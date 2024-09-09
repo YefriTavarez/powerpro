@@ -143,7 +143,11 @@ doc_events = {
 	"Item": {
 		"autoname": "powerpro.controllers.item.autoname",
 		"before_save": "powerpro.controllers.item.before_save",
-	}
+	},
+	"Sales Invoice": {
+		"before_insert": "powerpro.controllers.sales_invoice.before_insert",
+		"on_submit": "powerpro.controllers.sales_invoice.on_submit",
+	},
 }
 
 # Scheduled Tasks
