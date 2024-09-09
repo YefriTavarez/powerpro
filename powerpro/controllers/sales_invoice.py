@@ -15,10 +15,10 @@ def on_submit(doc, method):
 
 
 def delete_ncf(doc):
-    if doc.ncf and not doc.is_return:
-        doc.ncf = None
+    if doc.amended_from:
+        return False
 
-    if doc.ncf and doc.amended_from:
+    if doc.ncf and not doc.is_return:
         doc.ncf = None
 
 
@@ -30,6 +30,9 @@ def set_return_against_ncf(doc):
 
 def set_ncf(doc):
     if not doc.naming_series:
+        return False
+
+    if doc.amended_from:
         return False
 
     # if doc.is_pos and doc.ncf:
