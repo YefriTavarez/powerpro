@@ -4,3 +4,4 @@
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
+powerpro.patches.v1.enable_set_only_once_in_item_group_levels
