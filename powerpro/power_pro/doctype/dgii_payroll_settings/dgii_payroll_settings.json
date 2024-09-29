@@ -1,0 +1,123 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-09-22 19:26:37.959954",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "timesheet_section",
+  "weekly_expected_hours",
+  "max_weekly_extra_hours",
+  "column_break_aqkm",
+  "start_night_hours",
+  "end_night_hours",
+  "earnings_section",
+  "extra_hours_rate",
+  "extraordinary_hours_rate",
+  "column_break_kekz",
+  "night_hours_rate",
+  "deductions_section",
+  "pension_fund_provider",
+  "column_break_jdsg",
+  "health_insurance_provider"
+ ],
+ "fields": [
+  {
+   "fieldname": "extra_hours_rate",
+   "fieldtype": "Percent",
+   "label": "Extra Hours Rate %"
+  },
+  {
+   "fieldname": "extraordinary_hours_rate",
+   "fieldtype": "Percent",
+   "label": "Extraordinary Hours Rate %"
+  },
+  {
+   "fieldname": "column_break_kekz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "night_hours_rate",
+   "fieldtype": "Percent",
+   "label": "NIght Hours Rate %"
+  },
+  {
+   "fieldname": "earnings_section",
+   "fieldtype": "Section Break",
+   "label": "Earnings"
+  },
+  {
+   "fieldname": "timesheet_section",
+   "fieldtype": "Section Break",
+   "label": "Timesheet"
+  },
+  {
+   "default": "0",
+   "fieldname": "weekly_expected_hours",
+   "fieldtype": "Float",
+   "label": "Weekly Expected Hours"
+  },
+  {
+   "fieldname": "column_break_aqkm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "start_night_hours",
+   "fieldtype": "Time",
+   "label": "Start Night Hours"
+  },
+  {
+   "fieldname": "end_night_hours",
+   "fieldtype": "Time",
+   "label": "End Night Hours"
+  },
+  {
+   "fieldname": "deductions_section",
+   "fieldtype": "Section Break",
+   "label": "Deductions"
+  },
+  {
+   "fieldname": "pension_fund_provider",
+   "fieldtype": "Percent",
+   "label": "Pension Fund Provider (AFP)"
+  },
+  {
+   "fieldname": "column_break_jdsg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "health_insurance_provider",
+   "fieldtype": "Percent",
+   "label": "Health Insurance Provider (ARS)"
+  },
+  {
+   "default": "0",
+   "fieldname": "max_weekly_extra_hours",
+   "fieldtype": "Float",
+   "label": "Max Weekly Extra Hours"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-09-25 00:07:23.389311",
+ "modified_by": "Administrator",
+ "module": "Power Pro",
+ "name": "DGII Payroll Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
