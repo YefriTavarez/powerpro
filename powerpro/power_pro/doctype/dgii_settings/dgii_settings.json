@@ -1,0 +1,101 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "prompt",
+ "creation": "2024-09-16 21:35:28.475189",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "legal_tip_account",
+  "itbis_account",
+  "column_break_lovq",
+  "excise_tax",
+  "other_taxes_section",
+  "other_tax_detail",
+  "update_taxes",
+  "section_break_qpbh",
+  "multi_company",
+  "multi_other_tax_detail"
+ ],
+ "fields": [
+  {
+   "fieldname": "legal_tip_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Legal Tip Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "itbis_account",
+   "fieldtype": "Link",
+   "label": "ITBIS Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "column_break_lovq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "excise_tax",
+   "fieldtype": "Link",
+   "label": "Excise Tax",
+   "options": "Account"
+  },
+  {
+   "fieldname": "other_taxes_section",
+   "fieldtype": "Section Break",
+   "label": "Other Taxes"
+  },
+  {
+   "fieldname": "other_tax_detail",
+   "fieldtype": "Table",
+   "label": "Other Tax Detail",
+   "options": "Other Tax Detail"
+  },
+  {
+   "fieldname": "update_taxes",
+   "fieldtype": "Button",
+   "label": "Update Taxes"
+  },
+  {
+   "fieldname": "section_break_qpbh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "multi_company",
+   "fieldtype": "Table",
+   "label": "Multi Company",
+   "options": "DGII Settings Multi Company"
+  },
+  {
+   "fieldname": "multi_other_tax_detail",
+   "fieldtype": "Table",
+   "label": "Multi Other Tax Detail",
+   "options": "Multi Other Tax Detail"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-09-17 19:58:48.034904",
+ "modified_by": "Administrator",
+ "module": "Power Pro",
+ "name": "DGII Settings",
+ "naming_rule": "Set by user",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
