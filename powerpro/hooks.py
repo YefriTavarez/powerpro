@@ -44,7 +44,8 @@ app_license = "mit"
 
 # include js in doctype views
 doctype_js = {
-	"Item" : "public/js/item.js"
+    "Purchase Invoice": "public/js/purchase_invoice.js",
+    "Payment Entry": "public/js/payment_entry.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -148,6 +149,10 @@ doc_events = {
 		"before_insert": "powerpro.controllers.sales_invoice.before_insert",
 		"on_submit": "powerpro.controllers.sales_invoice.on_submit",
 	},
+    "Purchase Invoice": {
+        "validate": "powerpro.controllers.purchase_invoice.validate",
+        "before_submit": "powerpro.controllers.purchase_invoice.before_submit",
+	}
 }
 
 # Scheduled Tasks

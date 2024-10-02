@@ -1,0 +1,139 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-09-20 20:33:54.375881",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "company",
+  "column_break_bnyk",
+  "abbr",
+  "applicable_for",
+  "section_break_hzgf",
+  "account",
+  "column_break_ymxq",
+  "cost_center",
+  "section_break_ibny",
+  "retention_description",
+  "retention_type",
+  "retention_category",
+  "column_break_nkze",
+  "retention_rate"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_bnyk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "abbr",
+   "fieldtype": "Data",
+   "label": "Abbr",
+   "read_only": 1
+  },
+  {
+   "fieldname": "applicable_for",
+   "fieldtype": "Select",
+   "label": "Applicable for",
+   "options": "Pay\nReceive"
+  },
+  {
+   "fieldname": "section_break_hzgf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Account",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_ymxq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_ibny",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "retention_description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Retention Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "retention_type",
+   "fieldtype": "Select",
+   "label": "Retention Type",
+   "options": "ITBIS\nISR\nDISCOUNT"
+  },
+  {
+   "depends_on": "eval:doc.retention_type===\"ISR\"",
+   "fieldname": "retention_category",
+   "fieldtype": "Select",
+   "label": "Retention Category",
+   "mandatory_depends_on": "eval:doc.retention_type===\"ISR\"",
+   "options": "\n01 - ALQUILERES\n02 - HONORARIOS POR SERVICIOS\n03 - OTRAS RENTAS\n04 - OTRAS RENTAS (Rentas Presuntas)\n05 - INTERESES PAGADOS A PERSONAS JURIDICAS RESIDENTES\n06 - INTERESES PAGADOS A PERSONAS FISICAS RESIDENTES\n07 - RETENCION POR PROVEEDORES DEL ESTADO\n08 - JUEGOS TELEFONICOS"
+  },
+  {
+   "fieldname": "column_break_nkze",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "retention_rate",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Retention Rate",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-09-20 20:43:47.984869",
+ "modified_by": "Administrator",
+ "module": "Power Pro",
+ "name": "Retention",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
