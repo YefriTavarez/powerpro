@@ -44,8 +44,11 @@ app_license = "mit"
 
 # include js in doctype views
 doctype_js = {
+	"Item" : "public/js/item.js",
+    "Salary Structure": "public/js/salary_structure.js",
     "Purchase Invoice": "public/js/purchase_invoice.js",
     "Payment Entry": "public/js/payment_entry.js",
+    "Payroll Entry": "public/js/payroll_entry.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -132,9 +135,10 @@ doctype_js = {
 # ---------------
 # Override standard doctype classes
 
-# override_doctype_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
+override_doctype_class = {
+	"Salary Slip": "powerpro.controllers.salary_slip.SalarySlip",
+    "Payroll Entry": "powerpro.controllers.payroll_entry.PayrollEntry",
+}
 
 # Document Events
 # ---------------
@@ -148,6 +152,13 @@ doc_events = {
 	"Sales Invoice": {
 		"before_insert": "powerpro.controllers.sales_invoice.before_insert",
 		"on_submit": "powerpro.controllers.sales_invoice.on_submit",
+	},
+	"Salary Structure Assignment": {
+		"validate": "powerpro.controllers.salary_structure_assignment.validate",
+	},
+    "Timesheet": {
+        "before_save": "powerpro.controllers.timesheet.before_save",
+        "validate": "powerpro.controllers.timesheet.validate",
 	},
     "Purchase Invoice": {
         "validate": "powerpro.controllers.purchase_invoice.validate",
@@ -184,9 +195,9 @@ doc_events = {
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "powerpro.event.get_events"
-# }
+override_whitelisted_methods = {
+	"hrms.payroll.doctype.salary_slip.salary_lip.make_salary_slip_from_timesheet": "powerpro.controllers.salary_slip.make_salary_slip_from_timesheet",
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
