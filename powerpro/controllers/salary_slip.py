@@ -20,7 +20,7 @@ class SalarySlip(SalarySlip):
             "extraordinary_hours_rate": self.dgii_payroll_settings.extraordinary_hours_rate,
             "night_hours_rate": self.dgii_payroll_settings.night_hours_rate,
             "pension_fund_provider": self.dgii_payroll_settings.pension_fund_provider,
-            "health_insurance_provider": self.dgii_payroll_settings.health_insurance_provider,
+            "health_insurance_rate": self.dgii_payroll_settings.health_insurance_rate,
         })
 
     def get_dgii_payroll_settings(self):
