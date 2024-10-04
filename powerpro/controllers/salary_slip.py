@@ -23,6 +23,11 @@ class SalarySlip(SalarySlip):
             "health_insurance_rate": self.dgii_payroll_settings.health_insurance_rate,
         })
 
+    def set_salary_slip_fake_status(self):
+        # This is a fake status that is needed to be able to validate
+        # the condition in the salary structure
+        self.salary_slip_status = "Submitted"
+
     def get_dgii_payroll_settings(self):
         doctype = "DGII Payroll Settings"
         return frappe.get_single(doctype)
@@ -68,6 +73,7 @@ class SalarySlip(SalarySlip):
             })
         
         self.set_dgii_payroll_settings()
+        self.set_salary_slip_fake_status()
 
 
 @frappe.whitelist()
