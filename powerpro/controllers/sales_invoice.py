@@ -20,6 +20,9 @@ def on_cancel(doc, method):
 
 
 def delete_ncf(doc):
+    if doc.informal_customer:
+        return
+
     if doc.amended_from:
         return False
 
@@ -34,6 +37,9 @@ def set_return_against_ncf(doc):
 
 
 def set_ncf(doc):
+    if doc.informal_customer:
+        return
+
     if not doc.naming_series:
         return False
 
@@ -90,10 +96,7 @@ def get_serie(doc):
 
         return credit_note
 
-    return frappe.get_doc("NCF Manager", {
-        "company": doc.company,
-        "tax_category": doc.tax_category
-    })
+    return get_ncf_manager(doc)
 
 
 def get_credit_note(company):
@@ -112,6 +115,20 @@ def get_customer_tax_category(doc):
 
     return frappe.get_value(doctype, doc.customer, fieldname)
 
+
+def get_ncf_manager(doc):
+    doctype = "NCF Manager"
+    filters = {
+        "company": doc.company,
+        "tax_category": doc.tax_category
+    }
+
+    if name := frappe.db.exists(doctype, filters):
+        return frappe.get_doc(doctype, name)
+    else:
+        frappe.throw(
+            f"No se ha configurado una serie para la categoria de impuestos <b>{doc.tax_category}</b>."
+        )
 
 
 def validate_cancellation_type(doc):
