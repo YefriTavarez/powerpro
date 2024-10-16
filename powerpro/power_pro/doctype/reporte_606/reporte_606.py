@@ -7,6 +7,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.utils import cstr, cint, flt, formatdate, format_datetime
+from datetime import datetime
 from frappe.model.document import Document
 from frappe.utils.csvutils import UnicodeWriter
 import time
@@ -27,6 +28,8 @@ def get_file_address(from_date, to_date, company="INDUSTRIA GRÁFICA DEL CARIBE"
 SELECT
     pinv.taxes_and_charges_added,
     pinv.posting_date,
+    pinv.retention_date,
+    pinv.isr_date,
     pinv.company,
     pinv.name,
     pinv.tax_id,
@@ -82,13 +85,17 @@ LEFT JOIN
 WHERE
     pinv.docstatus = 1
     AND pinv.company = {company!r}
-    AND pinv.posting_date >= {from_date!r} AND pinv.posting_date <= {to_date!r}
+    AND pinv.posting_date >= {from_date!r} AND pinv.posting_date <= {to_date!r} 
+    OR pinv.retention_date >= {from_date!r} AND pinv.retention_date <= {to_date!r} 
+    OR pinv.isr_date >= {from_date!r} AND pinv.isr_date <= {to_date!r}
 
 UNION ALL
 
 SELECT 
     pinv.taxes_and_charges_added,
     pe.posting_date,
+    pinv.retention_date,
+    pinv.isr_date,
     pe.company,
     pinv.name,
     pinv.tax_id,
@@ -144,10 +151,13 @@ WHERE
         'Monto Facturado en Bienes',                                       #10
         'Total Monto Facturado',                                           #11
         'ITBIS Facturado',                                                 #12
+        'Monto Retenido',
         'ITBIS Retenido',                                                  #13
+        'Fecha Retencion',                                                 #14
         'ITBIS por Adelantar',                                             #14
         'ITBIS percibido en compras',                                      #15
         'Tipo de Retencion en ISR',                                        #16
+        'Fecha retencion',                                                 #17
         'Impuesto Selectivo al Consumo',                                   #17
         'Otros Impuesto/Tasas',                                            #18
         'Monto Propina Legal',                                             #19
@@ -181,10 +191,13 @@ WHERE
             row.monto_facturado_bienes,	# Monto Facturado en bienes                      #10
             flt(row.monto_facturado_servicios) + flt(row.monto_facturado_bienes),        #11
             get_itbis(row) or 0,		     # ITBIS Facturado                           #12
+            row.retention_amount or 0,  			# Monto Retención Renta              #16
             row.itbis_retenido or 0,                                                     #13
+            get_retention_date_if_in_range(row, from_date, to_date),                      #14
             get_itbis(row) or 0,             #itbis por adelantar                        #14
             row.retention_type if row.retention_type else '',   #tipo de retencion       #15
             row.isr_amount or 0,  			# Monto Retención Renta                      #16
+            get_isr_date_if_in_range(row, from_date, to_date),                            #17
             row.excise_tax or 0,  			# Impuesto Selectivo al Consumo              #17
             row.other_taxes or 0,  			# Otros Impuesto/Tasas                       #18
             row.legal_tip,  				# Monto Propina Legal                        #19
@@ -272,3 +285,41 @@ def get_itbis(row):
         if item.account_head == conf.itbis_account:
             return item.base_tax_amount
         
+
+from datetime import datetime
+
+def get_isr_date_if_in_range(row, from_date, to_date):
+    # Asegúrate de que from_date y to_date son strings y están en el formato correcto
+    if row.isr_date:
+        # Convertir isr_date a string en formato YYYY-MM-DD
+        isr_date = row.isr_date.strftime("%Y-%m-%d")  # Asegúrate de que es un string
+
+        # Convertir from_date y to_date a objetos datetime para la comparación
+        from_date = datetime.strptime(from_date, "%Y-%m-%d")
+        to_date = datetime.strptime(to_date, "%Y-%m-%d")
+        isr_date_dt = datetime.strptime(isr_date, "%Y-%m-%d")
+
+        # Comprueba si la fecha de ISR está dentro del rango
+        if from_date <= isr_date_dt <= to_date:
+            return row.isr_date  # Retorna la fecha en formato YYYY-MM-DD
+
+    return "No esta entrando"  # Si no está en rango, retorna una cadena vacía
+
+def get_retention_date_if_in_range(row, from_date, to_date):
+    # Asegúrate de que from_date y to_date son strings y están en el formato correcto
+    if row.retention_date:
+        # Convierte retention_date a string en formato YYYY-MM-DD
+        retention_date = row.retention_date.strftime("%Y-%m-%d")
+
+        # Convierte from_date y to_date a objetos datetime para la comparación
+        from_date = datetime.strptime(from_date, "%Y-%m-%d")
+        to_date = datetime.strptime(to_date, "%Y-%m-%d")
+        retention_date_dt = datetime.strptime(retention_date, "%Y-%m-%d")
+
+        # Comprueba si la fecha de retención está dentro del rango
+        if from_date <= retention_date_dt <= to_date:
+            return row.retention_date  # Retorna la fecha en formato YYYY-MM-DD
+
+    return "No esta entrando"  # Si no está en rango, retorna una cadena vacía
+
+

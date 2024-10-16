@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "format:{retention_description} - {abbr}",
  "creation": "2024-09-20 20:33:54.375881",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -23,7 +24,7 @@
  ],
  "fields": [
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "enabled",
    "fieldtype": "Check",
    "label": "Enabled"
@@ -41,12 +42,14 @@
    "fieldtype": "Column Break"
   },
   {
+   "fetch_from": "company.abbr",
    "fieldname": "abbr",
    "fieldtype": "Data",
    "label": "Abbr",
    "read_only": 1
   },
   {
+   "default": "Receive",
    "fieldname": "applicable_for",
    "fieldtype": "Select",
    "label": "Applicable for",
@@ -87,6 +90,7 @@
    "reqd": 1
   },
   {
+   "default": "ITBIS",
    "fieldname": "retention_type",
    "fieldtype": "Select",
    "label": "Retention Type",
@@ -114,10 +118,11 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-20 20:43:47.984869",
+ "modified": "2024-10-09 20:28:15.314973",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Retention",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
