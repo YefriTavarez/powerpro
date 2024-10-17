@@ -1,6 +1,11 @@
 frappe.ui.form.on("Purchase Invoice", {
 	
 	refresh(frm){
+		
+		frappe.run_serially([
+			_ => frm.trigger("set_queries"),
+		]);
+
 		frm.set_query("ibtis_retention_type", () => {
 			return {
 				"filters": {
@@ -72,70 +77,87 @@ frappe.ui.form.on("Purchase Invoice", {
 		frm.set_value("tax_id", replace_all(frm.doc.tax_id.trim(), "-", ""));
 		frm.trigger("validate_rnc");
 	},
-	include_isr(frm){
-		frm.trigger("calculate_isr");
-		$.map(["retention_rate", "retention_type"], field => {
-			frm.set_df_property(field, 'reqd', frm.doc.include_isr);
-		})
-	},
-	isr_rate(frm){
-		frm.trigger("calculate_isr");
-	},
-	include_retention(frm){
-		frm.set_df_property("retention_rate", 'reqd', frm.doc.include_retention);
-
-		frm.trigger("calculate_retention");
-		frm.trigger("update_taxes_amount")
-	},
-	retention_rate(frm){
-		frm.trigger("calculate_retention");
-		// frm.trigger("update_taxes_amount")
 	
+	//new code
+
+	refresh(frm) {
+		frappe.run_serially([
+			() => frm.trigger("set_queries"),
+		]);
 	},
-	update_taxes_amount(frm) {
+	set_queries(frm) {
+		frappe.run_serially([
+			() => frm.trigger("set_retention_query"),
+			() => frm.trigger("set_isr_rate_query"),
+		]);
+	},
+	set_retention_query(frm) {
 		const { doc } = frm;
-		if (!doc.include_retention && !doc.include_isr) return;
-		let retencion_rete;
-		if (doc.retention_rate == '30%') {
-				retencion_rete = 30
-			}
-		if (frm.doc.retention_rate == '100%') {
-				retencion_rete = 100
-			}
+
+		const fieldname = "retention";
+
+		const get_query = function () {
+			const filters = {
+				"retention_type": ["!=", "ISR"],
+				"applicable_for": "Pay",
+			};
+			return { filters };
+		};
+
+		frm.set_query(fieldname, get_query);
+	},
+	set_isr_rate_query(frm) {
+		const { doc } = frm;
+
+		const fieldname = "isr_rate";
+
+		const get_query = function () {
+			const filters = {
+				"retention_type": "ISR",
+			};
+			return { filters };
+		};
+
+		frm.set_query(fieldname, get_query);
+	},
+	retention(frm) {
+		// frappe.msgprint("retention");
+		// if (!frm.doc.retention) {
+		// 	return "Skip for empty retention";
+		// }
+
+		frm.call({
+			method: "powerpro.controllers.purchase_invoice.get_retention_details",
+			args: {
+				base_total_taxes_and_charges: frm.doc.base_total_taxes_and_charges,
+				total: frm.doc.total,
+				retention_type: frm.doc.retention,
+			},
+		}).then(({ message }) => {
+			const { amount } = message;
+
+			frm.set_value("retention_amount", amount);
+		});
+	},
+
+	isr_rate(frm) {
+		if (!frm.doc.isr_rate) {
+			return "Skip for empty isr_rate";
+		}
+
+		frm.call({
+			method: "powerpro.controllers.purchase_invoice.get_retention_details",
+			args: {
+				base_total_taxes_and_charges: frm.doc.base_total_taxes_and_charges,
+				total: frm.doc.total,
+				retention_type: frm.doc.isr_rate,
+			},
+		}).then(({ message }) => {
+			const { amount } = message;
+
+			frm.set_value("isr_amount", amount);
+		});
+	},
 	
-		frm.doc.taxes.map((row)=>{
-			if (doc.include_retention && !doc.include_isr) {
-				const itbis_rate = row.rate * (100 - retencion_rete) / 100;
-				frappe.model.set_value("Purchase Taxes and Charges", row.name, "rate", itbis_rate)
-				frm.refresh_field("taxes")
-			} else if (doc.include_retention && doc.include_isr) {
-				const itbis_rate = row.rate * (100 - (retencion_rete - doc.isr_rate)) / 100;
-				frappe.model.set_value("Purchase Taxes and Charges", row.name, "rate", itbis_rate)
-				frm.refresh_field("taxes")
-			}
-		})
-	},
-	calculate_retention(frm){
-		if (!frm.doc.include_retention || !frm.doc.total_taxes_and_charges || !frm.doc.retention_rate)
-			frm.set_value("retention_amount", 0);
-
-		let retention_rate = 0;
-		if (frm.doc.retention_rate == '2%')
-			retention_rate = 0.02;
-
-		if (frm.doc.retention_rate == '30%')
-			retention_rate = 0.30;
-		
-		if (frm.doc.retention_rate == '100%')
-			retention_rate = 1;
-		
-		frm.set_value("retention_amount", frm.doc.total_taxes_and_charges * retention_rate);
-	},
-	calculate_isr(frm){
-		if (!frm.doc.include_isr || !frm.doc.total || !frm.doc.isr_rate)
-			frm.set_value("isr_amount", 0);
-		let amount = frm.doc.total * (frm.doc.isr_rate / 100);
-		frm.set_value("isr_amount", amount);
-	}
 });
 
