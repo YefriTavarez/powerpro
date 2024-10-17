@@ -20,6 +20,9 @@ def on_cancel(doc, method):
 
 
 def delete_ncf(doc):
+    if doc.informal_customer:
+        return
+
     if doc.amended_from:
         return False
 
@@ -34,6 +37,9 @@ def set_return_against_ncf(doc):
 
 
 def set_ncf(doc):
+    if doc.informal_customer:
+        return
+
     if not doc.naming_series:
         return False
 
