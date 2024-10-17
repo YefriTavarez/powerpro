@@ -19,7 +19,7 @@
   "deductions_section",
   "pension_fund_provider",
   "column_break_jdsg",
-  "health_insurance_provider"
+  "health_insurance_rate"
  ],
  "fields": [
   {
@@ -86,21 +86,21 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "health_insurance_provider",
-   "fieldtype": "Percent",
-   "label": "Health Insurance Provider (ARS)"
-  },
-  {
    "default": "0",
    "fieldname": "max_weekly_extra_hours",
    "fieldtype": "Float",
    "label": "Max Weekly Extra Hours"
+  },
+  {
+   "fieldname": "health_insurance_rate",
+   "fieldtype": "Percent",
+   "label": "Health Insurance Rate (ARS)"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-09-25 00:07:23.389311",
+ "modified": "2024-10-03 08:14:52.004142",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "DGII Payroll Settings",

@@ -159,6 +159,7 @@ doc_events = {
 	"Sales Invoice": {
 		"before_insert": "powerpro.controllers.sales_invoice.before_insert",
 		"on_submit": "powerpro.controllers.sales_invoice.on_submit",
+        "on_cancel": "powerpro.controllers.sales_invoice.on_cancel",
 	},
 	"Salary Structure Assignment": {
 		"validate": "powerpro.controllers.salary_structure_assignment.validate",
