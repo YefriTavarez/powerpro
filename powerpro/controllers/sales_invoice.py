@@ -8,10 +8,15 @@ from frappe.utils import cint
 def before_insert(doc, method):
     delete_ncf(doc)
     set_return_against_ncf(doc)
+    delete_cancellation_type(doc)
 
 
 def on_submit(doc, method):
     set_ncf(doc)
+
+
+def on_cancel(doc, method):
+    validate_cancellation_type(doc)
 
 
 def delete_ncf(doc):
@@ -106,3 +111,16 @@ def get_customer_tax_category(doc):
     fieldname = "tax_category"
 
     return frappe.get_value(doctype, doc.customer, fieldname)
+
+
+
+def validate_cancellation_type(doc):
+    if not doc.cancellation_type:
+        frappe.throw(
+            "Debe seleccionar un tipo de anulacion para cancelar el documento."
+        )
+
+
+def delete_cancellation_type(doc):
+    if doc.amended_from:
+        doc.cancellation_type = None
