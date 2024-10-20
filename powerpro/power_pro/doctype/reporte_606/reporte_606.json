@@ -9,7 +9,8 @@
   "from_date",
   "to_date",
   "company",
-  "descargar_reporte"
+  "descargar_reporte",
+  "descargar_reporte_txt"
  ],
  "fields": [
   {
@@ -31,13 +32,18 @@
   {
    "fieldname": "descargar_reporte",
    "fieldtype": "Button",
-   "label": "Descargar Reporte"
+   "label": "Descargar Reporte CSV"
+  },
+  {
+   "fieldname": "descargar_reporte_txt",
+   "fieldtype": "Button",
+   "label": "Descargar Reporte TXT"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-09-16 21:34:51.437980",
+ "modified": "2024-10-18 23:19:10.638843",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Reporte 606",

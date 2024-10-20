@@ -1,9 +1,6 @@
 # Copyright (c) 2024, Rainier Polanco and contributors
 # For license information, please see license.txt
 
-# Copyright (c) 2023, Rey M. Ferreras and contributors
-# For license information, please see license.txt
-
 from __future__ import unicode_literals
 import frappe
 from frappe.utils import cstr, cint, flt, formatdate, format_datetime
@@ -22,7 +19,7 @@ class ReferenceNotFound(Exception):
 
 
 @frappe.whitelist()
-def get_file_address(from_date, to_date, company="INDUSTRIA GRÁFICA DEL CARIBE"):
+def get_file_address(from_date, to_date, company="INDUSTRIA GRÁFICA DEL CARIBE", file_type="csv"):
     result = frappe.db.sql(f"""
 SELECT
     pinv.taxes_and_charges_added,
@@ -130,71 +127,110 @@ WHERE
     AND per.retention_amount > 0
     AND per.isr_amount > 0
 	""", as_dict=True)
-    w = UnicodeWriter()
-    w.writerow([
-        'Company',                                                         #01
-        'RNC o Cedula',                                                    #02
-        'Tipo Id',                                                         #03
-        'Tipo Bienes y Servicios Comprados',                               #04
-        'NCF',                                                             #05
-        'Fecha Comprobante',                                               #06
-        'Fecha Pago',                                                      #07
-        'dia',                                                             #08
-        'Monto Facturado en Servicios',                                    #09
-        'Monto Facturado en Bienes',                                       #10
-        'Total Monto Facturado',                                           #11
-        'ITBIS Facturado',                                                 #12
-        'ITBIS Retenido',                                                  #13
-        'ITBIS por Adelantar',                                             #14
-        'ITBIS percibido en compras',                                      #15
-        'Tipo de Retencion en ISR',                                        #16
-        'Impuesto Selectivo al Consumo',                                   #17
-        'Otros Impuesto/Tasas',                                            #18
-        'Monto Propina Legal',                                             #19
-        'Forma de Pago',                                                   #20
-                                                                        
-    ])
-
-    for row in result:
-        ncf = ''
-        date = ''
-        day = ''
-
-        if row.ncf:
-            ncf = row.ncf.split(
-                "-")[1] if (len(row.ncf.split("-")) > 1) else row.ncf  # NCF-A1##% || A1##%
-
-        if row.posting_date:
-            date = row.posting_date.strftime("%d%Y%m")
-            day = row.posting_date.strftime("%d")
-
+    
+    if file_type == "txt":
+        content = generate_txt(result)
+        frappe.response['result'] = cstr(content)
+        frappe.response['type'] = 'txt'
+    else:
+        w = UnicodeWriter()
         w.writerow([
-            row.company,                                                                 #1
-            row.tax_id.replace("-", "") if row.tax_id else "", 	# RNC                    #2
-            row.tipo_rnc,                                                                #3         
-            row.tipo_bienes_y_servicios_comprados,        # Tipo de RNC                  #4
-            ncf,		# NCF                                                            #5
-            date,  # FC AAAAMM                                                           #6
-            day,                                                                         #7
-            get_retention_date(row),  # FP DD          #fecha pago                       #8
-            row.monto_facturado_servicios,  # Monto Facturado en Servicios               #9
-            row.monto_facturado_bienes,	# Monto Facturado en bienes                      #10
-            flt(row.monto_facturado_servicios) + flt(row.monto_facturado_bienes),        #11
-            get_itbis(row) or 0,		     # ITBIS Facturado                           #12
-            row.itbis_retenido or 0,                                                     #13
-            get_itbis(row) or 0,             #itbis por adelantar                        #14
-            row.retention_type if row.retention_type else '',   #tipo de retencion       #15
-            row.isr_amount or 0,  			# Monto Retención Renta                      #16
-            row.excise_tax or 0,  			# Impuesto Selectivo al Consumo              #17
-            row.other_taxes or 0,  			# Otros Impuesto/Tasas                       #18
-            row.legal_tip,  				# Monto Propina Legal                        #19
-            row.mop						    # Forma de Pago                              #20
+            'Company',                                                         #01
+            'RNC o Cedula',                                                    #02
+            'Tipo Id',                                                         #03
+            'Tipo Bienes y Servicios Comprados',                               #04
+            'NCF',                                                             #05
+            'Fecha Comprobante',                                               #06
+            'Fecha Pago',                                                      #07
+            'dia',                                                             #08
+            'Monto Facturado en Servicios',                                    #09
+            'Monto Facturado en Bienes',                                       #10
+            'Total Monto Facturado',                                           #11
+            'ITBIS Facturado',                                                 #12
+            'ITBIS Retenido',                                                  #13
+            'ITBIS por Adelantar',                                             #14
+            'ITBIS percibido en compras',                                      #15
+            'Tipo de Retencion en ISR',                                        #16
+            'Impuesto Selectivo al Consumo',                                   #17
+            'Otros Impuesto/Tasas',                                            #18
+            'Monto Propina Legal',                                             #19
+            'Forma de Pago',                                                   #20
+                                                                            
         ])
 
-    frappe.response['result'] = cstr(w.getvalue())
-    frappe.response['type'] = 'csv'
+        for row in result:
+            ncf = ''
+            date = ''
+            day = ''
+
+            if row.ncf:
+                ncf = row.ncf.split(
+                    "-")[1] if (len(row.ncf.split("-")) > 1) else row.ncf  # NCF-A1##% || A1##%
+
+            if row.posting_date:
+                date = row.posting_date.strftime("%d%Y%m")
+                day = row.posting_date.strftime("%d")
+
+            w.writerow([
+                row.company,                                                                 #1
+                row.tax_id.replace("-", "") if row.tax_id else "", 	# RNC                    #2
+                row.tipo_rnc,                                                                #3         
+                row.tipo_bienes_y_servicios_comprados,        # Tipo de RNC                  #4
+                ncf,		# NCF                                                            #5
+                date,  # FC AAAAMM                                                           #6
+                day,                                                                         #7
+                get_retention_date(row),  # FP DD          #fecha pago                       #8
+                row.monto_facturado_servicios,  # Monto Facturado en Servicios               #9
+                row.monto_facturado_bienes,	# Monto Facturado en bienes                      #10
+                flt(row.monto_facturado_servicios) + flt(row.monto_facturado_bienes),        #11
+                get_itbis(row) or 0,		     # ITBIS Facturado                           #12
+                row.itbis_retenido or 0,                                                     #13
+                get_itbis(row) or 0,             #itbis por adelantar                        #14
+                row.retention_type if row.retention_type else '',   #tipo de retencion       #15
+                row.isr_amount or 0,  			# Monto Retención Renta                      #16
+                row.excise_tax or 0,  			# Impuesto Selectivo al Consumo              #17
+                row.other_taxes or 0,  			# Otros Impuesto/Tasas                       #18
+                row.legal_tip,  				# Monto Propina Legal                        #19
+                verify_payment(row)						    # Forma de Pago                              #20
+            ])
+
+        frappe.response['result'] = cstr(w.getvalue())
+        frappe.response['type'] = 'csv'
     frappe.response['doctype'] = "Reporte_606_" + str(int(time.time()))
 
+def generate_txt(result):
+    lines = []
+    for row in result:
+        ncf = row.ncf.split("-")[1] if row.ncf and len(row.ncf.split("-")) > 1 else row.ncf
+        date = row.posting_date.strftime("%d%Y%m") if row.posting_date else ''
+        day = row.posting_date.strftime("%d") if row.posting_date else ''
+        
+        line = (
+            f"{row.company}|"
+            f"{row.tax_id.replace('-', '') if row.tax_id else ''}|"
+            f"{row.tipo_rnc}|"
+            f"{row.tipo_bienes_y_servicios_comprados}|"
+            f"{ncf}|"
+            f"{date}|"
+            f"{day}|"
+            f"{get_retention_date(row)}|"
+            f"{row.monto_facturado_servicios}|"
+            f"{row.monto_facturado_bienes}|"
+            f"{flt(row.monto_facturado_servicios) + flt(row.monto_facturado_bienes)}|"
+            f"{get_itbis(row) or 0}|"
+            f"{row.itbis_retenido or 0}|"
+            f"{get_itbis(row) or 0}|"
+            f"{row.retention_type or ''}|"
+            f"{row.isr_amount or 0}|"
+            f"{row.excise_tax or 0}|"
+            f"{row.other_taxes or 0}|"
+            f"{row.legal_tip}|"
+            f"{verify_payment(row)}\n"
+        )
+        
+        lines.append(line)
+    
+    return "".join(lines)
 
 def get_retention_date(row):
     try:
@@ -272,3 +308,37 @@ def get_itbis(row):
         if item.account_head == conf.itbis_account:
             return item.base_tax_amount
         
+
+def get_payments_entries(row=None):
+    doctype = "Payment Entry Reference"
+    filters = {
+        "reference_doctype": "Purchase Invoice",
+        "reference_name": row.name,
+    }
+
+    if frappe.db.exists(doctype, filters):
+        return frappe.get_all(doctype, filters)
+    return []
+
+
+def verify_payment(row=None):
+    per = get_payments_entries(row)
+    
+    if not per:
+        return " "
+    
+    payment_types = []
+    
+    for entry in per:
+        parent_payment_entry = frappe.db.get_value("Payment Entry Reference", entry['name'], "parent")
+        payment_entry_doc = frappe.get_doc("Payment Entry", parent_payment_entry)
+        payment_types.append(payment_entry_doc.mode_of_payment)
+    
+    if len(payment_types) == 1:
+        return payment_types[0]
+    # Si todos los tipos de pago en la lista son iguales, devuelve el primero
+    elif all(payment == payment_types[0] for payment in payment_types):
+        return payment_types[0]
+    # Si hay una mezcla de tipos de pago, devuelve "Mixto"
+    else:
+        return "Mixto"
