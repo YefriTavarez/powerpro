@@ -8,10 +8,15 @@ from frappe.utils import cint
 def before_insert(doc, method):
     delete_ncf(doc)
     set_return_against_ncf(doc)
+    validate_cancellation_type(doc)
 
 
 def on_submit(doc, method):
     set_ncf(doc)
+
+
+def on_cancel(doc, method):
+    delete_cancellation_type(doc)
 
 
 def delete_ncf(doc):
@@ -91,10 +96,7 @@ def get_serie(doc):
 
         return credit_note
 
-    return frappe.get_doc("NCF Manager", {
-        "company": doc.company,
-        "tax_category": doc.tax_category
-    })
+    return get_ncf_manager(doc)
 
 
 def get_credit_note(company):
@@ -112,3 +114,30 @@ def get_customer_tax_category(doc):
     fieldname = "tax_category"
 
     return frappe.get_value(doctype, doc.customer, fieldname)
+
+
+def get_ncf_manager(doc):
+    doctype = "NCF Manager"
+    filters = {
+        "company": doc.company,
+        "tax_category": doc.tax_category
+    }
+
+    if name := frappe.db.exists(doctype, filters):
+        return frappe.get_doc(doctype, name)
+    else:
+        frappe.throw(
+            f"No se ha configurado una serie para la categoria de impuestos <b>{doc.tax_category}</b>."
+        )
+
+
+def validate_cancellation_type(doc):
+    if not doc.cancellation_type:
+        frappe.throw(
+            "Debe seleccionar un tipo de anulacion para cancelar el documento."
+        )
+
+
+def delete_cancellation_type(doc):
+    if doc.amended_from:
+        doc.cancellation_type = None

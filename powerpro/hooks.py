@@ -28,6 +28,7 @@ app_license = "mit"
 # app_include_css = "/assets/powerpro/css/powerpro.css"
 app_include_js = [
 	"/assets/powerpro/js/powerpro.js?v=1.0.1",
+	"/assets/powerpro/js/frappe/indicator.js?v=1.0.1",
 ]
 
 # include js, css files in header of web template
