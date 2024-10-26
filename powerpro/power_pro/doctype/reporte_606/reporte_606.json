@@ -9,7 +9,9 @@
   "from_date",
   "to_date",
   "company",
-  "descargar_reporte"
+  "descargar_reporte",
+  "column_break_vgfo",
+  "summary"
  ],
  "fields": [
   {
@@ -32,12 +34,21 @@
    "fieldname": "descargar_reporte",
    "fieldtype": "Button",
    "label": "Descargar Reporte"
+  },
+  {
+   "fieldname": "column_break_vgfo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "summary",
+   "fieldtype": "HTML",
+   "label": "Summary"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-09-16 21:34:51.437980",
+ "modified": "2024-10-25 21:21:47.393856",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Reporte 606",
