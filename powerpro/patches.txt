@@ -7,5 +7,7 @@
 powerpro.patches.v1.enable_set_only_once_in_item_group_levels
 powerpro.patches.v1.apply_customizations_for_hours_payroll
 powerpro.patches.v1.igc_14_apply_customizations
+powerpro.patches.v1.igc_4_apply_customizations
+powerpro.patches.v1.igc_8_refactor_fields
 powerpro.patches.v1.create_type_of_service_purchased
 powerpro.patches.v1.igc_15_apply_customizations

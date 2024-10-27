@@ -26,7 +26,9 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/powerpro/css/powerpro.css"
-# app_include_js = "/assets/powerpro/js/powerpro.js"
+app_include_js = [
+	"/assets/powerpro/js/powerpro.js?v=1.0.1",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/powerpro/css/powerpro.css"
@@ -123,9 +125,14 @@ doctype_js = {
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
+permission_query_conditions = {
+	"Customer": "powerpro.utils.query.customer_query_conditions",
+    "Quotation": "powerpro.utils.query.quotation_query_conditions",
+    "Sales Order": "powerpro.utils.query.sales_order_query_conditions",
+    "Sales Invoice": "powerpro.utils.query.sales_invoice_query_conditions",
+	"Payment Entry": "powerpro.utils.query.payment_entry_query_conditions",
+	"Delivery Note": "powerpro.utils.query.delivery_note_query_conditions",
+}
 #
 # has_permission = {
 # 	"Event": "frappe.desk.doctype.event.event.has_permission",
