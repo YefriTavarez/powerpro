@@ -2,7 +2,7 @@ import frappe
 import json
 
 
-file = "/home/frappe/frappe-bench/apps/powerpro/powerpro/patches/v1/igc_12_apply_customizations.json"
+file = "/home/frappe/frappe-bench/apps/powerpro/powerpro/patches/v1/igc_12_fix_bugs.json"
 
 
 def execute():
