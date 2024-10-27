@@ -1,7 +1,5 @@
 frappe.ui.form.on("Purchase Invoice", {
-	
 	refresh(frm){
-		
 		frappe.run_serially([
 			_ => frm.trigger("set_queries"),
 		]);
@@ -77,18 +75,12 @@ frappe.ui.form.on("Purchase Invoice", {
 		frm.set_value("tax_id", replace_all(frm.doc.tax_id.trim(), "-", ""));
 		frm.trigger("validate_rnc");
 	},
-	
-	//new code
 
-	refresh(frm) {
-		frappe.run_serially([
-			() => frm.trigger("set_queries"),
-		]);
-	},
 	set_queries(frm) {
 		frappe.run_serially([
 			() => frm.trigger("set_retention_query"),
 			() => frm.trigger("set_isr_rate_query"),
+			() => frm.trigger("set_details_of_service_purchased_query"),
 		]);
 	},
 	set_retention_query(frm) {
@@ -117,6 +109,18 @@ frappe.ui.form.on("Purchase Invoice", {
 			};
 			return { filters };
 		};
+
+		frm.set_query(fieldname, get_query);
+	},
+	set_details_of_service_purchased_query(frm) {
+		const { doc } = frm;
+		const fieldname = "details_of_service_purchased";
+		const get_query = function () {
+			const filters = {
+				"service_purchased": doc.type_of_service_purchased || "",
+			};
+			return { filters };
+		}
 
 		frm.set_query(fieldname, get_query);
 	},
