@@ -4,7 +4,22 @@
 
 {
 	function refresh(frm) {
+		_toggle_disable_form(frm);
 		_set_item_group_filters(frm);
+	}
+
+	function _toggle_disable_form(frm) {
+		const { doc } = frm;
+		
+		if (
+			doc.reference_type
+			&& doc.reference_name
+		) {
+			frm.disable_form();
+			frm.set_intro(
+				__("This Item is linked to a {0} record, you can't edit it here.", [doc.reference_type]), "red"
+			)
+		}
 	}
 
 	function _set_item_group_filters(frm) {

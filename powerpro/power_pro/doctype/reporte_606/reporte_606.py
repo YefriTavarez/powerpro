@@ -6,6 +6,7 @@ import frappe
 from frappe.utils import cstr, cint, flt, formatdate, format_datetime
 from frappe.model.document import Document
 from frappe.utils.csvutils import UnicodeWriter
+from datetime import datetime
 import time
 from frappe import _
 
@@ -342,3 +343,29 @@ def verify_payment(row=None):
     # Si hay una mezcla de tipos de pago, devuelve "Mixto"
     else:
         return "Mixto"
+
+        
+def get_isr_date_if_in_range(row, from_date, to_date):
+    if row.isr_date:     
+        isr_date = row.isr_date.strftime("%Y-%m-%d")   
+        from_date = datetime.strptime(from_date, "%Y-%m-%d")
+        to_date = datetime.strptime(to_date, "%Y-%m-%d")
+        isr_date_dt = datetime.strptime(isr_date, "%Y-%m-%d")
+        
+        if from_date <= isr_date_dt <= to_date:
+            return row.isr_date  
+            
+    return "No esta entrando"  
+
+
+def get_retention_date_if_in_range(row, from_date, to_date):
+    if row.retention_date:
+        retention_date = row.retention_date.strftime("%Y-%m-%d")
+        from_date = datetime.strptime(from_date, "%Y-%m-%d")
+        to_date = datetime.strptime(to_date, "%Y-%m-%d")
+        retention_date_dt = datetime.strptime(retention_date, "%Y-%m-%d")
+
+        if from_date <= retention_date_dt <= to_date:
+            return row.retention_date  
+
+    return "No esta entrando"  

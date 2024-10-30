@@ -8,7 +8,7 @@ from frappe.utils import cint
 def before_insert(doc, method):
     delete_ncf(doc)
     set_return_against_ncf(doc)
-    validate_cancellation_type(doc)
+    delete_cancellation_type(doc)
 
 
 def on_submit(doc, method):
@@ -16,7 +16,7 @@ def on_submit(doc, method):
 
 
 def on_cancel(doc, method):
-    delete_cancellation_type(doc)
+    validate_cancellation_type(doc)
 
 
 def delete_ncf(doc):
