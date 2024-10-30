@@ -25,25 +25,47 @@
 		});
 	}
 
-	function _toggle_read_only_depends_on_fields(frm) {
+	async function _toggle_read_only_depends_on_fields(frm) {
+		await frappe.timeout(.2);
 		const { doc } = frm;
 
 		const read_only_depends_on = [
 			"item_code",
 			"item_name",
+			"item_group",
+			"custom_item_group_1",
+			"custom_item_group_2",
+			"custom_item_group_3",
+			"custom_item_group_4",
+			"custom_item_group_5",
 			"description",
 			"reference_type",
 			"reference_name",
 			"stock_uom",
 		];
 		
-		const is_disabled = (
+		const enabled = !(
 			doc.reference_type
 			&& doc.reference_name
 		);
 
-		read_only_depends_on.forEach(fieldname => {
-			frm.toggle_enable(fieldname, !is_disabled);
+
+		read_only_depends_on.forEach(async function(fieldname) {
+			const element = jQuery(`div#page-Item`)
+				.find(`div[data-fieldname="${fieldname}"]`)
+			;
+
+			if (enabled) {
+
+				element
+					.fadeIn(500);
+			} else {
+				element
+					.fadeOut(500);
+			}
+
+			await frappe.timeout(1.4);
+			frm.toggle_enable(fieldname, enabled);
 		});
 	}
 
