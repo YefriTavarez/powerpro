@@ -369,3 +369,19 @@ def get_retention_date_if_in_range(row, from_date, to_date):
             return row.retention_date  
 
     return "No esta entrando"  
+
+
+@frappe.whitelist()
+def get_summary_data(from_date, to_date):
+    data = frappe.db.sql(f"""
+        Select
+            Sum(pinv.base_total) as subtotal,
+            Sum(pinv.total_itbis) as itbis
+        From
+            `tabPurchase Invoice` as pinv
+        Where
+            pinv.posting_date Between {from_date!r} And {to_date!r} And 
+            pinv.docstatus = 1
+    """, as_dict=True)
+
+    return data[0] if data else {}

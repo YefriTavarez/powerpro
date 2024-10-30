@@ -1,29 +1,29 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "prompt",
- "creation": "2024-09-13 22:31:44.160482",
+ "creation": "2024-10-03 22:42:09.983618",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "from_date",
   "to_date",
   "company",
-  "descargar_reporte",
-  "descargar_reporte_txt",
-  "column_break_vgfo",
-  "summary"
+  "run_report"
  ],
  "fields": [
   {
    "fieldname": "from_date",
    "fieldtype": "Date",
-   "label": "From Date"
+   "in_standard_filter": 1,
+   "label": "Desde Fecha",
+   "reqd": 1
   },
   {
    "fieldname": "to_date",
    "fieldtype": "Date",
-   "label": "To date"
+   "in_list_view": 1,
+   "label": "Hasta Fecha",
+   "reqd": 1
   },
   {
    "fieldname": "company",
@@ -32,32 +32,18 @@
    "options": "Company"
   },
   {
-   "fieldname": "descargar_reporte",
+   "fieldname": "run_report",
    "fieldtype": "Button",
-   "label": "Descargar Reporte CSV"
-  },
-  {
-   "fieldname": "descargar_reporte_txt",
-   "fieldtype": "Button",
-   "label": "Descargar Reporte TXT"
-  },
-  {
-   "fieldname": "column_break_vgfo",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "summary",
-   "fieldtype": "HTML",
-   "label": "Summary"
+   "label": "Descargar Reporte"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-10-25 21:21:47.393856",
+ "modified": "2024-10-03 23:43:50.119456",
  "modified_by": "Administrator",
  "module": "Power Pro",
- "name": "Reporte 606",
+ "name": "Reporte 607",
  "owner": "Administrator",
  "permissions": [
   {
