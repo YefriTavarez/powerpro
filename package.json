@@ -1,0 +1,12 @@
+{
+  "name": "powerpro",
+  "version": "1.0.0",
+  "description": "powerpro",
+  "main": "index.js",
+  "repository": "git@github.com:YefriTavarez/powerpro.git",
+  "author": "Yefri Tavarez",
+  "license": "MIT",
+  "dependencies": {
+    "vue": "^3.5.12"
+  }
+}

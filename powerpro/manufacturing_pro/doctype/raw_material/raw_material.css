@@ -1,0 +1,7 @@
+div[data-fieldtype="Small Text"][data-fieldname="description"]
+div.control-value.for-description {
+	font-size: 1.2rem !important;
+	font-weight: bold !important;
+	color: var(--text-color) !important;
+	background-color: transparent !important;
+}

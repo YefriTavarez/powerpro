@@ -1,0 +1,129 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2024-10-14 20:02:35.109501",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "description",
+  "section_break_vlhr",
+  "base_material",
+  "column_break_eoym",
+  "paperboard_type",
+  "paperboard_caliper",
+  "paper_type",
+  "paper_weight",
+  "section_break_cwwg",
+  "smart_hash"
+ ],
+ "fields": [
+  {
+   "fieldname": "base_material",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Base Material",
+   "options": "\nPaperboard\nPaper\nAdhesive Paper\nAdhesive Vinyl",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.base_material===\"Paperboard\"",
+   "fieldname": "paperboard_type",
+   "fieldtype": "Select",
+   "label": "Paperboard Type",
+   "mandatory_depends_on": "eval:doc.base_material===\"Paperboard\"",
+   "options": "\nUncoated Kraft Multi-layer\nWhite Back Multi-layer\nKraft Back Multi-layer\nRecycled Grey Back\nRecycled Kraft Back\nUncoated Solid Kraft\nWhite Back Solid\nKraft Back Solid"
+  },
+  {
+   "depends_on": "eval:doc.base_material===\"Paper\"",
+   "fieldname": "paper_type",
+   "fieldtype": "Select",
+   "label": "Paper Type",
+   "mandatory_depends_on": "eval:doc.base_material===\"Paper\"",
+   "options": "\nBond\nCouch\u00e9"
+  },
+  {
+   "depends_on": "eval:doc.base_material===\"Paperboard\"",
+   "fieldname": "paperboard_caliper",
+   "fieldtype": "Select",
+   "label": "Paperboard Caliper",
+   "mandatory_depends_on": "eval:doc.base_material===\"Paperboard\"",
+   "options": "\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n22\n24\n26\n28"
+  },
+  {
+   "depends_on": "eval:doc.base_material===\"Paper\"",
+   "fieldname": "paper_weight",
+   "fieldtype": "Select",
+   "label": "Paper Weight",
+   "mandatory_depends_on": "eval:doc.base_material===\"Paper\"",
+   "options": "\n20\n24\n60\n80\n100\n120"
+  },
+  {
+   "fieldname": "smart_hash",
+   "fieldtype": "Data",
+   "label": "Smart Hash",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "default": "-",
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_eoym",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_cwwg",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_vlhr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  }
+ ],
+ "hide_toolbar": 1,
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "group": "References",
+   "link_doctype": "Item",
+   "link_fieldname": "reference_name"
+  }
+ ],
+ "modified": "2024-10-29 21:57:06.122488",
+ "modified_by": "Administrator",
+ "module": "Manufacturing Pro",
+ "name": "Raw Material",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "description"
+}
