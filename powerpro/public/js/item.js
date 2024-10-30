@@ -4,22 +4,47 @@
 
 {
 	function refresh(frm) {
-		_toggle_disable_form(frm);
+		_disable_always_off_fields(frm);
+		_toggle_read_only_depends_on_fields(frm);
 		_set_item_group_filters(frm);
 	}
 
-	function _toggle_disable_form(frm) {
-		const { doc } = frm;
+	function _disable_always_off_fields(frm) {
+		// const { doc } = frm;
+
+		const read_only_depends_on = [
+			"has_variants",
+			"valuation_method",
+			"include_item_in_manufacturing",
+		];
 		
-		if (
+		const always_off = true;
+
+		read_only_depends_on.forEach(fieldname => {
+			frm.toggle_enable(fieldname, !always_off);
+		});
+	}
+
+	function _toggle_read_only_depends_on_fields(frm) {
+		const { doc } = frm;
+
+		const read_only_depends_on = [
+			"item_code",
+			"item_name",
+			"description",
+			"reference_type",
+			"reference_name",
+			"stock_uom",
+		];
+		
+		const is_disabled = (
 			doc.reference_type
 			&& doc.reference_name
-		) {
-			frm.disable_form();
-			frm.set_intro(
-				__("This Item is linked to a {0} record, you can't edit it here.", [doc.reference_type]), "red"
-			)
-		}
+		);
+
+		read_only_depends_on.forEach(fieldname => {
+			frm.toggle_enable(fieldname, !is_disabled);
+		});
 	}
 
 	function _set_item_group_filters(frm) {
