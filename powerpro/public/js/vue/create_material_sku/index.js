@@ -11,6 +11,10 @@ power.ui.CreateMaterialSKU = function(docname) {
 	let theprompt;
 	theprompt = frappe.prompt([
 		{
+			fieldtype: "Section Break",
+			label: __("Material Specification"),
+		},
+		{
 			fieldname: "material_format",
 			fieldtype: "Select",
 			label: __("Material Format"),
@@ -75,6 +79,36 @@ power.ui.CreateMaterialSKU = function(docname) {
 				const value = round_to_nearest_eighth(target.value);
 				if (target.value !== value) {
 					target.value = value;
+				}
+			},
+		},
+		{
+			fieldtype: "Section Break",
+			label: __("Weight"),
+		},
+		{
+			fieldname: "gsm",
+			fieldtype: "Int",
+			non_negative: 1,
+			reqd: 1,
+			label: __("GSM"),
+			async change(event) {
+				const { target } = event;
+				await frappe.timeout(.1);
+
+				if (!target.value) {
+					target.value = 0;
+				}
+
+				if (
+					target.value < 0
+				) {
+					target.value = 0;
+
+					frappe.show_alert({
+						message: __("GSM cannot be negative!"),
+						indicator: "red",
+					});
 				}
 			},
 		}

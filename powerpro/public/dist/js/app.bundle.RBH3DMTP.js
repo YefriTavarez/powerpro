@@ -62,6 +62,10 @@
         let theprompt;
         theprompt = frappe.prompt([
           {
+            fieldtype: "Section Break",
+            label: __("Material Specification")
+          },
+          {
             fieldname: "material_format",
             fieldtype: "Select",
             label: __("Material Format"),
@@ -125,6 +129,31 @@
                 target.value = value;
               }
             }
+          },
+          {
+            fieldtype: "Section Break",
+            label: __("Weight")
+          },
+          {
+            fieldname: "gsm",
+            fieldtype: "Int",
+            non_negative: 1,
+            reqd: 1,
+            label: __("GSM"),
+            async change(event) {
+              const { target } = event;
+              await frappe.timeout(0.1);
+              if (!target.value) {
+                target.value = 0;
+              }
+              if (target.value < 0) {
+                target.value = 0;
+                frappe.show_alert({
+                  message: __("GSM cannot be negative!"),
+                  indicator: "red"
+                });
+              }
+            }
           }
         ], function(values) {
           frappe.call("powerpro.manufacturing_pro.doctype.raw_material.client.create_material_sku", __spreadValues({
@@ -179,4 +208,4 @@
   var functions = __toESM(require_functions());
   var create_material_sku = __toESM(require_create_material_sku());
 })();
-//# sourceMappingURL=app.bundle.4F377NYD.js.map
+//# sourceMappingURL=app.bundle.RBH3DMTP.js.map

@@ -21,7 +21,8 @@ def create_material_sku(
 	material_format: Literal["Roll", "Sheet"],
 	roll_width: float = 0.0,
 	sheet_width: float = 0.0,
-	sheet_height: float = 0.0
+	sheet_height: float = 0.0,
+	gsm: int = 0,
 ):
 	"""Create a new SKU based on the given parameters"""
 	# validate material format
@@ -41,12 +42,11 @@ def create_material_sku(
 		"material_format": material_format,
 		"roll_width": round_to_nearest_eighth(roll_width),
 		"sheet_width": round_to_nearest_eighth(sheet_width),
-		"sheet_height": round_to_nearest_eighth(sheet_height)
+		"sheet_height": round_to_nearest_eighth(sheet_height),
+		"gsm": gsm,
 	})
 
 	description = material.get_description()
-
-
 
 	# validate an equivalent Item does not exists already in the system.
 	if name := frappe.db.exists("Item", {

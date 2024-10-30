@@ -39,14 +39,25 @@ class RawMaterial(Document):
 					f"Invalid material format: {self.material_format}"
 				)
 
+			if self.material_format == "Roll":
+				if not hasattr(self, "roll_width"):
+					raise ValueError("Roll Width is required for Roll format")
+
+			elif self.material_format == "Sheet":
+				if not hasattr(self, "sheet_width"):
+					raise ValueError("Sheet Width is required for Sheet format")
+
+				if hasattr(self, "sheet_height"):
+					raise ValueError("Sheet Height is required for Sheet format")
+
 			dimension_map = {
 				"Roll": f"{self.roll_width} in",
 				"Sheet": f"{self.sheet_width} x {self.sheet_height} in",
 			}
 
 			out.append(dimension_map[self.material_format])
-		
-		if self.gsm:
+
+		if getattr(self, "gsm", None):
 			out.append(f"{self.gsm} gsm")
 		
 		if as_list:
