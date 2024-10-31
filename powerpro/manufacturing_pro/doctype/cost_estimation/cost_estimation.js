@@ -4,7 +4,7 @@
 {
 	frappe.provide("power.ui");
 
-	function setup_vue(frm) {
+	function _setup_vue(frm) {
 		frappe.require([
 			"powerpro.bundle.js",
 		], function() {
@@ -32,7 +32,7 @@
 	}
 
 	function setup(frm) {
-		setup_vue(frm);
+		_setup_vue(frm);
 	}
 
 	function raw_material(frm) {
