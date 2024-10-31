@@ -72,12 +72,14 @@
    "default": "Today",
    "fieldname": "created_on",
    "fieldtype": "Date",
-   "label": "Created On"
+   "label": "Created On",
+   "reqd": 1
   },
   {
    "fieldname": "expires_on",
    "fieldtype": "Date",
-   "label": "Expires On"
+   "label": "Expires On",
+   "reqd": 1
   },
   {
    "fieldname": "naming_series",
@@ -91,7 +93,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-30 22:16:50.411035",
+ "modified": "2024-10-30 22:23:15.865134",
  "modified_by": "Administrator",
  "module": "Manufacturing Pro",
  "name": "Cost Estimation",
