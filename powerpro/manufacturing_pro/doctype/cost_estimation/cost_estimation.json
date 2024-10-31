@@ -1,6 +1,6 @@
 {
  "actions": [],
- "allow_rename": 1,
+ "autoname": "naming_series:",
  "creation": "2024-10-13 14:15:11.038838",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -8,6 +8,7 @@
   "customer",
   "raw_material",
   "column_break_4hbk",
+  "naming_series",
   "created_on",
   "expires_on",
   "features_section",
@@ -68,6 +69,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "Today",
    "fieldname": "created_on",
    "fieldtype": "Date",
    "label": "Created On"
@@ -76,15 +78,24 @@
    "fieldname": "expires_on",
    "fieldtype": "Date",
    "label": "Expires On"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "COST-EST-",
+   "reqd": 1,
+   "set_only_once": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-16 21:24:33.294885",
+ "modified": "2024-10-30 22:16:50.411035",
  "modified_by": "Administrator",
  "module": "Manufacturing Pro",
  "name": "Cost Estimation",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
