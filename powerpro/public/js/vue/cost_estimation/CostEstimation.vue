@@ -2,7 +2,6 @@
   <div id="cost-estimation">
     <h4>{{ title }}</h4>
     <h5>Material</h5>
-    <Material :raw_material_specs="raw_material_specs" />
     <p class="text-muted">{{ doc.raw_material }}</p>
 
     <form class="col col-sm-6">
@@ -28,7 +27,6 @@
 </template>
 
 <script>
-import Material from "./Material.vue";
 import RawMaterialController from "../../controllers/material_controller.js";
 export default {
   name: 'CostEstimation',
@@ -89,7 +87,6 @@ export default {
     }
   },
   components: {
-    Material,
   }
 }
 </script>

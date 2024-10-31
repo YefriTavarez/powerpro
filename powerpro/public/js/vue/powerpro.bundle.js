@@ -28,6 +28,6 @@ power.ui.CostEstimation = class {
 	}
 
 	fetch_raw_material_specs() {
-		this.vm.fetch_raw_material_specs();
+		// this.vm.fetch_raw_material_specs();
 	}
 }
