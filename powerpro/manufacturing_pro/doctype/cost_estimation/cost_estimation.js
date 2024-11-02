@@ -10,7 +10,7 @@
 		], function() {
 			const selector = `div[data-fieldname="cost_estimation_app"]`;
 			
-			if (!power.ui.CostEstimation) {
+			if (!power.ui.CostEstimationApp) {
 				jQuery(
 					selector
 				).html(
@@ -20,14 +20,14 @@
 				);
 
 				frappe.show_alert({
-					message: "Vue.CostEstimation is not available!",
+					message: "Vue.CostEstimationApp is not available!",
 					indicator: "red",
 				});
 
 				return ; // exit
 			}
 
-			power.ui.cost_estimation = new power.ui.CostEstimation(frm, selector);
+			power.ui.cost_estimation = new power.ui.CostEstimationApp(frm, selector);
 		});
 	}
 

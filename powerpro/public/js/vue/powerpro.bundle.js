@@ -4,11 +4,11 @@
 
 
 import { createApp } from 'vue';
-import CostEstimation from './cost_estimation/CostEstimation.vue';
+import App from './cost_estimation/App.vue';
 
 frappe.provide("power.ui");
 
-power.ui.CostEstimation = class {
+power.ui.CostEstimationApp = class {
 	constructor(frm, parent, dont_mount = false) {
 		this.frm = frm;
 		this.parent = parent;
@@ -19,15 +19,16 @@ power.ui.CostEstimation = class {
 	}
 
 	mount() {
-		this.vm = createApp(
-			CostEstimation, 
-			{
-				frm: this.frm,
-			}
-		).mount(this.parent);
+		const vm = createApp(App, { frm: this.frm })
+		vm.mount(this.parent);
+		this.update({ vm });
 	}
 
 	fetch_raw_material_specs() {
 		// this.vm.fetch_raw_material_specs();
+	}
+
+	update(opts) {
+		Object.assign(this, opts);
 	}
 }

@@ -1,5 +1,8 @@
+frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/custom/DimensionField.vue?type=style&index=0 */\n.inner-form-group[data-v-18a121b1] {\n  display: flex;\n}\n.inner-form-group input[data-v-18a121b1] {\n  margin-right: 5px;\n}\n.inner-form-group input[data-v-18a121b1]:nth-child(3) {\n  margin-left: 5px;\n}\n.inner-form-group span[data-v-18a121b1] {\n  width: 20px;\n  font-weight: bold;\n  display: inline-block;\n}\n.inner-form-group span[data-v-18a121b1]:nth-child(2) {\n  text-align: center;\n}\n.inner-form-group span[data-v-18a121b1]:nth-child(3) {\n  text-align: right;\n}\n.text-muted[data-v-18a121b1] {\n  font-size: 12px;\n}\n.text-muted[data-v-18a121b1]::before {\n  content: \"Nota: \";\n  font-weight: bold;\n}\n.text-muted[data-v-18a121b1]::after {\n  content: \" (pulgadas)\";\n}\n/*# sourceMappingURL=powerpro.bundle.ENNOQBTW.css.map */\n");
 (() => {
   var __defProp = Object.defineProperty;
+  var __defProps = Object.defineProperties;
+  var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
   var __getOwnPropSymbols = Object.getOwnPropertySymbols;
   var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __propIsEnum = Object.prototype.propertyIsEnumerable;
@@ -15,6 +18,7 @@
       }
     return a;
   };
+  var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 
   // ../powerpro/node_modules/@vue/shared/dist/shared.esm-bundler.js
   function makeMap(str) {
@@ -42,6 +46,7 @@
   var isArray = Array.isArray;
   var isMap = (val) => toTypeString(val) === "[object Map]";
   var isSet = (val) => toTypeString(val) === "[object Set]";
+  var isDate = (val) => toTypeString(val) === "[object Date]";
   var isFunction = (val) => typeof val === "function";
   var isString = (val) => typeof val === "string";
   var isSymbol = (val) => typeof val === "symbol";
@@ -173,6 +178,57 @@
   );
   function includeBooleanAttr(value) {
     return !!value || value === "";
+  }
+  function looseCompareArrays(a, b) {
+    if (a.length !== b.length)
+      return false;
+    let equal = true;
+    for (let i = 0; equal && i < a.length; i++) {
+      equal = looseEqual(a[i], b[i]);
+    }
+    return equal;
+  }
+  function looseEqual(a, b) {
+    if (a === b)
+      return true;
+    let aValidType = isDate(a);
+    let bValidType = isDate(b);
+    if (aValidType || bValidType) {
+      return aValidType && bValidType ? a.getTime() === b.getTime() : false;
+    }
+    aValidType = isSymbol(a);
+    bValidType = isSymbol(b);
+    if (aValidType || bValidType) {
+      return a === b;
+    }
+    aValidType = isArray(a);
+    bValidType = isArray(b);
+    if (aValidType || bValidType) {
+      return aValidType && bValidType ? looseCompareArrays(a, b) : false;
+    }
+    aValidType = isObject(a);
+    bValidType = isObject(b);
+    if (aValidType || bValidType) {
+      if (!aValidType || !bValidType) {
+        return false;
+      }
+      const aKeysCount = Object.keys(a).length;
+      const bKeysCount = Object.keys(b).length;
+      if (aKeysCount !== bKeysCount) {
+        return false;
+      }
+      for (const key in a) {
+        const aHasKey = a.hasOwnProperty(key);
+        const bHasKey = b.hasOwnProperty(key);
+        if (aHasKey && !bHasKey || !aHasKey && bHasKey || !looseEqual(a[key], b[key])) {
+          return false;
+        }
+      }
+    }
+    return String(a) === String(b);
+  }
+  function looseIndexOf(arr, val) {
+    return arr.findIndex((item) => looseEqual(item, val));
   }
   var isRef = (val) => {
     return !!(val && val["__v_isRef"] === true);
@@ -2361,6 +2417,12 @@
     currentScopeId = instance && instance.type.__scopeId || null;
     return prev;
   }
+  function pushScopeId(id) {
+    currentScopeId = id;
+  }
+  function popScopeId() {
+    currentScopeId = null;
+  }
   function withCtx(fn, ctx = currentRenderingInstance, isNonScopedSlot) {
     if (!ctx)
       return fn;
@@ -2660,7 +2722,93 @@
   function onErrorCaptured(hook, target = currentInstance) {
     injectHook("ec", hook, target);
   }
+  var COMPONENTS = "components";
+  function resolveComponent(name, maybeSelfReference) {
+    return resolveAsset(COMPONENTS, name, true, maybeSelfReference) || name;
+  }
   var NULL_DYNAMIC_COMPONENT = Symbol.for("v-ndc");
+  function resolveAsset(type, name, warnMissing = true, maybeSelfReference = false) {
+    const instance = currentRenderingInstance || currentInstance;
+    if (instance) {
+      const Component = instance.type;
+      if (type === COMPONENTS) {
+        const selfName = getComponentName(
+          Component,
+          false
+        );
+        if (selfName && (selfName === name || selfName === camelize(name) || selfName === capitalize(camelize(name)))) {
+          return Component;
+        }
+      }
+      const res = resolve(instance[type] || Component[type], name) || resolve(instance.appContext[type], name);
+      if (!res && maybeSelfReference) {
+        return Component;
+      }
+      if (warnMissing && !res) {
+        const extra = type === COMPONENTS ? `
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement.` : ``;
+        warn$1(`Failed to resolve ${type.slice(0, -1)}: ${name}${extra}`);
+      }
+      return res;
+    } else if (true) {
+      warn$1(
+        `resolve${capitalize(type.slice(0, -1))} can only be used in render() or setup().`
+      );
+    }
+  }
+  function resolve(registry, name) {
+    return registry && (registry[name] || registry[camelize(name)] || registry[capitalize(camelize(name))]);
+  }
+  function renderList(source, renderItem, cache, index) {
+    let ret;
+    const cached = cache && cache[index];
+    const sourceIsArray = isArray(source);
+    if (sourceIsArray || isString(source)) {
+      const sourceIsReactiveArray = sourceIsArray && isReactive(source);
+      let needsWrap = false;
+      if (sourceIsReactiveArray) {
+        needsWrap = !isShallow(source);
+        source = shallowReadArray(source);
+      }
+      ret = new Array(source.length);
+      for (let i = 0, l = source.length; i < l; i++) {
+        ret[i] = renderItem(
+          needsWrap ? toReactive(source[i]) : source[i],
+          i,
+          void 0,
+          cached && cached[i]
+        );
+      }
+    } else if (typeof source === "number") {
+      if (!Number.isInteger(source)) {
+        warn$1(`The v-for range expect an integer value but got ${source}.`);
+      }
+      ret = new Array(source);
+      for (let i = 0; i < source; i++) {
+        ret[i] = renderItem(i + 1, i, void 0, cached && cached[i]);
+      }
+    } else if (isObject(source)) {
+      if (source[Symbol.iterator]) {
+        ret = Array.from(
+          source,
+          (item, i) => renderItem(item, i, void 0, cached && cached[i])
+        );
+      } else {
+        const keys = Object.keys(source);
+        ret = new Array(keys.length);
+        for (let i = 0, l = keys.length; i < l; i++) {
+          const key = keys[i];
+          ret[i] = renderItem(source[key], key, i, cached && cached[i]);
+        }
+      }
+    } else {
+      ret = [];
+    }
+    if (cache) {
+      cache[index] = ret;
+    }
+    return ret;
+  }
   var getPublicInstance = (i) => {
     if (!i)
       return null;
@@ -2914,7 +3062,7 @@
       beforeUnmount,
       destroyed,
       unmounted,
-      render: render2,
+      render: render10,
       renderTracked,
       renderTriggered,
       errorCaptured,
@@ -3066,8 +3214,8 @@
         instance.exposed = {};
       }
     }
-    if (render2 && instance.render === NOOP) {
-      instance.render = render2;
+    if (render10 && instance.render === NOOP) {
+      instance.render = render10;
     }
     if (inheritAttrs != null) {
       instance.inheritAttrs = inheritAttrs;
@@ -3310,7 +3458,7 @@
     };
   }
   var uid$1 = 0;
-  function createAppAPI(render2, hydrate) {
+  function createAppAPI(render10, hydrate) {
     return function createApp2(rootComponent, rootProps = null) {
       if (!isFunction(rootComponent)) {
         rootComponent = extend({}, rootComponent);
@@ -3414,7 +3562,7 @@
             }
             if (true) {
               context.reload = () => {
-                render2(
+                render10(
                   cloneVNode(vnode),
                   rootContainer,
                   namespace
@@ -3424,7 +3572,7 @@
             if (isHydrate && hydrate) {
               hydrate(vnode, rootContainer);
             } else {
-              render2(vnode, rootContainer, namespace);
+              render10(vnode, rootContainer, namespace);
             }
             isMounted = true;
             app._container = rootContainer;
@@ -3456,7 +3604,7 @@ If you want to remount the same app, move your app creation logic into a factory
               app._instance,
               16
             );
-            render2(null, app._container);
+            render10(null, app._container);
             if (true) {
               app._instance = null;
               devtoolsUnmountApp(app);
@@ -5405,7 +5553,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
       return teleportEnd ? hostNextSibling(teleportEnd) : el;
     };
     let isFlushing = false;
-    const render2 = (vnode, container, namespace) => {
+    const render10 = (vnode, container, namespace) => {
       if (vnode == null) {
         if (container._vnode) {
           unmount(container._vnode, null, null, true);
@@ -5449,9 +5597,9 @@ For more details, see https://link.vuejs.org/feature-flags.`
       );
     }
     return {
-      render: render2,
+      render: render10,
       hydrate,
-      createApp: createAppAPI(render2, hydrate)
+      createApp: createAppAPI(render10, hydrate)
     };
   }
   function resolveChildrenNamespace({ type, props }, currentNamespace) {
@@ -5822,7 +5970,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
       slots,
       attrs,
       emit: emit2,
-      render: render2,
+      render: render10,
       renderCache,
       props,
       data,
@@ -5850,7 +5998,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
           }
         }) : proxyToUse;
         result = normalizeVNode(
-          render2.call(
+          render10.call(
             thisProxy,
             proxyToUse,
             renderCache,
@@ -6150,6 +6298,18 @@ For more details, see https://link.vuejs.org/feature-flags.`
       )
     );
   }
+  function createBlock(type, props, children, patchFlag, dynamicProps) {
+    return setupBlock(
+      createVNode(
+        type,
+        props,
+        children,
+        patchFlag,
+        dynamicProps,
+        true
+      )
+    );
+  }
   function isVNode(value) {
     return value ? value.__v_isVNode === true : false;
   }
@@ -6346,6 +6506,9 @@ Component that was made reactive: `,
   }
   function createTextVNode(text = " ", flag = 0) {
     return createVNode(Text, null, text, flag);
+  }
+  function createCommentVNode(text = "", asBlock = false) {
+    return asBlock ? (openBlock(), createBlock(Comment, null, text)) : createVNode(Comment, null, text);
   }
   function normalizeVNode(child) {
     if (child == null || typeof child === "boolean") {
@@ -7561,6 +7724,72 @@ Expected function or array of functions, received type ${typeof value}.`
       el.value = newValue;
     }
   };
+  var vModelSelect = {
+    deep: true,
+    created(el, { value, modifiers: { number } }, vnode) {
+      const isSetModel = isSet(value);
+      addEventListener(el, "change", () => {
+        const selectedVal = Array.prototype.filter.call(el.options, (o) => o.selected).map(
+          (o) => number ? looseToNumber(getValue(o)) : getValue(o)
+        );
+        el[assignKey](
+          el.multiple ? isSetModel ? new Set(selectedVal) : selectedVal : selectedVal[0]
+        );
+        el._assigning = true;
+        nextTick(() => {
+          el._assigning = false;
+        });
+      });
+      el[assignKey] = getModelAssigner(vnode);
+    },
+    mounted(el, { value }) {
+      setSelected(el, value);
+    },
+    beforeUpdate(el, _binding, vnode) {
+      el[assignKey] = getModelAssigner(vnode);
+    },
+    updated(el, { value }) {
+      if (!el._assigning) {
+        setSelected(el, value);
+      }
+    }
+  };
+  function setSelected(el, value) {
+    const isMultiple = el.multiple;
+    const isArrayValue = isArray(value);
+    if (isMultiple && !isArrayValue && !isSet(value)) {
+      warn2(
+        `<select multiple v-model> expects an Array or Set value for its binding, but got ${Object.prototype.toString.call(value).slice(8, -1)}.`
+      );
+      return;
+    }
+    for (let i = 0, l = el.options.length; i < l; i++) {
+      const option = el.options[i];
+      const optionValue = getValue(option);
+      if (isMultiple) {
+        if (isArrayValue) {
+          const optionType = typeof optionValue;
+          if (optionType === "string" || optionType === "number") {
+            option.selected = value.some((v) => String(v) === String(optionValue));
+          } else {
+            option.selected = looseIndexOf(value, optionValue) > -1;
+          }
+        } else {
+          option.selected = value.has(optionValue);
+        }
+      } else if (looseEqual(getValue(option), value)) {
+        if (el.selectedIndex !== i)
+          el.selectedIndex = i;
+        return;
+      }
+    }
+    if (!isMultiple && el.selectedIndex !== -1) {
+      el.selectedIndex = -1;
+    }
+  }
+  function getValue(el) {
+    return "_value" in el ? el._value : el.value;
+  }
   var rendererOptions = /* @__PURE__ */ extend({ patchProp }, nodeOps);
   var renderer;
   function ensureRenderer() {
@@ -7664,24 +7893,419 @@ Expected function or array of functions, received type ${typeof value}.`
     initDev();
   }
 
-  // ../powerpro/powerpro/public/js/controllers/material_controller.js
-  var material_controller_default = RawMaterialController = class {
-    constructor({ vm }) {
-      const { frm } = vm;
-      const { doc: doc2 } = frm;
-      this.frm = frm;
-      this.doc = doc2;
-      this.vm = vm;
-    }
-    fetch_raw_material_specs(material_id) {
-      fetch(`/api/resource/Raw Material/${material_id}`).then((response) => response.json()).then((response) => {
-        this.vm.raw_material_specs = response.data;
-      });
+  // sfc-script:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/QtyField.vue?type=script
+  var QtyField_default = {
+    props: {
+      value: {
+        type: Number,
+        default: 0
+      },
+      label: {
+        type: String,
+        default: "Quantity"
+      }
+    },
+    data() {
+      return {
+        quantity: this.value
+      };
+    },
+    watch: {
+      quantity(newVal, oldVal) {
+        this.$emit("update:quantity", this.quantity);
+      }
     }
   };
 
-  // sfc-script:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/CostEstimation.vue?type=script
-  var CostEstimation_default = {
+  // sfc-template:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/QtyField.vue?type=template
+  var _hoisted_1 = { class: "form-group" };
+  var _hoisted_2 = { for: "quantity" };
+  function render(_ctx, _cache, $props, $setup, $data, $options) {
+    return openBlock(), createElementBlock("div", _hoisted_1, [
+      createBaseVNode("label", _hoisted_2, toDisplayString($props.label), 1),
+      withDirectives(createBaseVNode("input", {
+        type: "text",
+        class: "form-control",
+        id: "quantity",
+        "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $data.quantity = $event)
+      }, null, 512), [
+        [vModelText, $data.quantity]
+      ])
+    ]);
+  }
+
+  // ../powerpro/powerpro/public/js/vue/cost_estimation/components/std/QtyField.vue
+  QtyField_default.render = render;
+  QtyField_default.__file = "../powerpro/powerpro/public/js/vue/cost_estimation/components/std/QtyField.vue";
+  var QtyField_default2 = QtyField_default;
+
+  // sfc-script:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/RateField.vue?type=script
+  var RateField_default = {
+    props: {
+      value: {
+        type: Number,
+        default: 0
+      },
+      label: {
+        type: String,
+        default: "Rate"
+      }
+    },
+    data() {
+      return {
+        rate: this.value
+      };
+    },
+    watch: {
+      rate(newVal, oldVal) {
+        this.$emit("update:rate", this.rate);
+      }
+    }
+  };
+
+  // sfc-template:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/RateField.vue?type=template
+  var _hoisted_12 = { class: "form-group" };
+  var _hoisted_22 = { for: "rate" };
+  function render2(_ctx, _cache, $props, $setup, $data, $options) {
+    return openBlock(), createElementBlock("div", _hoisted_12, [
+      createBaseVNode("label", _hoisted_22, toDisplayString($props.label), 1),
+      withDirectives(createBaseVNode("input", {
+        type: "text",
+        class: "form-control",
+        id: "rate",
+        "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $data.rate = $event)
+      }, null, 512), [
+        [vModelText, $data.rate]
+      ])
+    ]);
+  }
+
+  // ../powerpro/powerpro/public/js/vue/cost_estimation/components/std/RateField.vue
+  RateField_default.render = render2;
+  RateField_default.__file = "../powerpro/powerpro/public/js/vue/cost_estimation/components/std/RateField.vue";
+  var RateField_default2 = RateField_default;
+
+  // sfc-script:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/AmountField.vue?type=script
+  var AmountField_default = {
+    props: {
+      value: {
+        type: Number,
+        default: 0
+      },
+      label: {
+        type: String,
+        default: "Amount"
+      }
+    },
+    data() {
+      return {
+        amount: 0
+      };
+    },
+    mounted() {
+      this.amount = this.value;
+    },
+    watch: {
+      amount(newVal, oldVal) {
+        this.$emit(
+          "update:amount",
+          this.value
+        );
+      }
+    },
+    methods: {
+      set_amount(value) {
+        this.amount = value;
+      }
+    }
+  };
+
+  // sfc-template:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/AmountField.vue?type=template
+  var _hoisted_13 = { class: "form-group" };
+  var _hoisted_23 = { for: "amount" };
+  function render3(_ctx, _cache, $props, $setup, $data, $options) {
+    return openBlock(), createElementBlock("div", _hoisted_13, [
+      createBaseVNode("label", _hoisted_23, toDisplayString($props.label), 1),
+      withDirectives(createBaseVNode("input", {
+        type: "text",
+        class: "form-control",
+        "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $data.amount = $event)
+      }, null, 512), [
+        [vModelText, $data.amount]
+      ])
+    ]);
+  }
+
+  // ../powerpro/powerpro/public/js/vue/cost_estimation/components/std/AmountField.vue
+  AmountField_default.render = render3;
+  AmountField_default.__file = "../powerpro/powerpro/public/js/vue/cost_estimation/components/std/AmountField.vue";
+  var AmountField_default2 = AmountField_default;
+
+  // sfc-script:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/SelectField.vue?type=script
+  var SelectField_default = {
+    props: {
+      label: {
+        type: String,
+        default: __("Select")
+      },
+      options: {
+        type: Array,
+        default: () => []
+      },
+      selected: {
+        type: String,
+        default: ""
+      },
+      help_text: {
+        type: String,
+        default: null
+      }
+    },
+    data() {
+      return {
+        value: this.selected
+      };
+    },
+    mounted() {
+      this.value = this.selected;
+    },
+    watch: {
+      value(newVal, oldVal) {
+        if (newVal === oldVal)
+          return;
+        this.$emit("after_select", this.value);
+      }
+    }
+  };
+
+  // sfc-template:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/SelectField.vue?type=template
+  var _hoisted_14 = { class: "form-group" };
+  var _hoisted_24 = { class: "inner-form-group" };
+  var _hoisted_3 = ["value"];
+  var _hoisted_4 = {
+    key: 0,
+    class: "text-muted"
+  };
+  function render4(_ctx, _cache, $props, $setup, $data, $options) {
+    return openBlock(), createElementBlock("div", _hoisted_14, [
+      createBaseVNode("label", null, toDisplayString($props.label), 1),
+      createBaseVNode("div", _hoisted_24, [
+        withDirectives(createBaseVNode("select", {
+          class: "form-control",
+          "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $data.value = $event)
+        }, [
+          (openBlock(true), createElementBlock(Fragment, null, renderList($props.options, (option) => {
+            return openBlock(), createElementBlock("option", {
+              value: option.value
+            }, toDisplayString(option.label), 9, _hoisted_3);
+          }), 256))
+        ], 512), [
+          [vModelSelect, $data.value]
+        ]),
+        $props.help_text ? (openBlock(), createElementBlock("p", _hoisted_4, toDisplayString($props.help_text), 1)) : createCommentVNode("v-if", true)
+      ])
+    ]);
+  }
+
+  // ../powerpro/powerpro/public/js/vue/cost_estimation/components/std/SelectField.vue
+  SelectField_default.render = render4;
+  SelectField_default.__file = "../powerpro/powerpro/public/js/vue/cost_estimation/components/std/SelectField.vue";
+  var SelectField_default2 = SelectField_default;
+
+  // sfc-script:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/custom/DimensionField.vue?type=script
+  var DimensionField_default = {
+    props: {
+      label: {
+        type: String,
+        default: __("Dimension")
+      },
+      width: {
+        type: String,
+        default: ""
+      },
+      height: {
+        type: String,
+        default: ""
+      },
+      uom: {
+        type: String,
+        default: "in"
+      }
+    },
+    data() {
+      return {
+        _width: this.width,
+        _height: this.height
+      };
+    },
+    methods: {
+      on_width_change(event) {
+        const { value } = event.target;
+        this._width = parseFloat(value);
+        this.$emit("on_change", {
+          width: this._width,
+          height: this._height
+        });
+      },
+      on_height_change(event) {
+        const { value } = event.target;
+        this._height = parseFloat(value);
+        this.$emit("on_change", {
+          width: this._width,
+          height: this._height
+        });
+      }
+    }
+  };
+
+  // sfc-template:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/custom/DimensionField.vue?type=template
+  var _withScopeId = (n) => (pushScopeId("data-v-18a121b1"), n = n(), popScopeId(), n);
+  var _hoisted_15 = { class: "form-group" };
+  var _hoisted_25 = { for: "" };
+  var _hoisted_32 = { class: "inner-form-group" };
+  var _hoisted_42 = /* @__PURE__ */ _withScopeId(() => /* @__PURE__ */ createBaseVNode("span", null, "\xD7", -1));
+  var _hoisted_5 = /* @__PURE__ */ _withScopeId(() => /* @__PURE__ */ createBaseVNode("p", { class: "text-muted" }, "Ejemplo: 8.5 x 11 pulgadas", -1));
+  function render5(_ctx, _cache, $props, $setup, $data, $options) {
+    return openBlock(), createElementBlock("div", _hoisted_15, [
+      createBaseVNode("label", _hoisted_25, toDisplayString($props.label), 1),
+      createBaseVNode("div", _hoisted_32, [
+        withDirectives(createBaseVNode("input", {
+          type: "text",
+          "data-fieldname": "width",
+          class: "form-control",
+          "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $data._width = $event),
+          onInput: _cache[1] || (_cache[1] = (...args) => $options.on_width_change && $options.on_width_change(...args))
+        }, null, 544), [
+          [vModelText, $data._width]
+        ]),
+        _hoisted_42,
+        withDirectives(createBaseVNode("input", {
+          type: "text",
+          "data-fieldname": "height",
+          class: "form-control",
+          "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => $data._height = $event),
+          onInput: _cache[3] || (_cache[3] = (...args) => $options.on_height_change && $options.on_height_change(...args))
+        }, null, 544), [
+          [vModelText, $data._height]
+        ]),
+        createBaseVNode("span", null, toDisplayString($props.uom), 1)
+      ]),
+      _hoisted_5
+    ]);
+  }
+
+  // ../powerpro/powerpro/public/js/vue/cost_estimation/components/custom/DimensionField.vue
+  DimensionField_default.render = render5;
+  DimensionField_default.__file = "../powerpro/powerpro/public/js/vue/cost_estimation/components/custom/DimensionField.vue";
+  DimensionField_default.__scopeId = "data-v-18a121b1";
+  var DimensionField_default2 = DimensionField_default;
+
+  // sfc-script:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/custom/PrintingTecniqueField.vue?type=script
+  var PrintingTecniqueField_default = {
+    props: {
+      label: {
+        type: String,
+        default: __("Printing Tecnique")
+      },
+      selected: {
+        type: String,
+        default: ""
+      }
+    },
+    data() {
+      return {
+        options: [
+          { label: "Digital", value: "Digital" },
+          { label: "Offset", value: "Offset" }
+        ],
+        value: this.selected
+      };
+    },
+    methods: {
+      after_select(newVal) {
+        this.value = newVal;
+        this.$emit("update:selected", this.value);
+      }
+    },
+    components: {
+      SelectField: SelectField_default2
+    }
+  };
+
+  // sfc-template:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/custom/PrintingTecniqueField.vue?type=template
+  function render6(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_select_field = resolveComponent("select-field");
+    return openBlock(), createBlock(_component_select_field, {
+      label: $props.label,
+      options: $data.options,
+      onAfter_select: $options.after_select,
+      selected: $data.value
+    }, null, 8, ["label", "options", "onAfter_select", "selected"]);
+  }
+
+  // ../powerpro/powerpro/public/js/vue/cost_estimation/components/custom/PrintingTecniqueField.vue
+  PrintingTecniqueField_default.render = render6;
+  PrintingTecniqueField_default.__file = "../powerpro/powerpro/public/js/vue/cost_estimation/components/custom/PrintingTecniqueField.vue";
+  var PrintingTecniqueField_default2 = PrintingTecniqueField_default;
+
+  // sfc-script:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/custom/ColorCountField.vue?type=script
+  var ColorCountField_default = {
+    name: "ColorCountField",
+    props: {
+      label: {
+        type: String,
+        default: __("Color Count")
+      },
+      selected: {
+        type: Number,
+        default: 0
+      },
+      only_numbers: {
+        type: Boolean,
+        default: true
+      }
+    },
+    data() {
+      return {
+        options: [
+          { label: "N/A", value: 0 },
+          { label: "1", value: 1 },
+          { label: "2", value: 2 },
+          { label: "3", value: 3 },
+          { label: this.only_numbers ? "4" : "Full Color", value: 4 }
+        ],
+        value: this.selected
+      };
+    },
+    methods: {
+      after_select(newVal) {
+        this.value = newVal;
+        this.$emit("after_select", this.value);
+      }
+    },
+    components: {
+      SelectField: SelectField_default2
+    }
+  };
+
+  // sfc-template:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/custom/ColorCountField.vue?type=template
+  function render7(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_select_field = resolveComponent("select-field");
+    return openBlock(), createBlock(_component_select_field, {
+      label: $props.label,
+      options: $data.options,
+      onAfter_select: $options.after_select,
+      selected: $data.value
+    }, null, 8, ["label", "options", "onAfter_select", "selected"]);
+  }
+
+  // ../powerpro/powerpro/public/js/vue/cost_estimation/components/custom/ColorCountField.vue
+  ColorCountField_default.render = render7;
+  ColorCountField_default.__file = "../powerpro/powerpro/public/js/vue/cost_estimation/components/custom/ColorCountField.vue";
+  var ColorCountField_default2 = ColorCountField_default;
+
+  // sfc-script:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/CostEstimationForm.vue?type=script
+  var CostEstimationForm_default = {
     name: "CostEstimation",
     props: {
       frm: {
@@ -7689,124 +8313,193 @@ Expected function or array of functions, received type ${typeof value}.`
         required: true
       }
     },
-    mounted() {
-      this.material_controller = new material_controller_default({ vm: this });
-      if (this.frm.doc.raw_material) {
-        this.fetch_raw_material_specs();
-      }
-      this.calculate_cost();
-    },
-    computed: {
-      title() {
-        return __("Cost Estimation Calculator");
-      }
-    },
     data() {
+      const { doc: doc2 } = this.frm;
+      let form_data = {};
+      try {
+        form_data = JSON.parse(doc2.data || "{}");
+      } catch (e) {
+        console.error(e);
+      }
       return {
         quantity: 5,
         rate: 3,
         amount: 0,
         doc: __spreadValues({}, this.frm.doc),
-        raw_material_specs: {}
+        raw_material_specs: {},
+        form_data
       };
     },
     watch: {
-      quantity(newVal, oldVal) {
-        this.calculate_cost();
-      },
-      rate(newVal, oldVal) {
-        this.calculate_cost();
-      },
-      amount(newVal, oldVal) {
-        this.rate = flt(newVal) / flt(this.quantity);
+      form_data: {
+        handler(newVal, oldVal) {
+          if (this.loading) {
+            return this;
+          }
+          this.update_data();
+        },
+        deep: true
       }
     },
     methods: {
-      refresh() {
-        this.doc = __spreadValues({}, this.frm.doc);
-      },
       fetch_raw_material_specs() {
         this.material_controller.fetch_raw_material_specs(this.frm.doc.raw_material);
       },
       calculate_cost() {
-        this.amount = flt(this.quantity) * flt(this.rate);
-        console.log(`Amount: ${this.amount}`);
+      },
+      update_data() {
+        const data = JSON.stringify(this.form_data, null, 4);
+        this.frm.set_value("data", data);
+      },
+      after_color_select(fieldname, value) {
+        this.form_data[fieldname] = value;
+        this.update_data();
       }
     },
-    components: {}
+    components: {
+      QtyField: QtyField_default2,
+      RateField: RateField_default2,
+      AmountField: AmountField_default2,
+      SelectField: SelectField_default2,
+      Dimension: DimensionField_default2,
+      PrintingTecnique: PrintingTecniqueField_default2,
+      ColorCount: ColorCountField_default2
+    }
   };
 
-  // sfc-template:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/CostEstimation.vue?type=template
-  var _hoisted_1 = { id: "cost-estimation" };
-  var _hoisted_2 = /* @__PURE__ */ createBaseVNode("h5", null, "Material", -1);
-  var _hoisted_3 = { class: "text-muted" };
-  var _hoisted_4 = { class: "col col-sm-6" };
-  var _hoisted_5 = { class: "form-group" };
-  var _hoisted_6 = /* @__PURE__ */ createBaseVNode("label", { for: "quantity" }, "Quantity", -1);
-  var _hoisted_7 = { class: "form-group" };
-  var _hoisted_8 = /* @__PURE__ */ createBaseVNode("label", { for: "rate" }, "Rate", -1);
-  var _hoisted_9 = { class: "form-group" };
-  var _hoisted_10 = /* @__PURE__ */ createBaseVNode("label", { for: "amount" }, "Amount (USD)", -1);
-  var _hoisted_11 = { class: "form-group text-right" };
-  function render(_ctx, _cache, $props, $setup, $data, $options) {
-    return openBlock(), createElementBlock("div", _hoisted_1, [
-      createBaseVNode("h4", null, toDisplayString($options.title), 1),
-      _hoisted_2,
-      createBaseVNode("p", _hoisted_3, toDisplayString($data.doc.raw_material), 1),
-      createBaseVNode("form", _hoisted_4, [
-        createBaseVNode("h5", null, toDisplayString($data.amount), 1),
-        createBaseVNode("div", _hoisted_5, [
-          _hoisted_6,
-          withDirectives(createBaseVNode("input", {
-            type: "text",
-            class: "form-control",
-            id: "quantity",
-            "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $data.quantity = $event)
-          }, null, 512), [
-            [vModelText, $data.quantity]
-          ])
+  // sfc-template:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/CostEstimationForm.vue?type=template
+  var _hoisted_16 = { "data-component": "cost-estimation" };
+  var _hoisted_26 = { class: "row" };
+  var _hoisted_33 = { class: "form-column col-sm-6" };
+  var _hoisted_43 = /* @__PURE__ */ createBaseVNode("h3", null, "Dimensiones", -1);
+  var _hoisted_52 = { class: "form-column col-sm-6" };
+  var _hoisted_6 = { class: "row" };
+  var _hoisted_7 = { class: "form-column col-sm-6" };
+  var _hoisted_8 = /* @__PURE__ */ createBaseVNode("h3", null, "Tecnolog\xEDa de Impresi\xF3n", -1);
+  var _hoisted_9 = /* @__PURE__ */ createBaseVNode("hr", null, null, -1);
+  var _hoisted_10 = /* @__PURE__ */ createBaseVNode("div", { class: "row" }, [
+    /* @__PURE__ */ createBaseVNode("div", { class: "form-column col-sm-6" })
+  ], -1);
+  var _hoisted_11 = /* @__PURE__ */ createBaseVNode("h4", null, "Colores", -1);
+  var _hoisted_122 = /* @__PURE__ */ createBaseVNode("hr", null, null, -1);
+  var _hoisted_132 = { class: "row" };
+  var _hoisted_142 = { class: "form-column col-sm-6" };
+  var _hoisted_152 = { class: "form-column col-sm-6" };
+  function render8(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_dimension = resolveComponent("dimension");
+    const _component_printing_tecnique = resolveComponent("printing-tecnique");
+    const _component_color_count = resolveComponent("color-count");
+    return openBlock(), createElementBlock("div", _hoisted_16, [
+      createCommentVNode(" Tama\xF1o Montaje:\n    Tama\xF1o Material:\n    Tama\xF1o Producto Final:\n\n    Tecnologia Impresi\xF3n:\n        Digital (Pendiente a desarrollar)\n        Offset "),
+      createBaseVNode("div", _hoisted_26, [
+        createBaseVNode("div", _hoisted_33, [
+          _hoisted_43,
+          createVNode(_component_dimension, {
+            label: "Tama\xF1o Montaje",
+            width: $data.form_data.ancho_montaje,
+            height: $data.form_data.alto_montaje,
+            onOn_change: _cache[0] || (_cache[0] = ({ width: ancho_montaje, height: alto_montaje }) => $data.form_data = __spreadProps(__spreadValues({}, $data.form_data), { ancho_montaje, alto_montaje }))
+          }, null, 8, ["width", "height"]),
+          createVNode(_component_dimension, {
+            label: "Tama\xF1o Material",
+            width: $data.form_data.ancho_material,
+            height: $data.form_data.alto_material,
+            onOn_change: _cache[1] || (_cache[1] = ({ width: ancho_material, height: alto_material }) => $data.form_data = __spreadProps(__spreadValues({}, $data.form_data), { ancho_material, alto_material }))
+          }, null, 8, ["width", "height"])
         ]),
+        createBaseVNode("div", _hoisted_52, [
+          createVNode(_component_dimension, {
+            label: "Tama\xF1o Producto",
+            width: $data.form_data.ancho_producto,
+            height: $data.form_data.alto_producto,
+            onOn_change: _cache[2] || (_cache[2] = ({ width: ancho_producto, height: alto_producto }) => $data.form_data = __spreadProps(__spreadValues({}, $data.form_data), { ancho_producto, alto_producto }))
+          }, null, 8, ["width", "height"])
+        ])
+      ]),
+      createBaseVNode("div", _hoisted_6, [
         createBaseVNode("div", _hoisted_7, [
           _hoisted_8,
-          withDirectives(createBaseVNode("input", {
-            type: "text",
-            class: "form-control",
-            id: "rate",
-            "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => $data.rate = $event)
-          }, null, 512), [
-            [vModelText, $data.rate]
+          createVNode(_component_printing_tecnique, {
+            label: "Tecnolog\xEDa",
+            selected: $data.form_data.tecnologia,
+            onAfter_select: _cache[3] || (_cache[3] = (value) => $data.form_data.tecnologia = value)
+          }, null, 8, ["selected"])
+        ])
+      ]),
+      _hoisted_9,
+      _hoisted_10,
+      createBaseVNode("section", null, [
+        _hoisted_11,
+        _hoisted_122,
+        createBaseVNode("div", _hoisted_132, [
+          createBaseVNode("div", _hoisted_142, [
+            createVNode(_component_color_count, {
+              label: "Colores Procesos Tiro",
+              selected: $data.form_data.colores_procesos_tiro,
+              only_numbers: false,
+              onAfter_select: _cache[4] || (_cache[4] = (value) => $data.form_data.colores_procesos_tiro = value)
+            }, null, 8, ["selected"]),
+            createVNode(_component_color_count, {
+              label: "Colores Pantones Tiro",
+              selected: $data.form_data.colores_pantones_tiro,
+              onAfter_select: _cache[5] || (_cache[5] = (value) => $data.form_data.colores_pantones_tiro = value)
+            }, null, 8, ["selected"]),
+            createVNode(_component_color_count, {
+              label: "Colores Especiales Tiro",
+              selected: $data.form_data.colores_especiales_tiro,
+              onAfter_select: _cache[6] || (_cache[6] = (value) => $data.form_data.colores_especiales_tiro = value)
+            }, null, 8, ["selected"])
+          ]),
+          createBaseVNode("div", _hoisted_152, [
+            createVNode(_component_color_count, {
+              label: "Colores Procesos Retiro",
+              selected: $data.form_data.colores_procesos_retiro,
+              only_numbers: false,
+              onAfter_select: _cache[7] || (_cache[7] = (value) => $data.form_data.colores_procesos_retiro = value)
+            }, null, 8, ["selected"]),
+            createVNode(_component_color_count, {
+              label: "Colores Pantones Retiro",
+              selected: $data.form_data.colores_pantones_retiro,
+              onAfter_select: _cache[8] || (_cache[8] = (value) => $data.form_data.colores_pantones_retiro = value)
+            }, null, 8, ["selected"]),
+            createVNode(_component_color_count, {
+              label: "Colores Especiales Retiro",
+              selected: $data.form_data.colores_especiales_retiro,
+              onAfter_select: _cache[9] || (_cache[9] = (value) => $data.form_data.colores_especiales_retiro = value)
+            }, null, 8, ["selected"])
           ])
-        ]),
-        createBaseVNode("div", _hoisted_9, [
-          _hoisted_10,
-          withDirectives(createBaseVNode("input", {
-            type: "text",
-            class: "form-control",
-            id: "amount",
-            "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => $data.amount = $event)
-          }, null, 512), [
-            [vModelText, $data.amount]
-          ])
-        ]),
-        createBaseVNode("div", _hoisted_11, [
-          createBaseVNode("button", {
-            type: "button",
-            class: "btn btn-primary",
-            onClick: _cache[3] || (_cache[3] = (...args) => $options.calculate_cost && $options.calculate_cost(...args))
-          }, "Calculate")
         ])
       ])
     ]);
   }
 
-  // ../powerpro/powerpro/public/js/vue/cost_estimation/CostEstimation.vue
-  CostEstimation_default.render = render;
-  CostEstimation_default.__file = "../powerpro/powerpro/public/js/vue/cost_estimation/CostEstimation.vue";
-  var CostEstimation_default2 = CostEstimation_default;
+  // ../powerpro/powerpro/public/js/vue/cost_estimation/CostEstimationForm.vue
+  CostEstimationForm_default.render = render8;
+  CostEstimationForm_default.__file = "../powerpro/powerpro/public/js/vue/cost_estimation/CostEstimationForm.vue";
+  var CostEstimationForm_default2 = CostEstimationForm_default;
+
+  // sfc-script:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/App.vue?type=script
+  var App_default = {
+    name: "CostEstimationApp",
+    components: {
+      CostEstimationForm: CostEstimationForm_default2
+    }
+  };
+
+  // sfc-template:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/App.vue?type=template
+  function render9(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_CostEstimationForm = resolveComponent("CostEstimationForm");
+    return openBlock(), createBlock(_component_CostEstimationForm, { ref: "appl" }, null, 512);
+  }
+
+  // ../powerpro/powerpro/public/js/vue/cost_estimation/App.vue
+  App_default.render = render9;
+  App_default.__file = "../powerpro/powerpro/public/js/vue/cost_estimation/App.vue";
+  var App_default2 = App_default;
 
   // ../powerpro/powerpro/public/js/vue/powerpro.bundle.js
   frappe.provide("power.ui");
-  power.ui.CostEstimation = class {
+  power.ui.CostEstimationApp = class {
     constructor(frm, parent, dont_mount = false) {
       this.frm = frm;
       this.parent = parent;
@@ -7815,14 +8508,14 @@ Expected function or array of functions, received type ${typeof value}.`
       }
     }
     mount() {
-      this.vm = createApp(
-        CostEstimation_default2,
-        {
-          frm: this.frm
-        }
-      ).mount(this.parent);
+      const vm = createApp(App_default2, { frm: this.frm });
+      vm.mount(this.parent);
+      this.update({ vm });
     }
     fetch_raw_material_specs() {
+    }
+    update(opts) {
+      Object.assign(this, opts);
     }
   };
 })();
@@ -7852,4 +8545,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.CAOWIVQK.js.map
+//# sourceMappingURL=powerpro.bundle.NLQRI2FH.js.map
