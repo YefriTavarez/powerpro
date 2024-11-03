@@ -1,4 +1,4 @@
-frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/custom/DimensionField.vue?type=style&index=0 */\n.inner-form-group[data-v-18a121b1] {\n  display: flex;\n}\n.inner-form-group input[data-v-18a121b1] {\n  margin-right: 5px;\n}\n.inner-form-group input[data-v-18a121b1]:nth-child(3) {\n  margin-left: 5px;\n}\n.inner-form-group span[data-v-18a121b1] {\n  width: 20px;\n  font-weight: bold;\n  display: inline-block;\n}\n.inner-form-group span[data-v-18a121b1]:nth-child(2) {\n  text-align: center;\n}\n.inner-form-group span[data-v-18a121b1]:nth-child(3) {\n  text-align: right;\n}\n.text-muted[data-v-18a121b1] {\n  font-size: 12px;\n}\n.text-muted[data-v-18a121b1]::before {\n  content: \"Nota: \";\n  font-weight: bold;\n}\n.text-muted[data-v-18a121b1]::after {\n  content: \" (pulgadas)\";\n}\n/*# sourceMappingURL=powerpro.bundle.ENNOQBTW.css.map */\n");
+frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/custom/DimensionField.vue?type=style&index=0 */\n.inner-form-group[data-v-18a121b1] {\n  display: flex;\n}\n.inner-form-group input[data-v-18a121b1] {\n  margin-right: 5px;\n}\n.inner-form-group input[data-v-18a121b1]:nth-child(3) {\n  margin-left: 5px;\n}\n.inner-form-group span[data-v-18a121b1] {\n  width: 20px;\n  font-weight: bold;\n  display: inline-block;\n}\n.inner-form-group span[data-v-18a121b1]:nth-child(2) {\n  text-align: center;\n}\n.inner-form-group span[data-v-18a121b1]:nth-child(3) {\n  text-align: right;\n}\n.text-muted[data-v-18a121b1] {\n  font-size: 12px;\n}\n.text-muted[data-v-18a121b1]::before {\n  content: \"Nota: \";\n  font-weight: bold;\n}\n.text-muted[data-v-18a121b1]::after {\n  content: \" (pulgadas)\";\n}\nselect + span[data-v-18a121b1] {\n  margin-left: 5px;\n  margin-right: 5px;\n}\n\n/* sfc-style:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/CheckboxField.vue?type=style&index=0 */\nlabel[data-v-9430f2f5] {\n  cursor: pointer;\n}\nh3[data-v-9430f2f5] {\n  margin-top: 10px;\n  margin-bottom: -10px;\n}\n\n/* sfc-style:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/CostEstimationForm.vue?type=style&index=0 */\n.full-color-text[data-v-951b62bd] {\n  display: inline-block;\n  font-size: 48px;\n  line-height: 1;\n  font-weight: black;\n  background: linear-gradient(to top left, #df0781, #e45508, #ffe83f, #07d664, #70e2ff, #6f0ac7);\n  background-clip: text;\n  -webkit-background-clip: text;\n  -webkit-text-fill-color: transparent;\n}\n/*# sourceMappingURL=powerpro.bundle.2ZJFOP42.css.map */\n");
 (() => {
   var __defProp = Object.defineProperty;
   var __defProps = Object.defineProperties;
@@ -3062,7 +3062,7 @@ If this is a native custom element, make sure to exclude it from component resol
       beforeUnmount,
       destroyed,
       unmounted,
-      render: render10,
+      render: render12,
       renderTracked,
       renderTriggered,
       errorCaptured,
@@ -3214,8 +3214,8 @@ If this is a native custom element, make sure to exclude it from component resol
         instance.exposed = {};
       }
     }
-    if (render10 && instance.render === NOOP) {
-      instance.render = render10;
+    if (render12 && instance.render === NOOP) {
+      instance.render = render12;
     }
     if (inheritAttrs != null) {
       instance.inheritAttrs = inheritAttrs;
@@ -3458,7 +3458,7 @@ If this is a native custom element, make sure to exclude it from component resol
     };
   }
   var uid$1 = 0;
-  function createAppAPI(render10, hydrate) {
+  function createAppAPI(render12, hydrate) {
     return function createApp2(rootComponent, rootProps = null) {
       if (!isFunction(rootComponent)) {
         rootComponent = extend({}, rootComponent);
@@ -3562,7 +3562,7 @@ If this is a native custom element, make sure to exclude it from component resol
             }
             if (true) {
               context.reload = () => {
-                render10(
+                render12(
                   cloneVNode(vnode),
                   rootContainer,
                   namespace
@@ -3572,7 +3572,7 @@ If this is a native custom element, make sure to exclude it from component resol
             if (isHydrate && hydrate) {
               hydrate(vnode, rootContainer);
             } else {
-              render10(vnode, rootContainer, namespace);
+              render12(vnode, rootContainer, namespace);
             }
             isMounted = true;
             app._container = rootContainer;
@@ -3604,7 +3604,7 @@ If you want to remount the same app, move your app creation logic into a factory
               app._instance,
               16
             );
-            render10(null, app._container);
+            render12(null, app._container);
             if (true) {
               app._instance = null;
               devtoolsUnmountApp(app);
@@ -5553,7 +5553,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
       return teleportEnd ? hostNextSibling(teleportEnd) : el;
     };
     let isFlushing = false;
-    const render10 = (vnode, container, namespace) => {
+    const render12 = (vnode, container, namespace) => {
       if (vnode == null) {
         if (container._vnode) {
           unmount(container._vnode, null, null, true);
@@ -5597,9 +5597,9 @@ For more details, see https://link.vuejs.org/feature-flags.`
       );
     }
     return {
-      render: render10,
+      render: render12,
       hydrate,
-      createApp: createAppAPI(render10, hydrate)
+      createApp: createAppAPI(render12, hydrate)
     };
   }
   function resolveChildrenNamespace({ type, props }, currentNamespace) {
@@ -5970,7 +5970,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
       slots,
       attrs,
       emit: emit2,
-      render: render10,
+      render: render12,
       renderCache,
       props,
       data,
@@ -5998,7 +5998,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
           }
         }) : proxyToUse;
         result = normalizeVNode(
-          render10.call(
+          render12.call(
             thisProxy,
             proxyToUse,
             renderCache,
@@ -7724,6 +7724,60 @@ Expected function or array of functions, received type ${typeof value}.`
       el.value = newValue;
     }
   };
+  var vModelCheckbox = {
+    deep: true,
+    created(el, _, vnode) {
+      el[assignKey] = getModelAssigner(vnode);
+      addEventListener(el, "change", () => {
+        const modelValue = el._modelValue;
+        const elementValue = getValue(el);
+        const checked = el.checked;
+        const assign = el[assignKey];
+        if (isArray(modelValue)) {
+          const index = looseIndexOf(modelValue, elementValue);
+          const found = index !== -1;
+          if (checked && !found) {
+            assign(modelValue.concat(elementValue));
+          } else if (!checked && found) {
+            const filtered = [...modelValue];
+            filtered.splice(index, 1);
+            assign(filtered);
+          }
+        } else if (isSet(modelValue)) {
+          const cloned = new Set(modelValue);
+          if (checked) {
+            cloned.add(elementValue);
+          } else {
+            cloned.delete(elementValue);
+          }
+          assign(cloned);
+        } else {
+          assign(getCheckboxValue(el, checked));
+        }
+      });
+    },
+    mounted: setChecked,
+    beforeUpdate(el, binding, vnode) {
+      el[assignKey] = getModelAssigner(vnode);
+      setChecked(el, binding, vnode);
+    }
+  };
+  function setChecked(el, { value, oldValue }, vnode) {
+    el._modelValue = value;
+    let checked;
+    if (isArray(value)) {
+      checked = looseIndexOf(value, vnode.props.value) > -1;
+    } else if (isSet(value)) {
+      checked = value.has(vnode.props.value);
+    } else {
+      if (value === oldValue)
+        return;
+      checked = looseEqual(value, getCheckboxValue(el, true));
+    }
+    if (el.checked !== checked) {
+      el.checked = checked;
+    }
+  }
   var vModelSelect = {
     deep: true,
     created(el, { value, modifiers: { number } }, vnode) {
@@ -7789,6 +7843,10 @@ Expected function or array of functions, received type ${typeof value}.`
   }
   function getValue(el) {
     return "_value" in el ? el._value : el.value;
+  }
+  function getCheckboxValue(el, checked) {
+    const key = checked ? "_trueValue" : "_falseValue";
+    return key in el ? el[key] : checked;
   }
   var rendererOptions = /* @__PURE__ */ extend({ patchProp }, nodeOps);
   var renderer;
@@ -7896,7 +7954,7 @@ Expected function or array of functions, received type ${typeof value}.`
   // sfc-script:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/QtyField.vue?type=script
   var QtyField_default = {
     props: {
-      value: {
+      initial_value: {
         type: Number,
         default: 0
       },
@@ -7907,29 +7965,36 @@ Expected function or array of functions, received type ${typeof value}.`
     },
     data() {
       return {
-        quantity: this.value
+        id: this.getRandomId(),
+        value: this.initial_value
       };
     },
-    watch: {
-      quantity(newVal, oldVal) {
-        this.$emit("update:quantity", this.quantity);
+    methods: {
+      getRandomId() {
+        return Math.random().toString(36).substring(7);
+      },
+      on_change() {
+        this.value = parseFloat(this.value);
+        this.$emit("after_select", this.value);
       }
     }
   };
 
   // sfc-template:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/QtyField.vue?type=template
   var _hoisted_1 = { class: "form-group" };
-  var _hoisted_2 = { for: "quantity" };
+  var _hoisted_2 = ["for"];
+  var _hoisted_3 = ["id"];
   function render(_ctx, _cache, $props, $setup, $data, $options) {
     return openBlock(), createElementBlock("div", _hoisted_1, [
-      createBaseVNode("label", _hoisted_2, toDisplayString($props.label), 1),
+      createBaseVNode("label", { for: $data.id }, toDisplayString($props.label), 9, _hoisted_2),
       withDirectives(createBaseVNode("input", {
         type: "text",
         class: "form-control",
-        id: "quantity",
-        "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $data.quantity = $event)
-      }, null, 512), [
-        [vModelText, $data.quantity]
+        "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $data.value = $event),
+        onChange: _cache[1] || (_cache[1] = (...args) => $options.on_change && $options.on_change(...args)),
+        id: $data.id
+      }, null, 40, _hoisted_3), [
+        [vModelText, $data.value]
       ])
     ]);
   }
@@ -8066,9 +8131,6 @@ Expected function or array of functions, received type ${typeof value}.`
         value: this.selected
       };
     },
-    mounted() {
-      this.value = this.selected;
-    },
     watch: {
       value(newVal, oldVal) {
         if (newVal === oldVal)
@@ -8081,7 +8143,7 @@ Expected function or array of functions, received type ${typeof value}.`
   // sfc-template:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/SelectField.vue?type=template
   var _hoisted_14 = { class: "form-group" };
   var _hoisted_24 = { class: "inner-form-group" };
-  var _hoisted_3 = ["value"];
+  var _hoisted_32 = ["value", "disabled"];
   var _hoisted_4 = {
     key: 0,
     class: "text-muted"
@@ -8096,8 +8158,9 @@ Expected function or array of functions, received type ${typeof value}.`
         }, [
           (openBlock(true), createElementBlock(Fragment, null, renderList($props.options, (option) => {
             return openBlock(), createElementBlock("option", {
-              value: option.value
-            }, toDisplayString(option.label), 9, _hoisted_3);
+              value: option.value,
+              disabled: option.disabled
+            }, toDisplayString(option.label || option.value), 9, _hoisted_32);
           }), 256))
         ], 512), [
           [vModelSelect, $data.value]
@@ -8130,6 +8193,14 @@ Expected function or array of functions, received type ${typeof value}.`
       uom: {
         type: String,
         default: "in"
+      },
+      using_options: {
+        type: Boolean,
+        default: false
+      },
+      options: {
+        type: Object,
+        default: () => ({})
       }
     },
     data() {
@@ -8141,7 +8212,7 @@ Expected function or array of functions, received type ${typeof value}.`
     methods: {
       on_width_change(event) {
         const { value } = event.target;
-        this._width = parseFloat(value);
+        this._width = power.utils.round_to_nearest_eighth(value);
         this.$emit("on_change", {
           width: this._width,
           height: this._height
@@ -8149,7 +8220,7 @@ Expected function or array of functions, received type ${typeof value}.`
       },
       on_height_change(event) {
         const { value } = event.target;
-        this._height = parseFloat(value);
+        this._height = power.utils.round_to_nearest_eighth(value);
         this.$emit("on_change", {
           width: this._width,
           height: this._height
@@ -8162,35 +8233,72 @@ Expected function or array of functions, received type ${typeof value}.`
   var _withScopeId = (n) => (pushScopeId("data-v-18a121b1"), n = n(), popScopeId(), n);
   var _hoisted_15 = { class: "form-group" };
   var _hoisted_25 = { for: "" };
-  var _hoisted_32 = { class: "inner-form-group" };
-  var _hoisted_42 = /* @__PURE__ */ _withScopeId(() => /* @__PURE__ */ createBaseVNode("span", null, "\xD7", -1));
-  var _hoisted_5 = /* @__PURE__ */ _withScopeId(() => /* @__PURE__ */ createBaseVNode("p", { class: "text-muted" }, "Ejemplo: 8.5 x 11 pulgadas", -1));
+  var _hoisted_33 = { class: "inner-form-group" };
+  var _hoisted_42 = ["value"];
+  var _hoisted_5 = /* @__PURE__ */ _withScopeId(() => /* @__PURE__ */ createBaseVNode("span", null, "\xD7", -1));
+  var _hoisted_6 = ["value"];
+  var _hoisted_7 = { class: "uom" };
+  var _hoisted_8 = /* @__PURE__ */ _withScopeId(() => /* @__PURE__ */ createBaseVNode("p", { class: "text-muted" }, "Ejemplo: 8.5 x 11 pulgadas", -1));
   function render5(_ctx, _cache, $props, $setup, $data, $options) {
     return openBlock(), createElementBlock("div", _hoisted_15, [
       createBaseVNode("label", _hoisted_25, toDisplayString($props.label), 1),
-      createBaseVNode("div", _hoisted_32, [
-        withDirectives(createBaseVNode("input", {
+      createBaseVNode("div", _hoisted_33, [
+        !$props.using_options ? withDirectives((openBlock(), createElementBlock("input", {
+          key: 0,
           type: "text",
           "data-fieldname": "width",
           class: "form-control",
           "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $data._width = $event),
-          onInput: _cache[1] || (_cache[1] = (...args) => $options.on_width_change && $options.on_width_change(...args))
-        }, null, 544), [
+          onChange: _cache[1] || (_cache[1] = (...args) => $options.on_width_change && $options.on_width_change(...args))
+        }, null, 544)), [
           [vModelText, $data._width]
-        ]),
-        _hoisted_42,
-        withDirectives(createBaseVNode("input", {
+        ]) : createCommentVNode("v-if", true),
+        $props.using_options ? withDirectives((openBlock(), createElementBlock("select", {
+          key: 1,
+          "data-fieldname": "width",
+          class: "form-control",
+          "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => $data._width = $event),
+          onChange: _cache[3] || (_cache[3] = (...args) => $options.on_width_change && $options.on_width_change(...args))
+        }, [
+          (openBlock(true), createElementBlock(Fragment, null, renderList($props.options.width, (option, index) => {
+            return openBlock(), createElementBlock("option", {
+              key: index,
+              value: option.value
+            }, toDisplayString(option.label), 9, _hoisted_42);
+          }), 128))
+        ], 544)), [
+          [vModelSelect, $data._width]
+        ]) : createCommentVNode("v-if", true),
+        _hoisted_5,
+        !$props.using_options ? withDirectives((openBlock(), createElementBlock("input", {
+          key: 2,
           type: "text",
           "data-fieldname": "height",
           class: "form-control",
-          "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => $data._height = $event),
-          onInput: _cache[3] || (_cache[3] = (...args) => $options.on_height_change && $options.on_height_change(...args))
-        }, null, 544), [
+          "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => $data._height = $event),
+          onChange: _cache[5] || (_cache[5] = (...args) => $options.on_height_change && $options.on_height_change(...args))
+        }, null, 544)), [
           [vModelText, $data._height]
-        ]),
-        createBaseVNode("span", null, toDisplayString($props.uom), 1)
+        ]) : createCommentVNode("v-if", true),
+        $props.using_options ? withDirectives((openBlock(), createElementBlock("select", {
+          key: 3,
+          "data-fieldname": "height",
+          class: "form-control",
+          "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => $data._height = $event),
+          onChange: _cache[7] || (_cache[7] = (...args) => $options.on_height_change && $options.on_height_change(...args))
+        }, [
+          (openBlock(true), createElementBlock(Fragment, null, renderList($props.options.height, (option, index) => {
+            return openBlock(), createElementBlock("option", {
+              key: index,
+              value: option.value
+            }, toDisplayString(option.label), 9, _hoisted_6);
+          }), 128))
+        ], 544)), [
+          [vModelSelect, $data._height]
+        ]) : createCommentVNode("v-if", true),
+        createBaseVNode("span", _hoisted_7, toDisplayString($props.uom), 1)
       ]),
-      _hoisted_5
+      _hoisted_8
     ]);
   }
 
@@ -8304,6 +8412,149 @@ Expected function or array of functions, received type ${typeof value}.`
   ColorCountField_default.__file = "../powerpro/powerpro/public/js/vue/cost_estimation/components/custom/ColorCountField.vue";
   var ColorCountField_default2 = ColorCountField_default;
 
+  // sfc-script:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/CheckboxField.vue?type=script
+  var CheckboxField_default = {
+    props: {
+      label: {
+        type: String,
+        default: __("Checkbox")
+      },
+      initial_value: {
+        type: Boolean,
+        default: false
+      }
+    },
+    data() {
+      return {
+        id: this.getRandomId(),
+        value: this.initial_value
+      };
+    },
+    watch: {
+      value(newVal, oldVal) {
+        if (newVal === oldVal)
+          return;
+        this.$emit("after_select", this.value);
+      }
+    },
+    methods: {
+      getRandomId() {
+        return Math.random().toString(36).substring(7);
+      }
+    }
+  };
+
+  // sfc-template:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/CheckboxField.vue?type=template
+  var _hoisted_16 = { class: "form-group" };
+  var _hoisted_26 = ["data-fieldname", "id"];
+  var _hoisted_34 = ["for"];
+  function render8(_ctx, _cache, $props, $setup, $data, $options) {
+    return openBlock(), createElementBlock("div", _hoisted_16, [
+      createBaseVNode("h3", null, [
+        withDirectives(createBaseVNode("input", {
+          type: "checkbox",
+          autocomplete: "off",
+          class: "input-with-feedback",
+          "data-fieldname": $data.id,
+          id: $data.id,
+          "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $data.value = $event)
+        }, null, 8, _hoisted_26), [
+          [vModelCheckbox, $data.value]
+        ]),
+        createBaseVNode("label", { for: $data.id }, toDisplayString($props.label), 9, _hoisted_34)
+      ])
+    ]);
+  }
+
+  // ../powerpro/powerpro/public/js/vue/cost_estimation/components/std/CheckboxField.vue
+  CheckboxField_default.render = render8;
+  CheckboxField_default.__file = "../powerpro/powerpro/public/js/vue/cost_estimation/components/std/CheckboxField.vue";
+  CheckboxField_default.__scopeId = "data-v-9430f2f5";
+  var CheckboxField_default2 = CheckboxField_default;
+
+  // sfc-script:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/DataListField.vue?type=script
+  var DataListField_default = {
+    props: {
+      field_id: {
+        type: String,
+        required: true
+      },
+      list_id: {
+        type: String,
+        required: true
+      },
+      options: {
+        type: Array,
+        required: true
+      },
+      name: {
+        type: String,
+        default: null
+      },
+      label: {
+        type: String,
+        default: "Select"
+      },
+      selected: {
+        type: String,
+        default: null
+      }
+    },
+    data() {
+      return {
+        value: this.selected,
+        list_id: this.getRandomId(),
+        field_id: this.getRandomId(),
+        name_id: this.name || this.getRandomId()
+      };
+    },
+    methods: {
+      getRandomId() {
+        return Math.random().toString(36).substring(7);
+      },
+      after_change() {
+        if (this.options.find((option) => option.value === this.value)) {
+          this.value = null;
+        }
+        this.$emit("after_select", this.value);
+      }
+    }
+  };
+
+  // sfc-template:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/DataListField.vue?type=template
+  var _hoisted_17 = ["for"];
+  var _hoisted_27 = ["list", "id", "name"];
+  var _hoisted_35 = ["id"];
+  var _hoisted_43 = ["value"];
+  function render9(_ctx, _cache, $props, $setup, $data, $options) {
+    return openBlock(), createElementBlock(Fragment, null, [
+      createBaseVNode("label", { for: $data.field_id }, toDisplayString($props.label), 9, _hoisted_17),
+      withDirectives(createBaseVNode("input", {
+        class: "form-control",
+        list: $data.list_id,
+        id: $data.field_id,
+        name: $data.name_id,
+        type: "text",
+        onChange: _cache[0] || (_cache[0] = (...args) => $options.after_change && $options.after_change(...args)),
+        "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => $data.value = $event)
+      }, null, 40, _hoisted_27), [
+        [vModelText, $data.value]
+      ]),
+      createBaseVNode("datalist", { id: $data.list_id }, [
+        (openBlock(true), createElementBlock(Fragment, null, renderList($props.options, (option) => {
+          return openBlock(), createElementBlock("option", {
+            value: option.value
+          }, toDisplayString(option.label), 9, _hoisted_43);
+        }), 256))
+      ], 8, _hoisted_35)
+    ], 64);
+  }
+
+  // ../powerpro/powerpro/public/js/vue/cost_estimation/DataListField.vue
+  DataListField_default.render = render9;
+  DataListField_default.__file = "../powerpro/powerpro/public/js/vue/cost_estimation/DataListField.vue";
+  var DataListField_default2 = DataListField_default;
+
   // sfc-script:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/CostEstimationForm.vue?type=script
   var CostEstimationForm_default = {
     name: "CostEstimation",
@@ -8311,10 +8562,14 @@ Expected function or array of functions, received type ${typeof value}.`
       frm: {
         type: Object,
         required: true
+      },
+      document: {
+        type: Object,
+        required: true
       }
     },
     data() {
-      const { doc: doc2 } = this.frm;
+      const { document: doc2 } = this;
       let form_data = {};
       try {
         form_data = JSON.parse(doc2.data || "{}");
@@ -8325,7 +8580,7 @@ Expected function or array of functions, received type ${typeof value}.`
         quantity: 5,
         rate: 3,
         amount: 0,
-        doc: __spreadValues({}, this.frm.doc),
+        doc: this.document,
         raw_material_specs: {},
         form_data
       };
@@ -8343,7 +8598,9 @@ Expected function or array of functions, received type ${typeof value}.`
     },
     methods: {
       fetch_raw_material_specs() {
-        this.material_controller.fetch_raw_material_specs(this.frm.doc.raw_material);
+        this.material_controller.fetch_raw_material_specs(
+          this.frm.doc.raw_material
+        );
       },
       calculate_cost() {
       },
@@ -8354,7 +8611,17 @@ Expected function or array of functions, received type ${typeof value}.`
       after_color_select(fieldname, value) {
         this.form_data[fieldname] = value;
         this.update_data();
+      },
+      handle_relieve_dimension_change(index, width, height) {
+        this.form_data[`ancho_elemento_relieve_${index}`] = width;
+        this.form_data[`alto_elemento_relieve_${index}`] = height;
+        this.update_data();
+      },
+      fetch_assets() {
       }
+    },
+    mounted() {
+      this.fetch_assets();
     },
     components: {
       QtyField: QtyField_default2,
@@ -8363,109 +8630,435 @@ Expected function or array of functions, received type ${typeof value}.`
       SelectField: SelectField_default2,
       Dimension: DimensionField_default2,
       PrintingTecnique: PrintingTecniqueField_default2,
-      ColorCount: ColorCountField_default2
+      ColorCount: ColorCountField_default2,
+      CheckboxField: CheckboxField_default2,
+      DataListField: DataListField_default2
     }
   };
 
   // sfc-template:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/CostEstimationForm.vue?type=template
-  var _hoisted_16 = { "data-component": "cost-estimation" };
-  var _hoisted_26 = { class: "row" };
-  var _hoisted_33 = { class: "form-column col-sm-6" };
-  var _hoisted_43 = /* @__PURE__ */ createBaseVNode("h3", null, "Dimensiones", -1);
+  var _withScopeId2 = (n) => (pushScopeId("data-v-951b62bd"), n = n(), popScopeId(), n);
+  var _hoisted_18 = { "data-component": "cost-estimation" };
+  var _hoisted_28 = { class: "row" };
+  var _hoisted_36 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("div", {
+    class: "px-3",
+    style: { "width": "100%" }
+  }, [
+    /* @__PURE__ */ createBaseVNode("h3", null, "Dimensiones")
+  ], -1));
+  var _hoisted_44 = { class: "form-column col-sm-6" };
   var _hoisted_52 = { class: "form-column col-sm-6" };
-  var _hoisted_6 = { class: "row" };
-  var _hoisted_7 = { class: "form-column col-sm-6" };
-  var _hoisted_8 = /* @__PURE__ */ createBaseVNode("h3", null, "Tecnolog\xEDa de Impresi\xF3n", -1);
-  var _hoisted_9 = /* @__PURE__ */ createBaseVNode("hr", null, null, -1);
-  var _hoisted_10 = /* @__PURE__ */ createBaseVNode("div", { class: "row" }, [
-    /* @__PURE__ */ createBaseVNode("div", { class: "form-column col-sm-6" })
-  ], -1);
-  var _hoisted_11 = /* @__PURE__ */ createBaseVNode("h4", null, "Colores", -1);
-  var _hoisted_122 = /* @__PURE__ */ createBaseVNode("hr", null, null, -1);
-  var _hoisted_132 = { class: "row" };
-  var _hoisted_142 = { class: "form-column col-sm-6" };
-  var _hoisted_152 = { class: "form-column col-sm-6" };
-  function render8(_ctx, _cache, $props, $setup, $data, $options) {
+  var _hoisted_62 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
+  var _hoisted_72 = { class: "row" };
+  var _hoisted_82 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("div", {
+    class: "px-3",
+    style: { "width": "100%" }
+  }, [
+    /* @__PURE__ */ createBaseVNode("h3", null, "Tecnolog\xEDa de Impresi\xF3n")
+  ], -1));
+  var _hoisted_9 = { class: "form-column col-sm-6" };
+  var _hoisted_10 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("div", { class: "row" }, [
+    /* @__PURE__ */ createBaseVNode("div", { class: "form-column col-sm-6" }, [
+      /* @__PURE__ */ createCommentVNode(" empty column ")
+    ])
+  ], -1));
+  var _hoisted_152 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
+  var _hoisted_162 = {
+    key: 0,
+    class: "row"
+  };
+  var _hoisted_172 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("div", {
+    class: "px-3",
+    style: { "width": "100%" }
+  }, [
+    /* @__PURE__ */ createBaseVNode("h3", null, "Colores")
+  ], -1));
+  var _hoisted_182 = { class: "form-column col-sm-6" };
+  var _hoisted_19 = { class: "form-column col-sm-6" };
+  var _hoisted_20 = { for: "" };
+  var _hoisted_21 = ["list", "onUpdate:modelValue"];
+  var _hoisted_222 = {
+    key: 1,
+    class: "row"
+  };
+  var _hoisted_232 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("div", { class: "form-column col-sm-6" }, [
+    /* @__PURE__ */ createBaseVNode("p", {
+      class: "full-color-text",
+      style: { "color": "greenyellow" }
+    }, " Full Color ")
+  ], -1));
+  var _hoisted_242 = [
+    _hoisted_232
+  ];
+  var _hoisted_252 = { key: 1 };
+  var _hoisted_262 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
+  var _hoisted_272 = { class: "row" };
+  var _hoisted_282 = { class: "form-column col-sm-6" };
+  var _hoisted_29 = { key: 2 };
+  var _hoisted_30 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
+  var _hoisted_31 = { class: "row" };
+  var _hoisted_322 = { class: "form-column col-sm-6" };
+  var _hoisted_332 = {
+    key: 0,
+    class: "text-muted"
+  };
+  var _hoisted_342 = {
+    key: 1,
+    class: "text-muted"
+  };
+  var _hoisted_352 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
+  var _hoisted_362 = { class: "row" };
+  var _hoisted_37 = { class: "form-column col-sm-6" };
+  var _hoisted_38 = { key: 3 };
+  var _hoisted_39 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
+  var _hoisted_40 = { class: "row" };
+  var _hoisted_41 = { class: "form-column col-sm-6" };
+  var _hoisted_422 = { class: "form-column col-sm-6" };
+  var _hoisted_432 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
+  var _hoisted_442 = { class: "row" };
+  var _hoisted_45 = { class: "form-column col-sm-6" };
+  var _hoisted_46 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
+  var _hoisted_47 = { class: "row" };
+  var _hoisted_48 = { class: "form-column col-sm-6" };
+  var _hoisted_49 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
+  var _hoisted_50 = { class: "row" };
+  var _hoisted_51 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("div", {
+    class: "px-3",
+    style: { "width": "100%" }
+  }, [
+    /* @__PURE__ */ createBaseVNode("h3", null, "Empaque")
+  ], -1));
+  var _hoisted_522 = { class: "form-column col-sm-6" };
+  function render10(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_dimension = resolveComponent("dimension");
     const _component_printing_tecnique = resolveComponent("printing-tecnique");
-    const _component_color_count = resolveComponent("color-count");
-    return openBlock(), createElementBlock("div", _hoisted_16, [
-      createCommentVNode(" Tama\xF1o Montaje:\n    Tama\xF1o Material:\n    Tama\xF1o Producto Final:\n\n    Tecnologia Impresi\xF3n:\n        Digital (Pendiente a desarrollar)\n        Offset "),
-      createBaseVNode("div", _hoisted_26, [
-        createBaseVNode("div", _hoisted_33, [
-          _hoisted_43,
-          createVNode(_component_dimension, {
-            label: "Tama\xF1o Montaje",
-            width: $data.form_data.ancho_montaje,
-            height: $data.form_data.alto_montaje,
-            onOn_change: _cache[0] || (_cache[0] = ({ width: ancho_montaje, height: alto_montaje }) => $data.form_data = __spreadProps(__spreadValues({}, $data.form_data), { ancho_montaje, alto_montaje }))
-          }, null, 8, ["width", "height"]),
-          createVNode(_component_dimension, {
-            label: "Tama\xF1o Material",
-            width: $data.form_data.ancho_material,
-            height: $data.form_data.alto_material,
-            onOn_change: _cache[1] || (_cache[1] = ({ width: ancho_material, height: alto_material }) => $data.form_data = __spreadProps(__spreadValues({}, $data.form_data), { ancho_material, alto_material }))
-          }, null, 8, ["width", "height"])
-        ]),
-        createBaseVNode("div", _hoisted_52, [
-          createVNode(_component_dimension, {
-            label: "Tama\xF1o Producto",
-            width: $data.form_data.ancho_producto,
-            height: $data.form_data.alto_producto,
-            onOn_change: _cache[2] || (_cache[2] = ({ width: ancho_producto, height: alto_producto }) => $data.form_data = __spreadProps(__spreadValues({}, $data.form_data), { ancho_producto, alto_producto }))
-          }, null, 8, ["width", "height"])
-        ])
-      ]),
-      createBaseVNode("div", _hoisted_6, [
-        createBaseVNode("div", _hoisted_7, [
-          _hoisted_8,
-          createVNode(_component_printing_tecnique, {
-            label: "Tecnolog\xEDa",
-            selected: $data.form_data.tecnologia,
-            onAfter_select: _cache[3] || (_cache[3] = (value) => $data.form_data.tecnologia = value)
-          }, null, 8, ["selected"])
-        ])
-      ]),
-      _hoisted_9,
-      _hoisted_10,
+    const _component_checkbox_field = resolveComponent("checkbox-field");
+    const _component_select_field = resolveComponent("select-field");
+    const _component_qty_field = resolveComponent("qty-field");
+    return openBlock(), createElementBlock("div", _hoisted_18, [
       createBaseVNode("section", null, [
-        _hoisted_11,
-        _hoisted_122,
-        createBaseVNode("div", _hoisted_132, [
-          createBaseVNode("div", _hoisted_142, [
-            createVNode(_component_color_count, {
-              label: "Colores Procesos Tiro",
-              selected: $data.form_data.colores_procesos_tiro,
-              only_numbers: false,
-              onAfter_select: _cache[4] || (_cache[4] = (value) => $data.form_data.colores_procesos_tiro = value)
-            }, null, 8, ["selected"]),
-            createVNode(_component_color_count, {
-              label: "Colores Pantones Tiro",
-              selected: $data.form_data.colores_pantones_tiro,
-              onAfter_select: _cache[5] || (_cache[5] = (value) => $data.form_data.colores_pantones_tiro = value)
-            }, null, 8, ["selected"]),
-            createVNode(_component_color_count, {
-              label: "Colores Especiales Tiro",
-              selected: $data.form_data.colores_especiales_tiro,
-              onAfter_select: _cache[6] || (_cache[6] = (value) => $data.form_data.colores_especiales_tiro = value)
-            }, null, 8, ["selected"])
+        createBaseVNode("div", _hoisted_28, [
+          _hoisted_36,
+          createBaseVNode("div", _hoisted_44, [
+            createVNode(_component_dimension, {
+              label: "Tama\xF1o Montaje",
+              width: $data.form_data.ancho_montaje,
+              height: $data.form_data.alto_montaje,
+              onOn_change: _cache[0] || (_cache[0] = ({ width: ancho_montaje, height: alto_montaje }) => $data.form_data = __spreadProps(__spreadValues({}, $data.form_data), {
+                ancho_montaje,
+                alto_montaje
+              }))
+            }, null, 8, ["width", "height"]),
+            createVNode(_component_dimension, {
+              label: "Tama\xF1o Material",
+              width: $data.form_data.ancho_material,
+              height: $data.form_data.alto_material,
+              onOn_change: _cache[1] || (_cache[1] = ({
+                width: ancho_material,
+                height: alto_material
+              }) => $data.form_data = __spreadProps(__spreadValues({}, $data.form_data), {
+                ancho_material,
+                alto_material
+              }))
+            }, null, 8, ["width", "height"])
           ]),
-          createBaseVNode("div", _hoisted_152, [
-            createVNode(_component_color_count, {
-              label: "Colores Procesos Retiro",
-              selected: $data.form_data.colores_procesos_retiro,
-              only_numbers: false,
-              onAfter_select: _cache[7] || (_cache[7] = (value) => $data.form_data.colores_procesos_retiro = value)
+          createBaseVNode("div", _hoisted_52, [
+            createVNode(_component_dimension, {
+              label: "Tama\xF1o Producto",
+              width: $data.form_data.ancho_producto,
+              height: $data.form_data.alto_producto,
+              onOn_change: _cache[2] || (_cache[2] = ({
+                width: ancho_producto,
+                height: alto_producto
+              }) => $data.form_data = __spreadProps(__spreadValues({}, $data.form_data), {
+                ancho_producto,
+                alto_producto
+              }))
+            }, null, 8, ["width", "height"])
+          ])
+        ])
+      ]),
+      createBaseVNode("section", null, [
+        _hoisted_62,
+        createBaseVNode("div", _hoisted_72, [
+          _hoisted_82,
+          createBaseVNode("div", _hoisted_9, [
+            createVNode(_component_printing_tecnique, {
+              label: "Tecnolog\xEDa",
+              selected: $data.form_data.tecnologia,
+              onAfter_select: _cache[3] || (_cache[3] = (value) => $data.form_data.tecnologia = value)
+            }, null, 8, ["selected"])
+          ])
+        ]),
+        _hoisted_10
+      ]),
+      false ? (openBlock(), createElementBlock("section", _hoisted_11, [
+        _hoisted_12,
+        createBaseVNode("div", _hoisted_13, [
+          createBaseVNode("div", _hoisted_14, [
+            createVNode(_component_checkbox_field, {
+              label: "Incluye Pre-corte??",
+              initial_value: $data.form_data.incluye_precorte,
+              onAfter_select: _cache[4] || (_cache[4] = (value) => $data.form_data.incluye_precorte = value)
+            }, null, 8, ["initial_value"]),
+            $data.form_data.incluye_precorte ? (openBlock(), createBlock(_component_select_field, {
+              key: 0,
+              label: "Tipo de Pre-corte",
+              options: [
+                { value: "Guillotina" },
+                { value: "Convertidora de Material", disabled: $data.form_data.tecnologia !== "Offset" }
+              ],
+              selected: $data.form_data.tipo_precorte,
+              onAfter_select: _cache[5] || (_cache[5] = (value) => $data.form_data.tipo_precorte = value)
+            }, null, 8, ["options", "selected"])) : createCommentVNode("v-if", true)
+          ])
+        ])
+      ])) : createCommentVNode("v-if", true),
+      createBaseVNode("section", null, [
+        _hoisted_152,
+        $data.form_data.tecnologia === "Offset" ? (openBlock(), createElementBlock("div", _hoisted_162, [
+          _hoisted_172,
+          createBaseVNode("div", _hoisted_182, [
+            createVNode(_component_select_field, {
+              label: "Cantidad de Tintas",
+              options: [
+                { value: 1, label: "1" },
+                { value: 2, label: "2" },
+                { value: 3, label: "3" },
+                { value: 4, label: "4" },
+                { value: 5, label: "5" },
+                { value: 6, label: "6" },
+                { value: 7, label: "7" },
+                { value: 8, label: "8" }
+              ],
+              selected: $data.form_data.cantidad_de_tintas,
+              onAfter_select: _cache[6] || (_cache[6] = (value) => $data.form_data.cantidad_de_tintas = parseFloat(value))
             }, null, 8, ["selected"]),
-            createVNode(_component_color_count, {
-              label: "Colores Pantones Retiro",
-              selected: $data.form_data.colores_pantones_retiro,
-              onAfter_select: _cache[8] || (_cache[8] = (value) => $data.form_data.colores_pantones_retiro = value)
-            }, null, 8, ["selected"]),
-            createVNode(_component_color_count, {
-              label: "Colores Especiales Retiro",
-              selected: $data.form_data.colores_especiales_retiro,
-              onAfter_select: _cache[9] || (_cache[9] = (value) => $data.form_data.colores_especiales_retiro = value)
+            createCommentVNode(' <color-count\n                        label="Colores Procesos Tiro"\n                        :selected="form_data.colores_procesos_tiro"\n                        :only_numbers="false"\n                        @after_select="\n                            (value) =>\n                                (form_data.colores_procesos_tiro = value)\n                        "\n                    />\n                    <color-count\n                        label="Colores Pantones Tiro"\n                        :selected="form_data.colores_pantones_tiro"\n                        @after_select="\n                            (value) =>\n                                (form_data.colores_pantones_tiro = value)\n                        "\n                    />\n                    <color-count\n                        label="Colores Especiales Tiro"\n                        :selected="form_data.colores_especiales_tiro"\n                        @after_select="\n                            (value) =>\n                                (form_data.colores_especiales_tiro = value)\n                        "\n                    /> ')
+          ]),
+          createBaseVNode("div", _hoisted_19, [
+            createCommentVNode(' :field_id="`tinta_selccionada_${index}`"\n                    :list_id="`listado_de_tintas_${index}`" '),
+            (openBlock(true), createElementBlock(Fragment, null, renderList($data.form_data.cantidad_de_tintas, (index) => {
+              return openBlock(), createElementBlock("div", null, [
+                createBaseVNode("label", _hoisted_20, "Tinta " + toDisplayString(index), 1),
+                withDirectives(createBaseVNode("input", {
+                  type: "text",
+                  class: "form-control",
+                  list: `listado_de_tintas_${index}`,
+                  "onUpdate:modelValue": ($event) => $data.form_data[`tinta_selccionada_${index}`] = $event
+                }, null, 8, _hoisted_21), [
+                  [vModelText, $data.form_data[`tinta_selccionada_${index}`]]
+                ])
+              ]);
+            }), 256)),
+            createCommentVNode(' <color-count\n                        label="Colores Procesos Retiro"\n                        :selected="form_data.colores_procesos_retiro"\n                        :only_numbers="false"\n                        @after_select="\n                            (value) =>\n                                (form_data.colores_procesos_retiro = value)\n                        "\n                    />\n                    <color-count\n                        label="Colores Pantones Retiro"\n                        :selected="form_data.colores_pantones_retiro"\n                        @after_select="\n                            (value) =>\n                                (form_data.colores_pantones_retiro = value)\n                        "\n                    />\n                    <color-count\n                        label="Colores Especiales Retiro"\n                        :selected="form_data.colores_especiales_retiro"\n                        @after_select="\n                            (value) =>\n                                (form_data.colores_especiales_retiro = value)\n                        "\n                    /> ')
+          ])
+        ])) : (openBlock(), createElementBlock("div", _hoisted_222, [..._hoisted_242]))
+      ]),
+      $data.form_data.tecnologia === "Offset" ? (openBlock(), createElementBlock("section", _hoisted_252, [
+        _hoisted_262,
+        createBaseVNode("div", _hoisted_272, [
+          createBaseVNode("div", _hoisted_282, [
+            createVNode(_component_checkbox_field, {
+              label: "Incluye Barnizado?",
+              initial_value: $data.form_data.incluye_barnizado,
+              onAfter_select: _cache[7] || (_cache[7] = (value) => $data.form_data.incluye_barnizado = value)
+            }, null, 8, ["initial_value"]),
+            $data.form_data.incluye_barnizado ? (openBlock(), createBlock(_component_select_field, {
+              key: 0,
+              label: "Tipo de Barnizado",
+              options: [
+                { value: "Barnizado Base en Agua Brillo (in2)" },
+                { value: "Barnizado Base en Agua Mate" },
+                { value: "Barnizado Base en Aceite Brillo" },
+                { value: "Barnizado Base en Aceite Mate" },
+                { value: "Barnizado Base en Aceite Combinado" },
+                { value: "Barnizado UV Brillo" },
+                { value: "Barnizado UV Mate" },
+                { value: "Barnizado UV Combinado" }
+              ],
+              selected: $data.form_data.tipo_barnizado,
+              onAfter_select: _cache[8] || (_cache[8] = (value) => $data.form_data.tipo_barnizado = value)
+            }, null, 8, ["options", "selected"])) : createCommentVNode("v-if", true)
+          ])
+        ])
+      ])) : createCommentVNode("v-if", true),
+      $data.form_data.tecnologia === "Offset" ? (openBlock(), createElementBlock("section", _hoisted_29, [
+        _hoisted_30,
+        createBaseVNode("div", _hoisted_31, [
+          createBaseVNode("div", _hoisted_322, [
+            createVNode(_component_checkbox_field, {
+              label: "Incluye Troquelado?",
+              initial_value: $data.form_data.incluye_troquelado,
+              onAfter_select: _cache[9] || (_cache[9] = (value) => $data.form_data.incluye_troquelado = value)
+            }, null, 8, ["initial_value"]),
+            $data.form_data.incluye_troquelado ? (openBlock(), createElementBlock("p", _hoisted_332, " Este producto es troquelado. ")) : (openBlock(), createElementBlock("p", _hoisted_342, " Este producto es refilado. "))
+          ])
+        ])
+      ])) : createCommentVNode("v-if", true),
+      createBaseVNode("section", null, [
+        _hoisted_352,
+        createBaseVNode("div", _hoisted_362, [
+          createBaseVNode("div", _hoisted_37, [
+            createVNode(_component_checkbox_field, {
+              label: "Incluye Laminado?",
+              initial_value: $data.form_data.incluye_laminado,
+              onAfter_select: _cache[10] || (_cache[10] = (value) => $data.form_data.incluye_laminado = value)
+            }, null, 8, ["initial_value"])
+          ])
+        ])
+      ]),
+      $data.form_data.tecnologia === "Offset" ? (openBlock(), createElementBlock("section", _hoisted_38, [
+        _hoisted_39,
+        createBaseVNode("div", _hoisted_40, [
+          createBaseVNode("div", _hoisted_41, [
+            createVNode(_component_checkbox_field, {
+              label: "Incluye Relieve?",
+              initial_value: $data.form_data.incluye_relieve,
+              onAfter_select: _cache[11] || (_cache[11] = (value) => $data.form_data.incluye_relieve = value)
+            }, null, 8, ["initial_value"]),
+            $data.form_data.incluye_relieve ? (openBlock(), createBlock(_component_select_field, {
+              key: 0,
+              label: "Tipo de Relieve",
+              options: [
+                { value: "Repujado" },
+                { value: "Estampado" }
+              ],
+              selected: $data.form_data.tipo_de_relieve,
+              onAfter_select: _cache[12] || (_cache[12] = (value) => $data.form_data.tipo_de_relieve = value)
+            }, null, 8, ["selected"])) : createCommentVNode("v-if", true),
+            $data.form_data.incluye_relieve ? (openBlock(), createBlock(_component_select_field, {
+              key: 1,
+              label: "Color de Lamina",
+              options: [
+                { value: "Dorado" },
+                { value: "Papel" },
+                { value: "Cart\xF3n" },
+                { value: "Pl\xE1stico" }
+              ],
+              selected: $data.form_data.tipo_de_material_relieve,
+              onAfter_select: _cache[13] || (_cache[13] = (value) => $data.form_data.tipo_de_material_relieve = value)
+            }, null, 8, ["selected"])) : createCommentVNode("v-if", true),
+            $data.form_data.incluye_relieve ? (openBlock(), createBlock(_component_select_field, {
+              key: 2,
+              label: "Cantidad de Elementos",
+              options: [
+                { value: 1, label: "1" },
+                { value: 2, label: "2" },
+                { value: 3, label: "3" },
+                { value: 4, label: "4" },
+                { value: 5, label: "5" }
+              ],
+              selected: $data.form_data.cantidad_de_elementos_en_relieve,
+              onAfter_select: _cache[14] || (_cache[14] = (value) => $data.form_data.cantidad_de_elementos_en_relieve = value)
+            }, null, 8, ["selected"])) : createCommentVNode("v-if", true)
+          ]),
+          createBaseVNode("div", _hoisted_422, [
+            $data.form_data.incluye_relieve ? (openBlock(true), createElementBlock(Fragment, { key: 0 }, renderList($data.form_data.cantidad_de_elementos_en_relieve, (index) => {
+              return openBlock(), createBlock(_component_dimension, {
+                label: `Tama\xF1o del Elemento ${index}`,
+                width: $data.form_data[`ancho_elemento_relieve_${index}`],
+                height: $data.form_data[`alto_elemento_relieve_${index}`],
+                onOn_change: ({ width, height }) => $options.handle_relieve_dimension_change(index, width, height)
+              }, null, 8, ["label", "width", "height", "onOn_change"]);
+            }), 256)) : createCommentVNode("v-if", true)
+          ])
+        ])
+      ])) : createCommentVNode("v-if", true),
+      createBaseVNode("section", null, [
+        _hoisted_432,
+        createBaseVNode("div", _hoisted_442, [
+          createBaseVNode("div", _hoisted_45, [
+            createVNode(_component_checkbox_field, {
+              label: "Incluye Utilidad?",
+              initial_value: $data.form_data.incluye_utilidad,
+              onAfter_select: _cache[15] || (_cache[15] = (value) => $data.form_data.incluye_utilidad = value)
+            }, null, 8, ["initial_value"]),
+            $data.form_data.incluye_utilidad ? (openBlock(), createBlock(_component_select_field, {
+              key: 0,
+              label: "Tipo de Utilidad",
+              options: [{ value: "Cinta Doble Cara" }],
+              selected: $data.form_data.tipo_de_utilidad,
+              onAfter_select: _cache[16] || (_cache[16] = (value) => $data.form_data.tipo_de_utilidad = value)
+            }, null, 8, ["selected"])) : createCommentVNode("v-if", true),
+            createCommentVNode("\n                    Cantidad de puntos\n                    Tama\xF1o de los puntos (ancho y alto) con valores fijos\n                    Ancho: 0.5, 0.75, 1 in\n                    Largo: 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5 in\n                    "),
+            $data.form_data.tipo_de_utilidad && $data.form_data.tipo_de_utilidad === "Cinta Doble Cara" ? (openBlock(), createBlock(_component_qty_field, {
+              key: 1,
+              label: "Cantidad de Puntos",
+              initial_value: $data.form_data.cinta_doble_cara_cantidad_de_puntos,
+              onAfter_select: _cache[17] || (_cache[17] = (value) => $data.form_data.cinta_doble_cara_cantidad_de_puntos = value)
+            }, null, 8, ["initial_value"])) : createCommentVNode("v-if", true),
+            $data.form_data.tipo_de_utilidad && $data.form_data.tipo_de_utilidad === "Cinta Doble Cara" ? (openBlock(), createBlock(_component_dimension, {
+              key: 2,
+              label: "Tama\xF1o de los Puntos",
+              width: $data.form_data.ancho_punto,
+              height: $data.form_data.alto_punto,
+              using_options: true,
+              options: {
+                width: [
+                  { value: 0.5, label: "0.5" },
+                  { value: 0.75, label: "0.75" },
+                  { value: 1, label: "1" }
+                ],
+                height: [
+                  { value: 0.5, label: "0.5" },
+                  { value: 1, label: "1" },
+                  { value: 1.5, label: "1.5" },
+                  { value: 2, label: "2" },
+                  { value: 2.5, label: "2.5" },
+                  { value: 3, label: "3" },
+                  { value: 3.5, label: "3.5" },
+                  { value: 4, label: "4" },
+                  { value: 4.5, label: "4.5" },
+                  { value: 5, label: "5" }
+                ]
+              },
+              onOn_change: _cache[18] || (_cache[18] = ({ width: cinta_doble_cara_ancho_punto, height: cinta_doble_cara_alto_punto }) => $data.form_data = __spreadProps(__spreadValues({}, $data.form_data), {
+                cinta_doble_cara_ancho_punto,
+                cinta_doble_cara_alto_punto
+              }))
+            }, null, 8, ["width", "height"])) : createCommentVNode("v-if", true)
+          ])
+        ])
+      ]),
+      createBaseVNode("section", null, [
+        _hoisted_46,
+        createBaseVNode("div", _hoisted_47, [
+          createBaseVNode("div", _hoisted_48, [
+            createVNode(_component_checkbox_field, {
+              label: "Incluye Pegado?",
+              initial_value: $data.form_data.incluye_pegado,
+              onAfter_select: _cache[19] || (_cache[19] = (value) => $data.form_data.incluye_pegado = value)
+            }, null, 8, ["initial_value"]),
+            $data.form_data.incluye_pegado ? (openBlock(), createBlock(_component_select_field, {
+              key: 0,
+              label: "Tipo de Pegado",
+              options: [
+                { value: "Fondo Autom\xE1tico" },
+                { value: "Fondo Recto" },
+                { value: "Fondo Autom\xE1tico con Ventana" },
+                { value: "Fondo Recto con Ventana" }
+              ],
+              selected: $data.form_data.tipo_de_utilidad,
+              onAfter_select: _cache[20] || (_cache[20] = (value) => $data.form_data.tipo_de_utilidad = value)
+            }, null, 8, ["selected"])) : createCommentVNode("v-if", true)
+          ])
+        ])
+      ]),
+      createBaseVNode("section", null, [
+        _hoisted_49,
+        createBaseVNode("div", _hoisted_50, [
+          _hoisted_51,
+          createBaseVNode("div", _hoisted_522, [
+            createVNode(_component_select_field, {
+              label: "Tipo de Empaque",
+              options: [
+                { value: "Corrugado" },
+                { value: "Papel" },
+                { value: "Pl\xE1stico" }
+              ],
+              selected: $data.form_data.tipo_de_empaque,
+              onAfter_select: _cache[21] || (_cache[21] = (value) => $data.form_data.tipo_de_empaque = value)
             }, null, 8, ["selected"])
           ])
         ])
@@ -8474,26 +9067,53 @@ Expected function or array of functions, received type ${typeof value}.`
   }
 
   // ../powerpro/powerpro/public/js/vue/cost_estimation/CostEstimationForm.vue
-  CostEstimationForm_default.render = render8;
+  CostEstimationForm_default.render = render10;
   CostEstimationForm_default.__file = "../powerpro/powerpro/public/js/vue/cost_estimation/CostEstimationForm.vue";
+  CostEstimationForm_default.__scopeId = "data-v-951b62bd";
   var CostEstimationForm_default2 = CostEstimationForm_default;
 
   // sfc-script:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/App.vue?type=script
   var App_default = {
     name: "CostEstimationApp",
+    props: {
+      frm: {
+        type: Object,
+        required: true
+      },
+      doc: {
+        type: Object,
+        required: true
+      }
+    },
+    data() {
+      return {
+        document: this.doc
+      };
+    },
     components: {
       CostEstimationForm: CostEstimationForm_default2
+    },
+    update_data(doc2) {
+      this.document = doc2;
+      console.log("update_data", doc2);
     }
   };
 
   // sfc-template:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/App.vue?type=template
-  function render9(_ctx, _cache, $props, $setup, $data, $options) {
-    const _component_CostEstimationForm = resolveComponent("CostEstimationForm");
-    return openBlock(), createBlock(_component_CostEstimationForm, { ref: "appl" }, null, 512);
+  var _hoisted_110 = { class: "app-wrapper" };
+  function render11(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_cost_estimation_form = resolveComponent("cost-estimation-form");
+    return openBlock(), createElementBlock("div", _hoisted_110, [
+      createVNode(_component_cost_estimation_form, {
+        frm: $props.frm,
+        document: $data.document,
+        ref: "calculator"
+      }, null, 8, ["frm", "document"])
+    ]);
   }
 
   // ../powerpro/powerpro/public/js/vue/cost_estimation/App.vue
-  App_default.render = render9;
+  App_default.render = render11;
   App_default.__file = "../powerpro/powerpro/public/js/vue/cost_estimation/App.vue";
   var App_default2 = App_default;
 
@@ -8508,9 +9128,9 @@ Expected function or array of functions, received type ${typeof value}.`
       }
     }
     mount() {
-      const vm = createApp(App_default2, { frm: this.frm });
+      const vm = createApp(App_default2, { frm: this.frm, doc: this.frm.doc });
       vm.mount(this.parent);
-      this.update({ vm });
+      this.vm = vm;
     }
     fetch_raw_material_specs() {
     }
@@ -8545,4 +9165,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.NLQRI2FH.js.map
+//# sourceMappingURL=powerpro.bundle.BF34PVTU.js.map

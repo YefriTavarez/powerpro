@@ -19,9 +19,9 @@ power.ui.CostEstimationApp = class {
 	}
 
 	mount() {
-		const vm = createApp(App, { frm: this.frm })
+		const vm = createApp(App, { frm: this.frm, doc: this.frm.doc });
 		vm.mount(this.parent);
-		this.update({ vm });
+		this.vm = vm;
 	}
 
 	fetch_raw_material_specs() {

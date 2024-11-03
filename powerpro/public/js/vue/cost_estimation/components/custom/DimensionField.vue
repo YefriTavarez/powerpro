@@ -7,17 +7,50 @@
 				data-fieldname="width"
 				class="form-control"
 				v-model="_width"
-				@input="on_width_change"
+				@change="on_width_change"
+				v-if="!using_options"
 			/>
+
+			<select
+				data-fieldname="width"
+				class="form-control"
+				v-model="_width"
+				@change="on_width_change"
+				v-if="using_options"
+			>
+				<option
+					v-for="(option, index) in options.width"
+					:key="index"
+					:value="option.value"
+				>
+					{{ option.label }}
+				</option>
+			</select>
 			<span>&times;</span> 
 			<input
 				type="text"
 				data-fieldname="height"
 				class="form-control"
 				v-model="_height"
-				@input="on_height_change"
+				@change="on_height_change"
+				v-if="!using_options"
 			/>
-			<span>{{ uom }}</span>
+			<select
+				data-fieldname="height"
+				class="form-control"
+				v-model="_height"
+				@change="on_height_change"
+				v-if="using_options"
+			>
+				<option
+					v-for="(option, index) in options.height"
+					:key="index"
+					:value="option.value"
+				>
+					{{ option.label }}
+				</option>
+			</select>
+			<span class="uom">{{ uom }}</span>
 		</div>
 		<p class="text-muted">Ejemplo: 8.5 x 11 pulgadas</p>
 	</div>
@@ -42,6 +75,14 @@ export default {
 			type: String,
 			default: "in",
 		},
+		using_options: {
+			type: Boolean,
+			default: false,
+		},
+		options: {
+			type: Object,
+			default: () => ({}),
+		},
 	},
 	data() {
 		return {
@@ -52,7 +93,7 @@ export default {
 	methods: {
 		on_width_change(event) {
 			const { value } = event.target;
-			this._width = parseFloat(value);
+			this._width = power.utils.round_to_nearest_eighth(value);
 
 			this.$emit("on_change", {
 				width: this._width,
@@ -61,7 +102,7 @@ export default {
 		},
 		on_height_change(event) {
 			const { value } = event.target;
-			this._height = parseFloat(value);
+			this._height = power.utils.round_to_nearest_eighth(value);
 
 			this.$emit("on_change", {
 				width: this._width,
@@ -111,6 +152,8 @@ export default {
 	content: " (pulgadas)";
 }
 
-
-
+select + span {
+	margin-left: 5px;
+	margin-right: 5px;
+}
 </style>

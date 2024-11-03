@@ -3,7 +3,13 @@
 		<label>{{ label }}</label>
 		<div class="inner-form-group">
 			<select class="form-control" v-model="value">
-				<option v-for="option in options" :value="option.value">{{ option.label }}</option>
+				<option
+					v-for="option in options"
+					:value="option.value"
+					:disabled="option.disabled"
+				>
+						{{ option.label || option.value }}
+					</option>
 			</select>
 			<p v-if="help_text" class="text-muted">{{ help_text }}</p>
 		</div>
@@ -34,9 +40,6 @@ export default {
 		return {
 			value: this.selected,
 		}
-	},
-	mounted() {
-		this.value = this.selected;
 	},
 	watch: {
 		value(newVal, oldVal) {

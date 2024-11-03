@@ -1,0 +1,47 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-11-02 23:08:02.980364",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "ink_color",
+  "column_break_pmeh",
+  "percentage"
+ ],
+ "fields": [
+  {
+   "fieldname": "column_break_pmeh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "percentage",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Percentage",
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ink_color",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Ink Color",
+   "options": "Ink Color",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-11-03 00:24:37.023555",
+ "modified_by": "Administrator",
+ "module": "Manufacturing Pro",
+ "name": "Pantone Composition",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

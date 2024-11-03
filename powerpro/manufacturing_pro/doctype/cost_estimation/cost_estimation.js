@@ -70,6 +70,11 @@
 		_setup_vue(frm);
 	}
 
+	function refresh(frm) {
+		// const { vm } = power.ui.cost_estimation;
+		// vm.$refs.
+	}
+
 	function raw_material(frm) {
 		const { cost_estimation } = power.ui;
 		cost_estimation.fetch_raw_material_specs();
@@ -88,11 +93,17 @@
 		_validate_expires_on(frm);
 	}
 
+	function data(frm) {
+		
+	}
+
 	frappe.ui.form.on("Cost Estimation", {
 		setup,
+		refresh,
 		onload_post_render,
 		raw_material,
 		created_on,
 		expires_on,
+		data,
 	});
 }
