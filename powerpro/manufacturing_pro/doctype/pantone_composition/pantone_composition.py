@@ -6,4 +6,6 @@ from frappe.model.document import Document
 
 
 class PantoneComposition(Document):
-	pass
+	ink_color: str
+	percentage: float
+	rate_per_kg: float
