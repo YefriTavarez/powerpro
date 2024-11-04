@@ -87,15 +87,6 @@ export default {
     },
     computed,
     methods,
-    filters: {
-        upper(value) {
-            if (!value) {
-                return "";
-            }
-
-            return value.toUpperCase();
-        },
-    },
     components: {
         QtyField,
         RateField,
@@ -262,7 +253,7 @@ export default {
                             <span
                                 class="input-group-text color" id=""
                                 :style="{ background: form_data[`hex_tinta_seleccionada_retiro_${index}`] || '#56565656'}"
-                            >{{ (form_data[`hex_tinta_seleccionada_tiro_${index}`] | upper) || 'N/A' }}
+                            >{{ (form_data[`hex_tinta_seleccionada_tiro_${index}`] || 'N/A').toUpperCase() }}
                             </span>
                             <input
                                 type="text"
@@ -277,7 +268,7 @@ export default {
                                 @click="select_ink_color('Tiro', `tinta_seleccionada_tiro_${index}`)"
                             
                             >
-                                {{ "Seleccionar" | upper }}
+                                Seleccionar
                             </button>
                         </div>
                     </div>
@@ -319,7 +310,7 @@ export default {
                             <span
                                 class="input-group-text color" id=""
                                 :style="{ background: form_data[`hex_tinta_seleccionada_retiro_${index}`] || '#56565656'}"
-                            >{{ (form_data[`hex_tinta_seleccionada_retiro_${index}`] | upper) || 'N/A')}}
+                            >{{ (form_data[`hex_tinta_seleccionada_retiro_${index}`] || 'N/A').toUpperCase()}}
                             </span>
                             <input
                                 type="text"
@@ -635,6 +626,7 @@ export default {
 }
 
 .input-group > span.color {
+    width: 90px;
     height: 28px;
     border: none;
     border-top-right-radius: 0;

@@ -1,4 +1,4 @@
-frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/custom/DimensionField.vue?type=style&index=0 */\n.inner-form-group[data-v-18a121b1] {\n  display: flex;\n}\n.inner-form-group input[data-v-18a121b1] {\n  margin-right: 5px;\n}\n.inner-form-group input[data-v-18a121b1]:nth-child(3) {\n  margin-left: 5px;\n}\n.inner-form-group span[data-v-18a121b1] {\n  width: 20px;\n  font-weight: bold;\n  display: inline-block;\n}\n.inner-form-group span[data-v-18a121b1]:nth-child(2) {\n  text-align: center;\n}\n.inner-form-group span[data-v-18a121b1]:nth-child(3) {\n  text-align: right;\n}\n.text-muted[data-v-18a121b1] {\n  font-size: 12px;\n}\n.text-muted[data-v-18a121b1]::before {\n  content: \"Nota: \";\n  font-weight: bold;\n}\n.text-muted[data-v-18a121b1]::after {\n  content: \" (pulgadas)\";\n}\nselect + span[data-v-18a121b1] {\n  margin-left: 5px;\n  margin-right: 5px;\n}\n\n/* sfc-style:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/CheckboxField.vue?type=style&index=0 */\nlabel[data-v-9430f2f5] {\n  cursor: pointer;\n}\nh3[data-v-9430f2f5] {\n  margin-top: 10px;\n  margin-bottom: -10px;\n}\n\n/* sfc-style:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/CostEstimationForm.vue?type=style&index=0 */\n.full-color-text[data-v-951b62bd] {\n  display: inline-block;\n  font-size: 48px;\n  line-height: 1;\n  font-weight: black;\n  background: linear-gradient(to top left, #df0781, #e45508, #ffe83f, #07d664, #70e2ff, #6f0ac7);\n  background-clip: text;\n  -webkit-background-clip: text;\n  -webkit-text-fill-color: transparent;\n}\n.input-group > span.color[data-v-951b62bd] {\n  height: 28px;\n  border: none;\n  border-top-right-radius: 0;\n  border-bottom-right-radius: 0;\n}\n/*# sourceMappingURL=powerpro.bundle.2LUO3G2U.css.map */\n");
+frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/custom/DimensionField.vue?type=style&index=0 */\n.inner-form-group[data-v-18a121b1] {\n  display: flex;\n}\n.inner-form-group input[data-v-18a121b1] {\n  margin-right: 5px;\n}\n.inner-form-group input[data-v-18a121b1]:nth-child(3) {\n  margin-left: 5px;\n}\n.inner-form-group span[data-v-18a121b1] {\n  width: 20px;\n  font-weight: bold;\n  display: inline-block;\n}\n.inner-form-group span[data-v-18a121b1]:nth-child(2) {\n  text-align: center;\n}\n.inner-form-group span[data-v-18a121b1]:nth-child(3) {\n  text-align: right;\n}\n.text-muted[data-v-18a121b1] {\n  font-size: 12px;\n}\n.text-muted[data-v-18a121b1]::before {\n  content: \"Nota: \";\n  font-weight: bold;\n}\n.text-muted[data-v-18a121b1]::after {\n  content: \" (pulgadas)\";\n}\nselect + span[data-v-18a121b1] {\n  margin-left: 5px;\n  margin-right: 5px;\n}\n\n/* sfc-style:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/CheckboxField.vue?type=style&index=0 */\nlabel[data-v-9430f2f5] {\n  cursor: pointer;\n}\nh3[data-v-9430f2f5] {\n  margin-top: 10px;\n  margin-bottom: -10px;\n}\n\n/* sfc-style:/home/frappe/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/CostEstimationForm.vue?type=style&index=0 */\n.full-color-text[data-v-951b62bd] {\n  display: inline-block;\n  font-size: 48px;\n  line-height: 1;\n  font-weight: black;\n  background: linear-gradient(to top left, #df0781, #e45508, #ffe83f, #07d664, #70e2ff, #6f0ac7);\n  background-clip: text;\n  -webkit-background-clip: text;\n  -webkit-text-fill-color: transparent;\n}\n.input-group > span.color[data-v-951b62bd] {\n  width: 90px;\n  height: 28px;\n  border: none;\n  border-top-right-radius: 0;\n  border-bottom-right-radius: 0;\n}\n/*# sourceMappingURL=powerpro.bundle.XOCZAOCO.css.map */\n");
 (() => {
   var __defProp = Object.defineProperty;
   var __defProps = Object.defineProperties;
@@ -8705,14 +8705,6 @@ Expected function or array of functions, received type ${typeof value}.`
     },
     computed: computed_default,
     methods: methods_default,
-    filters: {
-      uppercase: (value) => {
-        if (!value) {
-          return "";
-        }
-        return value.toUpperCase();
-      }
-    },
     components: {
       QtyField: QtyField_default2,
       RateField: RateField_default2,
@@ -8952,7 +8944,7 @@ Expected function or array of functions, received type ${typeof value}.`
                     class: "input-group-text color",
                     id: "",
                     style: normalizeStyle({ background: $data.form_data[`hex_tinta_seleccionada_retiro_${index}`] || "#56565656" })
-                  }, toDisplayString(($data.form_data[`hex_tinta_seleccionada_tiro_${index}`] || "N/A") | _ctx.uppercase), 5),
+                  }, toDisplayString(($data.form_data[`hex_tinta_seleccionada_tiro_${index}`] || "N/A").toUpperCase()), 5),
                   withDirectives(createBaseVNode("input", {
                     type: "text",
                     class: "form-control",
@@ -8999,7 +8991,7 @@ Expected function or array of functions, received type ${typeof value}.`
                     class: "input-group-text color",
                     id: "",
                     style: normalizeStyle({ background: $data.form_data[`hex_tinta_seleccionada_retiro_${index}`] || "#56565656" })
-                  }, toDisplayString(($data.form_data[`hex_tinta_seleccionada_retiro_${index}`] || "N/A") | _ctx.uppercase), 5),
+                  }, toDisplayString(($data.form_data[`hex_tinta_seleccionada_retiro_${index}`] || "N/A").toUpperCase()), 5),
                   withDirectives(createBaseVNode("input", {
                     type: "text",
                     class: "form-control",
@@ -9330,4 +9322,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.SWSNVKIW.js.map
+//# sourceMappingURL=powerpro.bundle.SHDBREAZ.js.map
