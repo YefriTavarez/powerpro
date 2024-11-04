@@ -1,17 +1,22 @@
 # Copyright (c) 2024, Yefri Tavarez and contributors
 # For license information, please see license.txt
 
-from typing import List, Dict, Literal
+from typing import List, Literal, TYPE_CHECKING
 
 import frappe
 from frappe.model.document import Document
 
+if TYPE_CHECKING:
+	from powerpro.manufacturing_pro.doctype.pantone_composition import pantone_composition
 
 class InkColor(Document):
 	def validate(self):
 		self.ensure_100_percent_pantone_composition()
 		self.clear_pantone_composition_if_applies()
 		self.clear_pantone_type_if_applies()
+
+	def on_update(self):
+		self.update_rate_per_kg_if_applies()
 
 	def clear_pantone_type_if_applies(self):
 		if self.ink_type != "Pantone":
@@ -21,6 +26,10 @@ class InkColor(Document):
 		if self.ink_type != "Pantone" \
 			or self.pantone_type != "Formula":
 			self.pantone_composition = list()
+
+	def update_rate_per_kg_if_applies(self):
+		# if the rate_per_kg is based on formula, let's then calculate it
+		# here.
 
 	def ensure_100_percent_pantone_composition(self):
 		if self.ink_type == "Pantone" \
@@ -43,4 +52,4 @@ class InkColor(Document):
 	hexadecimal_color: str
 	rate_per_kg: float
 	currency: str
-	pantone_composition: List[Dict]
+	pantone_composition: List["pantone_composition.PantoneComposition"]
