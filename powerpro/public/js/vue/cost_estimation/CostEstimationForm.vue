@@ -110,6 +110,24 @@ export default {
                 </div>
                 <div class="form-column col-sm-4">
                     <dimension
+                        label="Tamaño Producto"
+                        :width="form_data.ancho_producto"
+                        :height="form_data.alto_producto"
+                        @on_change="
+                            ({
+                                width: ancho_producto,
+                                height: alto_producto,
+                            }) =>
+                                (form_data = {
+                                    ...form_data,
+                                    ancho_producto,
+                                    alto_producto,
+                                })
+                        "
+                    />
+                </div>
+                <div class="form-column col-sm-4">
+                    <dimension
                         label="Tamaño Montaje"
                         :width="form_data.ancho_montaje"
                         :height="form_data.alto_montaje"
@@ -137,24 +155,6 @@ export default {
                                     ...form_data,
                                     ancho_material,
                                     alto_material,
-                                })
-                        "
-                    />
-                </div>
-                <div class="form-column col-sm-4">
-                    <dimension
-                        label="Tamaño Producto"
-                        :width="form_data.ancho_producto"
-                        :height="form_data.alto_producto"
-                        @on_change="
-                            ({
-                                width: ancho_producto,
-                                height: alto_producto,
-                            }) =>
-                                (form_data = {
-                                    ...form_data,
-                                    ancho_producto,
-                                    alto_producto,
                                 })
                         "
                     />
@@ -252,21 +252,21 @@ export default {
                         <div class="input-group mb-3">
                             <span
                                 class="input-group-text color" id=""
-                                :style="{ background: form_data[`hex_tinta_seleccionada_retiro_${index}`] || '#56565656'}"
-                            >{{ (form_data[`hex_tinta_seleccionada_tiro_${index}`] || 'N/A').toUpperCase() }}
-                            </span>
+                                :style="{ background: form_data[`hex_tinta_seleccionada_tiro_${index}`] || '#56565656'}"
+                            ></span>
                             <input
                                 type="text"
                                 class="form-control"
-                                :list="`listado_de_tintas_${index}`"
+                                :list="`listado_de_tintas_tiro_${index}`"
                                 v-model="form_data[`tinta_seleccionada_tiro_${index}`]"
+                                @change="form_data[`hex_tinta_seleccionada_tiro_${index}`] = ''"
+                                @input="form_data[`tinta_seleccionada_tiro_${index}`] = ''"
                             />
 
                             <button
                                 class="btn btn-primary"
                                 style="border-top-left-radius: 0; border-bottom-left-radius: 0; height: 28px"
                                 @click="select_ink_color('Tiro', `tinta_seleccionada_tiro_${index}`)"
-                            
                             >
                                 Seleccionar
                             </button>
@@ -310,13 +310,14 @@ export default {
                             <span
                                 class="input-group-text color" id=""
                                 :style="{ background: form_data[`hex_tinta_seleccionada_retiro_${index}`] || '#56565656'}"
-                            >{{ (form_data[`hex_tinta_seleccionada_retiro_${index}`] || 'N/A').toUpperCase()}}
-                            </span>
+                            ></span>
                             <input
                                 type="text"
                                 class="form-control"
-                                :list="`listado_de_tintas_${index}`"
+                                :list="`listado_de_tintas_retiro${index}`"
                                 v-model="form_data[`tinta_seleccionada_retiro_${index}`]"
+                                @change="form_data[`hex_tinta_seleccionada_retiro_${index}`] = ''"
+                                @input="form_data[`tinta_seleccionada_retiro_${index}`] = ''"
                             />
 
                             <button

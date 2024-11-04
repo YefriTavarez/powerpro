@@ -8761,7 +8761,7 @@ Expected function or array of functions, received type ${typeof value}.`
   var _hoisted_21 = { class: "form-group" };
   var _hoisted_222 = { for: "" };
   var _hoisted_232 = { class: "input-group mb-3" };
-  var _hoisted_242 = ["list", "onUpdate:modelValue"];
+  var _hoisted_242 = ["list", "onUpdate:modelValue", "onChange", "onInput"];
   var _hoisted_252 = ["onClick"];
   var _hoisted_262 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("div", { class: "form-column col-sm-12" }, [
     /* @__PURE__ */ createBaseVNode("hr")
@@ -8771,7 +8771,7 @@ Expected function or array of functions, received type ${typeof value}.`
   var _hoisted_29 = { class: "form-group" };
   var _hoisted_30 = { for: "" };
   var _hoisted_31 = { class: "input-group mb-3" };
-  var _hoisted_322 = ["list", "onUpdate:modelValue"];
+  var _hoisted_322 = ["list", "onUpdate:modelValue", "onChange", "onInput"];
   var _hoisted_332 = ["onClick"];
   var _hoisted_342 = {
     key: 1,
@@ -8837,40 +8837,40 @@ Expected function or array of functions, received type ${typeof value}.`
           _hoisted_36,
           createBaseVNode("div", _hoisted_44, [
             createVNode(_component_dimension, {
-              label: "Tama\xF1o Montaje",
-              width: $data.form_data.ancho_montaje,
-              height: $data.form_data.alto_montaje,
-              onOn_change: _cache[0] || (_cache[0] = ({ width: ancho_montaje, height: alto_montaje }) => $data.form_data = __spreadProps(__spreadValues({}, $data.form_data), {
-                ancho_montaje,
-                alto_montaje
-              }))
-            }, null, 8, ["width", "height"])
-          ]),
-          createBaseVNode("div", _hoisted_52, [
-            createVNode(_component_dimension, {
-              label: "Tama\xF1o Material",
-              width: $data.form_data.ancho_material,
-              height: $data.form_data.alto_material,
-              onOn_change: _cache[1] || (_cache[1] = ({
-                width: ancho_material,
-                height: alto_material
-              }) => $data.form_data = __spreadProps(__spreadValues({}, $data.form_data), {
-                ancho_material,
-                alto_material
-              }))
-            }, null, 8, ["width", "height"])
-          ]),
-          createBaseVNode("div", _hoisted_62, [
-            createVNode(_component_dimension, {
               label: "Tama\xF1o Producto",
               width: $data.form_data.ancho_producto,
               height: $data.form_data.alto_producto,
-              onOn_change: _cache[2] || (_cache[2] = ({
+              onOn_change: _cache[0] || (_cache[0] = ({
                 width: ancho_producto,
                 height: alto_producto
               }) => $data.form_data = __spreadProps(__spreadValues({}, $data.form_data), {
                 ancho_producto,
                 alto_producto
+              }))
+            }, null, 8, ["width", "height"])
+          ]),
+          createBaseVNode("div", _hoisted_52, [
+            createVNode(_component_dimension, {
+              label: "Tama\xF1o Montaje",
+              width: $data.form_data.ancho_montaje,
+              height: $data.form_data.alto_montaje,
+              onOn_change: _cache[1] || (_cache[1] = ({ width: ancho_montaje, height: alto_montaje }) => $data.form_data = __spreadProps(__spreadValues({}, $data.form_data), {
+                ancho_montaje,
+                alto_montaje
+              }))
+            }, null, 8, ["width", "height"])
+          ]),
+          createBaseVNode("div", _hoisted_62, [
+            createVNode(_component_dimension, {
+              label: "Tama\xF1o Material",
+              width: $data.form_data.ancho_material,
+              height: $data.form_data.alto_material,
+              onOn_change: _cache[2] || (_cache[2] = ({
+                width: ancho_material,
+                height: alto_material
+              }) => $data.form_data = __spreadProps(__spreadValues({}, $data.form_data), {
+                ancho_material,
+                alto_material
               }))
             }, null, 8, ["width", "height"])
           ])
@@ -8943,14 +8943,16 @@ Expected function or array of functions, received type ${typeof value}.`
                   createBaseVNode("span", {
                     class: "input-group-text color",
                     id: "",
-                    style: normalizeStyle({ background: $data.form_data[`hex_tinta_seleccionada_retiro_${index}`] || "#56565656" })
-                  }, toDisplayString(($data.form_data[`hex_tinta_seleccionada_tiro_${index}`] || "N/A").toUpperCase()), 5),
+                    style: normalizeStyle({ background: $data.form_data[`hex_tinta_seleccionada_tiro_${index}`] || "#56565656" })
+                  }, null, 4),
                   withDirectives(createBaseVNode("input", {
                     type: "text",
                     class: "form-control",
-                    list: `listado_de_tintas_${index}`,
-                    "onUpdate:modelValue": ($event) => $data.form_data[`tinta_seleccionada_tiro_${index}`] = $event
-                  }, null, 8, _hoisted_242), [
+                    list: `listado_de_tintas_tiro_${index}`,
+                    "onUpdate:modelValue": ($event) => $data.form_data[`tinta_seleccionada_tiro_${index}`] = $event,
+                    onChange: ($event) => $data.form_data[`hex_tinta_seleccionada_tiro_${index}`] = "",
+                    onInput: ($event) => $data.form_data[`tinta_seleccionada_tiro_${index}`] = ""
+                  }, null, 40, _hoisted_242), [
                     [vModelText, $data.form_data[`tinta_seleccionada_tiro_${index}`]]
                   ]),
                   createBaseVNode("button", {
@@ -8991,13 +8993,15 @@ Expected function or array of functions, received type ${typeof value}.`
                     class: "input-group-text color",
                     id: "",
                     style: normalizeStyle({ background: $data.form_data[`hex_tinta_seleccionada_retiro_${index}`] || "#56565656" })
-                  }, toDisplayString(($data.form_data[`hex_tinta_seleccionada_retiro_${index}`] || "N/A").toUpperCase()), 5),
+                  }, null, 4),
                   withDirectives(createBaseVNode("input", {
                     type: "text",
                     class: "form-control",
-                    list: `listado_de_tintas_${index}`,
-                    "onUpdate:modelValue": ($event) => $data.form_data[`tinta_seleccionada_retiro_${index}`] = $event
-                  }, null, 8, _hoisted_322), [
+                    list: `listado_de_tintas_retiro${index}`,
+                    "onUpdate:modelValue": ($event) => $data.form_data[`tinta_seleccionada_retiro_${index}`] = $event,
+                    onChange: ($event) => $data.form_data[`hex_tinta_seleccionada_retiro_${index}`] = "",
+                    onInput: ($event) => $data.form_data[`tinta_seleccionada_retiro_${index}`] = ""
+                  }, null, 40, _hoisted_322), [
                     [vModelText, $data.form_data[`tinta_seleccionada_retiro_${index}`]]
                   ]),
                   createBaseVNode("button", {
@@ -9322,4 +9326,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.SHDBREAZ.js.map
+//# sourceMappingURL=powerpro.bundle.EPNBHK2T.js.map
