@@ -22,7 +22,9 @@
   "item_group_5",
   "is_group_5",
   "supported_operations_section",
-  "product_operations"
+  "product_operations",
+  "section_break_nvsi",
+  "raw_materials"
  ],
  "fields": [
   {
@@ -156,11 +158,22 @@
    "label": "Product Operations",
    "options": "Product Operations",
    "reqd": 1
+  },
+  {
+   "fieldname": "section_break_nvsi",
+   "fieldtype": "Section Break",
+   "label": "Supported Raw Materials"
+  },
+  {
+   "fieldname": "raw_materials",
+   "fieldtype": "Table MultiSelect",
+   "label": "Raw Materials",
+   "options": "Raw Materials"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-11-04 01:51:01.988396",
+ "modified": "2024-11-04 01:59:55.216351",
  "modified_by": "Administrator",
  "module": "Manufacturing Pro",
  "name": "Product Type",
