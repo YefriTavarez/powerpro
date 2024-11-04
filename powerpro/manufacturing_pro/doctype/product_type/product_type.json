@@ -1,0 +1,187 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:product_name",
+ "creation": "2024-11-04 01:00:16.143414",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "product_details_section",
+  "product_name",
+  "item_groups_section",
+  "item_group_1",
+  "is_group_1",
+  "item_group_2",
+  "is_group_2",
+  "column_break_hjrp",
+  "item_group_3",
+  "is_group_3",
+  "item_group_4",
+  "is_group_4",
+  "column_break_ycok",
+  "item_group_5",
+  "is_group_5",
+  "supported_operations_section",
+  "product_operations"
+ ],
+ "fields": [
+  {
+   "fieldname": "product_details_section",
+   "fieldtype": "Section Break",
+   "label": "Product Details"
+  },
+  {
+   "fieldname": "product_name",
+   "fieldtype": "Data",
+   "label": "Product Name",
+   "unique": 1
+  },
+  {
+   "fieldname": "item_groups_section",
+   "fieldtype": "Section Break",
+   "label": "Item Groups"
+  },
+  {
+   "fieldname": "item_group_1",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Item Group 1",
+   "options": "Item Group",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "default": "0",
+   "fetch_from": "item_group_1.is_group",
+   "fieldname": "is_group_1",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Is Group 1?",
+   "read_only": 1
+  },
+  {
+   "depends_on": "is_group_1",
+   "fieldname": "item_group_2",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Item Group 2",
+   "mandatory_depends_on": "is_group_1",
+   "options": "Item Group"
+  },
+  {
+   "default": "0",
+   "depends_on": "is_group_1",
+   "fetch_from": "item_group_2.is_group",
+   "fieldname": "is_group_2",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Is Group 2?",
+   "mandatory_depends_on": "is_group_1",
+   "read_only": 1
+  },
+  {
+   "depends_on": "is_group_2",
+   "fieldname": "item_group_3",
+   "fieldtype": "Link",
+   "label": "Item Group 3",
+   "mandatory_depends_on": "is_group_2",
+   "options": "Item Group"
+  },
+  {
+   "default": "0",
+   "depends_on": "is_group_2",
+   "fetch_from": "item_group_3.is_group",
+   "fieldname": "is_group_3",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Is Group 3?",
+   "mandatory_depends_on": "is_group_2",
+   "read_only": 1
+  },
+  {
+   "depends_on": "is_group_3",
+   "fieldname": "item_group_4",
+   "fieldtype": "Link",
+   "label": "Item Group 4",
+   "mandatory_depends_on": "is_group_3",
+   "options": "Item Group"
+  },
+  {
+   "default": "0",
+   "depends_on": "is_group_3",
+   "fetch_from": "item_group_4.is_group",
+   "fieldname": "is_group_4",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Is Group 4?",
+   "read_only": 1
+  },
+  {
+   "depends_on": "is_group_4",
+   "fieldname": "item_group_5",
+   "fieldtype": "Link",
+   "label": "Item Group 5",
+   "mandatory_depends_on": "is_group_4",
+   "options": "Item Group"
+  },
+  {
+   "default": "0",
+   "depends_on": "is_group_4",
+   "fetch_from": "item_group_5.is_group",
+   "fieldname": "is_group_5",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Is Group 5?",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_hjrp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ycok",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "supported_operations_section",
+   "fieldtype": "Section Break",
+   "label": "Supported Operations"
+  },
+  {
+   "description": "At least one Operation is required",
+   "fieldname": "product_operations",
+   "fieldtype": "Table MultiSelect",
+   "label": "Product Operations",
+   "options": "Product Operations",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-11-04 01:51:01.988396",
+ "modified_by": "Administrator",
+ "module": "Manufacturing Pro",
+ "name": "Product Type",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
