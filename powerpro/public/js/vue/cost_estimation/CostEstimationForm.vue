@@ -16,7 +16,8 @@ import CheckboxField from "./components/std/CheckboxField.vue";
 import DataListField from './DataListField.vue'
 // import RawMaterialController from "../../controllers/material_controller.js";
 
-// import computed from "./options/computed.js";
+import computed from "./options/computed.js";
+import methods from "./options/methods.js";
 
 export default {
     name: "CostEstimation",
@@ -47,6 +48,10 @@ export default {
             doc: this.document,
             raw_material_specs: {},
 
+            // misc
+            selecting_ink: false,
+            ink_colors: [],
+
             // Cost Estimation Fields
             form_data, // let this one be dynamic
             // form_data: {
@@ -68,7 +73,6 @@ export default {
             // },
         };
     },
-    // computed,
     watch: {
         form_data: {
             handler(newVal, oldVal) {
@@ -81,52 +85,28 @@ export default {
             deep: true,
         },
     },
-    methods: {
-        fetch_raw_material_specs() {
-            this.material_controller.fetch_raw_material_specs(
-                this.frm.doc.raw_material,
-            );
+    computed,
+    methods,
+    filters: {
+        upper(value) {
+            if (!value) {
+                return "";
+            }
+
+            return value.toUpperCase();
         },
-        calculate_cost() {
-            // this.amount = flt(this.quantity) * flt(this.rate);
-            // // this.$emit("update:amount", this.amount);
-            // // this.$refs.amt.set_amount(this.amount);
-            // const { $refs: refs } = this;
-            // refs.amt.set_amount(this.amount);
-        },
-        update_data() {
-            const data = JSON.stringify(this.form_data, null, 4);
-            this.frm.set_value("data", data);
-        },
-        after_color_select(fieldname, value) {
-            this.form_data[fieldname] = value;
-            this.update_data();
-        },
-        handle_relieve_dimension_change(index, width, height) {
-            this.form_data[`ancho_elemento_relieve_${index}`] = width;
-            this.form_data[`alto_elemento_relieve_${index}`] = height;
-            this.update_data();
-        },
-        fetch_assets() {
-            // Fetch:
-            // - Foil colors
-            // - Ink colors
-        },
-    },
-    mounted() {
-        this.fetch_assets();
     },
     components: {
-    QtyField,
-    RateField,
-    AmountField,
-    SelectField,
-    Dimension,
-    PrintingTecnique,
-    ColorCount,
-    CheckboxField,
-    DataListField,
-},
+        QtyField,
+        RateField,
+        AmountField,
+        SelectField,
+        Dimension,
+        PrintingTecnique,
+        ColorCount,
+        CheckboxField,
+        DataListField,
+    },
 };
 </script>
 
@@ -137,7 +117,7 @@ export default {
                 <div class="px-3" style="width: 100%">
                     <h3>Dimensiones</h3>
                 </div>
-                <div class="form-column col-sm-6">
+                <div class="form-column col-sm-4">
                     <dimension
                         label="Tamaño Montaje"
                         :width="form_data.ancho_montaje"
@@ -151,6 +131,8 @@ export default {
                                 })
                         "
                     />
+                </div>
+                <div class="form-column col-sm-4">
                     <dimension
                         label="Tamaño Material"
                         :width="form_data.ancho_material"
@@ -168,7 +150,7 @@ export default {
                         "
                     />
                 </div>
-                <div class="form-column col-sm-6">
+                <div class="form-column col-sm-4">
                     <dimension
                         label="Tamaño Producto"
                         :width="form_data.ancho_producto"
@@ -247,10 +229,11 @@ export default {
                 <div class="px-3" style="width: 100%">
                     <h3>Colores</h3>
                 </div>
-                <div class="form-column col-sm-6">
+                <div class="form-column col-sm-4">
                     <select-field
-                        label="Cantidad de Tintas"
+                        label="Cantidad de Tintas Tiro"
                         :options="[
+                            { value: 0, label: '0' },
                             { value: 1, label: '1' },
                             { value: 2, label: '2' },
                             { value: 3, label: '3' },
@@ -260,83 +243,104 @@ export default {
                             { value: 7, label: '7' },
                             { value: 8, label: '8' },
                         ]"
-                        :selected="form_data.cantidad_de_tintas"
+                        :selected="form_data.cantidad_de_tintas_tiro"
                         @after_select="
-                            (value) => (form_data.cantidad_de_tintas = parseFloat(value))
+                            (value) => (form_data.cantidad_de_tintas_tiro = parseFloat(value))
                         "
                     />
-
-
-                    <!-- <color-count
-                        label="Colores Procesos Tiro"
-                        :selected="form_data.colores_procesos_tiro"
-                        :only_numbers="false"
-                        @after_select="
-                            (value) =>
-                                (form_data.colores_procesos_tiro = value)
-                        "
-                    />
-                    <color-count
-                        label="Colores Pantones Tiro"
-                        :selected="form_data.colores_pantones_tiro"
-                        @after_select="
-                            (value) =>
-                                (form_data.colores_pantones_tiro = value)
-                        "
-                    />
-                    <color-count
-                        label="Colores Especiales Tiro"
-                        :selected="form_data.colores_especiales_tiro"
-                        @after_select="
-                            (value) =>
-                                (form_data.colores_especiales_tiro = value)
-                        "
-                    /> -->
                 </div>
-                <div class="form-column col-sm-6">
-                    <!-- :field_id="`tinta_selccionada_${index}`"
+                <div class="form-column col-sm-8">
+                    <!-- :field_id="`tinta_seleccionada_${index}`"
                     :list_id="`listado_de_tintas_${index}`" -->
                     
-                    <div v-for="index in form_data.cantidad_de_tintas">
+                    <div
+                        class="form-group" 
+                        v-for="index in form_data.cantidad_de_tintas_tiro"
+                    >
                         <label for="">Tinta {{ index }}</label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            :list="`listado_de_tintas_${index}`"
-                            v-model="form_data[`tinta_selccionada_${index}`]"
-                        />
+                        <div class="input-group mb-3">
+                            <span
+                                class="input-group-text color" id=""
+                                :style="{ background: form_data[`hex_tinta_seleccionada_retiro_${index}`] || '#56565656'}"
+                            >{{ (form_data[`hex_tinta_seleccionada_tiro_${index}`] | upper) || 'N/A' }}
+                            </span>
+                            <input
+                                type="text"
+                                class="form-control"
+                                :list="`listado_de_tintas_${index}`"
+                                v-model="form_data[`tinta_seleccionada_tiro_${index}`]"
+                            />
 
-                        
+                            <button
+                                class="btn btn-primary"
+                                style="border-top-left-radius: 0; border-bottom-left-radius: 0; height: 28px"
+                                @click="select_ink_color('Tiro', `tinta_seleccionada_tiro_${index}`)"
+                            
+                            >
+                                {{ "Seleccionar" | upper }}
+                            </button>
+                        </div>
                     </div>
+                </div>
 
-                    <!-- <color-count
-                        label="Colores Procesos Retiro"
-                        :selected="form_data.colores_procesos_retiro"
-                        :only_numbers="false"
+                <div class="form-column col-sm-12">
+                <hr>
+                </div>
+                <div class="form-column col-sm-4">
+                    <select-field
+                        label="Cantidad de Tintas Retiro"
+                        :options="[
+                            { value: 0, label: '0' },
+                            { value: 1, label: '1' },
+                            { value: 2, label: '2' },
+                            { value: 3, label: '3' },
+                            { value: 4, label: '4' },
+                            { value: 5, label: '5' },
+                            { value: 6, label: '6' },
+                            { value: 7, label: '7' },
+                            { value: 8, label: '8' },
+                        ]"
+                        :selected="form_data.cantidad_de_tintas_retiro"
                         @after_select="
-                            (value) =>
-                                (form_data.colores_procesos_retiro = value)
+                            (value) => (form_data.cantidad_de_tintas_retiro = parseFloat(value))
                         "
                     />
-                    <color-count
-                        label="Colores Pantones Retiro"
-                        :selected="form_data.colores_pantones_retiro"
-                        @after_select="
-                            (value) =>
-                                (form_data.colores_pantones_retiro = value)
-                        "
-                    />
-                    <color-count
-                        label="Colores Especiales Retiro"
-                        :selected="form_data.colores_especiales_retiro"
-                        @after_select="
-                            (value) =>
-                                (form_data.colores_especiales_retiro = value)
-                        "
-                    /> -->
+                </div>
+                <div class="form-column col-sm-8">
+                    <!-- :field_id="`tinta_seleccionada_${index}`"
+                    :list_id="`listado_de_tintas_${index}`" -->
+                    
+                    <div
+                        class="form-group" 
+                        v-for="index in form_data.cantidad_de_tintas_retiro"
+                    >
+                        <label for="">Tinta {{ index }}</label>
+                        <div class="input-group mb-3">
+                            <span
+                                class="input-group-text color" id=""
+                                :style="{ background: form_data[`hex_tinta_seleccionada_retiro_${index}`] || '#56565656'}"
+                            >{{ (form_data[`hex_tinta_seleccionada_retiro_${index}`] | upper) || 'N/A')}}
+                            </span>
+                            <input
+                                type="text"
+                                class="form-control"
+                                :list="`listado_de_tintas_${index}`"
+                                v-model="form_data[`tinta_seleccionada_retiro_${index}`]"
+                            />
+
+                            <button
+                                class="btn btn-primary"
+                                style="border-top-left-radius: 0; border-bottom-left-radius: 0; height: 28px"
+                                @click="select_ink_color('Retiro', `tinta_seleccionada_retiro_${index}`)"
+                            
+                            >
+                                Seleccionar
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="row" v-else>
+            <div class="row" v-if="form_data.tecnologia === 'Digital'">
                 <div class="form-column col-sm-6">
                     <p class="full-color-text" style="color: greenyellow">
                         Full Color
@@ -474,7 +478,7 @@ export default {
                     />
 
                 </div>
-                    <div class="form-column col-sm-6">
+                <div class="form-column col-sm-6">
                     <dimension
                         v-for="index in form_data.cantidad_de_elementos_en_relieve"
                         :label="`Tamaño del Elemento ${index}`"
@@ -628,5 +632,12 @@ export default {
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.input-group > span.color {
+    height: 28px;
+    border: none;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
 }
 </style>

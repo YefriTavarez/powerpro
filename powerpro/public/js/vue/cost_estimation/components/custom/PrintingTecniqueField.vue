@@ -25,6 +25,7 @@ export default {
 			options: [
 				{ label: "Digital", value: "Digital" },
 				{ label: "Offset", value: "Offset" },
+				{ label: "N/A", value: "No Print" },
 			],
 			value: this.selected,
 		}

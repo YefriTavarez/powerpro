@@ -1,5 +1,5 @@
 jQuery(frappe.router).ready(async function () {
-	await frappe.timeout(.300);
+	await frappe.timeout(.600);
 
 	const reroute_if_accounts_receivable = function (route_options) {
 		const route = frappe.get_route();
