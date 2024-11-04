@@ -8,7 +8,8 @@
  "field_order": [
   "ink_color",
   "column_break_pmeh",
-  "percentage"
+  "percentage",
+  "rate_per_kg"
  ],
  "fields": [
   {
@@ -30,12 +31,21 @@
    "label": "Ink Color",
    "options": "Ink Color",
    "reqd": 1
+  },
+  {
+   "fetch_from": "ink_color.rate_per_kg",
+   "fieldname": "rate_per_kg",
+   "fieldtype": "Currency",
+   "label": "Rate per KG",
+   "non_negative": 1,
+   "precision": "2",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-11-03 00:24:37.023555",
+ "modified": "2024-11-04 02:10:49.270616",
  "modified_by": "Administrator",
  "module": "Manufacturing Pro",
  "name": "Pantone Composition",
