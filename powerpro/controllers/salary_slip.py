@@ -23,10 +23,11 @@ class SalarySlip(SalarySlip):
             "health_insurance_rate": self.dgii_payroll_settings.health_insurance_rate,
         })
 
-    def set_salary_slip_fake_status(self):
-        # This is a fake status that is needed to be able to validate
-        # the condition in the salary structure
-        self.salary_slip_status = "Submitted"
+    def set_mid_month_start(self):
+        if self.start_date[-2:] >= "15" or self.payroll_frequency == "Monthly":
+            self.mid_month_start = True
+        else:
+            self.mid_month_start = False
 
     def get_dgii_payroll_settings(self):
         doctype = "DGII Payroll Settings"
@@ -73,7 +74,7 @@ class SalarySlip(SalarySlip):
             })
         
         self.set_dgii_payroll_settings()
-        self.set_salary_slip_fake_status()
+        self.set_mid_month_start()
 
 
 @frappe.whitelist()
