@@ -8859,7 +8859,7 @@ Expected function or array of functions, received type ${typeof value}.`
           createBaseVNode("div", _hoisted_9, [
             createVNode(_component_select_field, {
               label: "Porcentaje Adicional",
-              initial_value: _ctx.form_data.porcentaje_adicional,
+              selected: _ctx.form_data.porcentaje_adicional,
               onAfter_select: _cache[4] || (_cache[4] = (value) => _ctx.form_data.porcentaje_adicional = value),
               options: [
                 { value: 0, label: "0%" },
@@ -8868,7 +8868,7 @@ Expected function or array of functions, received type ${typeof value}.`
                 { value: 15, label: "15%" }
               ],
               help_text: "Este porcentaje se le sumar\xE1 a la cantidad total."
-            }, null, 8, ["initial_value"])
+            }, null, 8, ["selected"])
           ])
         ])
       ]),
@@ -9366,4 +9366,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.U2AZAX6E.js.map
+//# sourceMappingURL=powerpro.bundle.GGQZPOOC.js.map

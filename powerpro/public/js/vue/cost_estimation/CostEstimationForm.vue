@@ -71,7 +71,7 @@ export default {
                 <div class="form-column col-sm-4">
                     <select-field
                         label="Porcentaje Adicional"
-                        :initial_value="form_data.porcentaje_adicional"
+                        :selected="form_data.porcentaje_adicional"
                         @after_select="
                             (value) => (form_data.porcentaje_adicional = value)
                         "
