@@ -11,3 +11,5 @@ powerpro.patches.v1.igc_4_apply_customizations
 powerpro.patches.v1.igc_8_refactor_fields
 powerpro.patches.v1.create_type_of_service_purchased
 powerpro.patches.v1.igc_15_apply_customizations
+powerpro.patches.v1.create_views_for_606
+powerpro.patches.v1.igc_12_apply_customizations

@@ -28,6 +28,8 @@ SELECT
     pinv.company,
     pinv.name,
     pinv.tax_id,
+    pinv.retention_date,
+    pinv.isr_date,
     supl.tipo_rnc,
     pinv.tipo_bienes_y_servicios_comprados,
     pinv.ncf,
@@ -81,6 +83,8 @@ WHERE
     pinv.docstatus = 1
     AND pinv.company = {company!r}
     AND pinv.posting_date >= {from_date!r} AND pinv.posting_date <= {to_date!r}
+    OR pinv.retention_date >= {from_date!r} AND pinv.retention_date <= {to_date!r}
+    OR pinv.isr_date >= {from_date!r} AND pinv.isr_date <= {to_date!r}
 
 UNION ALL
 
@@ -92,6 +96,8 @@ SELECT
     pinv.tax_id,
     supl.tipo_rnc,
     pinv.tipo_bienes_y_servicios_comprados,
+    pinv.retention_date,
+    pinv.isr_date,
     pinv.ncf,
     pinv.bill_date,
     pinv.excise_tax,
@@ -180,15 +186,16 @@ WHERE
                 ncf,		# NCF                                                            #5
                 date,  # FC AAAAMM                                                           #6
                 day,                                                                         #7
-                get_retention_date(row),  # FP DD          #fecha pago                       #8
                 row.monto_facturado_servicios,  # Monto Facturado en Servicios               #9
                 row.monto_facturado_bienes,	# Monto Facturado en bienes                      #10
                 flt(row.monto_facturado_servicios) + flt(row.monto_facturado_bienes),        #11
                 get_itbis(row) or 0,		     # ITBIS Facturado                           #12
-                row.itbis_retenido or 0,                                                     #13
+                row.retention_amount or 0,                                                     #13
+                get_retention_date_if_in_range(row, from_date, to_date),                   #8
                 get_itbis(row) or 0,             #itbis por adelantar                        #14
                 row.retention_type if row.retention_type else '',   #tipo de retencion       #15
                 row.isr_amount or 0,  			# Monto Retención Renta                      #16
+                get_isr_date_if_in_range(row, from_date, to_date),
                 row.excise_tax or 0,  			# Impuesto Selectivo al Consumo              #17
                 row.other_taxes or 0,  			# Otros Impuesto/Tasas                       #18
                 row.legal_tip,  				# Monto Propina Legal                        #19
@@ -219,10 +226,12 @@ def generate_txt(result):
             f"{row.monto_facturado_bienes}|"
             f"{flt(row.monto_facturado_servicios) + flt(row.monto_facturado_bienes)}|"
             f"{get_itbis(row) or 0}|"
-            f"{row.itbis_retenido or 0}|"
+            f"{row.retention_amount or 0}|"
+            f"{get_retention_date_if_in_range(row, from_date, to_date)}|"
             f"{get_itbis(row) or 0}|"
             f"{row.retention_type or ''}|"
             f"{row.isr_amount or 0}|"
+            f"{get_isr_date_if_in_range(row, from_date, to_date)}|"
             f"{row.excise_tax or 0}|"
             f"{row.other_taxes or 0}|"
             f"{row.legal_tip}|"
@@ -347,28 +356,20 @@ def verify_payment(row=None):
         
 def get_isr_date_if_in_range(row, from_date, to_date):
     if row.isr_date:     
-        isr_date = row.isr_date.strftime("%Y-%m-%d")   
-        from_date = datetime.strptime(from_date, "%Y-%m-%d")
-        to_date = datetime.strptime(to_date, "%Y-%m-%d")
-        isr_date_dt = datetime.strptime(isr_date, "%Y-%m-%d")
         
-        if from_date <= isr_date_dt <= to_date:
+        if from_date <= row.isr_date <= to_date:
             return row.isr_date  
             
-    return "No esta entrando"  
+    return ""  
 
 
 def get_retention_date_if_in_range(row, from_date, to_date):
     if row.retention_date:
-        retention_date = row.retention_date.strftime("%Y-%m-%d")
-        from_date = datetime.strptime(from_date, "%Y-%m-%d")
-        to_date = datetime.strptime(to_date, "%Y-%m-%d")
-        retention_date_dt = datetime.strptime(retention_date, "%Y-%m-%d")
 
-        if from_date <= retention_date_dt <= to_date:
+        if from_date <= row.retention_date <= to_date:
             return row.retention_date  
 
-    return "No esta entrando"  
+    return ""  
 
 
 @frappe.whitelist()
