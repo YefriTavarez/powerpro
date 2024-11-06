@@ -53,8 +53,22 @@ export default {
                             </button>
                         </div>
                     </div>
-                    
+                </div>
 
+                <div class="form-column col-sm-4">
+                    <qty-field
+                        label="Cantidad"
+                        :initial_value="form_data.cantidad_de_producto"
+                        :enforce_positive="true"
+                        :enfore_integer="true"
+                        :format_with_comma="true"
+                        @after_select="
+                            (value) => (form_data.cantidad_de_producto = value)
+                        "
+                    />
+                </div>
+
+                <div class="form-column col-sm-4">
                     <select-field
                         label="Porcentaje Adicional"
                         :initial_value="form_data.porcentaje_adicional"
@@ -67,6 +81,7 @@ export default {
                             { value: 10, label: '10%' },
                             { value: 15, label: '15%' },
                         ]"
+                        help_text="Este porcentaje se le sumará a la cantidad total."
                     />
                 </div>
             </div>

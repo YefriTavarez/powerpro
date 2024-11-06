@@ -22,6 +22,18 @@ export default {
 			type: String,
 			default: "Quantity",
 		},
+		enforce_positive: {
+			type: Boolean,
+			default: false,
+		},
+		enfore_integer: {
+			type: Boolean,
+			default: false,
+		},
+		format_with_comma: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	data() {
 		return {
@@ -34,8 +46,24 @@ export default {
 			return Math.random().toString(36).substring(7);
 		},
 		on_change() {
-			this.value = parseFloat(this.value);
-			this.$emit("after_select", this.value);
+			// this.value = parseFloat(this.value);
+			// this.$emit("after_select", this.value);
+
+			const _value = flt(this.value);
+
+			if (this.enforce_positive && _value < 0) {
+				this.value = 0;
+			}
+
+			if (this.enfore_integer) {
+				this.value = parseInt(_value);
+			}
+
+			if (this.format_with_comma) {
+				this.value = _value.toLocaleString();
+			}
+
+			this.$emit("after_select", _value);
 		},
 	},
 }
