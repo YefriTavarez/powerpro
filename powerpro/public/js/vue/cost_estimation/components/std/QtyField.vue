@@ -38,7 +38,7 @@ export default {
 	data() {
 		return {
 			id: this.getRandomId(),
-			value: this.initial_value,
+			value: flt(this.initial_value).toLocaleString(),
 		}
 	},
 	methods: {
@@ -49,7 +49,7 @@ export default {
 			// this.value = parseFloat(this.value);
 			// this.$emit("after_select", this.value);
 
-			const _value = flt(this.value);
+			let _value = flt(this.value);
 
 			if (this.enforce_positive && _value < 0) {
 				_value = 0;

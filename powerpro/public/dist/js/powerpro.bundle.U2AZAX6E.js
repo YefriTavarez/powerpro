@@ -8116,7 +8116,7 @@ Expected function or array of functions, received type ${typeof value}.`
     data() {
       return {
         id: this.getRandomId(),
-        value: this.initial_value
+        value: flt(this.initial_value).toLocaleString()
       };
     },
     methods: {
@@ -8124,16 +8124,17 @@ Expected function or array of functions, received type ${typeof value}.`
         return Math.random().toString(36).substring(7);
       },
       on_change() {
-        const _value = flt(this.value);
+        let _value = flt(this.value);
         if (this.enforce_positive && _value < 0) {
-          this.value = 0;
+          _value = 0;
         }
         if (this.enfore_integer) {
-          this.value = parseInt(_value);
+          _value = parseInt(_value);
         }
         if (this.format_with_comma) {
-          this.value = _value.toLocaleString();
+          _value = _value.toLocaleString();
         }
+        this.value = _value;
         this.$emit("after_select", _value);
       }
     }
@@ -9365,4 +9366,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.OD4K7P4B.js.map
+//# sourceMappingURL=powerpro.bundle.U2AZAX6E.js.map
