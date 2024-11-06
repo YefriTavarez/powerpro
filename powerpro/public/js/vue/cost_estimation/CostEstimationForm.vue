@@ -2,107 +2,77 @@
 information, please see license.txt /* eslint-disable */
 
 <script>
-// Standard Fields
-import QtyField from "./components/std/QtyField.vue";
-import RateField from "./components/std/RateField.vue";
-import AmountField from "./components/std/AmountField.vue";
-import SelectField from "./components/std/SelectField.vue";
 
-// Custom Fields
-import Dimension from "./components/custom/DimensionField.vue";
-import PrintingTecnique from "./components/custom/PrintingTecniqueField.vue";
-import ColorCount from "./components/custom/ColorCountField.vue";
-import CheckboxField from "./components/std/CheckboxField.vue";
-import DataListField from './DataListField.vue'
 // import RawMaterialController from "../../controllers/material_controller.js";
 
+import props from "./options/props.js";
 import computed from "./options/computed.js";
 import methods from "./options/methods.js";
+import components from "./options/components.js";
+import watch from "./options/watch.js";
+import data from "./options/data.js";
 
 export default {
     name: "CostEstimation",
-    props: {
-        frm: {
-            type: Object,
-            required: true,
-        },
-        document: {
-            type: Object,
-            required: true,
-        },
-    },
-    data() {
-        const { document: doc } = this;
-
-        let form_data = {};
-        try {
-            form_data = JSON.parse(doc.data || "{}");
-        } catch (e) {
-            console.error(e);
-        }
-
-        return {
-            quantity: 5,
-            rate: 3,
-            amount: 0,
-            doc: this.document,
-            raw_material_specs: {},
-
-            // misc
-            selecting_ink: false,
-            ink_colors: [],
-
-            // Cost Estimation Fields
-            form_data, // let this one be dynamic
-            // form_data: {
-            //   ancho_montaje: 0,
-            //   alto_montaje: 0,
-            //   ancho_material: 0,
-            //   alto_material: 0,
-            //   ancho_producto: 0,
-            //   alto_producto: 0,
-            //   tecnologia: "",
-
-            //   // colors
-            //   colores_procesos_tiro: 0,
-            //   colores_pantones_tiro: 0,
-            //   colores_especiales_tiro: 0,
-            //   colores_procesos_retiro: 0,
-            //   colores_pantones_retiro: 0,
-            //   colores_especiales_retiro: 0,
-            // },
-        };
-    },
-    watch: {
-        form_data: {
-            handler(newVal, oldVal) {
-                if (this.loading) {
-                    return this;
-                }
-
-                this.update_data();
-            },
-            deep: true,
-        },
-    },
+    props,
+    data,
+    watch,
     computed,
     methods,
-    components: {
-        QtyField,
-        RateField,
-        AmountField,
-        SelectField,
-        Dimension,
-        PrintingTecnique,
-        ColorCount,
-        CheckboxField,
-        DataListField,
-    },
+    components,
 };
 </script>
 
 <template>
     <div data-component="cost-estimation">
+        <section>
+            <div class="row">
+                <div class="px-3" style="width: 100%">
+                    <h3>Cantidad</h3>
+                </div>
+                <div class="form-column col-sm-4">
+                    <div
+                        class="form-group" 
+                    >
+                        <label for="">Tipo de Producto</label>
+                        <div class="input-group mb-3">
+                            <input
+                                type="text"
+                                class="form-control"
+                                v-model="form_data.tipo_de_producto"
+                                @change="value => form_data.tipo_de_producto = value"
+                                readonly
+                            />
+
+                            <button
+                                class="btn btn-primary"
+                                style="border-top-left-radius: 0; border-bottom-left-radius: 0; height: 28px"
+                                @click="select_product_type()"
+                            >
+                                {{ !form_data.tipo_de_producto? "Seleccionar": "Cambiar" }}
+                            </button>
+                        </div>
+                    </div>
+                    
+
+                    <select-field
+                        label="Porcentaje Adicional"
+                        :initial_value="form_data.porcentaje_adicional"
+                        @after_select="
+                            (value) => (form_data.porcentaje_adicional = value)
+                        "
+                        :options="[
+                            { value: 0, label: '0%' },
+                            { value: 5, label: '5%' },
+                            { value: 10, label: '10%' },
+                            { value: 15, label: '15%' },
+                        ]"
+                    />
+                </div>
+            </div>
+        </section>
+
+
         <section>
             <div class="row">
                 <div class="px-3" style="width: 100%">

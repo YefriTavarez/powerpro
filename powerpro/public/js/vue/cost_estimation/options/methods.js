@@ -62,6 +62,33 @@ export default {
 
 		frappe.prompt(fields, callback, title, primary_label);
 	},
+	select_product_type() {
+		const self = this;
+		const fields = [
+			{
+				fieldname: "product_type",
+				fieldtype: "Link",
+				options: "Product Type",
+				label: __("Product Type"),
+				default: self.form_data.tipo_de_producto,
+				reqd: 1,
+			},
+		];
+
+		function callback(values) {
+			const { product_type } = values;
+
+			self.form_data.tipo_de_producto = product_type;
+			self.update_data();
+
+			// self.fetch_product_type_details(product_type);
+		};
+
+		const title = __("Select Product Type");
+		const primary_label = self.form_data.tipo_de_producto? __("Select"): __("Update");
+
+		frappe.prompt(fields, callback, title, primary_label);
+	},
 	get_selected_ink_colors_in_front_side() {
 		if (!this.form_data) {
 			return [];
