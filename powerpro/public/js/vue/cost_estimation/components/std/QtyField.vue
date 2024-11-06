@@ -52,16 +52,18 @@ export default {
 			const _value = flt(this.value);
 
 			if (this.enforce_positive && _value < 0) {
-				this.value = 0;
+				_value = 0;
 			}
 
 			if (this.enfore_integer) {
-				this.value = parseInt(_value);
+				_value = parseInt(_value);
 			}
 
 			if (this.format_with_comma) {
-				this.value = _value.toLocaleString();
+				_value = _value.toLocaleString();
 			}
+
+			this.value = _value;
 
 			this.$emit("after_select", _value);
 		},

@@ -8,8 +8,8 @@
 					:value="option.value"
 					:disabled="option.disabled"
 				>
-						{{ option.label || option.value }}
-					</option>
+					{{ option.label || option.value }}
+				</option>
 			</select>
 			<p v-if="help_text" class="text-muted">{{ help_text }}</p>
 		</div>
