@@ -136,7 +136,7 @@ WHERE
 	""", as_dict=True)
     
     if file_type == "txt":
-        content = generate_txt(result)
+        content = generate_txt(result, from_date, to_date)
         frappe.response['result'] = cstr(content)
         frappe.response['type'] = 'txt'
     else:
@@ -206,7 +206,7 @@ WHERE
         frappe.response['type'] = 'csv'
     frappe.response['doctype'] = "Reporte_606_" + str(int(time.time()))
 
-def generate_txt(result):
+def generate_txt(result, from_date, to_date,):
     lines = []
     for row in result:
         ncf = row.ncf.split("-")[1] if row.ncf and len(row.ncf.split("-")) > 1 else row.ncf
