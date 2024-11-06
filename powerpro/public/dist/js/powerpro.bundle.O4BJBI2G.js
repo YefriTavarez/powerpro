@@ -7973,8 +7973,6 @@ Expected function or array of functions, received type ${typeof value}.`
         this.frm.doc.raw_material
       );
     },
-    calculate_cost() {
-    },
     update_data() {
       const data = JSON.stringify(this.form_data, null, 4);
       this.frm.set_value("data", data);
@@ -8033,6 +8031,7 @@ Expected function or array of functions, received type ${typeof value}.`
         const { product_type } = values;
         self2.form_data.tipo_de_producto = product_type;
         self2.update_data();
+        self2.fetch_product_type_details(product_type);
       }
       ;
       const title = __("Select Product Type");
@@ -8086,6 +8085,23 @@ Expected function or array of functions, received type ${typeof value}.`
       }
       const parent_doc = null;
       frappe.db.get_value(doctype, filters, fieldname, callback, parent_doc);
+    },
+    fetch_product_type_details(product_type) {
+      const method = "powerpro.manufacturing_pro.doctype.cost_estimation.client.get_product_type_details";
+      function callback({ message }) {
+        console.log({ message });
+      }
+      ;
+      const args = {
+        product_type
+      };
+      function callback({ message }) {
+        console.log({ message });
+      }
+      ;
+      const freeze = true;
+      const freeze_message = "Loading Product Type details";
+      frappe.call({ method, args, callback, freeze, freeze_message });
     }
   };
 
@@ -9366,4 +9382,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.GGQZPOOC.js.map
+//# sourceMappingURL=powerpro.bundle.O4BJBI2G.js.map

@@ -8,13 +8,6 @@ export default {
 			this.frm.doc.raw_material,
 		);
 	},
-	calculate_cost() {
-		// this.amount = flt(this.quantity) * flt(this.rate);
-		// // this.$emit("update:amount", this.amount);
-		// // this.$refs.amt.set_amount(this.amount);
-		// const { $refs: refs } = this;
-		// refs.amt.set_amount(this.amount);
-	},
 	update_data() {
 		const data = JSON.stringify(this.form_data, null, 4);
 		this.frm.set_value("data", data);
@@ -81,7 +74,7 @@ export default {
 			self.form_data.tipo_de_producto = product_type;
 			self.update_data();
 
-			// self.fetch_product_type_details(product_type);
+			self.fetch_product_type_details(product_type);
 		};
 
 		const title = __("Select Product Type");
@@ -146,5 +139,24 @@ export default {
 	
 		const parent_doc = null;
 		frappe.db.get_value(doctype, filters, fieldname, callback, parent_doc);
-	}
+	},
+	fetch_product_type_details(product_type) {
+		const method = "powerpro.manufacturing_pro.doctype.cost_estimation.client.get_product_type_details";
+		function callback({ message}) {
+			console.log({ message });
+		};
+
+		const args = { 
+			product_type,
+		};
+
+		function callback({ message }) {
+			console.log({ message });
+		};
+
+		const freeze = true;
+		const freeze_message = "Loading Product Type details";
+		frappe.call({ method, args, callback, freeze, freeze_message });
+			
+	},
 };
