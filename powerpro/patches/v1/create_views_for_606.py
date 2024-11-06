@@ -1,7 +1,7 @@
 import frappe
 
 
-def execute:
+def execute():
     create_views()
 
 
