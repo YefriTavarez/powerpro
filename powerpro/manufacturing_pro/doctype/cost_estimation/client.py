@@ -9,6 +9,9 @@ import frappe
 
 @frappe.whitelist()
 def get_product_type_details(product_type: str) -> List[Dict]:
+	if not product_type:
+		return []
+
 	if "operation_type" not in get_table_columns("Operation"):
 		frappe.throw("The doctype Operation has not been fully configured yet")
 

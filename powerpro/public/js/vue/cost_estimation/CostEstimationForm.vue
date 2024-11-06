@@ -30,7 +30,7 @@ export default {
                 <div class="px-3" style="width: 100%">
                     <h3>Cantidad</h3>
                 </div>
-                <div class="form-column col-sm-4">
+                <div class="form-column col-sm-6">
                     <div
                         class="form-group" 
                     >
@@ -45,6 +45,15 @@ export default {
                             />
 
                             <button
+                                class="btn btn-secondary"
+                                style="border-radius: 0; height: 28px"
+                                v-if="form_data.tipo_de_producto"
+                                @click="fetch_product_type_details(form_data.tipo_de_producto)"
+                            >
+                                {{ "Refrescar" }}
+                            </button>
+
+                            <button
                                 class="btn btn-primary"
                                 style="border-top-left-radius: 0; border-bottom-left-radius: 0; height: 28px"
                                 @click="select_product_type()"
@@ -55,7 +64,7 @@ export default {
                     </div>
                 </div>
 
-                <div class="form-column col-sm-4">
+                <div class="form-column col-sm-3">
                     <qty-field
                         label="Cantidad"
                         :initial_value="form_data.cantidad_de_producto"
@@ -68,7 +77,7 @@ export default {
                     />
                 </div>
 
-                <div class="form-column col-sm-4">
+                <div class="form-column col-sm-3">
                     <select-field
                         label="Porcentaje Adicional"
                         :selected="form_data.porcentaje_adicional"
@@ -200,7 +209,7 @@ export default {
         </section> 
 
         <section>
-            <hr />
+            <hr v-if="['Digital', 'Offset'].includes(form_data.tecnologia)" />
             <div class="row" v-if="form_data.tecnologia ==='Offset'">
                 <div class="px-3" style="width: 100%">
                     <h3>Colores</h3>

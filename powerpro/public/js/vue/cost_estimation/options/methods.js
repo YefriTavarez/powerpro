@@ -64,7 +64,7 @@ export default {
 				options: "Product Type",
 				label: __("Product Type"),
 				default: self.form_data.tipo_de_producto,
-				reqd: 1,
+				reqd: 0,
 			},
 		];
 
@@ -78,7 +78,7 @@ export default {
 		};
 
 		const title = __("Select Product Type");
-		const primary_label = self.form_data.tipo_de_producto? __("Select"): __("Update");
+		const primary_label = self.form_data.tipo_de_producto? __("Update"): __("Select");
 
 		frappe.prompt(fields, callback, title, primary_label);
 	},
@@ -141,22 +141,22 @@ export default {
 		frappe.db.get_value(doctype, filters, fieldname, callback, parent_doc);
 	},
 	fetch_product_type_details(product_type) {
+		const self = this;
 		const method = "powerpro.manufacturing_pro.doctype.cost_estimation.client.get_product_type_details";
-		function callback({ message}) {
-			console.log({ message });
-		};
-
 		const args = { 
 			product_type,
 		};
 
-		function callback({ message }) {
-			console.log({ message });
+		function callback({ message: operations }) {
+			Object.assign(self.form_data, { operations });
+			self.update_data();
 		};
 
 		const freeze = true;
 		const freeze_message = "Loading Product Type details";
-		frappe.call({ method, args, callback, freeze, freeze_message });
-			
+
+		if (product_type) {
+			frappe.call({ method, args, callback, freeze, freeze_message });
+		}
 	},
 };
