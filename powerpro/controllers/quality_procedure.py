@@ -15,27 +15,27 @@ class QualityProcedure(quality_procedure.QualityProcedure):
 		self.name = naming.make_autoname(naming_series)
 
 	@frappe.whitelist()
-	def bump_major(self, save: bool = False):
+	def bump_major(self, autosave: bool = False):
 		version = self.get_version()
 		self.revision = str(version.bump_major())
 
-		if save:
+		if autosave:
 			self.db_set("revision", self.revision)
 
 	@frappe.whitelist()
-	def bump_minor(self, save: bool = False):
+	def bump_minor(self, autosave: bool = False):
 		version = self.get_version()
 		self.revision = str(version.bump_minor())
 
-		if save:
+		if autosave:
 			self.db_set("revision", self.revision)
 
 	@frappe.whitelist()
-	def bump_patch(self, save: bool = False):
+	def bump_patch(self, autosave: bool = False):
 		version = self.get_version()
 		self.revision = str(version.bump_patch())
 
-		if save:
+		if autosave:
 			self.db_set("revision", self.revision)
 
 	def get_version(self) -> Version:
