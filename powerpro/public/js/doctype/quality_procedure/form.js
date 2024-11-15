@@ -4,12 +4,12 @@
 
 {
 	function override_save_action(frm) {
-		const label = "Save";
+		const label = __("Save");
 		function click(event) {
 			const fields = [
 				{
 					fieldtype: "Select",
-					label: "Type of Update",
+					label: __("Type of Update"),
 					fieldname: "type_of_update",
 					reqd: 1,
 					options: [
@@ -44,8 +44,8 @@
 					});
 			};
 			
-			const title = "Type of Changes";
-			const primary_label = "Save";
+			const title = __("Type of Changes");
+			const primary_label = __("Save");
 
 			if (frm.is_new()) {
 				frm.save();
@@ -56,7 +56,7 @@
 		}
 		
 		const icon = null;
-		const working_label = "Wait...";
+		const working_label = `${__("Wait")}...`;
 		frm.page.set_primary_action(label, click, icon, working_label);
 	}
 
