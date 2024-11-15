@@ -46,6 +46,7 @@ class QualityProcedure(quality_procedure.QualityProcedure):
 			self.db_set("revision", self.revision)
 
 	def save_only(self):
+		self.flags.internal_save = True
 		self.save()
 
 	def get_version(self) -> Version:
