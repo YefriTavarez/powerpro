@@ -5,6 +5,7 @@ import frappe
 
 from semver import Version
 
+from frappe import _
 from frappe.model import naming
 from erpnext.quality_management.doctype.quality_procedure import quality_procedure
 
@@ -13,6 +14,12 @@ class QualityProcedure(quality_procedure.QualityProcedure):
 		department_prefix = self.department[:3]
 		naming_series = f"PRO-CAL-{department_prefix.upper()}-.#####"
 		self.name = naming.make_autoname(naming_series)
+
+	def validate(self):
+		if not self.flags.internal_save:
+			frappe.throw(
+				_("You can't update directly a Quality Procedure. Use the buttons instead.")
+			)
 
 	@frappe.whitelist()
 	def bump_major(self, autosave: bool = False):
@@ -37,6 +44,9 @@ class QualityProcedure(quality_procedure.QualityProcedure):
 
 		if autosave:
 			self.db_set("revision", self.revision)
+
+	def save_only(self):
+		self.save()
 
 	def get_version(self) -> Version:
 		return Version.parse(self.revision)
