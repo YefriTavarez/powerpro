@@ -145,6 +145,7 @@ permission_query_conditions = {
 # Override standard doctype classes
 
 override_doctype_class = {
+	"Quality Procedure": "powerpro.controllers.quality_procedure.QualityProcedure",
 	"Custom Field": "powerpro.controllers.custom_field.CustomField",
 	"Salary Slip": "powerpro.controllers.salary_slip.SalarySlip",
     "Payroll Entry": "powerpro.controllers.payroll_entry.PayrollEntry",
