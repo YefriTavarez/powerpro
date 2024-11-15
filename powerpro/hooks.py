@@ -53,9 +53,12 @@ doctype_js = {
     "Purchase Invoice": "public/js/purchase_invoice.js",
     "Payment Entry": "public/js/payment_entry.js",
     "Payroll Entry": "public/js/payroll_entry.js",
-    "Quality Procedure": "public/js/quality_procedure.js",
+    "Quality Procedure": "public/js/doctype/quality_procedure/form.js",
 }
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+
+doctype_list_js = {
+	"Quality Procedure": "public/js/doctype/quality_procedure/list.js",
+}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
