@@ -3,6 +3,9 @@
 /* eslint-disable */
 
 export default {
+	is_new() {
+		return this.frm.is_new();
+	},
 	fetch_raw_material_specs() {
 		this.material_controller.fetch_raw_material_specs(
 			this.frm.doc.raw_material,

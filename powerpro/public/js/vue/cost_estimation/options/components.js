@@ -8,6 +8,7 @@ import QtyField from "../components/std/QtyField.vue";
 import RateField from "../components/std/RateField.vue";
 import AmountField from "../components/std/AmountField.vue";
 import SelectField from "../components/std/SelectField.vue";
+import PercentField from "../components/std/PercentField.vue";
 
 // Custom Fields
 import Dimension from "../components/custom/DimensionField.vue";
@@ -21,6 +22,7 @@ export default {
 	RateField,
 	AmountField,
 	SelectField,
+	PercentField,
 	Dimension,
 	PrintingTecnique,
 	ColorCount,

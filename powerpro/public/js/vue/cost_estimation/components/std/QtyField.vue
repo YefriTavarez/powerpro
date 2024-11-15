@@ -7,6 +7,7 @@
 			v-model="value"
 			@change="on_change"
 			:id="id"
+			:read-only="read_only"
 		/>
 	</div>
 </template>
@@ -31,6 +32,10 @@ export default {
 			default: false,
 		},
 		format_with_comma: {
+			type: Boolean,
+			default: false,
+		},
+		read_only: {
 			type: Boolean,
 			default: false,
 		},

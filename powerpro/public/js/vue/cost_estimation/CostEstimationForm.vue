@@ -1,5 +1,6 @@
-// Copyright (c) 2024, Yefri Tavarez and contributors // For license
-information, please see license.txt /* eslint-disable */
+// Copyright (c) 2024, Yefri Tavarez and contributors
+// For license information, please see license.txt
+/* eslint-disable */
 
 <script>
 
@@ -20,16 +21,74 @@ export default {
     computed,
     methods,
     components,
+    _mounted() {
+        const self = this;
+        const { $refs: refs } = this;
+
+        let internal_change = false;
+
+        const df = frappe.ui.form.make_control({
+            parent: refs.tipo_de_producto,
+            df: {
+                fieldtype: "Link",
+                options: "Product Type",
+                fieldname: "product_type",
+                label: "Tipo de Producto",
+                reqd: 1,
+                change(event) {
+                    const { value } = this;
+
+                    if (internal_change) {
+                        internal_change = false;
+                        return;
+                    }
+
+                    self.form_data.tipo_de_producto = value;
+                    self.update_data();
+                },
+            },
+            render_input: true,
+        });
+
+        internal_change = true;
+        df.set_value(this.form_data.tipo_de_producto);
+    },
 };
 </script>
 
 <template>
     <div data-component="cost-estimation">
-        <section>
+        <section v-if="!is_new()">
             <div class="row">
                 <div class="px-3" style="width: 100%">
-                    <h3>Cantidad</h3>
+                    <h2 class="text-right">
+                        C/U <br>
+                        <small
+                            class="text-muted"
+                            style="color: crimson !important; font-weight: bold" >
+                            $ {{ parseFloat(form_data.unit_cost || 0.000).toLocaleString() }}
+                        </small>
+                    </h2>
                 </div>
+            </div>
+        </section>
+
+        <section>
+            <hr />
+            <div class="row">
+                <div class="px-3" style="width: 100%">
+                    <h3>Tecnología de Impresión</h3>
+                </div>
+                <div class="form-column col-sm-6">
+                    <printing-tecnique
+                        label="Tecnología"
+                        :selected="form_data.tecnologia"
+                        @after_select="
+                            (value) => (form_data.tecnologia = value)
+                        "
+                    />
+                </div>
+
                 <div class="form-column col-sm-6">
                     <div
                         class="form-group" 
@@ -43,6 +102,7 @@ export default {
                                 @change="value => form_data.tipo_de_producto = value"
                                 readonly
                             />
+                            <!-- <span class="form-control" style="padding-top: 3px">{{ form_data.tipo_de_producto }}</span> -->
 
                             <button
                                 class="btn btn-secondary"
@@ -63,6 +123,19 @@ export default {
                         </div>
                     </div>
                 </div>
+            </div>
+        </section>
+
+
+        <section>
+            <hr />
+            <div class="row">
+                <div class="px-3" style="width: 100%">
+                    <h3>Cantidad</h3>
+                </div>
+                <div class="form-column col-sm-6">
+                    
+                </div>
 
                 <div class="form-column col-sm-3">
                     <qty-field
@@ -75,9 +148,7 @@ export default {
                             (value) => (form_data.cantidad_de_producto = value)
                         "
                     />
-                </div>
 
-                <div class="form-column col-sm-3">
                     <select-field
                         label="Porcentaje Adicional"
                         :selected="form_data.porcentaje_adicional"
@@ -91,6 +162,28 @@ export default {
                             { value: 15, label: '15%' },
                         ]"
                         help_text="Este porcentaje se le sumará a la cantidad total."
+                    />
+                </div>
+
+                <div class="form-column col-sm-3">
+                    <qty-field
+                        :label="`Cantidad con Adicional`"
+                        :initial_value="form_data.cantidad_de_producto_con_adicional"
+                        :enforce_positive="true"
+                        :enfore_integer="true"
+                        :format_with_comma="true"
+                        :read_only="true"
+                        @after_select="
+                            (value) => (form_data.cantidad_de_producto_con_adicional = value)
+                        "
+                    />
+
+                    <percent-field
+                        label="Margen de Utilidad"
+                        :value="form_data.margen_de_utilidad"
+                        @after_select="
+                            (value) => (form_data.margen_de_utilidad = value)
+                        "
                     />
                 </div>
             </div>
@@ -152,29 +245,6 @@ export default {
                                 })
                         "
                     />
-                </div>
-            </div>
-        </section>
-
-        <section>
-            <hr />
-            <div class="row">
-                <div class="px-3" style="width: 100%">
-                    <h3>Tecnología de Impresión</h3>
-                </div>
-                <div class="form-column col-sm-6">
-                    <printing-tecnique
-                        label="Tecnología"
-                        :selected="form_data.tecnologia"
-                        @after_select="
-                            (value) => (form_data.tecnologia = value)
-                        "
-                    />
-                </div>
-            </div>
-            <div class="row">
-                <div class="form-column col-sm-6">
-                    <!-- empty column -->
                 </div>
             </div>
         </section>

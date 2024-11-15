@@ -29,3 +29,14 @@ export default {
 	},
 }
 </script>
+
+
+<!-- <div class="form-group">
+	<label>Rate</label>
+	<div class="form-input-group">
+		<span>$</span>
+		<input type="text" />
+		<span>&times;</span>
+	</div>
+</div>
+</div> -->

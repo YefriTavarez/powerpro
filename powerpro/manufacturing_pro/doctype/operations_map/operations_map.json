@@ -1,0 +1,146 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-11-10 12:08:17.822465",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "print_section",
+  "offset_print",
+  "column_break_dczv",
+  "digital_print",
+  "cutting_section",
+  "trimming",
+  "column_break_rysv",
+  "die_cutting",
+  "ink_protection_section",
+  "coating",
+  "column_break_vyhf",
+  "lamination",
+  "utilities_section",
+  "double_sided_tape",
+  "column_break_qbsr",
+  "gluing",
+  "section_break_zldv",
+  "packaging"
+ ],
+ "fields": [
+  {
+   "fieldname": "print_section",
+   "fieldtype": "Section Break",
+   "label": "Print"
+  },
+  {
+   "fieldname": "offset_print",
+   "fieldtype": "Link",
+   "label": "Offset Print",
+   "options": "Operation"
+  },
+  {
+   "fieldname": "column_break_dczv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "digital_print",
+   "fieldtype": "Link",
+   "label": "Digital Print",
+   "options": "Operation"
+  },
+  {
+   "fieldname": "cutting_section",
+   "fieldtype": "Section Break",
+   "label": "Cutting"
+  },
+  {
+   "fieldname": "trimming",
+   "fieldtype": "Link",
+   "label": "Trimming ",
+   "options": "Operation"
+  },
+  {
+   "fieldname": "column_break_rysv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "die_cutting",
+   "fieldtype": "Link",
+   "label": "Die Cutting",
+   "options": "Operation"
+  },
+  {
+   "fieldname": "ink_protection_section",
+   "fieldtype": "Section Break",
+   "label": "Ink Protection"
+  },
+  {
+   "fieldname": "coating",
+   "fieldtype": "Link",
+   "label": "Coating",
+   "options": "Operation"
+  },
+  {
+   "fieldname": "column_break_vyhf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "lamination",
+   "fieldtype": "Link",
+   "label": "Lamination",
+   "options": "Operation"
+  },
+  {
+   "fieldname": "utilities_section",
+   "fieldtype": "Section Break",
+   "label": "Utilities"
+  },
+  {
+   "fieldname": "double_sided_tape",
+   "fieldtype": "Link",
+   "label": "Double-sided Tape",
+   "options": "Operation"
+  },
+  {
+   "fieldname": "column_break_qbsr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gluing",
+   "fieldtype": "Link",
+   "label": "Gluing",
+   "options": "Operation"
+  },
+  {
+   "fieldname": "section_break_zldv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "packaging",
+   "fieldtype": "Link",
+   "label": "Packaging",
+   "options": "Operation"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-11-10 12:20:03.094962",
+ "modified_by": "Administrator",
+ "module": "Manufacturing Pro",
+ "name": "Operations Map",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
