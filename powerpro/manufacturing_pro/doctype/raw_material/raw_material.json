@@ -78,8 +78,10 @@
    "fieldtype": "Column Break"
   },
   {
+   "collapsible": 1,
    "fieldname": "section_break_cwwg",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Smart Hash"
   },
   {
    "fieldname": "section_break_vlhr",
@@ -101,7 +103,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2024-10-29 21:57:06.122488",
+ "modified": "2024-11-16 18:10:37.144986",
  "modified_by": "Administrator",
  "module": "Manufacturing Pro",
  "name": "Raw Material",
