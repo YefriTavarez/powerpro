@@ -60,6 +60,8 @@ class RawMaterial(Document):
 				_(self.paper_weight)
 			)
 
+		# dinamically add the material_format to get a better description 
+		# ready to be used in the Item's description
 		if getattr(self, "material_format", None):
 			if self.material_format not in ["Roll", "Sheet"]:
 				frappe.throw(
