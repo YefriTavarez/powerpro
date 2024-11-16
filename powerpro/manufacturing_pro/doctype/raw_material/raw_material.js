@@ -9,7 +9,6 @@
 	function add_custom_buttons(frm) {
 		if (frm.doc.__islocal) {
 			// buttons for new documents go here
-			return ;
 		} else {
 			// buttons for saved documents go here
 			add_create_SKU_button(frm);
