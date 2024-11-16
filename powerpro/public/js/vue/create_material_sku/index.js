@@ -9,6 +9,7 @@ const { round_to_nearest_eighth } = power.utils;
 
 power.ui.CreateMaterialSKU = function(docname) {
 	let dialog;
+
 	dialog = frappe.prompt([
 		{
 			fieldtype: "Section Break",
@@ -121,8 +122,10 @@ power.ui.CreateMaterialSKU = function(docname) {
 
 			if (message) {
 				frappe.confirm(`
-					Here is the SKU <strong>${message}</strong>
-					<button class="btn btn-info" onclick="frappe.utils.copy_to_clipboard('${message}')">${__("Copy to Clipboard")}</button>
+					${__("Here is the SKU")} <strong>${message}</strong>
+					<button class="btn btn-info" onclick="frappe.utils.copy_to_clipboard('${message}')">
+						${__("Copy to Clipboard")}
+					</button>
 					<br>${__("Do you want me to take you there?")}
 				`, () => {
 					frappe.set_route("Form", "Item", message);
