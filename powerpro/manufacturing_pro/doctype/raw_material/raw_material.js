@@ -7,6 +7,18 @@
 	}
 
 	function add_custom_buttons(frm) {
+		if (frm.doc.__islocal) {
+			// buttons for new documents go here
+			return ;
+		} else {
+			// buttons for saved documents go here
+			add_create_SKU_button(frm);
+		}
+
+		// always visible buttons go here
+	}
+
+	function add_create_SKU_button(frm) {
 		const { doc } = frm;
 		// const { round_to_nearest_eighth } = power.utils;
 		frm.add_custom_button(
