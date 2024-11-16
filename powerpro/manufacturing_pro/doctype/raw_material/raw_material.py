@@ -15,6 +15,23 @@ from powerpro.utils import (
 
 
 class RawMaterial(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		base_material: DF.Literal["", "Paperboard", "Paper", "Adhesive Paper", "Adhesive Vinyl"]
+		description: DF.SmallText | None
+		enabled: DF.Check
+		paper_type: DF.Literal["", "Bond", "Couch\u00e9"]
+		paper_weight: DF.Literal["", "20", "24", "60", "80", "100", "120"]
+		paperboard_caliper: DF.Literal["", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "22", "24", "26", "28"]
+		paperboard_type: DF.Literal["", "Uncoated Kraft Multi-layer", "White Back Multi-layer", "Kraft Back Multi-layer", "Recycled Grey Back", "Recycled Kraft Back", "Uncoated Solid Kraft", "White Back Solid", "Kraft Back Solid"]
+		smart_hash: DF.Data | None
+	# end: auto-generated types
 	def validate(self):
 		# self.round_dimensions()
 		self.set_description()
@@ -115,19 +132,6 @@ class RawMaterial(Document):
 		return frappe.db.exists(
 			doctype, filters
 		)
-
-	description: str
-	base_material: str
-	paperboard_type: str
-	paperboard_caliper: str
-	paper_type: str
-	paper_weight: str
-	material_format: str
-	roll_width: float
-	sheet_width: float
-	sheet_height: float
-	gsm: int
-	smart_hash: str
 
 
 def on_doctype_update():
