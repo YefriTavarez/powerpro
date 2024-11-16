@@ -1,0 +1,43 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-11-16 17:50:55.295183",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "root_item_group_for_raw_materials"
+ ],
+ "fields": [
+  {
+   "fieldname": "root_item_group_for_raw_materials",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Root Item Group for Raw Materials",
+   "options": "Item Group",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-11-16 17:52:56.778293",
+ "modified_by": "Administrator",
+ "module": "Power Pro",
+ "name": "Power-Pro Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
