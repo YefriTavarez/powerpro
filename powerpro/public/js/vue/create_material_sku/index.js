@@ -122,8 +122,8 @@ power.ui.CreateMaterialSKU = function(docname) {
 			if (message) {
 				frappe.confirm(`
 					Here is the SKU <strong>${message}</strong>
-					<button class="btn btn-info" onclick="frappe.utils.copy_to_clipboard('${message}')">Copy to Clipboard</button>
-					<br>Do you want me to take you there?
+					<button class="btn btn-info" onclick="frappe.utils.copy_to_clipboard('${message}')">${__("Copy to Clipboard")}</button>
+					<br>${__("Do you want me to take you there?")}
 				`, () => {
 					frappe.set_route("Form", "Item", message);
 				}, () => {
@@ -161,5 +161,5 @@ power.ui.CreateMaterialSKU = function(docname) {
 				() => frappe.show_alert(__("Okay!")),
 			);
 		});
-	}, "Create a new SKU", "Please, do!");
+	}, __("Create a new SKU"), __("Please, do!"));
 }
