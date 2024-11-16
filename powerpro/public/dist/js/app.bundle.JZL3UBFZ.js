@@ -162,8 +162,10 @@
             const { message } = response;
             if (message) {
               frappe.confirm(`
-					Here is the SKU <strong>${message}</strong>
-					<button class="btn btn-info" onclick="frappe.utils.copy_to_clipboard('${message}')">${__("Copy to Clipboard")}</button>
+					${__("Here is the SKU")} <strong>${message}</strong>
+					<button class="btn btn-info" onclick="frappe.utils.copy_to_clipboard('${message}')">
+						${__("Copy to Clipboard")}
+					</button>
 					<br>${__("Do you want me to take you there?")}
 				`, () => {
                 frappe.set_route("Form", "Item", message);
@@ -208,4 +210,4 @@
   var functions = __toESM(require_functions());
   var create_material_sku = __toESM(require_create_material_sku());
 })();
-//# sourceMappingURL=app.bundle.EXHNANCC.js.map
+//# sourceMappingURL=app.bundle.JZL3UBFZ.js.map
