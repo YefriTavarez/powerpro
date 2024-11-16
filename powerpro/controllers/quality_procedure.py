@@ -57,8 +57,6 @@ class QualityProcedure(quality_procedure.QualityProcedure):
 		self.save()
 
 	def supersede(self) -> None:
-		self.queue_action("mark_as_superseded", enqueue_after_commit=True)
-
 		copy = frappe.copy_doc(self)
 		copy.revision = self._revision
 		copy.status = self.status
@@ -70,7 +68,15 @@ class QualityProcedure(quality_procedure.QualityProcedure):
 
 		copy.flags.ignore_permissions = True
 		copy.flags.internal_save = True
-		copy.insert()
+
+		try:
+			copy.insert()
+		except frappe.ValidationError as e:
+			raise e
+		else:
+			self.queue_action(
+				"mark_as_superseded", enqueue_after_commit=True
+			)
 
 		return copy.name
 
