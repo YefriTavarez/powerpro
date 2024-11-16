@@ -2,6 +2,8 @@
 # For license information, please see license.txt
 
 import frappe
+
+from frappe import _
 from frappe.model.document import Document
 from frappe.utils import get_link_to_form
 
@@ -23,15 +25,23 @@ class RawMaterial(Document):
 
 	def get_description(self, as_list=False):
 		out = [
-			self.base_material,
+			_(self.base_material),
 		]
 
 		if self.base_material == "Paperboard":
-			out.append(self.paperboard_type)
-			out.append(self.paperboard_caliper)
+			out.append(
+				_(self.paperboard_type)
+			)
+			out.append(
+				_(self.paperboard_caliper)
+			)
 		elif self.base_material == "Paper":
-			out.append(self.paper_type)
-			out.append(self.paper_weight)
+			out.append(
+				_(self.paper_type)
+			)
+			out.append(
+				_(self.paper_weight)
+			)
 
 		if getattr(self, "material_format", None):
 			if self.material_format not in ["Roll", "Sheet"]:
@@ -55,7 +65,9 @@ class RawMaterial(Document):
 				"Sheet": f"{self.sheet_width} x {self.sheet_height} in",
 			}
 
-			out.append(dimension_map[self.material_format])
+			out.append(
+				_(dimension_map[self.material_format])
+			)
 
 		if getattr(self, "gsm", None):
 			out.append(f"{self.gsm} gsm")
@@ -76,7 +88,7 @@ class RawMaterial(Document):
 
 		if not self.smart_hash:
 			frappe.throw(
-				f"Unable to generate a hash for this raw material: <br> {self.description}"
+				f"{_('Unable to generate a hash for this raw material')}: <br> {self.description}"
 			)
 
 	def round_dimensions(self):
@@ -90,7 +102,7 @@ class RawMaterial(Document):
 		if existing_id := self.get_existing_smart_hash(self.smart_hash):
 			link_to_form = get_link_to_form(self.doctype, existing_id, label=self.description)
 			frappe.throw(
-				f"This raw material already exists as {link_to_form}"
+				f"{_('This raw material already exists as')} {link_to_form}"
 			)
 
 	def get_existing_smart_hash(self, smart_hash: str) -> str:
