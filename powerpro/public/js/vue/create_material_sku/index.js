@@ -8,8 +8,8 @@ frappe.provide("power.utils");
 const { round_to_nearest_eighth } = power.utils;
 
 power.ui.CreateMaterialSKU = function(docname) {
-	let theprompt;
-	theprompt = frappe.prompt([
+	let dialog;
+	dialog = frappe.prompt([
 		{
 			fieldtype: "Section Break",
 			label: __("Material Specification"),
@@ -25,12 +25,12 @@ power.ui.CreateMaterialSKU = function(docname) {
 				"Sheet",
 			],
 			change(event) {
-				theprompt.set_df_property("roll_width", "reqd", event.target.value === "Roll");
-				theprompt.set_df_property("roll_width", "hidden", event.target.value === "Sheet");
-				theprompt.set_df_property("sheet_width", "reqd", event.target.value === "Sheet");
-				theprompt.set_df_property("sheet_width", "hidden", event.target.value === "Roll");
-				theprompt.set_df_property("sheet_height", "reqd", event.target.value === "Sheet");
-				theprompt.set_df_property("sheet_height", "hidden", event.target.value === "Roll");
+				dialog.set_df_property("roll_width", "reqd", event.target.value === "Roll");
+				dialog.set_df_property("roll_width", "hidden", event.target.value === "Sheet");
+				dialog.set_df_property("sheet_width", "reqd", event.target.value === "Sheet");
+				dialog.set_df_property("sheet_width", "hidden", event.target.value === "Roll");
+				dialog.set_df_property("sheet_height", "reqd", event.target.value === "Sheet");
+				dialog.set_df_property("sheet_height", "hidden", event.target.value === "Roll");
 			}
 		},
 		{ fieldtype: "Column Break" },
@@ -145,7 +145,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 
 				frappe.confirm(
 					__("Would you like to try again?"),
-					() => theprompt.show(),
+					() => dialog.show(),
 					() => frappe.show_alert(__("Okay!")),
 				);
 			}
@@ -157,7 +157,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 
 			frappe.confirm(
 				__("Would you like to try again?"),
-				() => theprompt.show(),
+				() => dialog.show(),
 				() => frappe.show_alert(__("Okay!")),
 			);
 		});
