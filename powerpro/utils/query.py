@@ -103,6 +103,26 @@ def delivery_note_query_conditions(user):
         return ""
 
 
+def asset_maintenance_log_query_conditions(user):
+    if not user: 
+        user = frappe.session.user
+
+    if user == "Administrator":
+        return
+
+    return f"`tabAsset Maintenance Log`.task_assignee_email = {user!r}"
+
+
+def todo_query_conditions(user):
+    if not user: 
+        user = frappe.session.user
+
+    if user == "Administrator":
+        return
+
+    return f"`tabToDo`.allocated_to = {user!r}"
+
+
 def get_informal_customers():
     data = frappe.db.sql("""
         Select

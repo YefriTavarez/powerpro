@@ -54,6 +54,7 @@ doctype_js = {
     "Payment Entry": "public/js/payment_entry.js",
     "Payroll Entry": "public/js/payroll_entry.js",
     "Quality Procedure": "public/js/doctype/quality_procedure/form.js",
+    "ToDo": "public/js/todo.js",
 }
 
 doctype_list_js = {
@@ -138,6 +139,8 @@ permission_query_conditions = {
     "Sales Invoice": "powerpro.utils.query.sales_invoice_query_conditions",
 	"Payment Entry": "powerpro.utils.query.payment_entry_query_conditions",
 	"Delivery Note": "powerpro.utils.query.delivery_note_query_conditions",
+    "Asset Maintenance Log": "powerpro.utils.query.asset_maintenance_log_query_conditions",
+    "ToDo": "powerpro.utils.query.todo_query_conditions",
 }
 #
 # has_permission = {
@@ -153,6 +156,8 @@ override_doctype_class = {
 	"Custom Field": "powerpro.controllers.custom_field.CustomField",
 	"Salary Slip": "powerpro.controllers.salary_slip.SalarySlip",
     "Payroll Entry": "powerpro.controllers.payroll_entry.PayrollEntry",
+    "Asset Maintenance": "powerpro.controllers.asset_maintenance.AssetMaintenance",
+    "Asset Maintenance Log": "powerpro.controllers.asset_maintenance_log.AssetMaintenanceLog",
 }
 
 # Document Events
