@@ -6,7 +6,7 @@ frappe.ui.form.on("ToDo", {
     refresh: function (frm) {
         const { doc } = frm;
 
-        if (doc.reference_type && doc.reference_name) {
+        if (doc.reference_type != "Asset Maintenance Task" && doc.reference_name) {
             frm.add_custom_button(__(doc.reference_name), function () {
                 frappe.set_route("Form", doc.reference_type, doc.reference_name);
             });

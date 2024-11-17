@@ -12,6 +12,7 @@ def close_maintenance_task(todo, task, due_date):
     todo.update({
         "status": "Closed",
     })
+    todo.flags.ignore_permissions = True
     todo.save()
 
     maintenance_log = get_asset_maintenance_log(task, due_date)
@@ -20,10 +21,9 @@ def close_maintenance_task(todo, task, due_date):
         "actions_performed": todo.actions_performed,
         "maintenance_status": "Completed",
     })
+    maintenance_log.flags.ignore_permissions = True
     maintenance_log.submit()
 
-    asset_maintenance = get_asset_mainenance(maintenance_log.asset_maintenance)
-    # frappe.throw(asset_maintenance.name)
 
 def get_todo(todo):
     doctype = "ToDo"
@@ -39,7 +39,3 @@ def get_asset_maintenance_log(task, due_date):
     }
     return frappe.get_doc(doctype, filters)
 
-
-def get_asset_mainenance(asset_maintenance):
-    doctype = "Asset Maintenance"
-    return frappe.get_doc(doctype, asset_maintenance)
