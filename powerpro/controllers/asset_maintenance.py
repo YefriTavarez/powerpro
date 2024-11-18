@@ -4,17 +4,18 @@
 
 import frappe
 from frappe import _, throw
-from frappe.desk.form import assign_to
+# from frappe.desk.form import assign_to
+from . import assign_to
 from frappe.model.document import Document
 from frappe.desk.form.load import get_assignments
 from frappe.utils import add_days, add_months, add_years, getdate, nowdate
-from erpnext.assets.doctype.asset_maintenance.asset_maintenance import AssetMaintenance, update_maintenance_log
+from erpnext.assets.doctype.asset_maintenance.asset_maintenance import AssetMaintenance
 
 
 class AssetMaintenance(AssetMaintenance):
     def on_update(self):
         for task in self.get("asset_maintenance_tasks"):
-            assign_tasks(task.name, task.assign_to, task.maintenance_task, task.next_due_date)
+            assign_tasks(task.name, task.assign_to, task.maintenance_task, task.next_due_date, self.item_code, self.item_name)
         self.sync_maintenance_tasks()
 
     def sync_maintenance_tasks(self):
@@ -35,7 +36,7 @@ class AssetMaintenance(AssetMaintenance):
                 maintenance_log.db_set("maintenance_status", "Cancelled")
 
 
-def assign_tasks(asset_maintenance_name, assign_to_member, maintenance_task, next_due_date):
+def assign_tasks(asset_maintenance_name, assign_to_member, maintenance_task, next_due_date, item_code, item_name):
     team_member = frappe.db.get_value("User", assign_to_member, "email")
 
     args = {
@@ -44,6 +45,8 @@ def assign_tasks(asset_maintenance_name, assign_to_member, maintenance_task, nex
         "name": asset_maintenance_name,
         "description": maintenance_task,
         "date": next_due_date,
+        "item_code": item_code,
+        "item_name": item_name,
     }
 
     # Busca un ToDo abierto para la misma tarea (por description) asignado a otro usuario
@@ -77,8 +80,8 @@ def assign_tasks(asset_maintenance_name, assign_to_member, maintenance_task, nex
 
     # Si no existe, crea uno nuevo
     if not todo_exists:
-        args["assign_to"] = [args["assign_to"]]  # assign_to.add requiere una lista
-        assign_to.add(args) 
+        args["assign_to"] = [args["assign_to"]]
+        assign_to.add(args, ignore_permissions=True) 
 
 
 def update_maintenance_log(asset_maintenance, item_code, item_name, task):
@@ -109,6 +112,7 @@ def update_maintenance_log(asset_maintenance, item_code, item_name, task):
                 "due_date": task.next_due_date,
             }
         )
+        asset_maintenance_log.flags.ignore_permissions = True
         asset_maintenance_log.insert()
     else:
         maintenance_log = frappe.get_doc("Asset Maintenance Log", asset_maintenance_log)
@@ -119,4 +123,7 @@ def update_maintenance_log(asset_maintenance, item_code, item_name, task):
         maintenance_log.periodicity = str(task.periodicity)
         maintenance_log.maintenance_type = task.maintenance_type
         maintenance_log.due_date = task.next_due_date
+
+        maintenance_log.flags.ignore_permissions = True
         maintenance_log.save()
+
