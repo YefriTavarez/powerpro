@@ -26,9 +26,9 @@ class RawMaterial(Document):
 		base_material: DF.Link
 		description: DF.SmallText | None
 		enabled: DF.Check
-		option_1: DF.Literal[None]
-		option_2: DF.Literal[None]
-		option_3: DF.Literal[None]
+		option_1: DF.Literal["[Select]"]
+		option_2: DF.Literal["[Select]"]
+		option_3: DF.Literal["[Select]"]
 		smart_hash: DF.Data | None
 	# end: auto-generated types
 	def validate(self):
