@@ -97,9 +97,15 @@ def create_material_sku(
 	item.__newname = primary_key
 
 	item.flags.ignore_mandatory = True
-	item.flags.ignore_links = True
-	item.save()
-	
+	try:
+		item.save()
+	except frappe.ValidationError:
+		# ToDo: make sure to populate all the fields
+		# which are populated based on the depends_on property.
+		# When you add the flag ignore_links they're not populated.
+		item.flags.ignore_links = True
+		item.save()
+
 	return item.name
 
 
