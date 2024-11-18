@@ -9,7 +9,27 @@ const { round_to_nearest_eighth } = power.utils;
 
 power.ui.CreateMaterialSKU = function(docname) {
 	let dialog;
+	let item_group_details;
+	let doc;
 
+	const url = "/api/method/powerpro.controllers.assets.item_group.get_all_item_groups";
+	fetch(url)
+		.then(response => response.json())
+		.then(({ message }) => {
+			item_group_details = message;
+		});
+	
+	fetch(`/api/resource/Raw Material/${docname}`)
+		.then(response => response.json())
+		.then(({ message }) => {
+			doc = message;
+
+			if (doc.base_material === "Paper") {
+				
+			}
+		});
+
+	
 	dialog = frappe.prompt([
 		{
 			fieldtype: "Section Break",
@@ -38,7 +58,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 		{
 			fieldname: "roll_width",
 			fieldtype: "Float",
-			label: __("Roll Width"),
+			label: `${__("Roll Width")} (in)`,
 			reqd: 1,
 			precision: 3,
 			async change(event) {
@@ -54,7 +74,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 		{
 			fieldname: "sheet_width",
 			fieldtype: "Float",
-			label: __("Sheet Width"),
+			label: `${__("Sheet Width")} (in)`,
 			hidden: 1,
 			precision: 3,
 			async change(event) {
@@ -70,7 +90,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 		{
 			fieldname: "sheet_height",
 			fieldtype: "Float",
-			label: __("Sheet Height"),
+			label: `${__("Sheet Height")} (in)`,
 			hidden: 1,
 			precision: 3,
 			async change(event) {
@@ -112,7 +132,135 @@ power.ui.CreateMaterialSKU = function(docname) {
 					});
 				}
 			},
-		}
+		},
+		{
+			fieldtype: "Section Break",
+			label: __("Item Group"),
+		},
+		{
+			fieldname: "item_group_1",
+			fieldtype: "Link",
+			label: __("Item Group 1"),
+			options: "Item Group",
+			default: frappe.boot?.powerpro_settings?.root_item_group_for_raw_materials,
+			read_only: Boolean(frappe.boot?.powerpro_settings?.root_item_group_for_raw_materials),
+			reqd: 1,
+			change(event) {},
+		},
+		{
+			fieldname: "item_group_2",
+			fieldtype: "Link",
+			label: __("Item Group 2"),
+			options: "Item Group",
+			reqd: 1,
+			get_query() {
+				return {
+					filters: {
+						parent_item_group: dialog.get_value("item_group_1"),
+					},
+				};
+			},
+			change(event) {
+				// toggle visibility of the next field based on the value of this field
+				// and if it's a group or not
+				const { value } = this;
+
+				if (value) {
+					// const item_group = item_group_details.find(item_group => item_group.name === value);
+					// const is_group = item_group?.is_group;
+					const has_children = item_group_details.find(item_group => item_group.parent_item_group === value);
+
+					dialog.set_df_property("item_group_3", "hidden", !has_children);
+					dialog.set_df_property("item_group_3", "reqd", has_children);
+				} else {
+					dialog.set_df_property("item_group_5", "hidden", 1);
+					dialog.set_df_property("item_group_3", "reqd", 0);
+				}
+
+				dialog.set_value("item_group_3", null);
+			},
+		},
+		{
+			fieldname: "item_group_3",
+			fieldtype: "Link",
+			label: __("Item Group 3"),
+			options: "Item Group",
+			hidden: 1,
+			get_query() {
+				return {
+					filters: {
+						parent_item_group: dialog.get_value("item_group_2"),
+					},
+				};
+			},
+			change(event) {
+				// toggle visibility of the next field based on the value of this field
+				// and if it's a group or not
+				const { value } = this;
+
+				if (value) {
+					// const item_group = item_group_details.find(item_group => item_group.name === value);
+					// const is_group = item_group?.is_group;
+					const has_children = item_group_details.find(item_group => item_group.parent_item_group === value);
+
+					dialog.set_df_property("item_group_4", "hidden", !has_children);
+					dialog.set_df_property("item_group_4", "reqd", has_children);
+				} else {
+					dialog.set_df_property("item_group_4", "hidden", 1);
+					dialog.set_df_property("item_group_4", "reqd", 0);
+				}
+								
+				dialog.set_value("item_group_4", null);
+			},
+		},
+		{
+			fieldname: "item_group_4",
+			fieldtype: "Link",
+			label: __("Item Group 4"),
+			options: "Item Group",
+			hidden: 1,
+			get_query() {
+				return {
+					filters: {
+						parent_item_group: dialog.get_value("item_group_3"),
+					},
+				};
+			},
+			change(event) {
+				// toggle visibility of the next field based on the value of this field
+				// and if it's a group or not
+				const { value } = this;
+
+				if (value) {
+					// const item_group = item_group_details.find(item_group => item_group.name === value);
+					// const is_group = item_group?.is_group;
+					const has_children = item_group_details.find(item_group => item_group.parent_item_group === value);
+
+					dialog.set_df_property("item_group_5", "hidden", !has_children);
+					dialog.set_df_property("item_group_5", "reqd", has_children);
+				} else {
+					dialog.set_df_property("item_group_5", "hidden", 1);
+					dialog.set_df_property("item_group_5", "reqd", 0);
+				}
+								
+				dialog.set_value("item_group_5", null);
+			},
+		},
+		{
+			fieldname: "item_group_5",
+			fieldtype: "Link",
+			label: __("Item Group 5"),
+			options: "Item Group",
+			hidden: 1,
+			get_query() {
+				return {
+					filters: {
+						parent_item_group: dialog.get_value("item_group_4"),
+					},
+				};
+			},
+			change(event) {},
+		},
 	], function(values) {
 		frappe.call("powerpro.manufacturing_pro.doctype.raw_material.client.create_material_sku", {
 			material_id: docname,
