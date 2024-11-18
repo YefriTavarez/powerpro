@@ -10,54 +10,21 @@
   "section_break_vlhr",
   "base_material",
   "column_break_eoym",
-  "paperboard_type",
-  "paperboard_caliper",
-  "paper_type",
-  "paper_weight",
+  "option_1",
+  "option_2",
+  "option_3",
   "section_break_cwwg",
   "smart_hash"
  ],
  "fields": [
   {
    "fieldname": "base_material",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Base Material",
-   "options": "\nPaperboard\nPaper\nAdhesive Paper\nAdhesive Vinyl",
+   "options": "Base Material",
    "reqd": 1
-  },
-  {
-   "depends_on": "eval:doc.base_material===\"Paperboard\"",
-   "fieldname": "paperboard_type",
-   "fieldtype": "Select",
-   "label": "Paperboard Type",
-   "mandatory_depends_on": "eval:doc.base_material===\"Paperboard\"",
-   "options": "\nUncoated Kraft Multi-layer\nWhite Back Multi-layer\nKraft Back Multi-layer\nRecycled Grey Back\nRecycled Kraft Back\nUncoated Solid Kraft\nWhite Back Solid\nKraft Back Solid"
-  },
-  {
-   "depends_on": "eval:doc.base_material===\"Paper\"",
-   "fieldname": "paper_type",
-   "fieldtype": "Select",
-   "label": "Paper Type",
-   "mandatory_depends_on": "eval:doc.base_material===\"Paper\"",
-   "options": "\nBond\nCouch\u00e9"
-  },
-  {
-   "depends_on": "eval:doc.base_material===\"Paperboard\"",
-   "fieldname": "paperboard_caliper",
-   "fieldtype": "Select",
-   "label": "Paperboard Caliper",
-   "mandatory_depends_on": "eval:doc.base_material===\"Paperboard\"",
-   "options": "\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n22\n24\n26\n28"
-  },
-  {
-   "depends_on": "eval:doc.base_material===\"Paper\"",
-   "fieldname": "paper_weight",
-   "fieldtype": "Select",
-   "label": "Paper Weight",
-   "mandatory_depends_on": "eval:doc.base_material===\"Paper\"",
-   "options": "\n20\n24\n60\n80\n100\n120"
   },
   {
    "fieldname": "smart_hash",
@@ -92,6 +59,24 @@
    "fieldname": "enabled",
    "fieldtype": "Check",
    "label": "Enabled"
+  },
+  {
+   "fieldname": "option_1",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Option 1"
+  },
+  {
+   "fieldname": "option_2",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Option 2"
+  },
+  {
+   "fieldname": "option_3",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Option 3"
   }
  ],
  "hide_toolbar": 1,
@@ -103,7 +88,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2024-11-16 18:10:37.144986",
+ "modified": "2024-11-16 22:58:32.756133",
  "modified_by": "Administrator",
  "module": "Manufacturing Pro",
  "name": "Raw Material",
