@@ -26,6 +26,7 @@
 	}
 
 	async function _toggle_read_only_depends_on_fields(frm) {
+		// ToDo: Hide Custom Item Group Ns only if they're empty
 		await frappe.timeout(.2);
 		const { doc } = frm;
 
@@ -33,11 +34,11 @@
 			"item_code",
 			"item_name",
 			"item_group",
-			"custom_item_group_1",
-			"custom_item_group_2",
-			"custom_item_group_3",
-			"custom_item_group_4",
-			"custom_item_group_5",
+			// "custom_item_group_1",
+			// "custom_item_group_2",
+			// "custom_item_group_3",
+			// "custom_item_group_4",
+			// "custom_item_group_5",
 			"description",
 			"reference_type",
 			"reference_name",
