@@ -40,5 +40,4 @@ export default {
 		<span>&times;</span>
 	</div>
 </div>
-</div>
 -->
