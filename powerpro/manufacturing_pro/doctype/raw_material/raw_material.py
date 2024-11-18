@@ -23,13 +23,12 @@ class RawMaterial(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
-		base_material: DF.Literal["", "Paperboard", "Paper", "Adhesive Paper", "Adhesive Vinyl"]
+		base_material: DF.Link
 		description: DF.SmallText | None
 		enabled: DF.Check
-		paper_type: DF.Literal["", "Bond", "Couch\u00e9"]
-		paper_weight: DF.Literal["", "20", "24", "60", "80", "100", "120"]
-		paperboard_caliper: DF.Literal["", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "22", "24", "26", "28"]
-		paperboard_type: DF.Literal["", "Uncoated Kraft Multi-layer", "White Back Multi-layer", "Kraft Back Multi-layer", "Recycled Grey Back", "Recycled Kraft Back", "Uncoated Solid Kraft", "White Back Solid", "Kraft Back Solid"]
+		option_1: DF.Literal[None]
+		option_2: DF.Literal[None]
+		option_3: DF.Literal[None]
 		smart_hash: DF.Data | None
 	# end: auto-generated types
 	def validate(self):
