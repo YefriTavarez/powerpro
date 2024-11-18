@@ -44,19 +44,34 @@ class RawMaterial(Document):
 			_(self.base_material),
 		]
 
-		if self.base_material == "Paperboard":
+		# if self.base_material == "Paperboard":
+		# 	out.append(
+		# 		_(self.paperboard_type)
+		# 	)
+		# 	out.append(
+		# 		_(self.paperboard_caliper)
+		# 	)
+		# elif self.base_material == "Paper":
+		# 	out.append(
+		# 		_(self.paper_type)
+		# 	)
+		# 	out.append(
+		# 		_(self.paper_weight)
+		# 	)
+
+		if self.option_1:
 			out.append(
-				_(self.paperboard_type)
+				_(self.option_1)
 			)
+		
+		if self.option_2:
 			out.append(
-				_(self.paperboard_caliper)
+				_(self.option_2)
 			)
-		elif self.base_material == "Paper":
+
+		if self.option_3:
 			out.append(
-				_(self.paper_type)
-			)
-			out.append(
-				_(self.paper_weight)
+				_(self.option_3)
 			)
 
 		# dinamically add the material_format to get a better description 
