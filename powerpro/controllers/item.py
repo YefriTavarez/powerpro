@@ -7,7 +7,6 @@ from frappe.utils import cint
 
 def autoname(doc, method=None):
 	if doc.get("__newname"):
-		frappe.errprint(f"New name is set to {doc.get('__newname')}")
 		doc.name = doc.get("__newname")
 		return
 
