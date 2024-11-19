@@ -24,6 +24,9 @@ class AssetMaintenanceLog(AssetMaintenanceLog):
         args["assign_to"] = [args["assign_to"]]
         assign_to.add(args, ignore_permissions=True)
 
+    def on_trash(self):
+        self.delete_todos()
+
     def update_maintenance_task(self):
         asset_maintenance_doc = frappe.get_doc("Asset Maintenance Task", self.task)
 
@@ -44,3 +47,28 @@ class AssetMaintenanceLog(AssetMaintenanceLog):
         asset_maintenance_doc = frappe.get_doc("Asset Maintenance", self.asset_maintenance)
         asset_maintenance_doc.flags.ignore_permissions = True
         asset_maintenance_doc.save()
+
+    def delete_todos(self):
+        if not self.task:
+            return
+
+        doctype = "ToDo"
+        todos = self.get_todos(self.task)
+
+        if not todos:
+            return
+
+        for todo in todos:
+            doc = frappe.get_doc(doctype, todo.name)
+            doc.flags.ignore_permissions = True
+            doc.delete()
+
+
+    def get_todos(self, task):
+        doctype = "ToDo"
+        filters = {
+            "reference_type": "Asset Maintenance Task",
+            "reference_name": task,
+        }
+
+        return frappe.get_all(doctype, filters=filters)
