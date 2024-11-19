@@ -111,7 +111,22 @@ class RawMaterial(Document):
 		return ", ".join(out)
 
 	def set_description(self):
-		self.description = self.get_description()
+		settings = frappe.get_single("Power-Pro Settings")
+		template = settings.description_template_for_raw_material
+
+		if not template:
+			frappe.msgprint(
+				f"""
+				{_("'Description Template for Raw Material' not set in Power-Pro Settings")}.<br>
+				{_("Using default description template")}.
+				""", alert=True
+			)
+
+			self.description = self.get_description()
+		else:
+			self.description = frappe.render_template(
+				template, self.as_dict()
+			)
 
 	def set_smart_hash(self):
 		# self.get_description(as_list=True)
