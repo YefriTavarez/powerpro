@@ -71,8 +71,7 @@
 	}
 
 	function refresh(frm) {
-		// const { vm } = power.ui.cost_estimation;
-		// vm.$refs.
+		_add_custom_buttons(frm);
 	}
 
 	function raw_material(frm) {
@@ -94,7 +93,29 @@
 	}
 
 	function data(frm) {
-		
+		// ToDo: validate data
+	}
+
+	function _add_custom_buttons(frm) {
+		const { doc } = frm;
+
+		if (doc.docstatus === 1) {
+			frm.add_custom_button(
+				__("SKU"),
+				() => {
+					frm.call({
+						method: "create_sku",
+						args: {},
+						callback({ message }) {
+							if (message) {
+								frappe.set_route("Form", "Item", message);
+							}
+						},
+					});
+				},
+				__("Create")
+			);
+		}
 	}
 
 	frappe.ui.form.on("Cost Estimation", {
