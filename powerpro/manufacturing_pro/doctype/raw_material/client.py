@@ -91,7 +91,7 @@ def create_material_sku(
 		"item_type": "Bienes",
 		"reference_type": material.doctype,
 		"reference_name": material.name,
-		"stock_uom": "ud(s)" if material_format == "Sheet" else "Tonelada",
+		"stock_uom": "ud(s)" if material_format == "Sheet" else "mt",
 		"valuation_method": "FIFO",
 	})
 
