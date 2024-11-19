@@ -35,6 +35,34 @@ class AssetMaintenance(AssetMaintenance):
                 maintenance_log = frappe.get_doc("Asset Maintenance Log", asset_maintenance_log.name)
                 maintenance_log.db_set("maintenance_status", "Cancelled")
 
+    def on_trash(self):
+        self.delete_logs_and_todos()
+
+    def delete_logs_and_todos(self):
+        doctype = "Asset Maintenance Log"
+
+        for task in self.get("asset_maintenance_tasks"):
+            logs = self.get_asset_maintenance_logs(task.name)
+
+            if not logs:
+                continue
+
+            for log in logs:
+                doc = frappe.get_doc(doctype, log.name)
+
+                if doc.docstatus == 1:
+                    doc.cancel()
+
+                doc.delete()
+
+
+    def get_asset_maintenance_logs(self, task):
+        doctype = "Asset Maintenance Log"
+        filters = {
+            "task": task,
+        }
+        return frappe.get_all(doctype, filters=filters)
+
 
 def assign_tasks(asset_maintenance_name, assign_to_member, maintenance_task, next_due_date, item_code, item_name):
     team_member = frappe.db.get_value("User", assign_to_member, "email")
