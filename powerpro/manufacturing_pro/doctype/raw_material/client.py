@@ -8,8 +8,9 @@ from frappe.utils import get_link_to_form
 
 from powerpro.utils import (
 	round_to_nearest_eighth,
-	generate_material_primary_key,
 )
+
+# from powerpro.utils import generate_material_primary_key
 
 if TYPE_CHECKING:
 	from .raw_material import RawMaterial
@@ -63,17 +64,17 @@ def create_material_sku(
 		)
 
 	# generate the new item code and naming series
-	naming_series, primary_key = generate_material_primary_key(
-		material.base_material, include_naming_serie=True
-	)
+	# naming_series, primary_key = generate_material_primary_key(
+	# 	material.base_material, include_naming_serie=True
+	# )
 
 	# create and update the new item
 	item = frappe.new_doc("Item")
 
 	item.update({
-		"item_code": primary_key,
+		# "item_code": primary_key,
 		"item_name": description or material.description,
-		"naming_series": naming_series,
+		# "naming_series": naming_series,
 		"description": description,
 		"is_purchase_item": 1,
 		"is_sales_item": 0,
@@ -93,8 +94,6 @@ def create_material_sku(
 		"stock_uom": "ud(s)" if material_format == "Sheet" else "Tonelada",
 		"valuation_method": "FIFO",
 	})
-
-	item.__newname = primary_key
 
 	item.flags.ignore_mandatory = True
 	try:
