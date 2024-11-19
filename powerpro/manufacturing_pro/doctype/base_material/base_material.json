@@ -12,10 +12,13 @@
   "section_break_ruli",
   "option_name_1",
   "options_1",
+  "column_break_peeh",
   "option_name_2",
   "options_2",
+  "column_break_xakm",
   "option_name_3",
   "options_3",
+  "section_break_neru",
   "help"
  ],
  "fields": [
@@ -77,11 +80,23 @@
   {
    "fieldname": "column_break_nrmc",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_peeh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_xakm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_neru",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-11-16 22:52:03.670099",
+ "modified": "2024-11-18 20:03:52.810145",
  "modified_by": "Administrator",
  "module": "Manufacturing Pro",
  "name": "Base Material",
