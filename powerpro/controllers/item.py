@@ -12,6 +12,9 @@ def autoname(doc, method=None):
 
 	doc.name = get_next_value(doc)
 
+	if not doc.item_code:
+		doc.item_code = doc.name
+
 
 def before_save(doc, method=None):
 	doc.item_group = doc.custom_item_group_5 \
