@@ -59,7 +59,17 @@
       frappe.provide("power.utils");
       var { round_to_nearest_eighth } = power.utils;
       power.ui.CreateMaterialSKU = function(docname) {
+        var _a, _b, _c, _d;
         let dialog;
+        let item_group_details;
+        let doc;
+        const url = "/api/method/powerpro.controllers.assets.item_group.get_all_item_groups";
+        fetch(url).then((response) => response.json()).then(({ message }) => {
+          item_group_details = message;
+        });
+        fetch(`/api/resource/Raw Material/${docname}`).then((response) => response.json()).then(({ message }) => {
+          doc = message;
+        });
         dialog = frappe.prompt([
           {
             fieldtype: "Section Break",
@@ -88,7 +98,7 @@
           {
             fieldname: "roll_width",
             fieldtype: "Float",
-            label: __("Roll Width"),
+            label: `${__("Roll Width")} (in)`,
             reqd: 1,
             precision: 3,
             async change(event) {
@@ -103,7 +113,7 @@
           {
             fieldname: "sheet_width",
             fieldtype: "Float",
-            label: __("Sheet Width"),
+            label: `${__("Sheet Width")} (in)`,
             hidden: 1,
             precision: 3,
             async change(event) {
@@ -118,7 +128,7 @@
           {
             fieldname: "sheet_height",
             fieldtype: "Float",
-            label: __("Sheet Height"),
+            label: `${__("Sheet Height")} (in)`,
             hidden: 1,
             precision: 3,
             async change(event) {
@@ -153,6 +163,115 @@
                   indicator: "red"
                 });
               }
+            }
+          },
+          {
+            fieldtype: "Section Break",
+            label: __("Item Group")
+          },
+          {
+            fieldname: "item_group_1",
+            fieldtype: "Link",
+            label: __("Item Group 1"),
+            options: "Item Group",
+            default: (_b = (_a = frappe.boot) == null ? void 0 : _a.powerpro_settings) == null ? void 0 : _b.root_item_group_for_raw_materials,
+            read_only: Boolean((_d = (_c = frappe.boot) == null ? void 0 : _c.powerpro_settings) == null ? void 0 : _d.root_item_group_for_raw_materials),
+            reqd: 1,
+            change(event) {
+            }
+          },
+          {
+            fieldname: "item_group_2",
+            fieldtype: "Link",
+            label: __("Item Group 2"),
+            options: "Item Group",
+            reqd: 1,
+            get_query() {
+              return {
+                filters: {
+                  parent_item_group: dialog.get_value("item_group_1")
+                }
+              };
+            },
+            change(event) {
+              const { value } = this;
+              if (value) {
+                const has_children = item_group_details.find((item_group) => item_group.parent_item_group === value);
+                dialog.set_df_property("item_group_3", "hidden", !has_children);
+                dialog.set_df_property("item_group_3", "reqd", has_children);
+              } else {
+                dialog.set_df_property("item_group_5", "hidden", 1);
+                dialog.set_df_property("item_group_3", "reqd", 0);
+              }
+              dialog.set_value("item_group_3", null);
+            }
+          },
+          {
+            fieldname: "item_group_3",
+            fieldtype: "Link",
+            label: __("Item Group 3"),
+            options: "Item Group",
+            hidden: 1,
+            get_query() {
+              return {
+                filters: {
+                  parent_item_group: dialog.get_value("item_group_2")
+                }
+              };
+            },
+            change(event) {
+              const { value } = this;
+              if (value) {
+                const has_children = item_group_details.find((item_group) => item_group.parent_item_group === value);
+                dialog.set_df_property("item_group_4", "hidden", !has_children);
+                dialog.set_df_property("item_group_4", "reqd", has_children);
+              } else {
+                dialog.set_df_property("item_group_4", "hidden", 1);
+                dialog.set_df_property("item_group_4", "reqd", 0);
+              }
+              dialog.set_value("item_group_4", null);
+            }
+          },
+          {
+            fieldname: "item_group_4",
+            fieldtype: "Link",
+            label: __("Item Group 4"),
+            options: "Item Group",
+            hidden: 1,
+            get_query() {
+              return {
+                filters: {
+                  parent_item_group: dialog.get_value("item_group_3")
+                }
+              };
+            },
+            change(event) {
+              const { value } = this;
+              if (value) {
+                const has_children = item_group_details.find((item_group) => item_group.parent_item_group === value);
+                dialog.set_df_property("item_group_5", "hidden", !has_children);
+                dialog.set_df_property("item_group_5", "reqd", has_children);
+              } else {
+                dialog.set_df_property("item_group_5", "hidden", 1);
+                dialog.set_df_property("item_group_5", "reqd", 0);
+              }
+              dialog.set_value("item_group_5", null);
+            }
+          },
+          {
+            fieldname: "item_group_5",
+            fieldtype: "Link",
+            label: __("Item Group 5"),
+            options: "Item Group",
+            hidden: 1,
+            get_query() {
+              return {
+                filters: {
+                  parent_item_group: dialog.get_value("item_group_4")
+                }
+              };
+            },
+            change(event) {
             }
           }
         ], function(values) {
@@ -210,4 +329,4 @@
   var functions = __toESM(require_functions());
   var create_material_sku = __toESM(require_create_material_sku());
 })();
-//# sourceMappingURL=app.bundle.JZL3UBFZ.js.map
+//# sourceMappingURL=app.bundle.QJ2LL7OJ.js.map
