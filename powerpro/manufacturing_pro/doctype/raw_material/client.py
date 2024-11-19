@@ -4,6 +4,8 @@
 from typing import Literal, TYPE_CHECKING
 
 import frappe
+from frappe import _
+
 from frappe.utils import get_link_to_form
 
 from powerpro.utils import (
@@ -91,7 +93,7 @@ def create_material_sku(
 		"item_type": "Bienes",
 		"reference_type": material.doctype,
 		"reference_name": material.name,
-		"stock_uom": get_uom(material_format)
+		"stock_uom": get_uom(material_format),
 		"valuation_method": "FIFO",
 	})
 
@@ -126,9 +128,19 @@ def get_uom(material_format: Literal["Roll", "Sheet"]) -> str:
 	settings = frappe.get_single("Power-Pro Settings")
 
 	if material_format == "Roll":
+		if not settings.material_roll_uom:
+			frappe.throw(
+				_("Please set the Roll UOM in the Power-Pro Settings")
+			)
+
 		return settings.material_roll_uom
 
 	if material_format == "Sheet":
+		if not settings.material_sheet_uom:
+			frappe.throw(
+				_("Please set the Sheet UOM in the Power-Pro Settings")
+			)
+
 		return settings.material_sheet_uom
 	
 	frappe.throw(f"Invalid material format: {material_format}")
