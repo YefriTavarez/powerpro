@@ -91,7 +91,7 @@ def create_material_sku(
 		"item_type": "Bienes",
 		"reference_type": material.doctype,
 		"reference_name": material.name,
-		"stock_uom": "ud(s)" if material_format == "Sheet" else "mt",
+		"stock_uom": get_uom(material_format)
 		"valuation_method": "FIFO",
 	})
 
@@ -119,3 +119,16 @@ def get_material(name: str) -> "RawMaterial":
 		frappe.throw(f"Material {name} not found")
 
 	return frappe.get_doc(doctype, name)
+
+
+def get_uom(material_format: Literal["Roll", "Sheet"]) -> str:
+	"""Get the UOM based on the given material format"""
+	settings = frappe.get_single("Power-Pro Settings")
+
+	if material_format == "Roll":
+		return settings.material_roll_uom
+
+	if material_format == "Sheet":
+		return settings.material_sheet_uom
+	
+	frappe.throw(f"Invalid material format: {material_format}")
