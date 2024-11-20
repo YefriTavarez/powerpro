@@ -47,10 +47,11 @@
   },
   {
    "default": "{}",
+   "depends_on": "eval:doc.__onload?.debug",
    "fieldname": "data",
    "fieldtype": "JSON",
-   "hidden": 1,
-   "label": "Data"
+   "label": "Data",
+   "read_only_depends_on": "eval:!doc.__onload?.debug&&frappe.session.user!==\"Administrator\""
   },
   {
    "fieldname": "cost_estimation_app",
@@ -93,7 +94,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-11 23:55:43.497880",
+ "modified": "2024-11-19 16:17:48.203635",
  "modified_by": "Administrator",
  "module": "Manufacturing Pro",
  "name": "Cost Estimation",
