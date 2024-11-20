@@ -15,6 +15,22 @@ if TYPE_CHECKING:
 
 
 class CostEstimation(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		amended_from: DF.Link | None
+		created_on: DF.Date
+		customer: DF.Link
+		data: DF.JSON | None
+		expires_on: DF.Date
+		naming_series: DF.Literal["COST-EST-"]
+		raw_material: DF.Link
+	# end: auto-generated types
 	def onload(self):
 		self.set_onload("debug", True)
 
