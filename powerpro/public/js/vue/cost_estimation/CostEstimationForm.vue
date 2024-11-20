@@ -65,7 +65,7 @@ export default {
                         C/U <br>
                         <small
                             class="text-muted"
-                            style="color: crimson !important; font-weight: bold" >
+                            style="color: var(--success) !important; font-weight: bold" >
                             $ {{ parseFloat(form_data.unit_cost || 0.000).toLocaleString() }}
                         </small>
                     </h2>
