@@ -2,33 +2,37 @@
 // For license information, please see license.txt
 
 {
-	frappe.provide("power.ui");
+	frappe.provide("power.ui.cost_estimation");
 
 	function _setup_vue(frm) {
 		frappe.require([
 			"powerpro.bundle.js",
 		], function() {
-			const selector = `div[data-fieldname="cost_estimation_app"]`;
-			
-			if (!power.ui.CostEstimationApp) {
-				jQuery(
-					selector
-				).html(
-					`<p class="text-muted" style="color: rgb(181, 42, 42) !important">
-						${__("Error while loading Cost Estimation")}
-					</p>`
-				);
-
-				frappe.show_alert({
-					message: "Vue.CostEstimationApp is not available!",
-					indicator: "red",
-				});
-
-				return ; // exit
-			}
-
-			power.ui.cost_estimation = new power.ui.CostEstimationApp(frm, selector);
+			_refresh_vue(frm);
 		});
+	}
+
+	function _refresh_vue(frm) {
+		const selector = `div[data-fieldname="cost_estimation_app"]`;
+			
+		if (!power.ui.CostEstimationApp) {
+			jQuery(
+				selector
+			).html(
+				`<p class="text-muted" style="color: rgb(181, 42, 42) !important">
+					${__("Error while loading Cost Estimation")}
+				</p>`
+			);
+
+			frappe.show_alert({
+				message: "Vue.CostEstimationApp is not available!",
+				indicator: "red",
+			});
+
+			return ; // exit
+		}
+
+		power.ui.cost_estimation = new power.ui.CostEstimationApp(frm, selector);
 	}
 
 	function _autoset_expires_on({ frm, force = false }) {
@@ -71,6 +75,7 @@
 	}
 
 	function refresh(frm) {
+		_refresh_vue(frm);
 		_add_custom_buttons(frm);
 	}
 
