@@ -8,11 +8,14 @@
   "root_item_group_for_raw_materials",
   "column_break_gfqx",
   "section_break_vxnb",
-  "material_sheet_uom",
+  "product_uom",
   "column_break_lduc",
   "material_roll_uom",
+  "material_sheet_uom",
   "section_break_kdai",
-  "description_template_for_raw_material"
+  "description_template_for_raw_material",
+  "section_break_0luf",
+  "description_template_for_product"
  ],
  "fields": [
   {
@@ -57,12 +60,29 @@
    "fieldtype": "Code",
    "label": "Description Template for Raw Material",
    "options": "Jinja"
+  },
+  {
+   "description": "<pre>[{{ est.tecnologia }}] {{ est.tipo_de_producto }} {{ mat.description }} {{ est.ancho_producto }} x {{ est.alto_producto }} in\n</pre>\n\n<h3>Available variables:</h3>\n<p class=\"text-muted\">* Required</p>\n<ul>\n    <li>doc.raw_material *</li>\n    <li>doc.customer *</li>\n    <li>doc.created_on *</li>\n    <li>doc.expires_on *</li>\n\n    <li>mat.base_material *</li>\n    <li>mat.option_1</li>\n    <li>mat.option_2</li>\n    <li>mat.option_3</li>\n\n    <li>mat.material_format</li>\n    <li>mat.roll_width</li>\n    <li>mat.sheet_width</li>\n    <li>mat.sheet_height</li>\n\n    <li>mat.description</li>\n\n    <li>est.porcentaje_adicional</li>\n    <li>est.tecnologia *</li>\n    <li>est.tipo_de_producto *</li>\n    <li>est.operations</li>\n    <li>est.ancho_producto</li>\n    <li>est.alto_producto</li>\n    <li>est.ancho_montaje</li>\n    <li>est.alto_montaje</li>\n    <li>est.ancho_material</li>\n    <li>est.alto_material</li>\n    <li>est.cantidad_montaje</li>\n    <li>est.cantidad_de_tintas_tiro</li>\n    <li>est.tinta_seleccionada_tiro_1</li>\n    <li>est.hex_tinta_seleccionada_tiro_1</li>\n    <li>est.tinta_seleccionada_tiro_2</li>\n    <li>est.hex_tinta_seleccionada_tiro_2</li>\n    <li>est.tinta_seleccionada_tiro_3</li>\n    <li>est.hex_tinta_seleccionada_tiro_3</li>\n    <li>est.tinta_seleccionada_tiro_4</li>\n    <li>est.hex_tinta_seleccionada_tiro_4</li>\n    <li>est.tinta_seleccionada_tiro_5</li>\n    <li>est.hex_tinta_seleccionada_tiro_5</li>\n    <li>est.cantidad_de_tintas_retiro</li>\n    <li>est.tinta_seleccionada_retiro_1</li>\n    <li>est.hex_tinta_seleccionada_retiro_1</li>\n    <li>est.incluye_barnizado</li>\n    <li>est.tipo_barnizado</li>\n    <li>est.incluye_troquelado</li>\n    <li>est.incluye_laminado</li>\n    <li>est.incluye_relieve</li>\n    <li>est.tipo_de_relieve</li>\n    <li>est.tipo_de_material_relieve</li>\n    <li>est.cantidad_de_elementos_en_relieve</li>\n    <li>est.ancho_elemento_relieve_1</li>\n    <li>est.alto_elemento_relieve_1</li>\n    <li>est.ancho_elemento_relieve_2</li>\n    <li>est.alto_elemento_relieve_2</li>\n    <li>est.tipo_de_empaque</li>\n    <li>est.cantidad_de_producto</li>\n    <li>est.margen_de_utilidad</li>\n    <li>est.incluye_pegado</li>\n    <li>est.incluye_utilidad</li>\n    <li>est.ancho_elemento_relieve_3</li>\n    <li>est.alto_elemento_relieve_3</li>\n    <li>est.ancho_elemento_relieve_4</li>\n    <li>est.alto_elemento_relieve_4</li>\n    <li>est.ancho_elemento_relieve_5</li>\n    <li>est.alto_elemento_relieve_5</li>\n    <li>est.tipo_de_utilidad</li>\n    <li>est.cinta_doble_cara_ancho_punto</li>\n    <li>est.cinta_doble_cara_alto_punto</li>\n</ul>",
+   "fieldname": "description_template_for_product",
+   "fieldtype": "Code",
+   "label": "Description Template for Product",
+   "options": "Jinja"
+  },
+  {
+   "fieldname": "section_break_0luf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "product_uom",
+   "fieldtype": "Link",
+   "label": "Product UOM",
+   "options": "UOM"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-11-19 00:31:47.402358",
+ "modified": "2024-11-19 17:16:39.787526",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Power-Pro Settings",
