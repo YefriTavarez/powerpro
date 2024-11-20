@@ -13,7 +13,6 @@ if TYPE_CHECKING:
 	from powerpro.powerpro.manufacturing_pro.doctype.product_type.product_type import ProductType
 
 
-
 class CostEstimation(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.

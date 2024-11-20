@@ -139,7 +139,16 @@ export default {
                         <h3>Cantidad</h3>
                     </div>
                     <div class="form-column col-sm-6">
-                        
+                        <qty-field
+                            label="Unidades en Montaje"
+                            :initial_value="form_data.cantidad_montaje"
+                            :enforce_positive="true"
+                            :enforce_integer="true"
+                            :format_with_comma="true"
+                            @after_select="
+                                (value) => (form_data.cantidad_montaje = value)
+                            "
+                        />
                     </div>
 
                     <div class="form-column col-sm-3">
@@ -147,7 +156,7 @@ export default {
                             label="Cantidad"
                             :initial_value="form_data.cantidad_de_producto"
                             :enforce_positive="true"
-                            :enfore_integer="true"
+                            :enforce_integer="true"
                             :format_with_comma="true"
                             @after_select="
                                 (value) => (form_data.cantidad_de_producto = value)
@@ -171,17 +180,14 @@ export default {
                     </div>
 
                     <div class="form-column col-sm-3">
-                        <qty-field
-                            :label="`Cantidad con Adicional`"
-                            :initial_value="form_data.cantidad_de_producto_con_adicional"
-                            :enforce_positive="true"
-                            :enfore_integer="true"
-                            :format_with_comma="true"
-                            :read_only="true"
-                            @after_select="
-                                (value) => (form_data.cantidad_de_producto_con_adicional = value)
-                            "
-                        />
+                       <div class="form-group">
+                        <label for="cantidad_de_producto_con_adicional" class="for">
+                            Cantidad con Adicional
+                        </label>
+                        <span
+                            class="form-control"
+                        >{{ cantidad_de_producto_con_adicional }}</span>
+                       </div>
 
                         <percent-field
                             label="Margen de Utilidad"
@@ -260,7 +266,7 @@ export default {
                 <div class="row">
                     <div class="form-column col-sm-6">
                         <checkbox-field
-                            label="Incluye Pre-corte??"
+                            label="Incluye Pre-corte?"
                             :initial_value="form_data.incluye_precorte"
                             @after_select="
                                 (value) => (form_data.incluye_precorte = value)
