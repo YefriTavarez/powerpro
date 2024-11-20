@@ -32,7 +32,7 @@ class CostEstimation(Document):
 		raw_material: DF.Link
 	# end: auto-generated types
 	def onload(self):
-		self.set_onload("debug", True)
+		self.set_onload("debug", False)
 
 	@frappe.whitelist()
 	def create_sku(self):
