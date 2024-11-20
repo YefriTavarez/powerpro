@@ -8830,7 +8830,7 @@ Expected function or array of functions, received type ${typeof value}.`
   var _hoisted_62 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("br", null, null, -1));
   var _hoisted_72 = {
     class: "text-muted",
-    style: { "color": "crimson !important", "font-weight": "bold" }
+    style: { "color": "var(--success) !important", "font-weight": "bold" }
   };
   var _hoisted_82 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
   var _hoisted_9 = { class: "row" };
@@ -9531,4 +9531,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.RGPG5WZ7.js.map
+//# sourceMappingURL=powerpro.bundle.QVPK4SIB.js.map

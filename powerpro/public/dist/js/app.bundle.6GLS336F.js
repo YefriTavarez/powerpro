@@ -69,6 +69,8 @@
         });
         fetch(`/api/resource/Raw Material/${docname}`).then((response) => response.json()).then(({ message }) => {
           doc = message;
+          if (doc.base_material === "Paper") {
+          }
         });
         dialog = frappe.prompt([
           {
@@ -329,4 +331,4 @@
   var functions = __toESM(require_functions());
   var create_material_sku = __toESM(require_create_material_sku());
 })();
-//# sourceMappingURL=app.bundle.QJ2LL7OJ.js.map
+//# sourceMappingURL=app.bundle.6GLS336F.js.map
