@@ -103,15 +103,18 @@
 			frm.add_custom_button(
 				__("SKU"),
 				() => {
-					frm.call({
-						method: "create_sku",
-						args: {},
-						callback({ message }) {
-							if (message) {
-								frappe.set_route("Form", "Item", message);
-							}
-						},
-					});
+					const method = "create_sku";
+					const args = {
+						// no-args
+					};
+					
+					function callback({ message: name }) {
+						if (name) {
+							frappe.set_route("Form", "Item", name);
+						}
+					};
+
+					frm.call(method, args, callback);
 				},
 				__("Create")
 			);
