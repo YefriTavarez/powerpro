@@ -54,7 +54,7 @@ def create_material_sku(
 		"gsm": gsm,
 	})
 
-	description = material.get_description()
+	description = material.set_description()
 
 	# validate an equivalent Item does not exists already in the system.
 	if name := frappe.db.exists("Item", {

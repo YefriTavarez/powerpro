@@ -110,7 +110,7 @@ class RawMaterial(Document):
 
 		return ", ".join(out)
 
-	def set_description(self):
+	def set_description(self, for_return=False):
 		settings = frappe.get_single("Power-Pro Settings")
 		template = settings.description_template_for_raw_material
 
@@ -122,11 +122,16 @@ class RawMaterial(Document):
 				""", alert=True
 			)
 
-			self.description = self.get_description()
+			description = self.get_description()
 		else:
-			self.description = frappe.render_template(
+			description = frappe.render_template(
 				template, self.as_dict()
 			)
+		
+		if for_return:
+			return description
+		
+		self.description = description
 
 	def set_smart_hash(self):
 		# self.get_description(as_list=True)
