@@ -12,7 +12,8 @@
 		});
 	}
 
-	function _refresh_vue(frm) {
+	async function _refresh_vue(frm) {
+		await frappe.timeout(0.5);
 		const selector = `div[data-fieldname="cost_estimation_app"]`;
 			
 		if (!power.ui.CostEstimationApp) {
@@ -104,7 +105,7 @@
 	function _add_custom_buttons(frm) {
 		const { doc } = frm;
 
-		if (doc.docstatus === 1) {
+		if (!frm.is_dirty() && !doc.__onload.smart_hash_exist) {
 			frm.add_custom_button(
 				__("SKU"),
 				() => {
@@ -113,13 +114,56 @@
 						// no-args
 					};
 					
-					function callback({ message: name }) {
-						if (name) {
-							frappe.set_route("Form", "Item", name);
-						}
-					};
+					frm.call(method, args)
+						.then(function(response) {
+							const { message } = response;
+				
+							if (message) {
+								frappe.confirm(`
+									${__("Here is the SKU")} <strong>${message}</strong>
+									<button class="btn btn-info" onclick="frappe.utils.copy_to_clipboard('${message}')">
+										${__("Copy to Clipboard")}
+									</button>
+									<br>${__("Do you want me to take you there?")}
+								`, () => {
+									frappe.set_route("Form", "Item", message);
+								}, () => {
+									frappe.show_alert({
+										message: __("Alright... let's be productive, then!"),
+										indicator: "green",
+									});
+								});
+				
+								frappe.show_alert({
+									message,
+									indicator: "green",
+								});
 
-					frm.call(method, args, callback);
+								frm.reload_doc();
+							} else {
+								frappe.show_alert({
+									message: __("SKU not created!"),
+									indicator: "red",
+								});
+				
+								frappe.confirm(
+									__("Would you like to try again?"),
+									() => dialog.show(),
+									() => frappe.show_alert(__("Okay!")),
+								);
+							}
+						}, function(exec) {
+							frappe.show_alert({
+								message: __("SKU not created!"),
+								indicator: "red",
+							});
+				
+							frappe.confirm(
+								__("Would you like to try again?"),
+								() => dialog.show(),
+								() => frappe.show_alert(__("Okay!")),
+							);
+						});
 				},
 				__("Create")
 			);

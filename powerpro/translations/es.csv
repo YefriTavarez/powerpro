@@ -86,3 +86,5 @@
 "'Description Template for Product' is not set in the Power-Pro Settings","'Plantilla de Descripción para Producto' no establecida en Configuración de Power-Pro"
 "Product Type ID is required","Se requiere ID de Tipo de Producto"
 "Product Type '{product_type_id}' not found","Tipo de Producto '{product_type_id}' no encontrado"
+"The SKU already exists with the name {name!r}","El SKU ya existe con el nombre {name!r}"
+"Product Details","Detalles de Producto"
