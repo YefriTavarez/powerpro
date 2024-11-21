@@ -61,7 +61,7 @@ class CostEstimation(Document):
 			"description": self.get_product_description(vue_data),
 			"is_purchase_item": 0,
 			"is_sales_item": 1,
-			"is_stock_item": 1,
+			"is_stock_item": 0,
 			"custom_item_group_1": product_type.item_group_1,
 			"custom_item_group_2": product_type.item_group_2,
 			"custom_item_group_3": product_type.item_group_3,
