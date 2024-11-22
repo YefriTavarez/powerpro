@@ -428,10 +428,11 @@ export default {
                             "
                         />
 
+                        <!-- Calculated in Inches Square -->
                         <select-field
                             label="Tipo de Barnizado"
                             :options="[
-                                { value: 'Barnizado Base en Agua Brillo (in2)' },
+                                { value: 'Barnizado Base en Agua Brillo' },
                                 { value: 'Barnizado Base en Agua Mate' },
                                 { value: 'Barnizado Base en Aceite Brillo' },
                                 { value: 'Barnizado Base en Aceite Mate' },
