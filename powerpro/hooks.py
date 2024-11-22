@@ -55,6 +55,7 @@ doctype_js = {
     "Payroll Entry": "public/js/payroll_entry.js",
     "Quality Procedure": "public/js/doctype/quality_procedure/form.js",
     "ToDo": "public/js/todo.js",
+    "Asset Maintenance": "public/js/asset_maintenance.js",
 }
 
 doctype_list_js = {
@@ -184,7 +185,10 @@ doc_events = {
     "Purchase Invoice": {
         "validate": "powerpro.controllers.purchase_invoice.validate",
         "before_submit": "powerpro.controllers.purchase_invoice.before_submit",
-	}
+	},
+    "Asset Maintenance Log": {
+        "on_update_after_submit": "powerpro.controllers.asset_maintenance_log.on_update_after_submit",
+	},
 }
 
 # Scheduled Tasks

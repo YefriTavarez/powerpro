@@ -87,14 +87,19 @@ def add(args=None, *, ignore_permissions=False):
 					"allocated_to": assign_to,
 					"reference_type": args["doctype"],
 					"reference_name": args["name"],
-					"description": description,
+					"description": args.get("description"),
 					"priority": args.get("priority", "Medium"),
 					"status": "Open",
 					"date": args.get("date", nowdate()),
-					"assigned_by": args.get("assigned_by", frappe.session.user),
+					"assigned_by": "Administrator", # Super user is the default assigned_by to bypass permision query
 					"assignment_rule": args.get("assignment_rule"),
 					"item_code": args.get("item_code"),
 					"item_name": args.get("item_name"),
+					"asset_name": args.get("asset_name"),
+					"maintenance_team": args.get("maintenance_team"),
+					"periodicity": args.get("periodicity"),
+					"asset_maintenance_log": args.get("asset_maintenance_log"),
+					"assigne_name": args.get("assigne_name"),
 				}
 			).insert(ignore_permissions=True)
 
