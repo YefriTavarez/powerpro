@@ -8676,6 +8676,10 @@ Expected function or array of functions, received type ${typeof value}.`
       initial_value: {
         type: Boolean,
         default: false
+      },
+      conventional_checkbox: {
+        type: Boolean,
+        default: false
       }
     },
     data() {
@@ -8705,9 +8709,14 @@ Expected function or array of functions, received type ${typeof value}.`
   var _hoisted_35 = { class: "switch" };
   var _hoisted_43 = ["data-fieldname", "id"];
   var _hoisted_52 = /* @__PURE__ */ _withScopeId3(() => /* @__PURE__ */ createBaseVNode("span", { class: "slider round" }, null, -1));
+  var _hoisted_62 = ["for"];
+  var _hoisted_72 = ["data-fieldname", "id"];
   function render9(_ctx, _cache, $props, $setup, $data, $options) {
     return openBlock(), createElementBlock("div", _hoisted_17, [
-      createBaseVNode("h3", { for: $data.id }, [
+      !$props.conventional_checkbox ? (openBlock(), createElementBlock("h3", {
+        key: 0,
+        for: $data.id
+      }, [
         createBaseVNode("label", _hoisted_35, [
           withDirectives(createBaseVNode("input", {
             type: "checkbox",
@@ -8722,7 +8731,22 @@ Expected function or array of functions, received type ${typeof value}.`
           _hoisted_52
         ]),
         createTextVNode(" " + toDisplayString($props.label), 1)
-      ], 8, _hoisted_27)
+      ], 8, _hoisted_27)) : (openBlock(), createElementBlock("label", {
+        key: 1,
+        for: $data.id
+      }, [
+        withDirectives(createBaseVNode("input", {
+          type: "checkbox",
+          autocomplete: "off",
+          class: "input-with-feedback",
+          "data-fieldname": $data.id,
+          id: $data.id,
+          "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => $data.value = $event)
+        }, null, 8, _hoisted_72), [
+          [vModelCheckbox, $data.value]
+        ]),
+        createTextVNode(" " + toDisplayString($props.label), 1)
+      ], 8, _hoisted_62))
     ]);
   }
 
@@ -8836,8 +8860,8 @@ Expected function or array of functions, received type ${typeof value}.`
     class: "px-3",
     style: { "width": "100%" }
   };
-  var _hoisted_62 = { class: "text-right" };
-  var _hoisted_72 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("br", null, null, -1));
+  var _hoisted_63 = { class: "text-right" };
+  var _hoisted_73 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("br", null, null, -1));
   var _hoisted_82 = {
     class: "text-muted",
     style: { "color": "var(--success) !important", "font-weight": "bold" }
@@ -8930,38 +8954,39 @@ Expected function or array of functions, received type ${typeof value}.`
   var _hoisted_60 = { key: 3 };
   var _hoisted_61 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
   var _hoisted_622 = { class: "row" };
-  var _hoisted_63 = { class: "form-column col-sm-6" };
-  var _hoisted_64 = {
-    key: 0,
-    class: "text-muted"
-  };
+  var _hoisted_632 = { class: "form-column col-sm-6" };
+  var _hoisted_64 = { class: "form-column col-sm-6" };
   var _hoisted_65 = {
     key: 1,
     class: "text-muted"
   };
-  var _hoisted_66 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
-  var _hoisted_67 = { class: "row" };
-  var _hoisted_68 = { class: "form-column col-sm-6" };
-  var _hoisted_69 = { key: 4 };
-  var _hoisted_70 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
-  var _hoisted_71 = { class: "row" };
-  var _hoisted_722 = { class: "form-column col-sm-6" };
-  var _hoisted_73 = { class: "form-column col-sm-6" };
-  var _hoisted_74 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
-  var _hoisted_75 = { class: "row" };
-  var _hoisted_76 = { class: "form-column col-sm-6" };
-  var _hoisted_77 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
-  var _hoisted_78 = { class: "row" };
-  var _hoisted_79 = { class: "form-column col-sm-6" };
-  var _hoisted_80 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
-  var _hoisted_81 = { class: "row" };
-  var _hoisted_822 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("div", {
+  var _hoisted_66 = {
+    key: 2,
+    class: "text-muted"
+  };
+  var _hoisted_67 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
+  var _hoisted_68 = { class: "row" };
+  var _hoisted_69 = { class: "form-column col-sm-6" };
+  var _hoisted_70 = { key: 4 };
+  var _hoisted_71 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
+  var _hoisted_722 = { class: "row" };
+  var _hoisted_732 = { class: "form-column col-sm-6" };
+  var _hoisted_74 = { class: "form-column col-sm-6" };
+  var _hoisted_75 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
+  var _hoisted_76 = { class: "row" };
+  var _hoisted_77 = { class: "form-column col-sm-6" };
+  var _hoisted_78 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
+  var _hoisted_79 = { class: "row" };
+  var _hoisted_80 = { class: "form-column col-sm-6" };
+  var _hoisted_81 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
+  var _hoisted_822 = { class: "row" };
+  var _hoisted_83 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("div", {
     class: "px-3",
     style: { "width": "100%" }
   }, [
     /* @__PURE__ */ createBaseVNode("h3", null, "Empaque")
   ], -1));
-  var _hoisted_83 = { class: "form-column col-sm-6" };
+  var _hoisted_84 = { class: "form-column col-sm-6" };
   function render10(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_printing_tecnique = resolveComponent("printing-tecnique");
     const _component_qty_field = resolveComponent("qty-field");
@@ -8974,9 +8999,9 @@ Expected function or array of functions, received type ${typeof value}.`
         !_ctx.is_new() ? (openBlock(), createElementBlock("section", _hoisted_36, [
           createBaseVNode("div", _hoisted_44, [
             createBaseVNode("div", _hoisted_53, [
-              createBaseVNode("h2", _hoisted_62, [
+              createBaseVNode("h2", _hoisted_63, [
                 createTextVNode(" C/U "),
-                _hoisted_72,
+                _hoisted_73,
                 createBaseVNode("small", _hoisted_82, " $ " + toDisplayString(parseFloat(_ctx.form_data.unit_cost || 0).toLocaleString()), 1)
               ])
             ])
@@ -9274,36 +9299,45 @@ Expected function or array of functions, received type ${typeof value}.`
         _ctx.form_data.tecnologia === "Offset" ? (openBlock(), createElementBlock("section", _hoisted_60, [
           _hoisted_61,
           createBaseVNode("div", _hoisted_622, [
-            createBaseVNode("div", _hoisted_63, [
+            createBaseVNode("div", _hoisted_632, [
               createVNode(_component_checkbox_field, {
                 label: "Incluye Troquelado?",
                 initial_value: _ctx.form_data.incluye_troquelado,
                 onAfter_select: _cache[18] || (_cache[18] = (value) => _ctx.form_data.incluye_troquelado = value)
-              }, null, 8, ["initial_value"]),
-              _ctx.form_data.incluye_troquelado ? (openBlock(), createElementBlock("p", _hoisted_64, " Este producto es troquelado. ")) : (openBlock(), createElementBlock("p", _hoisted_65, " Este producto es refilado. "))
+              }, null, 8, ["initial_value"])
+            ]),
+            createBaseVNode("div", _hoisted_64, [
+              _ctx.form_data.incluye_troquelado ? (openBlock(), createBlock(_component_checkbox_field, {
+                key: 0,
+                label: "Troquel en Inventario?",
+                conventional_checkbox: true,
+                initial_value: _ctx.form_data.troquel_en_inventario,
+                onAfter_select: _cache[19] || (_cache[19] = (value) => _ctx.form_data.troquel_en_inventario = value)
+              }, null, 8, ["initial_value"])) : createCommentVNode("v-if", true),
+              _ctx.form_data.incluye_troquelado ? (openBlock(), createElementBlock("p", _hoisted_65, " Este producto es troquelado. ")) : (openBlock(), createElementBlock("p", _hoisted_66, " Este producto es refilado. "))
             ])
           ])
         ])) : createCommentVNode("v-if", true),
         createBaseVNode("section", null, [
-          _hoisted_66,
-          createBaseVNode("div", _hoisted_67, [
-            createBaseVNode("div", _hoisted_68, [
+          _hoisted_67,
+          createBaseVNode("div", _hoisted_68, [
+            createBaseVNode("div", _hoisted_69, [
               createVNode(_component_checkbox_field, {
                 label: "Incluye Laminado?",
                 initial_value: _ctx.form_data.incluye_laminado,
-                onAfter_select: _cache[19] || (_cache[19] = (value) => _ctx.form_data.incluye_laminado = value)
+                onAfter_select: _cache[20] || (_cache[20] = (value) => _ctx.form_data.incluye_laminado = value)
               }, null, 8, ["initial_value"])
             ])
           ])
         ]),
-        _ctx.form_data.tecnologia === "Offset" ? (openBlock(), createElementBlock("section", _hoisted_69, [
-          _hoisted_70,
-          createBaseVNode("div", _hoisted_71, [
-            createBaseVNode("div", _hoisted_722, [
+        _ctx.form_data.tecnologia === "Offset" ? (openBlock(), createElementBlock("section", _hoisted_70, [
+          _hoisted_71,
+          createBaseVNode("div", _hoisted_722, [
+            createBaseVNode("div", _hoisted_732, [
               createVNode(_component_checkbox_field, {
                 label: "Incluye Relieve?",
                 initial_value: _ctx.form_data.incluye_relieve,
-                onAfter_select: _cache[20] || (_cache[20] = (value) => _ctx.form_data.incluye_relieve = value)
+                onAfter_select: _cache[21] || (_cache[21] = (value) => _ctx.form_data.incluye_relieve = value)
               }, null, 8, ["initial_value"]),
               _ctx.form_data.incluye_relieve ? (openBlock(), createBlock(_component_select_field, {
                 key: 0,
@@ -9313,7 +9347,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: "Estampado" }
                 ],
                 selected: _ctx.form_data.tipo_de_relieve,
-                onAfter_select: _cache[21] || (_cache[21] = (value) => _ctx.form_data.tipo_de_relieve = value)
+                onAfter_select: _cache[22] || (_cache[22] = (value) => _ctx.form_data.tipo_de_relieve = value)
               }, null, 8, ["selected"])) : createCommentVNode("v-if", true),
               _ctx.form_data.incluye_relieve ? (openBlock(), createBlock(_component_select_field, {
                 key: 1,
@@ -9325,7 +9359,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: "Pl\xE1stico" }
                 ],
                 selected: _ctx.form_data.tipo_de_material_relieve,
-                onAfter_select: _cache[22] || (_cache[22] = (value) => _ctx.form_data.tipo_de_material_relieve = value)
+                onAfter_select: _cache[23] || (_cache[23] = (value) => _ctx.form_data.tipo_de_material_relieve = value)
               }, null, 8, ["selected"])) : createCommentVNode("v-if", true),
               _ctx.form_data.incluye_relieve ? (openBlock(), createBlock(_component_select_field, {
                 key: 2,
@@ -9338,10 +9372,10 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: 5, label: "5" }
                 ],
                 selected: _ctx.form_data.cantidad_de_elementos_en_relieve,
-                onAfter_select: _cache[23] || (_cache[23] = (value) => _ctx.form_data.cantidad_de_elementos_en_relieve = value)
+                onAfter_select: _cache[24] || (_cache[24] = (value) => _ctx.form_data.cantidad_de_elementos_en_relieve = value)
               }, null, 8, ["selected"])) : createCommentVNode("v-if", true)
             ]),
-            createBaseVNode("div", _hoisted_73, [
+            createBaseVNode("div", _hoisted_74, [
               _ctx.form_data.incluye_relieve ? (openBlock(true), createElementBlock(Fragment, { key: 0 }, renderList(_ctx.form_data.cantidad_de_elementos_en_relieve, (index) => {
                 return openBlock(), createBlock(_component_dimension, {
                   label: `Tama\xF1o del Elemento ${index}`,
@@ -9354,27 +9388,27 @@ Expected function or array of functions, received type ${typeof value}.`
           ])
         ])) : createCommentVNode("v-if", true),
         createBaseVNode("section", null, [
-          _hoisted_74,
-          createBaseVNode("div", _hoisted_75, [
-            createBaseVNode("div", _hoisted_76, [
+          _hoisted_75,
+          createBaseVNode("div", _hoisted_76, [
+            createBaseVNode("div", _hoisted_77, [
               createVNode(_component_checkbox_field, {
                 label: "Incluye Utilidad?",
                 initial_value: _ctx.form_data.incluye_utilidad,
-                onAfter_select: _cache[24] || (_cache[24] = (value) => _ctx.form_data.incluye_utilidad = value)
+                onAfter_select: _cache[25] || (_cache[25] = (value) => _ctx.form_data.incluye_utilidad = value)
               }, null, 8, ["initial_value"]),
               _ctx.form_data.incluye_utilidad ? (openBlock(), createBlock(_component_select_field, {
                 key: 0,
                 label: "Tipo de Utilidad",
                 options: [{ value: "Cinta Doble Cara" }],
                 selected: _ctx.form_data.tipo_de_utilidad,
-                onAfter_select: _cache[25] || (_cache[25] = (value) => _ctx.form_data.tipo_de_utilidad = value)
+                onAfter_select: _cache[26] || (_cache[26] = (value) => _ctx.form_data.tipo_de_utilidad = value)
               }, null, 8, ["selected"])) : createCommentVNode("v-if", true),
               createCommentVNode("\n                        Cantidad de puntos\n                        Tama\xF1o de los puntos (ancho y alto) con valores fijos\n                        Ancho: 0.5, 0.75, 1 in\n                        Largo: 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5 in\n                        "),
               _ctx.form_data.tipo_de_utilidad && _ctx.form_data.tipo_de_utilidad === "Cinta Doble Cara" ? (openBlock(), createBlock(_component_qty_field, {
                 key: 1,
                 label: "Cantidad de Puntos",
                 initial_value: _ctx.form_data.cinta_doble_cara_cantidad_de_puntos,
-                onAfter_select: _cache[26] || (_cache[26] = (value) => _ctx.form_data.cinta_doble_cara_cantidad_de_puntos = value)
+                onAfter_select: _cache[27] || (_cache[27] = (value) => _ctx.form_data.cinta_doble_cara_cantidad_de_puntos = value)
               }, null, 8, ["initial_value"])) : createCommentVNode("v-if", true),
               _ctx.form_data.tipo_de_utilidad && _ctx.form_data.tipo_de_utilidad === "Cinta Doble Cara" ? (openBlock(), createBlock(_component_dimension, {
                 key: 2,
@@ -9401,7 +9435,7 @@ Expected function or array of functions, received type ${typeof value}.`
                     { value: 5, label: "5" }
                   ]
                 },
-                onOn_change: _cache[27] || (_cache[27] = ({ width: cinta_doble_cara_ancho_punto, height: cinta_doble_cara_alto_punto }) => _ctx.form_data = __spreadProps(__spreadValues({}, _ctx.form_data), {
+                onOn_change: _cache[28] || (_cache[28] = ({ width: cinta_doble_cara_ancho_punto, height: cinta_doble_cara_alto_punto }) => _ctx.form_data = __spreadProps(__spreadValues({}, _ctx.form_data), {
                   cinta_doble_cara_ancho_punto,
                   cinta_doble_cara_alto_punto
                 }))
@@ -9410,13 +9444,13 @@ Expected function or array of functions, received type ${typeof value}.`
           ])
         ]),
         createBaseVNode("section", null, [
-          _hoisted_77,
-          createBaseVNode("div", _hoisted_78, [
-            createBaseVNode("div", _hoisted_79, [
+          _hoisted_78,
+          createBaseVNode("div", _hoisted_79, [
+            createBaseVNode("div", _hoisted_80, [
               createVNode(_component_checkbox_field, {
                 label: "Incluye Pegado?",
                 initial_value: _ctx.form_data.incluye_pegado,
-                onAfter_select: _cache[28] || (_cache[28] = (value) => _ctx.form_data.incluye_pegado = value)
+                onAfter_select: _cache[29] || (_cache[29] = (value) => _ctx.form_data.incluye_pegado = value)
               }, null, 8, ["initial_value"]),
               _ctx.form_data.incluye_pegado ? (openBlock(), createBlock(_component_select_field, {
                 key: 0,
@@ -9428,16 +9462,16 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: "Fondo Recto con Ventana" }
                 ],
                 selected: _ctx.form_data.tipo_de_utilidad,
-                onAfter_select: _cache[29] || (_cache[29] = (value) => _ctx.form_data.tipo_de_utilidad = value)
+                onAfter_select: _cache[30] || (_cache[30] = (value) => _ctx.form_data.tipo_de_utilidad = value)
               }, null, 8, ["selected"])) : createCommentVNode("v-if", true)
             ])
           ])
         ]),
         createBaseVNode("section", null, [
-          _hoisted_80,
-          createBaseVNode("div", _hoisted_81, [
-            _hoisted_822,
-            createBaseVNode("div", _hoisted_83, [
+          _hoisted_81,
+          createBaseVNode("div", _hoisted_822, [
+            _hoisted_83,
+            createBaseVNode("div", _hoisted_84, [
               createVNode(_component_select_field, {
                 label: "Tipo de Empaque",
                 options: [
@@ -9446,7 +9480,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: "Pl\xE1stico" }
                 ],
                 selected: _ctx.form_data.tipo_de_empaque,
-                onAfter_select: _cache[30] || (_cache[30] = (value) => _ctx.form_data.tipo_de_empaque = value)
+                onAfter_select: _cache[31] || (_cache[31] = (value) => _ctx.form_data.tipo_de_empaque = value)
               }, null, 8, ["selected"])
             ])
           ])
@@ -9554,4 +9588,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.XGP4K57Q.js.map
+//# sourceMappingURL=powerpro.bundle.5HOTCUAE.js.map
