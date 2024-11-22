@@ -109,7 +109,7 @@ export default {
                     <div class="px-3" style="width: 100%">
                         <h3>Cantidad</h3>
                     </div>
-                    <div class="form-column col-sm-6">
+                    <div class="form-column col-sm-4">
                         <qty-field
                             label="Unidades en Montaje"
                             :initial_value="form_data.cantidad_montaje"
@@ -122,7 +122,7 @@ export default {
                         />
                     </div>
 
-                    <div class="form-column col-sm-3">
+                    <div class="form-column col-sm-4">
                         <qty-field
                             label="Cantidad"
                             :initial_value="form_data.cantidad_de_producto"
@@ -150,7 +150,7 @@ export default {
                         />
                     </div>
 
-                    <div class="form-column col-sm-3">
+                    <div class="form-column col-sm-4">
                        <div class="form-group">
                         <label for="cantidad_de_producto_con_adicional" class="for">
                             Cantidad con Adicional

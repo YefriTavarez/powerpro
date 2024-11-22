@@ -7960,6 +7960,10 @@ Expected function or array of functions, received type ${typeof value}.`
     document: {
       type: Object,
       required: true
+    },
+    readonly: {
+      type: Boolean,
+      default: false
     }
   };
 
@@ -8912,9 +8916,9 @@ Expected function or array of functions, received type ${typeof value}.`
   }, [
     /* @__PURE__ */ createBaseVNode("h3", null, "Cantidad")
   ], -1));
-  var _hoisted_20 = { class: "form-column col-sm-6" };
-  var _hoisted_21 = { class: "form-column col-sm-3" };
-  var _hoisted_222 = { class: "form-column col-sm-3" };
+  var _hoisted_20 = { class: "form-column col-sm-4" };
+  var _hoisted_21 = { class: "form-column col-sm-4" };
+  var _hoisted_222 = { class: "form-column col-sm-4" };
   var _hoisted_232 = { class: "form-group" };
   var _hoisted_242 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("label", {
     for: "cantidad_de_producto_con_adicional",
@@ -9613,4 +9617,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.WJ7SBUMD.js.map
+//# sourceMappingURL=powerpro.bundle.JOCVCH4J.js.map
