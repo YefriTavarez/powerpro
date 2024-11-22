@@ -462,7 +462,17 @@ export default {
                                 (value) => (form_data.incluye_troquelado = value)
                             "
                         />
-
+                    </div>
+                    <div class="form-column col-sm-6">
+                        <checkbox-field
+                            v-if="form_data.incluye_troquelado"
+                            label="Troquel en Inventario?"
+                            :conventional_checkbox="true"
+                            :initial_value="form_data.troquel_en_inventario"
+                            @after_select="
+                                (value) => (form_data.troquel_en_inventario = value)
+                            "
+                        />
                         <p v-if="form_data.incluye_troquelado" class="text-muted">
                             Este producto es troquelado.
                         </p>
