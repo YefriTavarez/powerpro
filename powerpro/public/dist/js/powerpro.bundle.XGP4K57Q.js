@@ -7966,7 +7966,8 @@ Expected function or array of functions, received type ${typeof value}.`
   // ../powerpro/powerpro/public/js/vue/cost_estimation/options/computed.js
   var computed_default = {
     cantidad_de_producto_con_adicional() {
-      return (flt(this.form_data.cantidad_de_producto) * (flt(this.form_data.porcentaje_adicional) / 100 + 1)).toLocaleString();
+      const out = flt(this.form_data.cantidad_de_producto) * (flt(this.form_data.porcentaje_adicional) / 100 + 1);
+      return Math.ceil(out).toLocaleString();
     }
   };
 
@@ -9250,11 +9251,12 @@ Expected function or array of functions, received type ${typeof value}.`
                 initial_value: _ctx.form_data.incluye_barnizado,
                 onAfter_select: _cache[16] || (_cache[16] = (value) => _ctx.form_data.incluye_barnizado = value)
               }, null, 8, ["initial_value"]),
+              createCommentVNode(" Calculated in Inches Square "),
               _ctx.form_data.incluye_barnizado ? (openBlock(), createBlock(_component_select_field, {
                 key: 0,
                 label: "Tipo de Barnizado",
                 options: [
-                  { value: "Barnizado Base en Agua Brillo (in2)" },
+                  { value: "Barnizado Base en Agua Brillo" },
                   { value: "Barnizado Base en Agua Mate" },
                   { value: "Barnizado Base en Aceite Brillo" },
                   { value: "Barnizado Base en Aceite Mate" },
@@ -9265,7 +9267,7 @@ Expected function or array of functions, received type ${typeof value}.`
                 ],
                 selected: _ctx.form_data.tipo_barnizado,
                 onAfter_select: _cache[17] || (_cache[17] = (value) => _ctx.form_data.tipo_barnizado = value)
-              }, null, 8, ["options", "selected"])) : createCommentVNode("v-if", true)
+              }, null, 8, ["selected"])) : createCommentVNode("v-if", true)
             ])
           ])
         ])) : createCommentVNode("v-if", true),
@@ -9552,4 +9554,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.7H7W5DNI.js.map
+//# sourceMappingURL=powerpro.bundle.XGP4K57Q.js.map
