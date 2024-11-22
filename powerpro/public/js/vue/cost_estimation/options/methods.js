@@ -2,6 +2,9 @@
 // For license information, please see license.txt
 /* eslint-disable */
 
+let power_pro_settings;
+let loading_power_pro_settings = false;
+
 export default {
 	is_new() {
 		return this.frm.is_new();
@@ -162,4 +165,54 @@ export default {
 			frappe.call({ method, args, callback, freeze, freeze_message });
 		}
 	},
+	load_power_pro_settings() {
+		const self = this;
+		const method = "powerpro.controllers.assets.get_power_pro_settings";
+		const args = {
+			// empty
+		};
+
+		function callback({ message: powerpro_settings }) {
+			self.powerpro_settings = powerpro_settings;
+			loading_power_pro_settings = false;
+
+			// update global variable
+			power_pro_settings = powerpro_settings;
+		}
+
+		// for some reason, this method is being called twice.
+		if (!loading_power_pro_settings) {
+			loading_power_pro_settings = true;
+			frappe.call({ method, args, callback });
+		}
+	},
+	validate_and_set_margin_of_utility(value, set_value) {
+		const self = this;
+		// const { powerpro_settings: settings } = this;
+		const settings = power_pro_settings;
+
+		if (
+			!settings
+			|| typeof settings.min_margin !== "number"
+			|| typeof settings.max_margin !== "number"
+		) {
+			self.form_data.margen_de_utilidad = value;
+			return ; // do nothing else
+		}
+
+		const { min_margin, max_margin } = settings;
+
+		// validate the value
+		if (value > max_margin) {
+			frappe.msgprint(__("The value is above the maximum margin of utility"));
+			self.form_data.margen_de_utilidad = max_margin;
+			set_value(max_margin);
+		} else if (value < min_margin) {
+			frappe.msgprint(__("The value is below the minimum margin of utility"));
+			set_value(min_margin);
+			self.form_data.margen_de_utilidad = min_margin;
+		} else {
+			self.form_data.margen_de_utilidad = value;
+		}
+	}
 };

@@ -18,7 +18,7 @@ class QualityProcedure(quality_procedure.QualityProcedure):
 		self.name = naming.make_autoname(naming_series)
 
 	def validate(self):
-		if self.is_new():
+		if not self.flags.internal_save and self.is_new():
 			self.revision = "1.0.0"
 			return # ignore new documents
 
@@ -30,7 +30,7 @@ class QualityProcedure(quality_procedure.QualityProcedure):
 	@frappe.whitelist()
 	def bump_major(self, autosave: bool = False) -> Optional[str]:
 		version = self.get_version()
-		self.revision = str(version.bump_major())
+		self._revision = str(version.bump_major())
 
 		if autosave:
 			return self.supersede()
@@ -38,7 +38,7 @@ class QualityProcedure(quality_procedure.QualityProcedure):
 	@frappe.whitelist()
 	def bump_minor(self, autosave: bool = False) -> Optional[str]:
 		version = self.get_version()
-		self.revision = str(version.bump_minor())
+		self._revision = str(version.bump_minor())
 
 		if autosave:
 			return self.supersede()
@@ -46,7 +46,7 @@ class QualityProcedure(quality_procedure.QualityProcedure):
 	@frappe.whitelist()
 	def bump_patch(self, autosave: bool = False) -> Optional[str]:
 		version = self.get_version()
-		self.revision = str(version.bump_patch())
+		self._revision = str(version.bump_patch())
 
 		if autosave:
 			return self.supersede()
@@ -57,11 +57,10 @@ class QualityProcedure(quality_procedure.QualityProcedure):
 		self.save()
 
 	def supersede(self) -> None:
-		self.db_set("status", "Superseded")
-
 		copy = frappe.copy_doc(self)
-		copy.revision = self.revision
-		copy.status = "Published"
+		copy.revision = self._revision
+		copy.status = self.status
+
 		copy.closest_seed = self.name
 
 		if not copy.seed:
@@ -69,9 +68,20 @@ class QualityProcedure(quality_procedure.QualityProcedure):
 
 		copy.flags.ignore_permissions = True
 		copy.flags.internal_save = True
-		copy.save()
+
+		try:
+			copy.insert()
+		except frappe.ValidationError as e:
+			raise e
+		else:
+			self.queue_action(
+				"mark_as_superseded", enqueue_after_commit=True
+			)
 
 		return copy.name
+
+	def mark_as_superseded(self):
+		self.db_set("status", "Superseded")
 
 	def get_version(self) -> Version:
 		return Version.parse(self.revision)

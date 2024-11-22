@@ -1,4 +1,5 @@
 <script>
+let notified = true;
 export default {
 	props: {
 		value: {
@@ -17,20 +18,37 @@ export default {
 	},
 	watch: {
 		percentage(newVal, oldVal) {
+			const self = this;
+
 			const value = flt(newVal);
 			// validate percentage
 			if (value < 0) {
-				this.percentage = 0;
+				self.percentage = 0;
 			} else if (value > 100) {
-				this.percentage = 100;
+				self.percentage = 100;
 			}
 
-			this.$emit("after_select", flt(this.percentage));
+			// let timeoutId;
+			// timeoutId = setTimeout(function() {
+			// 	clearTimeout(timeoutId);
+
+			// 	self.$emit("after_select", flt(self.percentage));
+			// }, 1000);
+
+			notified = false;
 		},
 	},
 	methods: {
 		clearValue() {
 			this.percentage = 0;
+		},
+		_setValue(newVal) {
+			this.percentage = newVal;
+		},
+		notifyUpdate() {
+			if (notified) return;
+			this.$emit("after_select", flt(this.percentage), this._setValue);
+			notified = true;
 		},
 	},
 }
@@ -41,7 +59,7 @@ export default {
 		<label>{{ label }}</label>
 		<div class="form-input-group">
 			<span>%</span>
-			<input v-model="percentage" type="text" />
+			<input @blur="notifyUpdate" v-model="percentage" type="text" />
 			<span @click="clearValue">&times;</span>
 		</div>
 	</div>

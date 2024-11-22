@@ -35,7 +35,7 @@ frappe.listview_settings["Quality Procedure"] = {
 			"Cancelled": "red",
 		}[status];
 
-		return [status, color, `status,=,${status}`];
+		return [__(status), color, `status,=,${status}`];
 	},
 
 };

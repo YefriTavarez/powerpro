@@ -26,6 +26,7 @@
 	}
 
 	async function _toggle_read_only_depends_on_fields(frm) {
+		// ToDo: Hide Custom Item Group Ns only if they're empty
 		await frappe.timeout(.2);
 		const { doc } = frm;
 
@@ -51,20 +52,20 @@
 
 
 		read_only_depends_on.forEach(async function(fieldname) {
-			const element = jQuery(`div#page-Item`)
-				.find(`div[data-fieldname="${fieldname}"]`)
-			;
+			// const element = jQuery(`div#page-Item`)
+			// 	.find(`div[data-fieldname="${fieldname}"]`)
+			// ;
 
-			if (enabled) {
+			// if (enabled) {
 
-				element
-					.fadeIn(500);
-			} else {
-				element
-					.fadeOut(500);
-			}
+			// 	element
+			// 		.fadeIn(500);
+			// } else {
+			// 	element
+			// 		.fadeOut(500);
+			// }
 
-			await frappe.timeout(1.4);
+			// await frappe.timeout(1.4);
 			frm.toggle_enable(fieldname, enabled);
 		});
 	}

@@ -15,8 +15,8 @@
 					options: [
 						{label: __("Major Changes"), value: "bump_major"},
 						{label: __("Minor Changes"), value: "bump_minor"},
-						{label: __("Only Corrections"), value: "bump_patch"},
-						{label: __("Styling / Format"), value: "save_only"},
+						{label: __("Styling / Format"), value: "bump_patch"},
+						{label: __("Save Only"), value: "save_only"},
 					],
 				},
 			];

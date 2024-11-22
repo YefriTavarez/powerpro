@@ -2,6 +2,8 @@
 # For license information, please see license.txt
 
 import frappe
+
+from frappe import _
 from frappe.model.document import Document
 from frappe.utils import get_link_to_form
 
@@ -13,6 +15,22 @@ from powerpro.utils import (
 
 
 class RawMaterial(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		base_material: DF.Link
+		description: DF.SmallText | None
+		enabled: DF.Check
+		option_1: DF.Literal["[Select]"]
+		option_2: DF.Literal["[Select]"]
+		option_3: DF.Literal["[Select]"]
+		smart_hash: DF.Data | None
+	# end: auto-generated types
 	def validate(self):
 		# self.round_dimensions()
 		self.set_description()
@@ -23,16 +41,41 @@ class RawMaterial(Document):
 
 	def get_description(self, as_list=False):
 		out = [
-			self.base_material,
+			_(self.base_material),
 		]
 
-		if self.base_material == "Paperboard":
-			out.append(self.paperboard_type)
-			out.append(self.paperboard_caliper)
-		elif self.base_material == "Paper":
-			out.append(self.paper_type)
-			out.append(self.paper_weight)
+		# if self.base_material == "Paperboard":
+		# 	out.append(
+		# 		_(self.paperboard_type)
+		# 	)
+		# 	out.append(
+		# 		_(self.paperboard_caliper)
+		# 	)
+		# elif self.base_material == "Paper":
+		# 	out.append(
+		# 		_(self.paper_type)
+		# 	)
+		# 	out.append(
+		# 		_(self.paper_weight)
+		# 	)
 
+		if self.option_1:
+			out.append(
+				_(self.option_1)
+			)
+		
+		if self.option_2:
+			out.append(
+				_(self.option_2)
+			)
+
+		if self.option_3:
+			out.append(
+				_(self.option_3)
+			)
+
+		# dinamically add the material_format to get a better description 
+		# ready to be used in the Item's description
 		if getattr(self, "material_format", None):
 			if self.material_format not in ["Roll", "Sheet"]:
 				frappe.throw(
@@ -55,7 +98,9 @@ class RawMaterial(Document):
 				"Sheet": f"{self.sheet_width} x {self.sheet_height} in",
 			}
 
-			out.append(dimension_map[self.material_format])
+			out.append(
+				_(dimension_map[self.material_format])
+			)
 
 		if getattr(self, "gsm", None):
 			out.append(f"{self.gsm} gsm")
@@ -65,8 +110,28 @@ class RawMaterial(Document):
 
 		return ", ".join(out)
 
-	def set_description(self):
-		self.description = self.get_description()
+	def set_description(self, for_return=False):
+		settings = frappe.get_single("Power-Pro Settings")
+		template = settings.description_template_for_raw_material
+
+		if not template:
+			frappe.msgprint(
+				f"""
+				{_("'Description Template for Raw Material' not set in Power-Pro Settings")}.<br>
+				{_("Using default description template")}.
+				""", alert=True
+			)
+
+			description = self.get_description()
+		else:
+			description = frappe.render_template(
+				template, self.as_dict()
+			)
+		
+		if for_return:
+			return description
+		
+		self.description = description
 
 	def set_smart_hash(self):
 		# self.get_description(as_list=True)
@@ -76,7 +141,7 @@ class RawMaterial(Document):
 
 		if not self.smart_hash:
 			frappe.throw(
-				f"Unable to generate a hash for this raw material: <br> {self.description}"
+				f"{_('Unable to generate a hash for this raw material')}: <br> {self.description}"
 			)
 
 	def round_dimensions(self):
@@ -90,7 +155,7 @@ class RawMaterial(Document):
 		if existing_id := self.get_existing_smart_hash(self.smart_hash):
 			link_to_form = get_link_to_form(self.doctype, existing_id, label=self.description)
 			frappe.throw(
-				f"This raw material already exists as {link_to_form}"
+				f"{_('This raw material already exists as')} {link_to_form}"
 			)
 
 	def get_existing_smart_hash(self, smart_hash: str) -> str:
@@ -103,19 +168,6 @@ class RawMaterial(Document):
 		return frappe.db.exists(
 			doctype, filters
 		)
-
-	description: str
-	base_material: str
-	paperboard_type: str
-	paperboard_caliper: str
-	paper_type: str
-	paper_weight: str
-	material_format: str
-	roll_width: float
-	sheet_width: float
-	sheet_height: float
-	gsm: int
-	smart_hash: str
 
 
 def on_doctype_update():

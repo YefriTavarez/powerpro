@@ -7,7 +7,7 @@
 			v-model="value"
 			@change="on_change"
 			:id="id"
-			:read-only="read_only"
+			:readonly="read_only"
 		/>
 	</div>
 </template>
@@ -27,7 +27,7 @@ export default {
 			type: Boolean,
 			default: false,
 		},
-		enfore_integer: {
+		enforce_integer: {
 			type: Boolean,
 			default: false,
 		},
@@ -60,7 +60,7 @@ export default {
 				_value = 0;
 			}
 
-			if (this.enfore_integer) {
+			if (this.enforce_integer) {
 				_value = parseInt(_value);
 			}
 

@@ -33,6 +33,7 @@ export default function() {
 		// misc
 		selecting_ink: false,
 		ink_colors: [],
+		powerpro_settings: null,
 
 		// Cost Estimation Fields
 		form_data, // let this one be dynamic

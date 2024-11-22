@@ -7,11 +7,13 @@ from frappe.utils import cint
 
 def autoname(doc, method=None):
 	if doc.get("__newname"):
-		frappe.errprint(f"New name is set to {doc.get('__newname')}")
 		doc.name = doc.get("__newname")
 		return
 
 	doc.name = get_next_value(doc)
+
+	if not doc.item_code:
+		doc.item_code = doc.name
 
 
 def before_save(doc, method=None):
@@ -61,11 +63,19 @@ def get_last_value(serie):
 	""")
 
 	if result:
-		rezult = result[0]
+		[lastval] = result
 
-		if not rezult:
+		if not lastval:
 			return 0
 
-		return cint(rezult.split("-")[1])
+		# ABCEDE-0001 => [ABCEDE, 0001]
+		# we care about the second part only
+		naming_parts = lastval.split("-")
 
+		return cint(
+			naming_parts[1]
+		)
+
+	# if not result it means this is the first item
+	# in the serie
 	return 0
