@@ -87,7 +87,7 @@ def add(args=None, *, ignore_permissions=False):
 					"allocated_to": assign_to,
 					"reference_type": args["doctype"],
 					"reference_name": args["name"],
-					"description": args.get("description"),
+					"description": f"{args.get('description')} - {args.get('item_name')}",
 					"priority": args.get("priority", "Medium"),
 					"status": "Open",
 					"date": args.get("date", nowdate()),

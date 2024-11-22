@@ -168,16 +168,17 @@ def submit_logs(asset_maintenance):
     asset_maintenance_doc = get_asset_maintenance(asset_maintenance)
 
     for task in asset_maintenance_doc.get("asset_maintenance_tasks"):
-        get_planned_maintenance_log(asset_maintenance, task.name, task.maintenance_status, task.next_due_date)
+        get_planned_maintenance_log(asset_maintenance, task.name, task.next_due_date, asset_maintenance_doc.maintenance_team)
 
 
-def get_planned_maintenance_log(asset_maintenance, task, maintenance_status, due_date):
+def get_planned_maintenance_log(asset_maintenance, task, due_date, maintenance_team):
     doctype = "Asset Maintenance Log"
     filters = {
         "asset_maintenance": asset_maintenance,
         "task": task,
         "maintenance_status": ("in", ["Planned", "Overdue"]),
         "due_date": due_date,
+        "maintenance_team": maintenance_team,
     }
 
     if name := frappe.db.exists(doctype, filters):
@@ -189,3 +190,25 @@ def get_planned_maintenance_log(asset_maintenance, task, maintenance_status, due
 def get_asset_maintenance(asset_maintenance):
     doctype = "Asset Maintenance"
     return frappe.get_doc(doctype, asset_maintenance)
+
+
+@frappe.whitelist()
+def make_dashboard(asset_name, maintenance_team):
+	return frappe.db.sql(
+		f"""
+        Select 
+            maintenance_status, 
+            count(asset_name) as count, 
+            asset_name,
+            docstatus
+        From 
+            `tabAsset Maintenance Log`
+        Where 
+            asset_name = {asset_name!r} And 
+            maintenance_team = {maintenance_team!r}
+        Group By 
+            maintenance_status,
+            docstatus
+        """,
+		as_dict=1,
+	)
