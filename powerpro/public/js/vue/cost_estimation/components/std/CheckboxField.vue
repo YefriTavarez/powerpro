@@ -9,6 +9,10 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+		conventional_checkbox: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	data() {
 		return {
@@ -32,19 +36,34 @@ export default {
 
 <template>
 	<div class="form-group">
-		<h3 :for="id">
-		<label class="switch">
-			<input
-				type="checkbox"
-				autocomplete="off"
-				class="input-with-feedback"
-				:data-fieldname="id"
-				:id="id"
-				v-model="value"
-			/>
-			<span class="slider round"></span>
-		</label>
-		{{ label }}</h3>
+		<template v-if="!conventional_checkbox">
+			<h3 :for="id">
+			<label class="switch">
+				<input
+					type="checkbox"
+					autocomplete="off"
+					class="input-with-feedback"
+					:data-fieldname="id"
+					:id="id"
+					v-model="value"
+				/>
+				<span class="slider round"></span>
+			</label>
+			{{ label }}</h3>
+		</template>
+		<template v-else>
+			<label :for="id">
+				<input
+					type="checkbox"
+					autocomplete="off"
+					class="input-with-feedback"
+					:data-fieldname="id"
+					:id="id"
+					v-model="value"
+				/>
+				{{ label }}
+			</label>
+		</template>
 	</div>
 </template>
 
