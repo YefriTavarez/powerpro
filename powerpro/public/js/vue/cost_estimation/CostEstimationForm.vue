@@ -21,38 +21,7 @@ export default {
     computed,
     methods,
     components,
-    _mounted() {
-        const self = this;
-        const { $refs: refs } = this;
-
-        let internal_change = false;
-
-        const df = frappe.ui.form.make_control({
-            parent: refs.tipo_de_producto,
-            df: {
-                fieldtype: "Link",
-                options: "Product Type",
-                fieldname: "product_type",
-                label: "Tipo de Producto",
-                reqd: 1,
-                change(event) {
-                    const { value } = this;
-
-                    if (internal_change) {
-                        internal_change = false;
-                        return;
-                    }
-
-                    self.form_data.tipo_de_producto = value;
-                    self.update_data();
-                },
-            },
-            render_input: true,
-        });
-
-        internal_change = true;
-        df.set_value(this.form_data.tipo_de_producto);
-    },
+    mounted() {},
 };
 </script>
 
