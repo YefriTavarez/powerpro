@@ -91,7 +91,7 @@ def add(args=None, *, ignore_permissions=False):
 					"priority": args.get("priority", "Medium"),
 					"status": "Open",
 					"date": args.get("date", nowdate()),
-					"assigned_by": "All", # Super user is the default assigned_by to bypass permision query
+					"assigned_by": "Administrator", # Super user is the default assigned_by to bypass permision query
 					"assignment_rule": args.get("assignment_rule"),
 					"item_code": args.get("item_code"),
 					"item_name": args.get("item_name"),
