@@ -15,7 +15,12 @@
   "section_break_kdai",
   "description_template_for_raw_material",
   "section_break_0luf",
-  "description_template_for_product"
+  "description_template_for_product",
+  "cost_estimation_tab",
+  "margins_section",
+  "min_margin",
+  "column_break_flpz",
+  "max_margin"
  ],
  "fields": [
   {
@@ -32,7 +37,8 @@
   },
   {
    "fieldname": "section_break_vxnb",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "UOMs"
   },
   {
    "fieldname": "material_sheet_uom",
@@ -51,8 +57,11 @@
    "options": "UOM"
   },
   {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval:!doc.description_template_for_raw_material",
    "fieldname": "section_break_kdai",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Description Template for Raw Material"
   },
   {
    "description": "<pre>{{ base_material }}\n\n{% if option_1 %}{{ option_1 }}{% endif %}\n{% if option_2 %}{{ option_2 }}{% endif %}\n{% if option_3 %}{{ option_3 }}{% endif %}\n{% if material_format == \"Roll\" %}{{ roll_width }} Width {% endif %}\n</pre>\n\n<h3>Available variables:</h3>\n<p class=\"text-muted\">* Required</p>\n<ul>\n    <li>base_material *</li>\n\n    <li>option_1</li>\n    <li>option_2</li>\n    <li>option_3</li>\n\n    <li>material_format</li>\n    <li>roll_width</li>\n    <li>sheet_width</li>\n    <li>sheet_height</li>\n</ul>\n",
@@ -69,20 +78,49 @@
    "options": "Jinja"
   },
   {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval:!doc.description_template_for_product",
    "fieldname": "section_break_0luf",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Description Template for Product"
   },
   {
    "fieldname": "product_uom",
    "fieldtype": "Link",
    "label": "Product UOM",
    "options": "UOM"
+  },
+  {
+   "fieldname": "cost_estimation_tab",
+   "fieldtype": "Tab Break",
+   "label": "Cost Estimation"
+  },
+  {
+   "fieldname": "margins_section",
+   "fieldtype": "Section Break",
+   "label": "Margins"
+  },
+  {
+   "fieldname": "min_margin",
+   "fieldtype": "Percent",
+   "label": "Min Margin",
+   "precision": "2"
+  },
+  {
+   "fieldname": "column_break_flpz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "max_margin",
+   "fieldtype": "Percent",
+   "label": "Max Margin",
+   "precision": "2"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-11-19 17:16:39.787526",
+ "modified": "2024-11-21 23:51:11.172512",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Power-Pro Settings",
