@@ -21,7 +21,9 @@ export default {
     computed,
     methods,
     components,
-    mounted() {},
+    mounted() {
+        this.load_power_pro_settings();
+    },
 };
 </script>
 
@@ -161,9 +163,7 @@ export default {
                         <percent-field
                             label="Margen de Utilidad"
                             :value="form_data.margen_de_utilidad"
-                            @after_select="
-                                (value) => (form_data.margen_de_utilidad = value)
-                            "
+                            @after_select="validate_and_set_margin_of_utility"
                         />
                     </div>
                 </div>

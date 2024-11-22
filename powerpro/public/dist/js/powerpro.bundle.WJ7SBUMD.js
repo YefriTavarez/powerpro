@@ -7972,6 +7972,8 @@ Expected function or array of functions, received type ${typeof value}.`
   };
 
   // ../powerpro/powerpro/public/js/vue/cost_estimation/options/methods.js
+  var power_pro_settings;
+  var loading_power_pro_settings = false;
   var methods_default = {
     is_new() {
       return this.frm.is_new();
@@ -8109,6 +8111,40 @@ Expected function or array of functions, received type ${typeof value}.`
       const freeze_message = "Loading Product Type details";
       if (product_type) {
         frappe.call({ method, args, callback, freeze, freeze_message });
+      }
+    },
+    load_power_pro_settings() {
+      const self2 = this;
+      const method = "powerpro.controllers.assets.get_power_pro_settings";
+      const args = {};
+      function callback({ message: powerpro_settings }) {
+        self2.powerpro_settings = powerpro_settings;
+        loading_power_pro_settings = false;
+        power_pro_settings = powerpro_settings;
+      }
+      if (!loading_power_pro_settings) {
+        loading_power_pro_settings = true;
+        frappe.call({ method, args, callback });
+      }
+    },
+    validate_and_set_margin_of_utility(value, set_value) {
+      const self2 = this;
+      const settings = power_pro_settings;
+      if (!settings || typeof settings.min_margin !== "number" || typeof settings.max_margin !== "number") {
+        self2.form_data.margen_de_utilidad = value;
+        return;
+      }
+      const { min_margin, max_margin } = settings;
+      if (value > max_margin) {
+        frappe.msgprint(__("The value is above the maximum margin of utility"));
+        self2.form_data.margen_de_utilidad = max_margin;
+        set_value(max_margin);
+      } else if (value < min_margin) {
+        frappe.msgprint(__("The value is below the minimum margin of utility"));
+        set_value(min_margin);
+        self2.form_data.margen_de_utilidad = min_margin;
+      } else {
+        self2.form_data.margen_de_utilidad = value;
       }
     }
   };
@@ -8365,6 +8401,7 @@ Expected function or array of functions, received type ${typeof value}.`
   var SelectField_default2 = SelectField_default;
 
   // sfc-script:/opt/erpnext/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/components/std/PercentField.vue?type=script
+  var notified = true;
   var PercentField_default = {
     props: {
       value: {
@@ -8383,18 +8420,28 @@ Expected function or array of functions, received type ${typeof value}.`
     },
     watch: {
       percentage(newVal, oldVal) {
+        const self2 = this;
         const value = flt(newVal);
         if (value < 0) {
-          this.percentage = 0;
+          self2.percentage = 0;
         } else if (value > 100) {
-          this.percentage = 100;
+          self2.percentage = 100;
         }
-        this.$emit("after_select", flt(this.percentage));
+        notified = false;
       }
     },
     methods: {
       clearValue() {
         this.percentage = 0;
+      },
+      _setValue(newVal) {
+        this.percentage = newVal;
+      },
+      notifyUpdate() {
+        if (notified)
+          return;
+        this.$emit("after_select", flt(this.percentage), this._setValue);
+        notified = true;
       }
     }
   };
@@ -8410,13 +8457,14 @@ Expected function or array of functions, received type ${typeof value}.`
       createBaseVNode("div", _hoisted_25, [
         _hoisted_33,
         withDirectives(createBaseVNode("input", {
-          "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $data.percentage = $event),
+          onBlur: _cache[0] || (_cache[0] = (...args) => $options.notifyUpdate && $options.notifyUpdate(...args)),
+          "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => $data.percentage = $event),
           type: "text"
-        }, null, 512), [
+        }, null, 544), [
           [vModelText, $data.percentage]
         ]),
         createBaseVNode("span", {
-          onClick: _cache[1] || (_cache[1] = (...args) => $options.clearValue && $options.clearValue(...args))
+          onClick: _cache[2] || (_cache[2] = (...args) => $options.clearValue && $options.clearValue(...args))
         }, "\xD7")
       ])
     ]);
@@ -8804,6 +8852,7 @@ Expected function or array of functions, received type ${typeof value}.`
       raw_material_specs: {},
       selecting_ink: false,
       ink_colors: [],
+      powerpro_settings: null,
       form_data
     };
   }
@@ -8817,32 +8866,8 @@ Expected function or array of functions, received type ${typeof value}.`
     computed: computed_default,
     methods: methods_default,
     components: components_default,
-    _mounted() {
-      const self2 = this;
-      const { $refs: refs } = this;
-      let internal_change = false;
-      const df = frappe.ui.form.make_control({
-        parent: refs.tipo_de_producto,
-        df: {
-          fieldtype: "Link",
-          options: "Product Type",
-          fieldname: "product_type",
-          label: "Tipo de Producto",
-          reqd: 1,
-          change(event) {
-            const { value } = this;
-            if (internal_change) {
-              internal_change = false;
-              return;
-            }
-            self2.form_data.tipo_de_producto = value;
-            self2.update_data();
-          }
-        },
-        render_input: true
-      });
-      internal_change = true;
-      df.set_value(this.form_data.tipo_de_producto);
+    mounted() {
+      this.load_power_pro_settings();
     }
   };
 
@@ -9092,8 +9117,8 @@ Expected function or array of functions, received type ${typeof value}.`
               createVNode(_component_percent_field, {
                 label: "Margen de Utilidad",
                 value: _ctx.form_data.margen_de_utilidad,
-                onAfter_select: _cache[8] || (_cache[8] = (value) => _ctx.form_data.margen_de_utilidad = value)
-              }, null, 8, ["value"])
+                onAfter_select: _ctx.validate_and_set_margin_of_utility
+              }, null, 8, ["value", "onAfter_select"])
             ])
           ])
         ]),
@@ -9105,7 +9130,7 @@ Expected function or array of functions, received type ${typeof value}.`
                 label: "Tama\xF1o Producto",
                 width: _ctx.form_data.ancho_producto,
                 height: _ctx.form_data.alto_producto,
-                onOn_change: _cache[9] || (_cache[9] = ({
+                onOn_change: _cache[8] || (_cache[8] = ({
                   width: ancho_producto,
                   height: alto_producto
                 }) => _ctx.form_data = __spreadProps(__spreadValues({}, _ctx.form_data), {
@@ -9119,7 +9144,7 @@ Expected function or array of functions, received type ${typeof value}.`
                 label: "Tama\xF1o Montaje",
                 width: _ctx.form_data.ancho_montaje,
                 height: _ctx.form_data.alto_montaje,
-                onOn_change: _cache[10] || (_cache[10] = ({ width: ancho_montaje, height: alto_montaje }) => _ctx.form_data = __spreadProps(__spreadValues({}, _ctx.form_data), {
+                onOn_change: _cache[9] || (_cache[9] = ({ width: ancho_montaje, height: alto_montaje }) => _ctx.form_data = __spreadProps(__spreadValues({}, _ctx.form_data), {
                   ancho_montaje,
                   alto_montaje
                 }))
@@ -9130,7 +9155,7 @@ Expected function or array of functions, received type ${typeof value}.`
                 label: "Tama\xF1o Material",
                 width: _ctx.form_data.ancho_material,
                 height: _ctx.form_data.alto_material,
-                onOn_change: _cache[11] || (_cache[11] = ({
+                onOn_change: _cache[10] || (_cache[10] = ({
                   width: ancho_material,
                   height: alto_material
                 }) => _ctx.form_data = __spreadProps(__spreadValues({}, _ctx.form_data), {
@@ -9148,7 +9173,7 @@ Expected function or array of functions, received type ${typeof value}.`
               createVNode(_component_checkbox_field, {
                 label: "Incluye Pre-corte?",
                 initial_value: _ctx.form_data.incluye_precorte,
-                onAfter_select: _cache[12] || (_cache[12] = (value) => _ctx.form_data.incluye_precorte = value)
+                onAfter_select: _cache[11] || (_cache[11] = (value) => _ctx.form_data.incluye_precorte = value)
               }, null, 8, ["initial_value"]),
               _ctx.form_data.incluye_precorte ? (openBlock(), createBlock(_component_select_field, {
                 key: 0,
@@ -9158,7 +9183,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: "Convertidora de Material", disabled: _ctx.form_data.tecnologia !== "Offset" }
                 ],
                 selected: _ctx.form_data.tipo_precorte,
-                onAfter_select: _cache[13] || (_cache[13] = (value) => _ctx.form_data.tipo_precorte = value)
+                onAfter_select: _cache[12] || (_cache[12] = (value) => _ctx.form_data.tipo_precorte = value)
               }, null, 8, ["options", "selected"])) : createCommentVNode("v-if", true)
             ])
           ])
@@ -9182,7 +9207,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: 8, label: "8" }
                 ],
                 selected: _ctx.form_data.cantidad_de_tintas_tiro,
-                onAfter_select: _cache[14] || (_cache[14] = (value) => _ctx.form_data.cantidad_de_tintas_tiro = parseFloat(value))
+                onAfter_select: _cache[13] || (_cache[13] = (value) => _ctx.form_data.cantidad_de_tintas_tiro = parseFloat(value))
               }, null, 8, ["selected"])
             ]),
             createBaseVNode("div", _hoisted_39, [
@@ -9231,7 +9256,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: 8, label: "8" }
                 ],
                 selected: _ctx.form_data.cantidad_de_tintas_retiro,
-                onAfter_select: _cache[15] || (_cache[15] = (value) => _ctx.form_data.cantidad_de_tintas_retiro = parseFloat(value))
+                onAfter_select: _cache[14] || (_cache[14] = (value) => _ctx.form_data.cantidad_de_tintas_retiro = parseFloat(value))
               }, null, 8, ["selected"])
             ]),
             createBaseVNode("div", _hoisted_47, [
@@ -9274,7 +9299,7 @@ Expected function or array of functions, received type ${typeof value}.`
               createVNode(_component_checkbox_field, {
                 label: "Incluye Barnizado?",
                 initial_value: _ctx.form_data.incluye_barnizado,
-                onAfter_select: _cache[16] || (_cache[16] = (value) => _ctx.form_data.incluye_barnizado = value)
+                onAfter_select: _cache[15] || (_cache[15] = (value) => _ctx.form_data.incluye_barnizado = value)
               }, null, 8, ["initial_value"]),
               createCommentVNode(" Calculated in Inches Square "),
               _ctx.form_data.incluye_barnizado ? (openBlock(), createBlock(_component_select_field, {
@@ -9291,7 +9316,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: "Barnizado UV Combinado" }
                 ],
                 selected: _ctx.form_data.tipo_barnizado,
-                onAfter_select: _cache[17] || (_cache[17] = (value) => _ctx.form_data.tipo_barnizado = value)
+                onAfter_select: _cache[16] || (_cache[16] = (value) => _ctx.form_data.tipo_barnizado = value)
               }, null, 8, ["selected"])) : createCommentVNode("v-if", true)
             ])
           ])
@@ -9303,7 +9328,7 @@ Expected function or array of functions, received type ${typeof value}.`
               createVNode(_component_checkbox_field, {
                 label: "Incluye Troquelado?",
                 initial_value: _ctx.form_data.incluye_troquelado,
-                onAfter_select: _cache[18] || (_cache[18] = (value) => _ctx.form_data.incluye_troquelado = value)
+                onAfter_select: _cache[17] || (_cache[17] = (value) => _ctx.form_data.incluye_troquelado = value)
               }, null, 8, ["initial_value"])
             ]),
             createBaseVNode("div", _hoisted_64, [
@@ -9312,7 +9337,7 @@ Expected function or array of functions, received type ${typeof value}.`
                 label: "Troquel en Inventario?",
                 conventional_checkbox: true,
                 initial_value: _ctx.form_data.troquel_en_inventario,
-                onAfter_select: _cache[19] || (_cache[19] = (value) => _ctx.form_data.troquel_en_inventario = value)
+                onAfter_select: _cache[18] || (_cache[18] = (value) => _ctx.form_data.troquel_en_inventario = value)
               }, null, 8, ["initial_value"])) : createCommentVNode("v-if", true),
               _ctx.form_data.incluye_troquelado ? (openBlock(), createElementBlock("p", _hoisted_65, " Este producto es troquelado. ")) : (openBlock(), createElementBlock("p", _hoisted_66, " Este producto es refilado. "))
             ])
@@ -9325,7 +9350,7 @@ Expected function or array of functions, received type ${typeof value}.`
               createVNode(_component_checkbox_field, {
                 label: "Incluye Laminado?",
                 initial_value: _ctx.form_data.incluye_laminado,
-                onAfter_select: _cache[20] || (_cache[20] = (value) => _ctx.form_data.incluye_laminado = value)
+                onAfter_select: _cache[19] || (_cache[19] = (value) => _ctx.form_data.incluye_laminado = value)
               }, null, 8, ["initial_value"])
             ])
           ])
@@ -9337,7 +9362,7 @@ Expected function or array of functions, received type ${typeof value}.`
               createVNode(_component_checkbox_field, {
                 label: "Incluye Relieve?",
                 initial_value: _ctx.form_data.incluye_relieve,
-                onAfter_select: _cache[21] || (_cache[21] = (value) => _ctx.form_data.incluye_relieve = value)
+                onAfter_select: _cache[20] || (_cache[20] = (value) => _ctx.form_data.incluye_relieve = value)
               }, null, 8, ["initial_value"]),
               _ctx.form_data.incluye_relieve ? (openBlock(), createBlock(_component_select_field, {
                 key: 0,
@@ -9347,7 +9372,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: "Estampado" }
                 ],
                 selected: _ctx.form_data.tipo_de_relieve,
-                onAfter_select: _cache[22] || (_cache[22] = (value) => _ctx.form_data.tipo_de_relieve = value)
+                onAfter_select: _cache[21] || (_cache[21] = (value) => _ctx.form_data.tipo_de_relieve = value)
               }, null, 8, ["selected"])) : createCommentVNode("v-if", true),
               _ctx.form_data.incluye_relieve ? (openBlock(), createBlock(_component_select_field, {
                 key: 1,
@@ -9359,7 +9384,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: "Pl\xE1stico" }
                 ],
                 selected: _ctx.form_data.tipo_de_material_relieve,
-                onAfter_select: _cache[23] || (_cache[23] = (value) => _ctx.form_data.tipo_de_material_relieve = value)
+                onAfter_select: _cache[22] || (_cache[22] = (value) => _ctx.form_data.tipo_de_material_relieve = value)
               }, null, 8, ["selected"])) : createCommentVNode("v-if", true),
               _ctx.form_data.incluye_relieve ? (openBlock(), createBlock(_component_select_field, {
                 key: 2,
@@ -9372,7 +9397,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: 5, label: "5" }
                 ],
                 selected: _ctx.form_data.cantidad_de_elementos_en_relieve,
-                onAfter_select: _cache[24] || (_cache[24] = (value) => _ctx.form_data.cantidad_de_elementos_en_relieve = value)
+                onAfter_select: _cache[23] || (_cache[23] = (value) => _ctx.form_data.cantidad_de_elementos_en_relieve = value)
               }, null, 8, ["selected"])) : createCommentVNode("v-if", true)
             ]),
             createBaseVNode("div", _hoisted_74, [
@@ -9394,21 +9419,21 @@ Expected function or array of functions, received type ${typeof value}.`
               createVNode(_component_checkbox_field, {
                 label: "Incluye Utilidad?",
                 initial_value: _ctx.form_data.incluye_utilidad,
-                onAfter_select: _cache[25] || (_cache[25] = (value) => _ctx.form_data.incluye_utilidad = value)
+                onAfter_select: _cache[24] || (_cache[24] = (value) => _ctx.form_data.incluye_utilidad = value)
               }, null, 8, ["initial_value"]),
               _ctx.form_data.incluye_utilidad ? (openBlock(), createBlock(_component_select_field, {
                 key: 0,
                 label: "Tipo de Utilidad",
                 options: [{ value: "Cinta Doble Cara" }],
                 selected: _ctx.form_data.tipo_de_utilidad,
-                onAfter_select: _cache[26] || (_cache[26] = (value) => _ctx.form_data.tipo_de_utilidad = value)
+                onAfter_select: _cache[25] || (_cache[25] = (value) => _ctx.form_data.tipo_de_utilidad = value)
               }, null, 8, ["selected"])) : createCommentVNode("v-if", true),
               createCommentVNode("\n                        Cantidad de puntos\n                        Tama\xF1o de los puntos (ancho y alto) con valores fijos\n                        Ancho: 0.5, 0.75, 1 in\n                        Largo: 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5 in\n                        "),
               _ctx.form_data.tipo_de_utilidad && _ctx.form_data.tipo_de_utilidad === "Cinta Doble Cara" ? (openBlock(), createBlock(_component_qty_field, {
                 key: 1,
                 label: "Cantidad de Puntos",
                 initial_value: _ctx.form_data.cinta_doble_cara_cantidad_de_puntos,
-                onAfter_select: _cache[27] || (_cache[27] = (value) => _ctx.form_data.cinta_doble_cara_cantidad_de_puntos = value)
+                onAfter_select: _cache[26] || (_cache[26] = (value) => _ctx.form_data.cinta_doble_cara_cantidad_de_puntos = value)
               }, null, 8, ["initial_value"])) : createCommentVNode("v-if", true),
               _ctx.form_data.tipo_de_utilidad && _ctx.form_data.tipo_de_utilidad === "Cinta Doble Cara" ? (openBlock(), createBlock(_component_dimension, {
                 key: 2,
@@ -9435,7 +9460,7 @@ Expected function or array of functions, received type ${typeof value}.`
                     { value: 5, label: "5" }
                   ]
                 },
-                onOn_change: _cache[28] || (_cache[28] = ({ width: cinta_doble_cara_ancho_punto, height: cinta_doble_cara_alto_punto }) => _ctx.form_data = __spreadProps(__spreadValues({}, _ctx.form_data), {
+                onOn_change: _cache[27] || (_cache[27] = ({ width: cinta_doble_cara_ancho_punto, height: cinta_doble_cara_alto_punto }) => _ctx.form_data = __spreadProps(__spreadValues({}, _ctx.form_data), {
                   cinta_doble_cara_ancho_punto,
                   cinta_doble_cara_alto_punto
                 }))
@@ -9450,7 +9475,7 @@ Expected function or array of functions, received type ${typeof value}.`
               createVNode(_component_checkbox_field, {
                 label: "Incluye Pegado?",
                 initial_value: _ctx.form_data.incluye_pegado,
-                onAfter_select: _cache[29] || (_cache[29] = (value) => _ctx.form_data.incluye_pegado = value)
+                onAfter_select: _cache[28] || (_cache[28] = (value) => _ctx.form_data.incluye_pegado = value)
               }, null, 8, ["initial_value"]),
               _ctx.form_data.incluye_pegado ? (openBlock(), createBlock(_component_select_field, {
                 key: 0,
@@ -9462,7 +9487,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: "Fondo Recto con Ventana" }
                 ],
                 selected: _ctx.form_data.tipo_de_utilidad,
-                onAfter_select: _cache[30] || (_cache[30] = (value) => _ctx.form_data.tipo_de_utilidad = value)
+                onAfter_select: _cache[29] || (_cache[29] = (value) => _ctx.form_data.tipo_de_utilidad = value)
               }, null, 8, ["selected"])) : createCommentVNode("v-if", true)
             ])
           ])
@@ -9480,7 +9505,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: "Pl\xE1stico" }
                 ],
                 selected: _ctx.form_data.tipo_de_empaque,
-                onAfter_select: _cache[31] || (_cache[31] = (value) => _ctx.form_data.tipo_de_empaque = value)
+                onAfter_select: _cache[30] || (_cache[30] = (value) => _ctx.form_data.tipo_de_empaque = value)
               }, null, 8, ["selected"])
             ])
           ])
@@ -9588,4 +9613,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.5HOTCUAE.js.map
+//# sourceMappingURL=powerpro.bundle.WJ7SBUMD.js.map

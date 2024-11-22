@@ -102,3 +102,5 @@
 "Margins","Márgenes"
 "Min Margin","Margen Mínimo"
 "Max Margin","Margen Máximo"
+"The value is below the minimum margin of utility","El valor está por debajo del margen mínimo de utilidad"
+"The value is above the maximum margin of utility","El valor está por encima del margen máximo de utilidad"
