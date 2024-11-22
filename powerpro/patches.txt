@@ -14,3 +14,4 @@ powerpro.patches.v1.igc_15_apply_customizations
 powerpro.patches.v1.create_views_for_606
 powerpro.patches.v1.igc_12_apply_customizations
 powerpro.patches.v1.create_initial_records_for_coating_type
+powerpro.patches.v1.create_initial_records_for_lamination_type
