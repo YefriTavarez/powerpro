@@ -7,13 +7,17 @@ export default {
 	// 	// return selected_ink_colors;
 	// },
 	cantidad_de_producto_con_adicional() {
-		return (
+		const out = (
 			flt(this.form_data.cantidad_de_producto) 
 			* (
 				(
 					flt(this.form_data.porcentaje_adicional) / 100.000
 				) + 1
 			)
-		).toLocaleString();
+		);
+		
+		// ceil the output and return it as a string
+		return Math.ceil(out)
+			.toLocaleString();
 	}
 }
