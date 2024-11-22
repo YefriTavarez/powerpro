@@ -26,7 +26,7 @@
 			);
 
 			frappe.show_alert({
-				message: "Vue.CostEstimationApp is not available!",
+				message: __("Vue.CostEstimationApp is not available!"),
 				indicator: "red",
 			});
 

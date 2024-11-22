@@ -88,3 +88,8 @@
 "Product Type '{product_type_id}' not found","Tipo de Producto '{product_type_id}' no encontrado"
 "The SKU already exists with the name {name!r}","El SKU ya existe con el nombre {name!r}"
 "Product Details","Detalles de Producto"
+"Cost Estimation","Estimación de Costos"
+"Error while loading Cost Estimation","Error al cargar Estimación de Costos"
+"Vue.CostEstimationApp is not available!","¡Vue.CostEstimationApp no está disponible!"
+"Expires On cannot be less than the current date!","¡Expira el no puede ser menor que la fecha actual!"
+"Expires On cannot be less than Created On!","¡Expira el no puede ser menor que Elaborado el!"
