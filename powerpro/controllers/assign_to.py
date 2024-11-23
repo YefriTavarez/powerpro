@@ -132,8 +132,8 @@ def add(args=None, *, ignore_permissions=False):
 			notify_assignment(
 				d.assigned_by,
 				d.allocated_to,
-				d.reference_type,
-				d.reference_name,
+				"ToDo",
+				d.name,
 				action="ASSIGN",
 				description=description,
 			)
