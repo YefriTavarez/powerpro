@@ -5,9 +5,9 @@
 
 export default {
 	mounted() {
-        const self = this;
         this.load_power_pro_settings();
         
         this.load_coating_type_options();
+        this.load_lamination_type_options();
     },
 }

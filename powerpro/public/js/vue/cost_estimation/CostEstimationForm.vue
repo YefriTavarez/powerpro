@@ -476,6 +476,17 @@ export default {
                             "
                             :read_only="readonly"
                         />
+
+                        <select-field
+                            label="Tipo de Laminado"
+                            :options="select_options['tipo_laminado']"
+                            :selected="form_data.tipo_laminado"
+                            @after_select="
+                                (value) => (form_data.tipo_laminado = value)
+                            "
+                            v-if="form_data.incluye_laminado"
+                            :read_only="readonly"
+                        />
                     </div>
                 </div>
             </section>

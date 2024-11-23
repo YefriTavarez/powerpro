@@ -8143,6 +8143,18 @@ Expected function or array of functions, received type ${typeof value}.`
       ;
       frappe.call({ method, args, callback });
     },
+    load_lamination_type_options() {
+      const self2 = this;
+      const method = "powerpro.controllers.assets.get_lamination_type_options";
+      const args = {};
+      function callback({ message }) {
+        for (const option of message) {
+          self2.select_options["tipo_laminado"].push({ value: option });
+        }
+      }
+      ;
+      frappe.call({ method, args, callback });
+    },
     validate_and_set_margin_of_utility(value, set_value) {
       const self2 = this;
       const settings = power_pro_settings;
@@ -8922,7 +8934,8 @@ Expected function or array of functions, received type ${typeof value}.`
       ink_colors: [],
       powerpro_settings: null,
       select_options: {
-        tipo_barnizado: []
+        tipo_barnizado: [],
+        tipo_laminado: []
       },
       form_data
     };
@@ -8931,9 +8944,9 @@ Expected function or array of functions, received type ${typeof value}.`
   // ../powerpro/powerpro/public/js/vue/cost_estimation/options/life_cycle_hooks.js
   var life_cycle_hooks_default = {
     mounted() {
-      const self2 = this;
       this.load_power_pro_settings();
       this.load_coating_type_options();
+      this.load_lamination_type_options();
     }
   };
 
@@ -9445,7 +9458,15 @@ Expected function or array of functions, received type ${typeof value}.`
                 initial_value: _ctx.form_data.incluye_laminado,
                 onAfter_select: _cache[19] || (_cache[19] = (value) => _ctx.form_data.incluye_laminado = value),
                 read_only: _ctx.readonly
-              }, null, 8, ["initial_value", "read_only"])
+              }, null, 8, ["initial_value", "read_only"]),
+              _ctx.form_data.incluye_laminado ? (openBlock(), createBlock(_component_select_field, {
+                key: 0,
+                label: "Tipo de Laminado",
+                options: _ctx.select_options["tipo_laminado"],
+                selected: _ctx.form_data.tipo_laminado,
+                onAfter_select: _cache[20] || (_cache[20] = (value) => _ctx.form_data.tipo_laminado = value),
+                read_only: _ctx.readonly
+              }, null, 8, ["options", "selected", "read_only"])) : createCommentVNode("v-if", true)
             ])
           ])
         ]),
@@ -9456,7 +9477,7 @@ Expected function or array of functions, received type ${typeof value}.`
               createVNode(_component_checkbox_field, {
                 label: "Incluye Relieve?",
                 initial_value: _ctx.form_data.incluye_relieve,
-                onAfter_select: _cache[20] || (_cache[20] = (value) => _ctx.form_data.incluye_relieve = value),
+                onAfter_select: _cache[21] || (_cache[21] = (value) => _ctx.form_data.incluye_relieve = value),
                 read_only: _ctx.readonly
               }, null, 8, ["initial_value", "read_only"]),
               _ctx.form_data.incluye_relieve ? (openBlock(), createBlock(_component_select_field, {
@@ -9467,7 +9488,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: "Estampado" }
                 ],
                 selected: _ctx.form_data.tipo_de_relieve,
-                onAfter_select: _cache[21] || (_cache[21] = (value) => _ctx.form_data.tipo_de_relieve = value),
+                onAfter_select: _cache[22] || (_cache[22] = (value) => _ctx.form_data.tipo_de_relieve = value),
                 read_only: _ctx.readonly
               }, null, 8, ["selected", "read_only"])) : createCommentVNode("v-if", true),
               _ctx.form_data.incluye_relieve ? (openBlock(), createBlock(_component_select_field, {
@@ -9480,7 +9501,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: "Pl\xE1stico" }
                 ],
                 selected: _ctx.form_data.tipo_de_material_relieve,
-                onAfter_select: _cache[22] || (_cache[22] = (value) => _ctx.form_data.tipo_de_material_relieve = value),
+                onAfter_select: _cache[23] || (_cache[23] = (value) => _ctx.form_data.tipo_de_material_relieve = value),
                 read_only: _ctx.readonly
               }, null, 8, ["selected", "read_only"])) : createCommentVNode("v-if", true),
               _ctx.form_data.incluye_relieve ? (openBlock(), createBlock(_component_select_field, {
@@ -9494,7 +9515,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: 5, label: "5" }
                 ],
                 selected: _ctx.form_data.cantidad_de_elementos_en_relieve,
-                onAfter_select: _cache[23] || (_cache[23] = (value) => _ctx.form_data.cantidad_de_elementos_en_relieve = value),
+                onAfter_select: _cache[24] || (_cache[24] = (value) => _ctx.form_data.cantidad_de_elementos_en_relieve = value),
                 read_only: _ctx.readonly
               }, null, 8, ["selected", "read_only"])) : createCommentVNode("v-if", true)
             ]),
@@ -9518,7 +9539,7 @@ Expected function or array of functions, received type ${typeof value}.`
               createVNode(_component_checkbox_field, {
                 label: "Incluye Utilidad?",
                 initial_value: _ctx.form_data.incluye_utilidad,
-                onAfter_select: _cache[24] || (_cache[24] = (value) => _ctx.form_data.incluye_utilidad = value),
+                onAfter_select: _cache[25] || (_cache[25] = (value) => _ctx.form_data.incluye_utilidad = value),
                 read_only: _ctx.readonly
               }, null, 8, ["initial_value", "read_only"]),
               _ctx.form_data.incluye_utilidad ? (openBlock(), createBlock(_component_select_field, {
@@ -9526,7 +9547,7 @@ Expected function or array of functions, received type ${typeof value}.`
                 label: "Tipo de Utilidad",
                 options: [{ value: "Cinta Doble Cara" }],
                 selected: _ctx.form_data.tipo_de_utilidad,
-                onAfter_select: _cache[25] || (_cache[25] = (value) => _ctx.form_data.tipo_de_utilidad = value),
+                onAfter_select: _cache[26] || (_cache[26] = (value) => _ctx.form_data.tipo_de_utilidad = value),
                 read_only: _ctx.readonly
               }, null, 8, ["selected", "read_only"])) : createCommentVNode("v-if", true),
               createCommentVNode("\n                        Cantidad de puntos\n                        Tama\xF1o de los puntos (ancho y alto) con valores fijos\n                        Ancho: 0.5, 0.75, 1 in\n                        Largo: 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5 in\n                        "),
@@ -9534,7 +9555,7 @@ Expected function or array of functions, received type ${typeof value}.`
                 key: 1,
                 label: "Cantidad de Puntos",
                 initial_value: _ctx.form_data.cinta_doble_cara_cantidad_de_puntos,
-                onAfter_select: _cache[26] || (_cache[26] = (value) => _ctx.form_data.cinta_doble_cara_cantidad_de_puntos = value),
+                onAfter_select: _cache[27] || (_cache[27] = (value) => _ctx.form_data.cinta_doble_cara_cantidad_de_puntos = value),
                 read_only: _ctx.readonly
               }, null, 8, ["initial_value", "read_only"])) : createCommentVNode("v-if", true),
               _ctx.form_data.tipo_de_utilidad && _ctx.form_data.tipo_de_utilidad === "Cinta Doble Cara" ? (openBlock(), createBlock(_component_dimension, {
@@ -9562,7 +9583,7 @@ Expected function or array of functions, received type ${typeof value}.`
                     { value: 5, label: "5" }
                   ]
                 },
-                onOn_change: _cache[27] || (_cache[27] = ({ width: cinta_doble_cara_ancho_punto, height: cinta_doble_cara_alto_punto }) => _ctx.form_data = __spreadProps(__spreadValues({}, _ctx.form_data), {
+                onOn_change: _cache[28] || (_cache[28] = ({ width: cinta_doble_cara_ancho_punto, height: cinta_doble_cara_alto_punto }) => _ctx.form_data = __spreadProps(__spreadValues({}, _ctx.form_data), {
                   cinta_doble_cara_ancho_punto,
                   cinta_doble_cara_alto_punto
                 })),
@@ -9578,7 +9599,7 @@ Expected function or array of functions, received type ${typeof value}.`
               createVNode(_component_checkbox_field, {
                 label: "Incluye Pegado?",
                 initial_value: _ctx.form_data.incluye_pegado,
-                onAfter_select: _cache[28] || (_cache[28] = (value) => _ctx.form_data.incluye_pegado = value),
+                onAfter_select: _cache[29] || (_cache[29] = (value) => _ctx.form_data.incluye_pegado = value),
                 read_only: _ctx.readonly
               }, null, 8, ["initial_value", "read_only"]),
               _ctx.form_data.incluye_pegado ? (openBlock(), createBlock(_component_select_field, {
@@ -9591,7 +9612,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: "Fondo Recto con Ventana" }
                 ],
                 selected: _ctx.form_data.tipo_de_utilidad,
-                onAfter_select: _cache[29] || (_cache[29] = (value) => _ctx.form_data.tipo_de_utilidad = value),
+                onAfter_select: _cache[30] || (_cache[30] = (value) => _ctx.form_data.tipo_de_utilidad = value),
                 read_only: _ctx.readonly
               }, null, 8, ["selected", "read_only"])) : createCommentVNode("v-if", true)
             ])
@@ -9610,7 +9631,7 @@ Expected function or array of functions, received type ${typeof value}.`
                   { value: "Pl\xE1stico" }
                 ],
                 selected: _ctx.form_data.tipo_de_empaque,
-                onAfter_select: _cache[30] || (_cache[30] = (value) => _ctx.form_data.tipo_de_empaque = value),
+                onAfter_select: _cache[31] || (_cache[31] = (value) => _ctx.form_data.tipo_de_empaque = value),
                 read_only: _ctx.readonly
               }, null, 8, ["selected", "read_only"])
             ])
@@ -9728,4 +9749,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.4G7CVXUM.js.map
+//# sourceMappingURL=powerpro.bundle.C2UQ53IE.js.map

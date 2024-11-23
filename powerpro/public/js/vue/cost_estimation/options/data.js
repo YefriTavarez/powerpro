@@ -36,6 +36,7 @@ export default function() {
 		powerpro_settings: null,
 		select_options: {
 			tipo_barnizado: [],
+			tipo_laminado: [],
 		},
 
 		// Cost Estimation Fields
