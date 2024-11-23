@@ -23,6 +23,12 @@ frappe.ui.form.on("ToDo", {
                                     "Debe especificar las acciones realizadas durante esta tarea para poder cerrar el mantenimiento."
                                 )
                             }
+
+                            if (doc.__unsaved) {
+                                frappe.throw(
+                                    "Por favor guarde el registro antes de cerrar la tarea."
+                                )
+                            }
                                 
                             const method = "powerpro.controllers.todo.close_maintenance_task";
                             const args = {
@@ -47,24 +53,41 @@ frappe.ui.form.on("ToDo", {
                     "btn-success"
                 );
             } else {
+                if (doc.status == "Cancelled" && doc.reference_type == "Asset Maintenance Task") {
+                    return;
+                }
+
                 frm.add_custom_button(
                     __("Reopen"),
                     function () {
-                        frm.set_value("status", "Open");
-                        frm.save();
+                        if (doc.reference_type == "Asset Maintenance Task") {
+                            const method = "powerpro.controllers.todo.reopen_maintenance_task";
+                            const args = {
+                                "todo": doc.name, 
+                                "task": doc.reference_name,
+                                "due_date": doc.date,
+                            };
+                            const callback = function () {
+                                // frm.set_value("status", "Open");
+                                frm.reload_doc();
+                            }
+
+                            frappe.call({ method, args, callback });
+                        }
+                        // frm.save();
                     },
                     null,
                     "btn-default"
                 );
             }
-            frm.add_custom_button(
-                __("New"),
-                function () {
-                    frappe.new_doc("ToDo");
-                },
-                null,
-                "btn-default"
-            );
+            // frm.add_custom_button(
+            //     __("New"),
+            //     function () {
+            //         frappe.new_doc("ToDo");
+            //     },
+            //     null,
+            //     "btn-default"
+            // );
         }
     },
 });

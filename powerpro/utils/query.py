@@ -107,20 +107,32 @@ def asset_maintenance_log_query_conditions(user):
     if not user: 
         user = frappe.session.user
 
-    if user == "Administrator":
+    allowed_roles = [
+        "System Manager",
+        "Encargado Mantenimiento",
+    ]
+
+    if frappe.get_roles(user) and any(role in allowed_roles for role in frappe.get_roles(user)):
         return
 
-    return f"`tabAsset Maintenance Log`.task_assignee_email = {user!r}"
+    return f"`tabAsset Maintenance Log`.task_assignee_email = {user!r} or `tabAsset Maintenance Log`.maintenance_manager = {user!r}"
 
 
 def todo_query_conditions(user):
     if not user: 
         user = frappe.session.user
 
-    if user == "Administrator":
+    allowed_roles = [
+        "System Manager",
+        "Encargado Mantenimiento",
+    ]
+
+    user_roles = frappe.get_roles(user)
+
+    if user_roles and any(role in allowed_roles for role in user_roles):
         return
 
-    return f"`tabToDo`.allocated_to = {user!r}"
+    return f"`tabToDo`.allocated_to = {user!r} or `tabToDo`.maintenance_manager = {user!r}"
 
 
 def get_informal_customers():
