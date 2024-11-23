@@ -37,6 +37,7 @@ export default function() {
 		select_options: {
 			tipo_barnizado: [],
 			tipo_laminado: [],
+			tipo_pegado: [],
 		},
 
 		// Cost Estimation Fields

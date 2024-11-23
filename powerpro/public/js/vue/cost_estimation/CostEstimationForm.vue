@@ -582,9 +582,9 @@ export default {
                         <select-field
                             label="Tipo de Utilidad"
                             :options="[{ value: 'Cinta Doble Cara' }]"
-                            :selected="form_data.tipo_de_utilidad"
+                            :selected="form_data.tipo_utilidad"
                             @after_select="
-                                (value) => (form_data.tipo_de_utilidad = value)
+                                (value) => (form_data.tipo_utilidad = value)
                             "
                             v-if="form_data.incluye_utilidad"
                             :read_only="readonly"
@@ -602,7 +602,7 @@ export default {
                             @after_select="
                                 (value) => (form_data.cinta_doble_cara_cantidad_de_puntos = value)
                             "
-                            v-if="form_data.tipo_de_utilidad && form_data.tipo_de_utilidad === 'Cinta Doble Cara'"
+                            v-if="form_data.tipo_utilidad && form_data.tipo_utilidad === 'Cinta Doble Cara'"
                             :read_only="readonly"
                         />
 
@@ -638,7 +638,7 @@ export default {
                                         cinta_doble_cara_alto_punto,
                                     })
                             "
-                            v-if="form_data.tipo_de_utilidad && form_data.tipo_de_utilidad === 'Cinta Doble Cara'"
+                            v-if="form_data.tipo_utilidad && form_data.tipo_utilidad === 'Cinta Doble Cara'"
                             :read_only="readonly"
                         />
                         
@@ -661,15 +661,10 @@ export default {
 
                         <select-field
                             label="Tipo de Pegado"
-                            :options="[
-                                { value: 'Fondo Automático' },
-                                { value: 'Fondo Recto' },
-                                { value: 'Fondo Automático con Ventana' },
-                                { value: 'Fondo Recto con Ventana' },
-                            ]"
-                            :selected="form_data.tipo_de_utilidad"
+                            :options="select_options.tipo_pegado"
+                            :selected="form_data.tipo_pegado"
                             @after_select="
-                                (value) => (form_data.tipo_de_utilidad = value)
+                                (value) => (form_data.tipo_pegado = value)
                             "
                             v-if="form_data.incluye_pegado"
                             :read_only="readonly"
