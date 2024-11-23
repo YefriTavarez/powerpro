@@ -8131,6 +8131,18 @@ Expected function or array of functions, received type ${typeof value}.`
         frappe.call({ method, args, callback });
       }
     },
+    load_coating_type_options() {
+      const self2 = this;
+      const method = "powerpro.controllers.assets.get_coating_type_options";
+      const args = {};
+      function callback({ message }) {
+        for (const option of message) {
+          self2.select_options["tipo_barnizado"].push({ value: option });
+        }
+      }
+      ;
+      frappe.call({ method, args, callback });
+    },
     validate_and_set_margin_of_utility(value, set_value) {
       const self2 = this;
       const settings = power_pro_settings;
@@ -8909,23 +8921,32 @@ Expected function or array of functions, received type ${typeof value}.`
       selecting_ink: false,
       ink_colors: [],
       powerpro_settings: null,
+      select_options: {
+        tipo_barnizado: []
+      },
       form_data
     };
   }
 
+  // ../powerpro/powerpro/public/js/vue/cost_estimation/options/life_cycle_hooks.js
+  var life_cycle_hooks_default = {
+    mounted() {
+      const self2 = this;
+      this.load_power_pro_settings();
+      this.load_coating_type_options();
+    }
+  };
+
   // sfc-script:/opt/erpnext/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/CostEstimationForm.vue?type=script
-  var CostEstimationForm_default = {
+  var CostEstimationForm_default = __spreadValues({
     name: "CostEstimation",
     props: props_default,
     data: data_default,
     watch: watch_default,
     computed: computed_default,
     methods: methods_default,
-    components: components_default,
-    mounted() {
-      this.load_power_pro_settings();
-    }
-  };
+    components: components_default
+  }, life_cycle_hooks_default);
 
   // sfc-template:/opt/erpnext/yefri-bench/apps/powerpro/powerpro/public/js/vue/cost_estimation/CostEstimationForm.vue?type=template
   var _withScopeId4 = (n) => (pushScopeId("data-v-951b62bd"), n = n(), popScopeId(), n);
@@ -9383,20 +9404,11 @@ Expected function or array of functions, received type ${typeof value}.`
               _ctx.form_data.incluye_barnizado ? (openBlock(), createBlock(_component_select_field, {
                 key: 0,
                 label: "Tipo de Barnizado",
-                options: [
-                  { value: "Barnizado Base en Agua Brillo" },
-                  { value: "Barnizado Base en Agua Mate" },
-                  { value: "Barnizado Base en Aceite Brillo" },
-                  { value: "Barnizado Base en Aceite Mate" },
-                  { value: "Barnizado Base en Aceite Combinado" },
-                  { value: "Barnizado UV Brillo" },
-                  { value: "Barnizado UV Mate" },
-                  { value: "Barnizado UV Combinado" }
-                ],
+                options: _ctx.select_options["tipo_barnizado"],
                 selected: _ctx.form_data.tipo_barnizado,
                 onAfter_select: _cache[16] || (_cache[16] = (value) => _ctx.form_data.tipo_barnizado = value),
                 read_only: _ctx.readonly
-              }, null, 8, ["selected", "read_only"])) : createCommentVNode("v-if", true)
+              }, null, 8, ["options", "selected", "read_only"])) : createCommentVNode("v-if", true)
             ])
           ])
         ])) : createCommentVNode("v-if", true),
@@ -9716,4 +9728,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.WDSOINJT.js.map
+//# sourceMappingURL=powerpro.bundle.4G7CVXUM.js.map
