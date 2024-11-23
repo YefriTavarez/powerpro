@@ -105,6 +105,7 @@
 	function _add_custom_buttons(frm) {
 		if (frm.is_new()) {
 			// buttons for new documents
+			_add_load_from_sku_button(frm);
 		} else {
 			if (frm.doc.docstatus === 0) {
 				// buttons for draft documents
@@ -117,6 +118,40 @@
 		}
 
 		// always on buttons
+	}
+
+	function _add_load_from_sku_button(frm) {
+		const label = __("SKU");
+		function action(event) {
+			_show_load_from_sku_popup(frm);
+		}
+		const parent = __("Fetch From");
+		frm.add_custom_button(label, action, parent);
+	}
+
+	function _show_load_from_sku_popup(frm) {
+		const fields = [
+			{
+				fieldtype: "Link",
+				fieldname: "item",
+				label: __("Item"),
+				options: "Item",
+				description: __("Please select an Item to load from"),
+				reqd: 1,
+				get_query: {
+					reference_type: frm.doctype,
+				}
+			},
+		];
+
+		function callback({ item }) {
+			_load_estimation_from_sku(frm, item);
+		}
+
+		const title = __("Load from Item");
+		const primary_label = __("Load");
+		
+		frappe.prompt(fields, callback, title, primary_label);
 	}
 
 	function _add_create_sku_button(frm) {
@@ -185,6 +220,51 @@
 				__("Create")
 			);
 		}
+	}
+
+	function _load_estimation_from_sku(frm, sku) {
+		const doctype = "Item";
+		const name = sku;
+		const fieldname = "product_details";
+		function callback({ product_details: value }) {
+			function __onerror() {
+				frappe.msgprint(
+					__("Woops! It looks like this SKU was created using an older version of the Cost Estimation.")
+				);
+			}
+
+			let object = null;
+
+			if (!value) {
+				__onerror();
+				return ; // exit
+			} else {
+
+				try {
+					object = JSON.parse(value);
+				} catch (error) {
+					__onerror();
+					return ; // exit
+				}
+
+				if (Object.keys(value).length === 0) {
+					__onerror();
+					return ; // exit
+				}
+			}
+			
+			frm.set_value("product_type", object.tipo_de_producto);
+			frm.set_value("raw_material", object.material);
+			
+			frm.set_value("data", value);
+			_refresh_vue(frm);
+
+			frappe.show_alert({
+				message: __("Estimation loaded!"),
+				indicator: "green",
+			});
+		}
+		frappe.db.get_value(doctype, name, fieldname, callback);
 	}
 
 	frappe.ui.form.on("Cost Estimation", {
