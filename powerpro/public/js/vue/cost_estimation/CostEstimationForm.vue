@@ -12,6 +12,7 @@ import methods from "./options/methods.js";
 import components from "./options/components.js";
 import watch from "./options/watch.js";
 import data from "./options/data.js";
+import life_cycle_hooks from "./options/life_cycle_hooks.js";
 
 export default {
     name: "CostEstimation",
@@ -21,9 +22,7 @@ export default {
     computed,
     methods,
     components,
-    mounted() {
-        this.load_power_pro_settings();
-    },
+    ...life_cycle_hooks,
 };
 </script>
 
