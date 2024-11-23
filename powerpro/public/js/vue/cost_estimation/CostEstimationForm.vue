@@ -409,41 +409,6 @@ export default {
                 </div>
             </section>
 
-            <section v-if="form_data.tecnologia ==='Offset'">
-                <hr />
-                <div class="row">
-                    <div class="form-column col-sm-6">
-                        <checkbox-field
-                            label="Incluye Troquelado?"
-                            :initial_value="form_data.incluye_troquelado"
-                            @after_select="
-                                (value) => (form_data.incluye_troquelado = value)
-                            "
-                            :read_only="readonly"
-                        />
-                    </div>
-                    <div class="form-column col-sm-6">
-                        <checkbox-field
-                            v-if="form_data.incluye_troquelado"
-                            label="Troquel en Inventario?"
-                            :conventional_checkbox="true"
-                            :initial_value="form_data.troquel_en_inventario"
-                            @after_select="
-                                (value) => (form_data.troquel_en_inventario = value)
-                            "
-                            :read_only="readonly"
-                        />
-                        <p v-if="form_data.incluye_troquelado" class="text-muted">
-                            Este producto es troquelado.
-                        </p>
-
-                        <p v-else class="text-muted">
-                            Este producto es refilado.
-                        </p>
-                    </div>
-                </div>
-            </section>
-
             <section>
                 <hr />
                 <div class="row">
@@ -537,6 +502,41 @@ export default {
                             v-if="form_data.incluye_relieve"
                             :read_only="readonly"
                         />
+                    </div>
+                </div>
+            </section>
+
+            <section v-if="form_data.tecnologia ==='Offset'">
+                <hr />
+                <div class="row">
+                    <div class="form-column col-sm-6">
+                        <checkbox-field
+                            label="Incluye Troquelado?"
+                            :initial_value="form_data.incluye_troquelado"
+                            @after_select="
+                                (value) => (form_data.incluye_troquelado = value)
+                            "
+                            :read_only="readonly"
+                        />
+                    </div>
+                    <div class="form-column col-sm-6">
+                        <checkbox-field
+                            v-if="form_data.incluye_troquelado"
+                            label="Troquel en Inventario?"
+                            :conventional_checkbox="true"
+                            :initial_value="form_data.troquel_en_inventario"
+                            @after_select="
+                                (value) => (form_data.troquel_en_inventario = value)
+                            "
+                            :read_only="readonly"
+                        />
+                        <p v-if="form_data.incluye_troquelado" class="text-muted">
+                            Este producto es troquelado.
+                        </p>
+
+                        <p v-else class="text-muted">
+                            Este producto es refilado.
+                        </p>
                     </div>
                 </div>
             </section>
