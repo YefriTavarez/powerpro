@@ -103,6 +103,23 @@
 	}
 
 	function _add_custom_buttons(frm) {
+		if (frm.is_new()) {
+			// buttons for new documents
+		} else {
+			if (frm.doc.docstatus === 0) {
+				// buttons for draft documents
+			} else if (frm.doc.docstatus === 1) {
+				// buttons for submitted documents
+				_add_create_sku_button(frm);
+			} else {
+				// buttons for cancelled documents
+			}
+		}
+
+		// always on buttons
+	}
+
+	function _add_create_sku_button(frm) {
 		const { doc } = frm;
 
 		if (!frm.is_dirty() && !doc.__onload.smart_hash_exist) {
