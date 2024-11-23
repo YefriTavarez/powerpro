@@ -7,5 +7,7 @@ export default {
 	mounted() {
         const self = this;
         this.load_power_pro_settings();
+        
+        this.load_coating_type_options();
     },
 }

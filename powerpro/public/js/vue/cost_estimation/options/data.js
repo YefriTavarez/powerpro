@@ -34,6 +34,9 @@ export default function() {
 		selecting_ink: false,
 		ink_colors: [],
 		powerpro_settings: null,
+		select_options: {
+			tipo_barnizado: [],
+		},
 
 		// Cost Estimation Fields
 		form_data, // let this one be dynamic

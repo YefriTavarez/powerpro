@@ -417,16 +417,7 @@ export default {
                         <!-- Calculated in Inches Square -->
                         <select-field
                             label="Tipo de Barnizado"
-                            :options="[
-                                { value: 'Barnizado Base en Agua Brillo' },
-                                { value: 'Barnizado Base en Agua Mate' },
-                                { value: 'Barnizado Base en Aceite Brillo' },
-                                { value: 'Barnizado Base en Aceite Mate' },
-                                { value: 'Barnizado Base en Aceite Combinado' },
-                                { value: 'Barnizado UV Brillo' },
-                                { value: 'Barnizado UV Mate' },
-                                { value: 'Barnizado UV Combinado' },
-                            ]"
+                            :options="select_options['tipo_barnizado']"
                             :selected="form_data.tipo_barnizado"
                             @after_select="
                                 (value) => (form_data.tipo_barnizado = value)
