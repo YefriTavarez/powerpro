@@ -33,38 +33,8 @@ export default {
         data-fieldname="cost_estimation_app"
     >
         <div data-component="cost-estimation">
-            <section v-if="!is_new()">
-                <div class="row">
-                    <div class="px-3" style="width: 100%">
-                        <h2 class="text-right">
-                            C/U <br>
-                            <small
-                                class="text-muted"
-                                style="color: var(--success) !important; font-weight: bold" >
-                                $ {{ parseFloat(form_data.unit_cost || 0.000).toLocaleString() }}
-                            </small>
-                        </h2>
-                    </div>
-                </div>
-            </section>
-
             <section>
-                <hr />
                 <div class="row">
-                    <div class="px-3" style="width: 100%">
-                        <h3>Tecnología de Impresión</h3>
-                    </div>
-                    <div class="form-column col-sm-6">
-                        <printing-tecnique
-                            label="Tecnología"
-                            :selected="form_data.tecnologia"
-                            :read_only="readonly"
-                            @after_select="
-                                (value) => (form_data.tecnologia = value)
-                            "
-                        />
-                    </div>
-
                     <div class="form-column col-sm-6">
                         <div
                             class="form-group" 
@@ -100,6 +70,40 @@ export default {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <section v-if="!is_new()">
+                <div class="row">
+                    <div class="px-3" style="width: 100%">
+                        <h2 class="text-right">
+                            C/U <br>
+                            <small
+                                class="text-muted"
+                                style="color: var(--success) !important; font-weight: bold" >
+                                $ {{ parseFloat(form_data.unit_cost || 0.000).toLocaleString() }}
+                            </small>
+                        </h2>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <hr />
+                <div class="row">
+                    <div class="px-3" style="width: 100%">
+                        <h3>Tecnología de Impresión</h3>
+                    </div>
+                    <div class="form-column col-sm-6">
+                        <printing-tecnique
+                            label="Tecnología"
+                            :selected="form_data.tecnologia"
+                            :read_only="readonly"
+                            @after_select="
+                                (value) => (form_data.tecnologia = value)
+                            "
+                        />
                     </div>
                 </div>
             </section>
