@@ -4,6 +4,7 @@
 		:options="options"
 		@after_select="after_select"
 		:selected="value"
+		:read_only="read_only"	
 	/>
 </template>
 
@@ -23,6 +24,10 @@ export default {
 		only_numbers: {
 			type: Boolean,
 			default: true,
+		},
+		read_only: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	data() {

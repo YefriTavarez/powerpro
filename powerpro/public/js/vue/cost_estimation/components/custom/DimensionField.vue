@@ -9,6 +9,7 @@
 				v-model="_width"
 				@change="on_width_change"
 				v-if="!using_options"
+				:readonly="read_only"
 			/>
 
 			<select
@@ -17,6 +18,7 @@
 				v-model="_width"
 				@change="on_width_change"
 				v-if="using_options"
+				:disabled="read_only"
 			>
 				<option
 					v-for="(option, index) in options.width"
@@ -34,6 +36,7 @@
 				v-model="_height"
 				@change="on_height_change"
 				v-if="!using_options"
+				:readonly="read_only"
 			/>
 			<select
 				data-fieldname="height"
@@ -41,6 +44,7 @@
 				v-model="_height"
 				@change="on_height_change"
 				v-if="using_options"
+				:disabled="read_only"
 			>
 				<option
 					v-for="(option, index) in options.height"
@@ -82,6 +86,10 @@ export default {
 		options: {
 			type: Object,
 			default: () => ({}),
+		},
+		read_only: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	data() {

@@ -1,6 +1,11 @@
 <template>
 	<div class="app-wrapper">
-		<cost-estimation-form :frm="frm" :document="document" ref="calculator" />
+		<cost-estimation-form
+			:frm="frm"
+			:document="document"
+			ref="calculator"
+			:readonly="readonly"
+		/>
 	</div>
 </template>
 
@@ -25,6 +30,11 @@ export default {
 	},
 	components: {
 		CostEstimationForm,
+	},
+	computed: {
+		readonly() {
+			return this.frm.doc.docstatus === 1;
+		},
 	},
 	update_data(doc) {
 		this.document = doc;

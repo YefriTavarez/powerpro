@@ -4,6 +4,7 @@
 		:options="options"
 		@after_select="after_select"
 		:selected="value"
+		:read_only="read_only"
 	/>
 </template>
 
@@ -18,6 +19,10 @@ export default {
 		selected: {
 			type: String,
 			default: "",
+		},
+		read_only: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	data() {

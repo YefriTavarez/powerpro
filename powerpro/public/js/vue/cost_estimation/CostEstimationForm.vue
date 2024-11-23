@@ -59,6 +59,7 @@ export default {
                         <printing-tecnique
                             label="Tecnología"
                             :selected="form_data.tecnologia"
+                            :read_only="readonly"
                             @after_select="
                                 (value) => (form_data.tecnologia = value)
                             "
@@ -76,7 +77,7 @@ export default {
                                     class="form-control"
                                     v-model="form_data.tipo_de_producto"
                                     @change="value => form_data.tipo_de_producto = value"
-                                    readonly
+                                    :readonly="readonly"
                                 />
                                 <!-- <span class="form-control" style="padding-top: 3px">{{ form_data.tipo_de_producto }}</span> -->
 
@@ -85,6 +86,7 @@ export default {
                                     style="border-radius: 0; height: 28px"
                                     v-if="form_data.tipo_de_producto"
                                     @click="fetch_product_type_details(form_data.tipo_de_producto)"
+                                    :disabled="readonly"
                                 >
                                     {{ "Refrescar" }}
                                 </button>
@@ -93,6 +95,7 @@ export default {
                                     class="btn btn-primary"
                                     style="border-top-left-radius: 0; border-bottom-left-radius: 0; height: 28px"
                                     @click="select_product_type()"
+                                    :disabled="readonly"
                                 >
                                     {{ !form_data.tipo_de_producto? "Seleccionar": "Cambiar" }}
                                 </button>
@@ -119,6 +122,7 @@ export default {
                             @after_select="
                                 (value) => (form_data.cantidad_montaje = value)
                             "
+                            :read_only="readonly"
                         />
                     </div>
 
@@ -132,6 +136,7 @@ export default {
                             @after_select="
                                 (value) => (form_data.cantidad_de_producto = value)
                             "
+                            :read_only="readonly"
                         />
 
                         <select-field
@@ -147,6 +152,7 @@ export default {
                                 { value: 15, label: '15%' },
                             ]"
                             help_text="Este porcentaje se le sumará a la cantidad total."
+                            :read_only="readonly"
                         />
                     </div>
 
@@ -164,6 +170,7 @@ export default {
                             label="Margen de Utilidad"
                             :value="form_data.margen_de_utilidad"
                             @after_select="validate_and_set_margin_of_utility"
+                            :read_only="readonly"
                         />
                     </div>
                 </div>
@@ -191,6 +198,7 @@ export default {
                                         alto_producto,
                                     })
                             "
+                            :read_only="readonly"
                         />
                     </div>
                     <div class="form-column col-sm-4">
@@ -206,6 +214,7 @@ export default {
                                         alto_montaje,
                                     })
                             "
+                            :read_only="readonly"
                         />
                     </div>
                     <div class="form-column col-sm-4">
@@ -224,6 +233,7 @@ export default {
                                         alto_material,
                                     })
                             "
+                            :read_only="readonly"
                         />
                     </div>
                 </div>
@@ -240,6 +250,7 @@ export default {
                             @after_select="
                                 (value) => (form_data.incluye_precorte = value)
                             "
+                            :read_only="readonly"
                         />
 
                         <select-field
@@ -253,6 +264,7 @@ export default {
                                 (value) => (form_data.tipo_precorte = value)
                             "
                             v-if="form_data.incluye_precorte"
+                            :read_only="readonly"
                         />
                     </div>
                 </div>
@@ -282,6 +294,7 @@ export default {
                             @after_select="
                                 (value) => (form_data.cantidad_de_tintas_tiro = parseFloat(value))
                             "
+                            :read_only="readonly"
                         />
                     </div>
                     <div class="form-column col-sm-8">
@@ -305,12 +318,14 @@ export default {
                                     v-model="form_data[`tinta_seleccionada_tiro_${index}`]"
                                     @change="form_data[`hex_tinta_seleccionada_tiro_${index}`] = ''"
                                     @input="form_data[`tinta_seleccionada_tiro_${index}`] = ''"
+                                    :readonly="readonly"
                                 />
 
                                 <button
                                     class="btn btn-primary"
                                     style="border-top-left-radius: 0; border-bottom-left-radius: 0; height: 28px"
                                     @click="select_ink_color('Tiro', `tinta_seleccionada_tiro_${index}`)"
+                                    :disabled="readonly"
                                 >
                                     Seleccionar
                                 </button>
@@ -339,6 +354,7 @@ export default {
                             @after_select="
                                 (value) => (form_data.cantidad_de_tintas_retiro = parseFloat(value))
                             "
+                            :read_only="readonly"
                         />
                     </div>
                     <div class="form-column col-sm-8">
@@ -362,13 +378,14 @@ export default {
                                     v-model="form_data[`tinta_seleccionada_retiro_${index}`]"
                                     @change="form_data[`hex_tinta_seleccionada_retiro_${index}`] = ''"
                                     @input="form_data[`tinta_seleccionada_retiro_${index}`] = ''"
+                                    :readonly="readonly"
                                 />
 
                                 <button
                                     class="btn btn-primary"
                                     style="border-top-left-radius: 0; border-bottom-left-radius: 0; height: 28px"
                                     @click="select_ink_color('Retiro', `tinta_seleccionada_retiro_${index}`)"
-                                
+                                    :disabled="readonly"
                                 >
                                     Seleccionar
                                 </button>
@@ -395,6 +412,7 @@ export default {
                             @after_select="
                                 (value) => (form_data.incluye_barnizado = value)
                             "
+                            :read_only="readonly"
                         />
 
                         <!-- Calculated in Inches Square -->
@@ -415,6 +433,7 @@ export default {
                                 (value) => (form_data.tipo_barnizado = value)
                             "
                             v-if="form_data.incluye_barnizado"
+                            :read_only="readonly"
                         />
                     </div>
                 </div>
@@ -430,6 +449,7 @@ export default {
                             @after_select="
                                 (value) => (form_data.incluye_troquelado = value)
                             "
+                            :read_only="readonly"
                         />
                     </div>
                     <div class="form-column col-sm-6">
@@ -441,6 +461,7 @@ export default {
                             @after_select="
                                 (value) => (form_data.troquel_en_inventario = value)
                             "
+                            :read_only="readonly"
                         />
                         <p v-if="form_data.incluye_troquelado" class="text-muted">
                             Este producto es troquelado.
@@ -463,6 +484,7 @@ export default {
                             @after_select="
                                 (value) => (form_data.incluye_laminado = value)
                             "
+                            :read_only="readonly"
                         />
                     </div>
                 </div>
@@ -478,6 +500,7 @@ export default {
                             @after_select="
                                 (value) => (form_data.incluye_relieve = value)
                             "
+                            :read_only="readonly"
                         />
 
                         <select-field
@@ -491,6 +514,7 @@ export default {
                                 (value) => (form_data.tipo_de_relieve = value)
                             "
                             v-if="form_data.incluye_relieve"
+                            :read_only="readonly"
                         />
 
                         <select-field
@@ -506,6 +530,7 @@ export default {
                                 (value) => (form_data.tipo_de_material_relieve = value)
                             "
                             v-if="form_data.incluye_relieve"
+                            :read_only="readonly"
                         />
 
                         <select-field
@@ -522,6 +547,7 @@ export default {
                                 (value) => (form_data.cantidad_de_elementos_en_relieve = value)
                             "
                             v-if="form_data.incluye_relieve"
+                            :read_only="readonly"
                         />
 
                     </div>
@@ -533,6 +559,7 @@ export default {
                             :height="form_data[`alto_elemento_relieve_${index}`]"
                             @on_change="({ width, height }) => handle_relieve_dimension_change(index, width, height)"
                             v-if="form_data.incluye_relieve"
+                            :read_only="readonly"
                         />
                     </div>
                 </div>
@@ -548,6 +575,7 @@ export default {
                             @after_select="
                                 (value) => (form_data.incluye_utilidad = value)
                             "
+                            :read_only="readonly"
                         />
 
                         <select-field
@@ -558,6 +586,7 @@ export default {
                                 (value) => (form_data.tipo_de_utilidad = value)
                             "
                             v-if="form_data.incluye_utilidad"
+                            :read_only="readonly"
                         />
                         <!--
                         Cantidad de puntos
@@ -573,6 +602,7 @@ export default {
                                 (value) => (form_data.cinta_doble_cara_cantidad_de_puntos = value)
                             "
                             v-if="form_data.tipo_de_utilidad && form_data.tipo_de_utilidad === 'Cinta Doble Cara'"
+                            :read_only="readonly"
                         />
 
                         <dimension
@@ -608,6 +638,7 @@ export default {
                                     })
                             "
                             v-if="form_data.tipo_de_utilidad && form_data.tipo_de_utilidad === 'Cinta Doble Cara'"
+                            :read_only="readonly"
                         />
                         
                     </div>
@@ -624,6 +655,7 @@ export default {
                             @after_select="
                                 (value) => (form_data.incluye_pegado = value)
                             "
+                            :read_only="readonly"
                         />
 
                         <select-field
@@ -639,6 +671,7 @@ export default {
                                 (value) => (form_data.tipo_de_utilidad = value)
                             "
                             v-if="form_data.incluye_pegado"
+                            :read_only="readonly"
                         />
                     </div>
                 </div>
@@ -662,6 +695,7 @@ export default {
                             @after_select="
                                 (value) => (form_data.tipo_de_empaque = value)
                             "
+                            :read_only="readonly"
                         />
                     </div>
                 </div>

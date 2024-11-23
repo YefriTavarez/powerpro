@@ -7,6 +7,7 @@
 			type="text"
 			class="form-control"
 			v-model="amount"
+			:readonly="read_only"
 		/>
 	</div>
 </template>
@@ -21,6 +22,10 @@ export default {
 		label: {
 			type: String,
 			default: "Amount",
+		},
+		read_only: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	data() {

@@ -2,7 +2,7 @@
 	<div class="form-group">
 		<label>{{ label }}</label>
 		<div class="inner-form">
-			<input type="text" class="form-control" v-model="value" @input="onInput" />
+			<input type="text" :readonly="read_only" class="form-control" v-model="value" @input="onInput" />
 			<p v-if="help_text" class="text-muted">{{ help_text }}</p>
 		</div>
 	</div>
@@ -22,6 +22,10 @@ export default {
 		help_text: {
 			type: String,
 			default: null,
+		},
+		read_only: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	data() {

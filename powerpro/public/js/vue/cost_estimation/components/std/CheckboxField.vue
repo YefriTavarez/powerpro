@@ -13,6 +13,10 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+		read_only: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	data() {
 		return {
@@ -46,6 +50,7 @@ export default {
 					:data-fieldname="id"
 					:id="id"
 					v-model="value"
+					:disabled="read_only"
 				/>
 				<span class="slider round"></span>
 			</label>
@@ -60,6 +65,7 @@ export default {
 					:data-fieldname="id"
 					:id="id"
 					v-model="value"
+					:disabled="read_only"
 				/>
 				{{ label }}
 			</label>

@@ -1,7 +1,7 @@
 <template>
 	<div class="form-group">
 		<label for="rate">{{  label }}</label>
-		<input type="text" class="form-control" id="rate" v-model="rate">
+		<input type="text" :readonly="read_only" class="form-control" id="rate" v-model="rate">
 	</div>
 </template>
 
@@ -15,6 +15,10 @@ export default {
 		label: {
 			type: String,
 			default: "Rate",
+		},
+		read_only: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	data() {

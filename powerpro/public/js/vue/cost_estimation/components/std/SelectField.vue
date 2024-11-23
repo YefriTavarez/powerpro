@@ -2,7 +2,7 @@
 	<div class="form-group">
 		<label>{{ label }}</label>
 		<div class="inner-form-group">
-			<select class="form-control" v-model="value">
+			<select :disabled="read_only" class="form-control" v-model="value">
 				<option
 					v-for="option in options"
 					:value="option.value"
@@ -34,6 +34,10 @@ export default {
 		help_text: {
 			type: String,
 			default: null,
+		},
+		read_only: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	data() {

@@ -10,6 +10,10 @@ export default {
 			type: String,
 			default: "Percentage",
 		},
+		read_only: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	data() {
 		return {
@@ -59,7 +63,7 @@ export default {
 		<label>{{ label }}</label>
 		<div class="form-input-group">
 			<span>%</span>
-			<input @blur="notifyUpdate" v-model="percentage" type="text" />
+			<input @blur="notifyUpdate" :readonly="read_only" v-model="percentage" type="text" />
 			<span @click="clearValue">&times;</span>
 		</div>
 	</div>
