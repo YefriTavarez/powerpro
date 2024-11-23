@@ -77,26 +77,6 @@ export default {
                 <hr />
                 <div class="row">
                     <div class="px-3" style="width: 100%">
-                        <h3>Tecnología de Impresión</h3>
-                    </div>
-                    <div class="form-column col-sm-6">
-                        <printing-tecnique
-                            label="Tecnología"
-                            :selected="form_data.tecnologia"
-                            :read_only="readonly"
-                            @after_select="
-                                (value) => (form_data.tecnologia = value)
-                            "
-                        />
-                    </div>
-                </div>
-            </section>
-            
-
-            <section>
-                <hr />
-                <div class="row">
-                    <div class="px-3" style="width: 100%">
                         <h3>Cantidad</h3>
                     </div>
                     <div class="form-column col-sm-4">
@@ -248,10 +228,29 @@ export default {
                         />
                     </div>
                 </div>
-            </section> 
+            </section>
 
             <section>
-                <hr v-if="['Digital', 'Offset'].includes(form_data.tecnologia)" />
+                <hr />
+                <div class="row">
+                    <div class="px-3" style="width: 100%">
+                        <h3>Tecnología de Impresión</h3>
+                    </div>
+                    <div class="form-column col-sm-6">
+                        <printing-tecnique
+                            label="Tecnología"
+                            :selected="form_data.tecnologia"
+                            :read_only="readonly"
+                            @after_select="
+                                (value) => (form_data.tecnologia = value)
+                            "
+                        />
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <!-- <hr v-if="['Digital', 'Offset'].includes(form_data.tecnologia)" /> -->
                 <div class="row" v-if="form_data.tecnologia ==='Offset'">
                     <div class="px-3" style="width: 100%">
                         <h3>Colores</h3>
