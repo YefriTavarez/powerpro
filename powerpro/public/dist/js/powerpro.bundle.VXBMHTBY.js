@@ -9575,8 +9575,8 @@ Expected function or array of functions, received type ${typeof value}.`
               _ctx.form_data.tipo_utilidad && _ctx.form_data.tipo_utilidad === "Cinta Doble Cara" ? (openBlock(), createBlock(_component_dimension, {
                 key: 2,
                 label: "Tama\xF1o de los Puntos",
-                width: _ctx.form_data.ancho_punto,
-                height: _ctx.form_data.alto_punto,
+                width: _ctx.form_data.cinta_doble_cara_ancho_punto,
+                height: _ctx.form_data.cinta_doble_cara_alto_punto,
                 using_options: true,
                 options: {
                   width: [
@@ -9758,4 +9758,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.MVVUHDWJ.js.map
+//# sourceMappingURL=powerpro.bundle.VXBMHTBY.js.map

@@ -608,8 +608,8 @@ export default {
 
                         <dimension
                             label="Tamaño de los Puntos"
-                            :width="form_data.ancho_punto"
-                            :height="form_data.alto_punto"
+                            :width="form_data.cinta_doble_cara_ancho_punto"
+                            :height="form_data.cinta_doble_cara_alto_punto"
                             :using_options="true"
                             :options="{
                                 width: [
