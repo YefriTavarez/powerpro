@@ -21,6 +21,7 @@ def close_maintenance_task(todo, task, due_date):
         "completion_date": frappe.utils.nowdate(),
         "actions_performed": todo.actions_performed,
         "completed_by": frappe.session.user,
+        "completed_by_name": frappe.get_value("User", frappe.session.user, "full_name"),
         "maintenance_status": "Completed",
     })
     maintenance_log.flags.ignore_permissions = True
@@ -62,7 +63,7 @@ def reopen_maintenance_task(todo, task, due_date):
     todo.flags.ignore_permissions = True
     todo.save()
 
-    log = get_completed_asset_maintenance_log(task, due_date)
+    log = get_completed_asset_maintenance_log(todo.asset_maintenance_log)
     log.update({
         "completion_date": None,
         "actions_performed": None,
@@ -89,14 +90,11 @@ def get_asset_maintenance_log(task, due_date):
     return frappe.get_doc(doctype, filters)
 
 
-def get_completed_asset_maintenance_log(task, due_date):
+def get_completed_asset_maintenance_log(log):
     doctype = "Asset Maintenance Log"
-    filters = {
-        "task": task,
-        "due_date": due_date,
-        "maintenance_status": "Completed",
-    }
-    return frappe.get_doc(doctype, filters)
+
+    if name := frappe.db.exists(doctype, log):
+        return frappe.get_doc(doctype, name)
 
 
 def get_asset_maintenance(asset_maintenance):

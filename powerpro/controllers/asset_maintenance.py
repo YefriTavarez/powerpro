@@ -162,6 +162,39 @@ def update_maintenance_log(asset_maintenance, item_code, item_name, task):
         maintenance_log.flags.ignore_validate_update_after_submit = True
         maintenance_log.save()
 
+        if maintenance_log.docstatus == 1:
+            update_todo(
+                maintenance_log.name,
+                maintenance_log.periodicity,
+                maintenance_log.due_date,
+            )
+
+
+def update_todo(asset_maintenance_log, periodicity, due_date):
+    todo = get_maintenance_log_todo(asset_maintenance_log)
+
+    if not todo:
+        return
+
+    if todo:
+        todo.update({
+            "periodicity": periodicity,
+            "date": due_date,
+        })
+        todo.flags.ignore_permissions = True
+        todo.save()
+
+
+def get_maintenance_log_todo(log):
+    doctype = "ToDo"
+    filters = {
+        "asset_maintenance_log": log,
+        "status": "Open",
+    }
+
+    if name := frappe.db.exists(doctype, filters):
+        return frappe.get_doc(doctype, name)
+
 
 @frappe.whitelist()
 def submit_logs(asset_maintenance):
