@@ -247,5 +247,5 @@ export default {
 		} else {
 			self.form_data.margen_de_utilidad = value;
 		}
-	}
+	},
 };
