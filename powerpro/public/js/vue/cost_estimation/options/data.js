@@ -38,6 +38,7 @@ export default function() {
 			tipo_barnizado: [],
 			tipo_laminado: [],
 			tipo_pegado: [],
+			color_lamina: [],
 		},
 
 		// Cost Estimation Fields

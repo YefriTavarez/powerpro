@@ -520,12 +520,7 @@ export default {
 
                         <select-field
                             label="Color de Lamina"
-                            :options="[
-                                { value: 'Dorado' },
-                                { value: 'Papel' },
-                                { value: 'Cartón' },
-                                { value: 'Plástico' },
-                            ]"
+                            :options="select_options['color_lamina']"
                             :selected="form_data.tipo_de_material_relieve"
                             @after_select="
                                 (value) => (form_data.tipo_de_material_relieve = value)

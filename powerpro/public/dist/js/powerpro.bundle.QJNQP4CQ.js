@@ -8167,6 +8167,18 @@ Expected function or array of functions, received type ${typeof value}.`
       ;
       frappe.call({ method, args, callback });
     },
+    load_foil_color_options() {
+      const self2 = this;
+      const method = "powerpro.controllers.assets.get_foil_color_options";
+      const args = {};
+      function callback({ message }) {
+        for (const option of message) {
+          self2.select_options["color_lamina"].push({ value: option });
+        }
+      }
+      ;
+      frappe.call({ method, args, callback });
+    },
     validate_and_set_margin_of_utility(value, set_value) {
       const self2 = this;
       const settings = power_pro_settings;
@@ -8948,7 +8960,8 @@ Expected function or array of functions, received type ${typeof value}.`
       select_options: {
         tipo_barnizado: [],
         tipo_laminado: [],
-        tipo_pegado: []
+        tipo_pegado: [],
+        color_lamina: []
       },
       form_data
     };
@@ -8961,6 +8974,7 @@ Expected function or array of functions, received type ${typeof value}.`
       this.load_coating_type_options();
       this.load_lamination_type_options();
       this.load_gluing_type_options();
+      this.load_foil_color_options();
     }
   };
 
@@ -9508,16 +9522,11 @@ Expected function or array of functions, received type ${typeof value}.`
               _ctx.form_data.incluye_relieve ? (openBlock(), createBlock(_component_select_field, {
                 key: 1,
                 label: "Color de Lamina",
-                options: [
-                  { value: "Dorado" },
-                  { value: "Papel" },
-                  { value: "Cart\xF3n" },
-                  { value: "Pl\xE1stico" }
-                ],
+                options: _ctx.select_options["color_lamina"],
                 selected: _ctx.form_data.tipo_de_material_relieve,
                 onAfter_select: _cache[23] || (_cache[23] = (value) => _ctx.form_data.tipo_de_material_relieve = value),
                 read_only: _ctx.readonly
-              }, null, 8, ["selected", "read_only"])) : createCommentVNode("v-if", true),
+              }, null, 8, ["options", "selected", "read_only"])) : createCommentVNode("v-if", true),
               _ctx.form_data.incluye_relieve ? (openBlock(), createBlock(_component_select_field, {
                 key: 2,
                 label: "Cantidad de Elementos",
@@ -9758,4 +9767,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.VXBMHTBY.js.map
+//# sourceMappingURL=powerpro.bundle.QJNQP4CQ.js.map

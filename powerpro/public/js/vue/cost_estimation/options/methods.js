@@ -236,6 +236,23 @@ export default {
 
 		frappe.call({ method, args, callback });
 	},
+	load_foil_color_options() {
+		const self = this;
+		const method = "powerpro.controllers.assets.get_foil_color_options";
+		const args = {
+			// empty
+		};
+		
+		function callback({ message }) {
+			for (const option of message) {
+				self.select_options["color_lamina"]
+					.push({ value: option })
+				;
+			}
+		};
+
+		frappe.call({ method, args, callback });
+	},
 	validate_and_set_margin_of_utility(value, set_value) {
 		const self = this;
 		// const { powerpro_settings: settings } = this;

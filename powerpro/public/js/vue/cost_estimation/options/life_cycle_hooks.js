@@ -10,5 +10,6 @@ export default {
         this.load_coating_type_options();
         this.load_lamination_type_options();
         this.load_gluing_type_options();
+        this.load_foil_color_options();
     },
 }
