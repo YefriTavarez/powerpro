@@ -70,21 +70,6 @@ export default {
                 </div>
             </section>
 
-            <section v-if="!is_new()">
-                <div class="row">
-                    <div class="px-3" style="width: 100%">
-                        <h2 class="text-right">
-                            C/U <br>
-                            <small
-                                class="text-muted"
-                                style="color: var(--success) !important; font-weight: bold" >
-                                $ {{ parseFloat(form_data.unit_cost || 0.000).toLocaleString() }}
-                            </small>
-                        </h2>
-                    </div>
-                </div>
-            </section>
-
             <section>
                 <hr />
                 <div class="row">
@@ -688,6 +673,21 @@ export default {
                             "
                             :read_only="readonly"
                         />
+                    </div>
+                </div>
+            </section>
+
+            <section v-if="!is_new()">
+                <div class="row">
+                    <div class="px-3" style="width: 100%">
+                        <h2 class="text-right">
+                            C/U <br>
+                            <small
+                                class="text-muted"
+                                style="color: var(--success) !important; font-weight: bold" >
+                                $ {{ parseFloat(form_data.unit_cost || 0.000).toLocaleString() }}
+                            </small>
+                        </h2>
                     </div>
                 </div>
             </section>
