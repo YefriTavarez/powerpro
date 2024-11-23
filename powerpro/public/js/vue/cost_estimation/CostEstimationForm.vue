@@ -3,9 +3,6 @@
 /* eslint-disable */
 
 <script>
-
-// import RawMaterialController from "../../controllers/material_controller.js";
-
 import props from "./options/props.js";
 import computed from "./options/computed.js";
 import methods from "./options/methods.js";
@@ -48,7 +45,6 @@ export default {
                                     @change="value => form_data.tipo_de_producto = value"
                                     :readonly="readonly"
                                 />
-                                <!-- <span class="form-control" style="padding-top: 3px">{{ form_data.tipo_de_producto }}</span> -->
 
                                 <button
                                     class="btn btn-secondary"
