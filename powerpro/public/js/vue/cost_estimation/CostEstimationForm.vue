@@ -251,7 +251,7 @@ export default {
 
             <section>
                 <!-- <hr v-if="['Digital', 'Offset'].includes(form_data.tecnologia)" /> -->
-                <div class="row" v-if="form_data.tecnologia ==='Offset'">
+                <div class="row">
                     <div class="px-3" style="width: 100%">
                         <h3>Colores</h3>
                     </div>
@@ -381,7 +381,7 @@ export default {
                 </div>
             </section>
 
-            <section v-if="form_data.tecnologia ==='Offset'">
+            <section>
                 <hr />
                 <div class="row">
                     <div class="form-column col-sm-6">
@@ -436,7 +436,7 @@ export default {
                 </div>
             </section>
 
-            <section v-if="form_data.tecnologia ==='Offset'">
+            <section>
                 <hr />
                 <div class="row">
                     <div class="form-column col-sm-6">
@@ -506,7 +506,7 @@ export default {
                 </div>
             </section>
 
-            <section v-if="form_data.tecnologia ==='Offset'">
+            <section>
                 <hr />
                 <div class="row">
                     <div class="form-column col-sm-6">
