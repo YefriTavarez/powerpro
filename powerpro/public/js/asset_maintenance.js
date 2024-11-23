@@ -57,7 +57,8 @@ frappe.ui.form.on("Asset Maintenance", {
                     }
     
                     // Eliminar la sección original si existe
-                    $('div.section-head:contains("Maintenance Log")')
+                    let section_maintenance = __("Maintenance Log");
+                    $('div.section-head:contains("' + section_maintenance + '")')
                         .closest('div.form-dashboard-section')
                         .remove();
     
