@@ -171,7 +171,7 @@ export default {
 		const args = {
 			// empty
 		};
-
+		
 		function callback({ message: powerpro_settings }) {
 			self.powerpro_settings = powerpro_settings;
 			loading_power_pro_settings = false;
