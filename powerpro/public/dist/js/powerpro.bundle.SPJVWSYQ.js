@@ -8240,7 +8240,7 @@ Expected function or array of functions, received type ${typeof value}.`
               internal = false;
               return;
             }
-            self2.form_data.raw_material = this.value;
+            self2.form_data.material = this.value;
             self2.update_data();
             self2.frm.set_value("raw_material", this.value);
           }
@@ -8249,7 +8249,7 @@ Expected function or array of functions, received type ${typeof value}.`
         parent: this.$refs.material
       });
       internal = true;
-      this.raw_material_field.set_value(self2.form_data.raw_material);
+      this.raw_material_field.set_value(self2.form_data.material);
     }
   };
 
@@ -9803,4 +9803,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.LNDT2EGM.js.map
+//# sourceMappingURL=powerpro.bundle.SPJVWSYQ.js.map
