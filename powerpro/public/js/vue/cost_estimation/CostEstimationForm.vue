@@ -149,13 +149,6 @@ export default {
                             class="form-control"
                         >{{ cantidad_de_producto_con_adicional }}</span>
                        </div>
-
-                        <percent-field
-                            label="Margen de Utilidad"
-                            :value="form_data.margen_de_utilidad"
-                            @after_select="validate_and_set_margin_of_utility"
-                            :read_only="readonly"
-                        />
                     </div>
                 </div>
             </section>
@@ -678,8 +671,20 @@ export default {
             </section>
 
             <section v-if="!is_new()">
+                <hr />
                 <div class="row">
                     <div class="px-3" style="width: 100%">
+                        <h3>Costo Unitario</h3>
+                    </div>
+                    <div class="col-sm-6">
+                        <percent-field
+                            label="Margen de Utilidad"
+                            :value="form_data.margen_de_utilidad"
+                            @after_select="validate_and_set_margin_of_utility"
+                            :read_only="readonly"
+                        />
+                    </div>
+                    <div class="col-sm-6 px-3">
                         <h2 class="text-right">
                             C/U <br>
                             <small
