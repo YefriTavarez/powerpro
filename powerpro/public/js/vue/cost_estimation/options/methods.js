@@ -328,7 +328,7 @@ export default {
 						return ; // do nothing
 					}
 
-					self.form_data.raw_material = this.value;
+					self.form_data.material = this.value;
 					self.update_data();
 					self.frm.set_value("raw_material", this.value);
 				},
@@ -338,6 +338,6 @@ export default {
 		});
 
 		internal = true;
-		this.raw_material_field.set_value(self.form_data.raw_material);
+		this.raw_material_field.set_value(self.form_data.material);
 	},
 };
