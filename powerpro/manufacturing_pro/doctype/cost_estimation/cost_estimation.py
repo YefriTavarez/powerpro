@@ -30,6 +30,7 @@ class CostEstimation(Document):
 		data: DF.JSON | None
 		expires_on: DF.Date
 		naming_series: DF.Literal["COST-EST-"]
+		product_type: DF.Link
 		raw_material: DF.Link
 	# end: auto-generated types
 	def onload(self):

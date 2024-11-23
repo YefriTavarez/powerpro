@@ -282,4 +282,62 @@ export default {
 			self.form_data.margen_de_utilidad = value;
 		}
 	},
+	mount_product_type_field() {
+		const self = this;
+
+		let internal = false;
+		this.product_type_field = frappe.ui.form.make_control({
+			df: {
+				fieldtype: "Link",
+				fieldname: "tipo_de_producto",
+				options: "Product Type",
+				label: __("Product Type"),
+				reqd: 1,
+				change() {
+					if (internal) {
+						internal = false;
+						return ; // do nothing
+					}
+
+					self.form_data.tipo_de_producto = this.value;
+					self.update_data();
+					self.frm.set_value("product_type", this.value);
+				},
+			},
+			render_input: true,
+			parent: self.$refs.tipo_de_producto,
+		});
+
+		internal = true;
+		this.product_type_field.set_value(self.form_data.tipo_de_producto);
+	},
+	mount_raw_material_field() {
+		const self = this;
+
+		let internal = false;
+		this.raw_material_field = frappe.ui.form.make_control({
+			df: {
+				fieldtype: "Link",
+				fieldname: "raw_material",
+				options: "Raw Material",
+				label: __("Raw Material"),
+				reqd: 1,
+				change() {
+					if (internal) {
+						internal = false;
+						return ; // do nothing
+					}
+
+					self.form_data.raw_material = this.value;
+					self.update_data();
+					self.frm.set_value("raw_material", this.value);
+				},
+			},
+			render_input: true,
+			parent: this.$refs.material,
+		});
+
+		internal = true;
+		this.raw_material_field.set_value(self.form_data.raw_material);
+	},
 };

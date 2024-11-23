@@ -32,8 +32,8 @@ export default {
         <div data-component="cost-estimation">
             <section>
                 <div class="row">
-                    <div class="form-column col-sm-6">
-                        <div
+                    <div ref="tipo_de_producto" class="col-sm-6">
+                        <!-- <div
                             class="form-group" 
                         >
                             <label for="">Tipo de Producto</label>
@@ -65,7 +65,10 @@ export default {
                                     {{ !form_data.tipo_de_producto? "Seleccionar": "Cambiar" }}
                                 </button>
                             </div>
-                        </div>
+                        </div> -->
+                    </div>
+                    <div ref="material" class="col-sm-6">
+                        
                     </div>
                 </div>
             </section>

@@ -11,5 +11,8 @@ export default {
         this.load_lamination_type_options();
         this.load_gluing_type_options();
         this.load_foil_color_options();
+
+		this.mount_product_type_field();
+		this.mount_raw_material_field();
     },
 }

@@ -7,6 +7,7 @@
  "field_order": [
   "customer",
   "raw_material",
+  "product_type",
   "column_break_4hbk",
   "naming_series",
   "created_on",
@@ -38,6 +39,7 @@
    "fieldname": "raw_material",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Raw Material",
    "options": "Raw Material",
    "reqd": 1
@@ -90,12 +92,22 @@
    "options": "COST-EST-",
    "reqd": 1,
    "set_only_once": 1
+  },
+  {
+   "depends_on": "eval:false",
+   "fieldname": "product_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Product Type",
+   "options": "Product Type",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-23 01:49:17.848504",
+ "modified": "2024-11-23 02:11:56.978625",
  "modified_by": "Administrator",
  "module": "Manufacturing Pro",
  "name": "Cost Estimation",
