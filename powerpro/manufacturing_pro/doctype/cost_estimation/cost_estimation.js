@@ -90,6 +90,245 @@
 		_autoset_expires_on({ frm });
 	}
 
+
+	// VALIDATE THE VUE FORM
+	function validate(frm) {
+		/* Validaciones de campos obligatorios:
+		tipo_de_producto
+		material
+		cantidad_montaje
+		cantidad_de_producto
+		porcentaje_adicional
+		ancho_producto
+		alto_producto
+		ancho_montaje
+		alto_montaje
+		ancho_material
+		alto_material
+		tecnologia
+		cantidad_de_tintas_tiro
+			tinta_seleccionada_tiro_1 #*
+			tinta_seleccionada_tiro_2 #*
+			tinta_seleccionada_tiro_3 #*
+			tinta_seleccionada_tiro_4 #*
+			tinta_seleccionada_tiro_5 #*
+			tinta_seleccionada_tiro_6 #*
+			tinta_seleccionada_tiro_7 #*
+			tinta_seleccionada_tiro_8 #*
+		cantidad_de_tintas_retiro
+			tinta_seleccionada_retiro_1 #*
+			tinta_seleccionada_retiro_2 #*
+			tinta_seleccionada_retiro_3 #*
+			tinta_seleccionada_retiro_4 #*
+			tinta_seleccionada_retiro_5 #*
+			tinta_seleccionada_retiro_6 #*
+			tinta_seleccionada_retiro_7 #*
+			tinta_seleccionada_retiro_8 #*
+		incluye_barnizado
+			tipo_barnizado *
+	
+		incluye_laminado
+			tipo_laminado *
+	
+		incluye_relieve
+			tipo_de_relieve *
+			tipo_de_material_relieve *
+			cantidad_de_elementos_en_relieve *
+				ancho_elemento_relieve_1 #*
+				ancho_elemento_relieve_2 #*
+				ancho_elemento_relieve_3 #*
+				ancho_elemento_relieve_4 #*
+				ancho_elemento_relieve_5 #*
+	
+				alto_elemento_relieve_1 #*
+				alto_elemento_relieve_2 #*
+				alto_elemento_relieve_3 #*
+				alto_elemento_relieve_4 #*
+				alto_elemento_relieve_5 #*
+	
+	
+		incluye_troquelado
+			troquel_en_inventario #
+		incluye_utilidad
+			tipo_utilidad *
+	
+			cinta_doble_cara_cantidad_de_puntos *
+			cinta_doble_cara_ancho_punto *
+			cinta_doble_cara_alto_punto *
+	
+		incluye_pegado
+			tipo_pegado *
+		tipo_de_empaque *
+	
+		margen_de_utilidad *
+		*/
+	
+		const form_data = JSON.parse(frm.doc.data);
+	
+		if (!form_data.tipo_de_producto) {
+			frappe.msgprint('El campo "Tipo de producto" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		if (!form_data.material) {
+			frappe.msgprint('El campo "Material" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		if (!form_data.cantidad_montaje) {
+			frappe.msgprint('El campo "Cantidad de montaje" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		if (!form_data.cantidad_de_producto) {
+			frappe.msgprint('El campo "Cantidad de producto" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		if (!form_data.porcentaje_adicional && form_data.porcentaje_adicional !== 0) {
+			frappe.msgprint('El campo "Porcentaje adicional" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		if (!form_data.ancho_producto) {
+			frappe.msgprint('El campo "Ancho de producto" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		if (!form_data.alto_producto) {
+			frappe.msgprint('El campo "Alto de producto" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		if (!form_data.ancho_montaje) {
+			frappe.msgprint('El campo "Ancho de montaje" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		if (!form_data.alto_montaje) {
+			frappe.msgprint('El campo "Alto de montaje" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		if (!form_data.ancho_material) {
+			frappe.msgprint('El campo "Ancho de material" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		if (!form_data.alto_material) {
+			frappe.msgprint('El campo "Alto de material" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		if (!form_data.tecnologia) {
+			frappe.msgprint('El campo "Tecnología" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		if (!form_data.cantidad_de_tintas_tiro && form_data.cantidad_de_tintas_tiro !== 0) {
+			frappe.msgprint('El campo "Cantidad de Tintas en el Tiro" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		// depende de la cantidad de tintas tiro
+		for (let i = 1; i <= cint(form_data.cantidad_de_tintas_tiro); i++) {
+			if (!form_data[`tinta_seleccionada_tiro_${i}`]) {
+				frappe.msgprint(`El campo "Tinta ${i} en el Tiro" es obligatorio`);
+				frappe.validated = false;
+			}
+		}
+	
+		if (!form_data.cantidad_de_tintas_retiro && form_data.cantidad_de_tintas_retiro !== 0) {
+			frappe.msgprint('El campo "Cantidad de Tintas en el Retiro" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		// depende de la cantidad de tintas retiro
+		for (let i = 1; i <= cint(form_data.cantidad_de_tintas_retiro); i++) {
+			if (!form_data[`tinta_seleccionada_retiro_${i}`]) {
+				frappe.msgprint(`El campo "Listado de Tintas en el Retiro ${i}" es obligatorio`);
+				frappe.validated = false;
+			}
+		}
+	
+		if (form_data.incluye_barnizado && !form_data.tipo_barnizado) {
+			frappe.msgprint('El campo "Tipo de Barnizado" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		if (form_data.incluye_laminado && !form_data.tipo_laminado) {
+			frappe.msgprint('El campo "Tipo de Laminado" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		if (form_data.incluye_relieve) {
+			if (!form_data.tipo_de_relieve) {
+				frappe.msgprint('El campo "Tipo de Relieve" es obligatorio');
+				frappe.validated = false;
+			}
+	
+			if (!form_data.tipo_de_material_relieve) {
+				frappe.msgprint('El campo "Color de Lamina en Relieve" es obligatorio');
+				frappe.validated = false;
+			}
+	
+			if (!form_data.cantidad_de_elementos_en_relieve) {
+				frappe.msgprint('El campo "Cantidad de Elementos en Relieve" es obligatorio');
+				frappe.validated = false;
+			}
+	
+			// depende de la cantidad de elementos en relieve
+			for (let i = 1; i <= cint(form_data.cantidad_de_elementos_en_relieve); i++) {
+				if (!form_data[`ancho_elemento_relieve_${i}`]) {
+					frappe.msgprint(`El campo "Ancho de Elemento ${i} en Relieve" es obligatorio`);
+					frappe.validated = false;
+				}
+	
+				if (!form_data[`alto_elemento_relieve_${i}`]) {
+					frappe.msgprint(`El campo "Alto de Elemento ${i} en Relieve" es obligatorio`);
+					frappe.validated = false;
+				}
+			}
+		}
+	
+		// if (form_data.incluye_troquelado && !form_data.troquel_en_inventario) {
+		// 	frappe.msgprint('El campo "Troquel en Inventario" es obligatorio');
+		// 	frappe.validated = false;
+		// }
+	
+		if (form_data.incluye_utilidad) {
+			if (!form_data.tipo_utilidad) {
+				frappe.msgprint('El campo "Tipo de Utilidad" es obligatorio');
+				frappe.validated = false;
+			}
+	
+			if (!form_data.cinta_doble_cara_cantidad_de_puntos) {
+				frappe.msgprint('El campo "Cantidad de Puntos en Utilidad" es obligatorio');
+				frappe.validated = false;
+			}
+	
+			if (!form_data.cinta_doble_cara_ancho_punto) {
+				frappe.msgprint('El campo "Ancho de Punto en Utilidad" es obligatorio');
+				frappe.validated = false;
+			}
+	
+			if (!form_data.cinta_doble_cara_alto_punto) {
+				frappe.msgprint('El campo "Alto de Punto en Utilidad" es obligatorio');
+				frappe.validated = false;
+			}
+		}
+	
+		if (form_data.incluye_pegado && !form_data.tipo_pegado) {
+			frappe.msgprint('El campo "Tipo de Pegado" es obligatorio');
+			frappe.validated = false;
+		}
+	
+		if (!form_data.tipo_de_empaque) {
+			frappe.msgprint('El campo "Tipo de Empaque" es obligatorio');
+			frappe.validated = false;
+		}
+	}
+
 	function created_on(frm) {
 		// update expires_on
 		_autoset_expires_on({ frm, force: true });
@@ -294,6 +533,7 @@
 		setup,
 		refresh,
 		onload_post_render,
+		validate,
 		raw_material,
 		created_on,
 		expires_on,
