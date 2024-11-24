@@ -78,6 +78,7 @@
 	function refresh(frm) {
 		_refresh_vue(frm);
 		_add_custom_buttons(frm);
+		_setup_intro(frm);
 	}
 
 	function raw_material(frm) {
@@ -118,6 +119,25 @@
 		}
 
 		// always on buttons
+	}
+
+	function _setup_intro(frm) {
+		const { doc } = frm;
+		
+		frm.set_intro(); // clear intro
+		if (doc.docstatus === 2) {
+			return ; // exit
+		}
+
+		const { __onload: data } = doc;
+
+
+		if (data.smart_hash_exist) {
+			frm.set_intro(
+			`${__("There is already an SKU for with this exact data.")}<br>
+				<button class="btn btn-info btn-xs" onclick="frappe.utils.copy_to_clipboard('${data.item_id}')">${__("Copy SKU")}</button>
+				${__("or go to the Item itself by clicking here")} <a href="/app/item/${data.item_id}">${data.item_id}</a>`, "blue");
+		}
 	}
 
 	function _add_load_from_sku_button(frm) {
