@@ -314,6 +314,11 @@ export default {
 					self.form_data.tipo_de_producto = this.value;
 					self.update_data();
 					self.frm.set_value("product_type", this.value);
+
+					// clear raw material
+					// self.form_data.material = "";
+					self.raw_material_field.set_value("");
+					// self.frm.set_value("raw_material", "");
 				},
 			},
 			render_input: true,
@@ -334,6 +339,14 @@ export default {
 				options: "Raw Material",
 				label: __("Raw Material"),
 				reqd: 1,
+				get_query() {
+					return {
+						query: "powerpro.controllers.queries.raw_material_query",
+						filters: {
+							product_type: self.form_data.tipo_de_producto,
+						},
+					};
+				},
 				change() {
 					if (internal) {
 						internal = false;
