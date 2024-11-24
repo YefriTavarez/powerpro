@@ -194,6 +194,9 @@ export default {
 		};
 		
 		function callback({ message }) {
+			self.select_options["tipo_barnizado"]
+				.push({ value: "" });
+
 			for (const option of message) {
 				self.select_options["tipo_barnizado"]
 					.push({ value: option });
@@ -210,6 +213,9 @@ export default {
 		};
 		
 		function callback({ message }) {
+			self.select_options["tipo_laminado"]
+				.push({ value: "" });
+
 			for (const option of message) {
 				self.select_options["tipo_laminado"]
 					.push({ value: option })
@@ -227,6 +233,9 @@ export default {
 		};
 		
 		function callback({ message }) {
+			self.select_options["tipo_pegado"]
+				.push({ value: "" });
+
 			for (const option of message) {
 				self.select_options["tipo_pegado"]
 					.push({ value: option })
@@ -244,6 +253,9 @@ export default {
 		};
 		
 		function callback({ message }) {
+			self.select_options["color_lamina"]
+				.push({ value: "" });
+
 			for (const option of message) {
 				self.select_options["color_lamina"]
 					.push({ value: option })
@@ -340,4 +352,8 @@ export default {
 		internal = true;
 		this.raw_material_field.set_value(self.form_data.material);
 	},
+	handle_utility_type_change(value) {
+		this.form_data.tipo_utilidad = value;
+		this.update_data();	
+	}
 };
