@@ -131,6 +131,9 @@
 
 		const { __onload: data } = doc;
 
+		if (!data) {
+			return ; // exit
+		}
 
 		if (data.smart_hash_exist) {
 			frm.set_intro(
