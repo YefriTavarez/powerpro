@@ -35,8 +35,11 @@ class CostEstimation(Document):
 	# end: auto-generated types
 	def onload(self):
 		smart_hash = self.generate_smart_hash()
-		smart_hash_exist = self.does_smart_hash_exist(smart_hash)
-		self.set_onload("smart_hash_exist", smart_hash_exist)
+		if item_id := self.does_smart_hash_exist(smart_hash, as_name=True):
+			self.set_onload("item_id", item_id)
+			self.set_onload("smart_hash_exist", True)
+		else:
+			self.set_onload("smart_hash_exist", False)
 
 		# enable the form_data view in the form
 		self.set_onload("debug", False)
