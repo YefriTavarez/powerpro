@@ -81,6 +81,18 @@ export default {
                     </div>
                     <div class="form-column col-sm-4">
                         <qty-field
+                            label="Cantidad"
+                            :initial_value="form_data.cantidad_de_producto"
+                            :enforce_positive="true"
+                            :enforce_integer="true"
+                            :format_with_comma="true"
+                            @after_select="
+                                (value) => (form_data.cantidad_de_producto = value)
+                            "
+                            :read_only="readonly"
+                        />
+
+                        <qty-field
                             label="Unidades en Montaje"
                             :initial_value="form_data.cantidad_montaje"
                             :enforce_positive="true"
@@ -94,18 +106,6 @@ export default {
                     </div>
 
                     <div class="form-column col-sm-4">
-                        <qty-field
-                            label="Cantidad"
-                            :initial_value="form_data.cantidad_de_producto"
-                            :enforce_positive="true"
-                            :enforce_integer="true"
-                            :format_with_comma="true"
-                            @after_select="
-                                (value) => (form_data.cantidad_de_producto = value)
-                            "
-                            :read_only="readonly"
-                        />
-
                         <select-field
                             label="Porcentaje Adicional"
                             :selected="form_data.porcentaje_adicional"
@@ -138,6 +138,7 @@ export default {
 
 
             <section>
+                <hr>
                 <div class="row">
                     <div class="px-3" style="width: 100%">
                         <h3>Dimensiones</h3>
