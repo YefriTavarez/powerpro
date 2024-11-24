@@ -556,11 +556,12 @@ export default {
 
                         <select-field
                             label="Tipo de Utilidad"
-                            :options="[{ value: 'Cinta Doble Cara' }]"
+                            :options="[
+                                { value: '' },
+                                { value: 'Cinta Doble Cara' },
+                            ]"
                             :selected="form_data.tipo_utilidad"
-                            @after_select="
-                                (value) => (form_data.tipo_utilidad = value)
-                            "
+                            @after_select="handle_utility_type_change"
                             v-if="form_data.incluye_utilidad"
                             :read_only="readonly"
                         />
@@ -577,7 +578,7 @@ export default {
                             @after_select="
                                 (value) => (form_data.cinta_doble_cara_cantidad_de_puntos = value)
                             "
-                            v-if="form_data.tipo_utilidad && form_data.tipo_utilidad === 'Cinta Doble Cara'"
+                            v-if="form_data.incluye_utilidad && form_data.tipo_utilidad === 'Cinta Doble Cara'"
                             :read_only="readonly"
                         />
 
@@ -613,7 +614,7 @@ export default {
                                         cinta_doble_cara_alto_punto,
                                     })
                             "
-                            v-if="form_data.tipo_utilidad && form_data.tipo_utilidad === 'Cinta Doble Cara'"
+                            v-if="form_data.incluye_utilidad && form_data.tipo_utilidad === 'Cinta Doble Cara'"
                             :read_only="readonly"
                         />
                         
@@ -658,6 +659,7 @@ export default {
                         <select-field
                             label="Tipo de Empaque"
                             :options="[
+                                { value: '' },
                                 { value: 'Corrugado' },
                                 { value: 'Papel' },
                                 { value: 'Plástico' },
