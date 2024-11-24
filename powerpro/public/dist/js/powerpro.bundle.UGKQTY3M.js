@@ -8136,6 +8136,7 @@ Expected function or array of functions, received type ${typeof value}.`
       const method = "powerpro.controllers.assets.get_coating_type_options";
       const args = {};
       function callback({ message }) {
+        self2.select_options["tipo_barnizado"].push({ value: "" });
         for (const option of message) {
           self2.select_options["tipo_barnizado"].push({ value: option });
         }
@@ -8148,6 +8149,7 @@ Expected function or array of functions, received type ${typeof value}.`
       const method = "powerpro.controllers.assets.get_lamination_type_options";
       const args = {};
       function callback({ message }) {
+        self2.select_options["tipo_laminado"].push({ value: "" });
         for (const option of message) {
           self2.select_options["tipo_laminado"].push({ value: option });
         }
@@ -8160,6 +8162,7 @@ Expected function or array of functions, received type ${typeof value}.`
       const method = "powerpro.controllers.assets.get_gluing_type_options";
       const args = {};
       function callback({ message }) {
+        self2.select_options["tipo_pegado"].push({ value: "" });
         for (const option of message) {
           self2.select_options["tipo_pegado"].push({ value: option });
         }
@@ -8172,6 +8175,7 @@ Expected function or array of functions, received type ${typeof value}.`
       const method = "powerpro.controllers.assets.get_foil_color_options";
       const args = {};
       function callback({ message }) {
+        self2.select_options["color_lamina"].push({ value: "" });
         for (const option of message) {
           self2.select_options["color_lamina"].push({ value: option });
         }
@@ -8250,6 +8254,10 @@ Expected function or array of functions, received type ${typeof value}.`
       });
       internal = true;
       this.raw_material_field.set_value(self2.form_data.material);
+    },
+    handle_utility_type_change(value) {
+      this.form_data.tipo_utilidad = value;
+      this.update_data();
     }
   };
 
@@ -9583,20 +9591,23 @@ Expected function or array of functions, received type ${typeof value}.`
               _ctx.form_data.incluye_utilidad ? (openBlock(), createBlock(_component_select_field, {
                 key: 0,
                 label: "Tipo de Utilidad",
-                options: [{ value: "Cinta Doble Cara" }],
+                options: [
+                  { value: "" },
+                  { value: "Cinta Doble Cara" }
+                ],
                 selected: _ctx.form_data.tipo_utilidad,
-                onAfter_select: _cache[22] || (_cache[22] = (value) => _ctx.form_data.tipo_utilidad = value),
+                onAfter_select: _ctx.handle_utility_type_change,
                 read_only: _ctx.readonly
-              }, null, 8, ["selected", "read_only"])) : createCommentVNode("v-if", true),
+              }, null, 8, ["selected", "onAfter_select", "read_only"])) : createCommentVNode("v-if", true),
               createCommentVNode("\n                        Cantidad de puntos\n                        Tama\xF1o de los puntos (ancho y alto) con valores fijos\n                        Ancho: 0.5, 0.75, 1 in\n                        Largo: 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5 in\n                        "),
-              _ctx.form_data.tipo_utilidad && _ctx.form_data.tipo_utilidad === "Cinta Doble Cara" ? (openBlock(), createBlock(_component_qty_field, {
+              _ctx.form_data.incluye_utilidad && _ctx.form_data.tipo_utilidad === "Cinta Doble Cara" ? (openBlock(), createBlock(_component_qty_field, {
                 key: 1,
                 label: "Cantidad de Puntos",
                 initial_value: _ctx.form_data.cinta_doble_cara_cantidad_de_puntos,
-                onAfter_select: _cache[23] || (_cache[23] = (value) => _ctx.form_data.cinta_doble_cara_cantidad_de_puntos = value),
+                onAfter_select: _cache[22] || (_cache[22] = (value) => _ctx.form_data.cinta_doble_cara_cantidad_de_puntos = value),
                 read_only: _ctx.readonly
               }, null, 8, ["initial_value", "read_only"])) : createCommentVNode("v-if", true),
-              _ctx.form_data.tipo_utilidad && _ctx.form_data.tipo_utilidad === "Cinta Doble Cara" ? (openBlock(), createBlock(_component_dimension, {
+              _ctx.form_data.incluye_utilidad && _ctx.form_data.tipo_utilidad === "Cinta Doble Cara" ? (openBlock(), createBlock(_component_dimension, {
                 key: 2,
                 label: "Tama\xF1o de los Puntos",
                 width: _ctx.form_data.cinta_doble_cara_ancho_punto,
@@ -9621,7 +9632,7 @@ Expected function or array of functions, received type ${typeof value}.`
                     { value: 5, label: "5" }
                   ]
                 },
-                onOn_change: _cache[24] || (_cache[24] = ({ width: cinta_doble_cara_ancho_punto, height: cinta_doble_cara_alto_punto }) => _ctx.form_data = __spreadProps(__spreadValues({}, _ctx.form_data), {
+                onOn_change: _cache[23] || (_cache[23] = ({ width: cinta_doble_cara_ancho_punto, height: cinta_doble_cara_alto_punto }) => _ctx.form_data = __spreadProps(__spreadValues({}, _ctx.form_data), {
                   cinta_doble_cara_ancho_punto,
                   cinta_doble_cara_alto_punto
                 })),
@@ -9637,7 +9648,7 @@ Expected function or array of functions, received type ${typeof value}.`
               createVNode(_component_checkbox_field, {
                 label: "Incluye Pegado?",
                 initial_value: _ctx.form_data.incluye_pegado,
-                onAfter_select: _cache[25] || (_cache[25] = (value) => _ctx.form_data.incluye_pegado = value),
+                onAfter_select: _cache[24] || (_cache[24] = (value) => _ctx.form_data.incluye_pegado = value),
                 read_only: _ctx.readonly
               }, null, 8, ["initial_value", "read_only"]),
               _ctx.form_data.incluye_pegado ? (openBlock(), createBlock(_component_select_field, {
@@ -9645,7 +9656,7 @@ Expected function or array of functions, received type ${typeof value}.`
                 label: "Tipo de Pegado",
                 options: _ctx.select_options.tipo_pegado,
                 selected: _ctx.form_data.tipo_pegado,
-                onAfter_select: _cache[26] || (_cache[26] = (value) => _ctx.form_data.tipo_pegado = value),
+                onAfter_select: _cache[25] || (_cache[25] = (value) => _ctx.form_data.tipo_pegado = value),
                 read_only: _ctx.readonly
               }, null, 8, ["options", "selected", "read_only"])) : createCommentVNode("v-if", true)
             ])
@@ -9659,12 +9670,13 @@ Expected function or array of functions, received type ${typeof value}.`
               createVNode(_component_select_field, {
                 label: "Tipo de Empaque",
                 options: [
+                  { value: "" },
                   { value: "Corrugado" },
                   { value: "Papel" },
                   { value: "Pl\xE1stico" }
                 ],
                 selected: _ctx.form_data.tipo_de_empaque,
-                onAfter_select: _cache[27] || (_cache[27] = (value) => _ctx.form_data.tipo_de_empaque = value),
+                onAfter_select: _cache[26] || (_cache[26] = (value) => _ctx.form_data.tipo_de_empaque = value),
                 read_only: _ctx.readonly
               }, null, 8, ["selected", "read_only"])
             ])
@@ -9803,4 +9815,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.SPJVWSYQ.js.map
+//# sourceMappingURL=powerpro.bundle.UGKQTY3M.js.map
