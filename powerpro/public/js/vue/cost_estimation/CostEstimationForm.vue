@@ -276,6 +276,15 @@ export default {
                             "
                             :read_only="readonly"
                         />
+
+                        <button
+                            class="btn btn-primary btn-xs"
+                            @click="load_full_color('frontside')"
+                            :disabled="readonly"
+                            v-if="form_data.cantidad_de_tintas_tiro >= 4"
+                        >
+                            Cargar Cuatricomía
+                        </button>
                     </div>
                     <div class="form-column col-sm-8">
                         <!-- :field_id="`tinta_seleccionada_${index}`"
@@ -336,6 +345,14 @@ export default {
                             "
                             :read_only="readonly"
                         />
+                        <button
+                            class="btn btn-primary btn-xs"
+                            @click="load_full_color('backside')"
+                            :disabled="readonly"
+                            v-if="form_data.cantidad_de_tintas_retiro >= 4"
+                        >
+                            Cargar Cuatricomía
+                        </button>
                     </div>
                     <div class="form-column col-sm-8">
                         <!-- :field_id="`tinta_seleccionada_${index}`"
