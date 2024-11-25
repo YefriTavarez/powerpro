@@ -265,6 +265,71 @@ export default {
 
 		frappe.call({ method, args, callback });
 	},
+	load_full_color(side) {
+		if (!power_pro_settings) {
+			frappe.throw(__("Power-Pro Settings not loaded yet"));
+		}
+
+		const {
+			cyan_color,
+			magenta_color,
+			yellow_color,
+			key_color,
+		} = power_pro_settings;
+
+		// validate each color is set
+		if (!cyan_color) {
+			console.log({ cyan_color });
+			frappe.throw(`
+				${__("Cyan color not set in Power-Pro Settings")}
+				<br>${__("Please, set this value in the Power-Pro Settings and then reload the browser")}
+			`);
+		}
+
+		if (!magenta_color) {
+			frappe.throw(`
+				${__("Magenta color not set in Power-Pro Settings")}
+				<br>${__("Please, set this value in the Power-Pro Settings and then reload the browser")}
+			`);
+		}
+
+		if (!yellow_color) {
+			frappe.throw(`
+				${__("Yellow color not set in Power-Pro Settings")}
+				<br>${__("Please, set this value in the Power-Pro Settings and then reload the browser")}
+			`);
+		}
+
+		if (!key_color) {
+			frappe.throw(`
+				${__("Black color not set in Power-Pro Settings")}
+				<br>${__("Please, set this value in the Power-Pro Settings and then reload the browser")}
+			`);
+		}
+
+		const colors = [
+			cyan_color,
+			magenta_color,
+			yellow_color,
+			key_color,
+		];
+
+		if (side === "frontside") {
+			for (let i = 1; i <= 4; i++) {
+				const fieldname = `tinta_seleccionada_tiro_${i}`;
+				this.form_data[fieldname] = colors[i - 1];
+				this.fetch_ink_color(`${fieldname}`, colors[i - 1]);
+			}
+		} else if (side === "backside") {
+			for (let i = 1; i <= 4; i++) {
+				const fieldname = `tinta_seleccionada_retiro_${i}`;
+				this.form_data[fieldname] = colors[i - 1];
+				this.fetch_ink_color(`${fieldname}`, colors[i - 1]);
+			}
+		} else {
+			throw new Error(`Invalid side: ${side}`);
+		}
+	},
 	validate_and_set_margin_of_utility(value, set_value) {
 		const self = this;
 		// const { powerpro_settings: settings } = this;

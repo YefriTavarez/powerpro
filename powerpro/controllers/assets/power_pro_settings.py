@@ -17,6 +17,10 @@ def get_power_pro_settings(fields=None):
 		"description_template_for_product",
 		"min_margin",
 		"max_margin",
+		"cyan_color",
+		"magenta_color",
+		"yellow_color",
+		"key_color",
 	]
 
 	if fields:

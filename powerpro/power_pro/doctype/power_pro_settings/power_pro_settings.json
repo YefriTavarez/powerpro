@@ -20,7 +20,17 @@
   "margins_section",
   "min_margin",
   "column_break_flpz",
-  "max_margin"
+  "max_margin",
+  "colors_tab",
+  "cyan_color",
+  "column_break_dbfa",
+  "magenta_color",
+  "column_break_qyjr",
+  "yellow_color",
+  "column_break_zdbv",
+  "key_color",
+  "section_break_lqdd",
+  "html_haqn"
  ],
  "fields": [
   {
@@ -115,12 +125,62 @@
    "fieldtype": "Percent",
    "label": "Max Margin",
    "precision": "2"
+  },
+  {
+   "fieldname": "colors_tab",
+   "fieldtype": "Tab Break",
+   "label": "Colors"
+  },
+  {
+   "fieldname": "cyan_color",
+   "fieldtype": "Link",
+   "label": "Cyan Color",
+   "options": "Ink Color"
+  },
+  {
+   "fieldname": "column_break_dbfa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "magenta_color",
+   "fieldtype": "Link",
+   "label": "Magenta Color",
+   "options": "Ink Color"
+  },
+  {
+   "fieldname": "column_break_qyjr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "yellow_color",
+   "fieldtype": "Link",
+   "label": "Yellow Color",
+   "options": "Ink Color"
+  },
+  {
+   "fieldname": "column_break_zdbv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "key_color",
+   "fieldtype": "Link",
+   "label": "Key Color",
+   "options": "Ink Color"
+  },
+  {
+   "fieldname": "section_break_lqdd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html_haqn",
+   "fieldtype": "HTML",
+   "options": "<p>Especifique cuales son los colores que deben ser usados para representar la Cuatricom\u00eda</p>"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-11-21 23:51:11.172512",
+ "modified": "2024-11-25 18:16:15.398558",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Power-Pro Settings",
