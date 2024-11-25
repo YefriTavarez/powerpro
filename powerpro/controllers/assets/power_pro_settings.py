@@ -6,6 +6,15 @@ import frappe
 
 @frappe.whitelist()
 def get_power_pro_settings(fields=None):
+	if isinstance(fields, str):
+		if fields.startswith("["):
+			fields = frappe.parse_json(fields)
+		else:
+			fields = [fields]
+
+	if not isinstance(fields, list):
+		fields = None
+
 	settings = frappe.get_single("Power-Pro Settings")
 
 	_fields = [
