@@ -7,6 +7,8 @@ export default function() {
 
 	let form_data = {
 		porcentaje_adicional: 5, // 5% default
+		cantidad_de_tintas_tiro: 1,
+		cantidad_de_tintas_retiro: 0,
 	};
 
 	try {
