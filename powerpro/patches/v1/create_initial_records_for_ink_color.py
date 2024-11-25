@@ -8,6 +8,8 @@ import frappe
 def execute():
     for record in cmyk_records:
         create_new_ink_color(record)
+    
+    update_power_pro_settings()
 
     
 def create_new_ink_color(record):
@@ -38,6 +40,30 @@ def create_new_ink_color(record):
             click.secho(f"There was an error updating {record.get('name')}!", fg="red")
         else:
             click.secho(f"{record.get('name')} updated!", fg="green")
+
+
+def update_power_pro_settings():
+    doctype = "Power-Pro Settings"
+
+    if not frappe.db.exists(doctype):
+        click.secho(f"{doctype} does not exist!", fg="red")
+        return
+
+    doc = frappe.get_single(doctype)
+
+    doc.update({
+        "cyan_color": "Cyan",
+        "magenta_color": "Magenta",
+        "yellow_color": "Yellow",
+        "key_color": "Black",
+    })
+
+    try:
+        doc.save()
+    except frappe.exceptions.ValidationError:
+        click.secho(f"There was an error updating {doctype}!", fg="red")
+    else:
+        click.secho(f"{doctype} updated!", fg="green")
 
 
 cmyk_records = [
