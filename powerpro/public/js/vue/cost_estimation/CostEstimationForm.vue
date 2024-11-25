@@ -692,7 +692,7 @@ export default {
                 </div>
             </section>
 
-            <section v-if="!is_new()">
+            <section>
                 <hr />
                 <div class="row">
                     <div class="px-3" style="width: 100%">
@@ -707,7 +707,7 @@ export default {
                         />
                     </div>
                     <div class="col-sm-6 px-3">
-                        <h2 class="text-right">
+                        <h2 class="text-right" v-if="!is_new()">
                             C/U <br>
                             <small
                                 class="text-muted"
