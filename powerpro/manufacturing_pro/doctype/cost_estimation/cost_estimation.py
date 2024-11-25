@@ -182,6 +182,8 @@ class CostEstimation(Document):
 		form_data["ancho_producto"] = width
 		form_data["alto_producto"] = height
 
+		self.clean_up_data(form_data)
+
 		# ignore this keys from the form_data (self.data)
 		ignore_list = {
 			"cantidad_montaje",
@@ -205,6 +207,52 @@ class CostEstimation(Document):
 			out += f"{key}: {form_data[key]} - "
 
 		return hash_key(out)
+	# delete sub-options if primary checkbox is not checked
+
+	@staticmethod
+	def clean_up_data(form_data):
+		if not form_data.incluye_barnizado:
+			if "tipo_barnizado" in form_data:
+				del form_data["tipo_barnizado"]
+
+		if not form_data.incluye_laminado:
+			if "tipo_laminado" in form_data:
+				del form_data["tipo_laminado"]
+
+		if not form_data.incluye_relieve:
+			if "tipo_de_relieve" in form_data:
+				del form_data["tipo_de_relieve"]
+			if "tipo_de_material_relieve" in form_data:
+				del form_data["tipo_de_material_relieve"]
+			if "cantidad_de_elementos_en_relieve" in form_data:
+				del form_data["cantidad_de_elementos_en_relieve"]
+
+				for index in range(1, 6):
+					if f"ancho_elemento_relieve_{index}" in form_data:
+						del form_data[f"ancho_elemento_relieve_{index}"]
+
+				for index in range(1, 6):
+					if f"alto_elemento_relieve_{index}" in form_data:
+						del form_data[f"alto_elemento_relieve_{index}"]
+
+		if not form_data.incluye_troquelado:
+			if "troquel_en_inventario" in form_data:
+				del form_data["troquel_en_inventario"]
+
+		if not form_data.incluye_utilidad or form_data.tipo_utilidad != "Cinta Doble Cara":
+			if "tipo_utilidad" in form_data:
+				del form_data["tipo_utilidad"]
+			if "cinta_doble_cara_cantidad_de_puntos" in form_data:
+				del form_data["cinta_doble_cara_cantidad_de_puntos"]
+			if "cinta_doble_cara_ancho_punto" in form_data:
+				del form_data["cinta_doble_cara_ancho_punto"]
+			if "cinta_doble_cara_alto_punto" in form_data:
+				del form_data["cinta_doble_cara_alto_punto"]
+
+		if not form_data.incluye_pegado:
+			if "tipo_pegado" in form_data:
+				del form_data["tipo_pegado"]
+
 
 	@frappe.whitelist()
 	def does_smart_hash_exist(self, smart_hash: str, as_name: bool=False) -> bool:
