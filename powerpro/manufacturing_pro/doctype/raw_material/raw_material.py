@@ -124,8 +124,9 @@ class RawMaterial(Document):
 
 			description = self.get_description()
 		else:
+			valid_dict = self.__dict__.copy()
 			description = frappe.render_template(
-				template, self.as_dict()
+				template, valid_dict
 			)
 		
 		if for_return:
