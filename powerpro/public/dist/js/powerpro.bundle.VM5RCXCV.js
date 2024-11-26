@@ -9063,7 +9063,7 @@ Expected function or array of functions, received type ${typeof value}.`
     const { document: doc2 } = this;
     let form_data = {
       porcentaje_adicional: 5,
-      cantidad_de_tintas_tiro: 1,
+      cantidad_de_tintas_tiro: null,
       cantidad_de_tintas_retiro: 0
     };
     try {
@@ -9902,4 +9902,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.RGJFLBWK.js.map
+//# sourceMappingURL=powerpro.bundle.VM5RCXCV.js.map
