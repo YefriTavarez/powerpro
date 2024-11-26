@@ -43,7 +43,6 @@ def create_material_sku(
 			"Should be either 'Roll' or 'Sheet'"
 		)
 
-
 	# update material with new dimensions to get a more accurate description
 	material = get_material(material_id)
 	material.update({
@@ -54,7 +53,8 @@ def create_material_sku(
 		"gsm": gsm,
 	})
 
-	description = material.set_description()
+	description = material.set_description(for_return=True)
+	item_name = material.get_item_name()
 
 	# validate an equivalent Item does not exists already in the system.
 	if name := frappe.db.exists("Item", {
@@ -73,9 +73,12 @@ def create_material_sku(
 	# create and update the new item
 	item = frappe.new_doc("Item")
 
+	if item_name == description:
+		frappe.throw("Item name is required")
+
 	item.update({
 		# "item_code": primary_key,
-		"item_name": description or material.description,
+		"item_name": item_name,
 		# "naming_series": naming_series,
 		"description": description,
 		"is_purchase_item": 1,

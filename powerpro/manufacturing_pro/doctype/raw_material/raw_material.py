@@ -110,6 +110,25 @@ class RawMaterial(Document):
 
 		return ", ".join(out)
 
+	def get_item_name(self):
+		settings = frappe.get_single("Power-Pro Settings")
+		template = settings.item_name_template_for_raw_material
+
+		if not template:
+			frappe.msgprint(
+				f"""
+				{_("'Item Name Template for Raw Material' is not set in the Power-Pro Settings")}.<br>
+				{_("Using default description template")}.
+				""", alert=True
+			)
+
+			return self.description
+		else:
+			valid_dict = self.__dict__.copy()
+			return frappe.render_template(
+				template, valid_dict
+			)
+
 	def set_description(self, for_return=False):
 		settings = frappe.get_single("Power-Pro Settings")
 		template = settings.description_template_for_raw_material
