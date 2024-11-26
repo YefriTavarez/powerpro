@@ -9249,20 +9249,22 @@ Expected function or array of functions, received type ${typeof value}.`
     /* @__PURE__ */ createBaseVNode("h3", null, "Empaque")
   ], -1));
   var _hoisted_76 = { class: "form-column col-sm-6" };
-  var _hoisted_77 = { key: 1 };
-  var _hoisted_78 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
-  var _hoisted_79 = { class: "row" };
-  var _hoisted_80 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("div", {
+  var _hoisted_77 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("hr", null, null, -1));
+  var _hoisted_78 = { class: "row" };
+  var _hoisted_79 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("div", {
     class: "px-3",
     style: { "width": "100%" }
   }, [
     /* @__PURE__ */ createBaseVNode("h3", null, "Costo Unitario")
   ], -1));
-  var _hoisted_81 = { class: "col-sm-6" };
-  var _hoisted_822 = { class: "col-sm-6 px-3" };
-  var _hoisted_83 = { class: "text-right" };
-  var _hoisted_84 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("br", null, null, -1));
-  var _hoisted_85 = {
+  var _hoisted_80 = { class: "col-sm-6" };
+  var _hoisted_81 = { class: "col-sm-6 px-3" };
+  var _hoisted_822 = {
+    key: 0,
+    class: "text-right"
+  };
+  var _hoisted_83 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("br", null, null, -1));
+  var _hoisted_84 = {
     class: "text-muted",
     style: { "color": "var(--success) !important", "font-weight": "bold" }
   };
@@ -9595,8 +9597,8 @@ Expected function or array of functions, received type ${typeof value}.`
                 key: 0,
                 label: "Tipo de Relieve",
                 options: [
-                  { value: "Repujado" },
-                  { value: "Estampado" }
+                  { value: "Estampado" },
+                  { value: "Repujado" }
                 ],
                 selected: _ctx.form_data.tipo_de_relieve,
                 onAfter_select: _cache[18] || (_cache[18] = (value) => _ctx.form_data.tipo_de_relieve = value),
@@ -9766,11 +9768,11 @@ Expected function or array of functions, received type ${typeof value}.`
             ])
           ])
         ]),
-        !_ctx.is_new() ? (openBlock(), createElementBlock("section", _hoisted_77, [
-          _hoisted_78,
-          createBaseVNode("div", _hoisted_79, [
-            _hoisted_80,
-            createBaseVNode("div", _hoisted_81, [
+        createBaseVNode("section", null, [
+          _hoisted_77,
+          createBaseVNode("div", _hoisted_78, [
+            _hoisted_79,
+            createBaseVNode("div", _hoisted_80, [
               createVNode(_component_percent_field, {
                 label: "Margen de Utilidad",
                 value: _ctx.form_data.margen_de_utilidad,
@@ -9778,15 +9780,15 @@ Expected function or array of functions, received type ${typeof value}.`
                 read_only: _ctx.readonly
               }, null, 8, ["value", "onAfter_select", "read_only"])
             ]),
-            createBaseVNode("div", _hoisted_822, [
-              createBaseVNode("h2", _hoisted_83, [
+            createBaseVNode("div", _hoisted_81, [
+              !_ctx.is_new() ? (openBlock(), createElementBlock("h2", _hoisted_822, [
                 createTextVNode(" C/U "),
-                _hoisted_84,
-                createBaseVNode("small", _hoisted_85, " $ " + toDisplayString(parseFloat(_ctx.form_data.unit_cost || 0).toLocaleString()), 1)
-              ])
+                _hoisted_83,
+                createBaseVNode("small", _hoisted_84, " $ " + toDisplayString(parseFloat(_ctx.form_data.unit_cost || 0).toLocaleString()), 1)
+              ])) : createCommentVNode("v-if", true)
             ])
           ])
-        ])) : createCommentVNode("v-if", true)
+        ])
       ])
     ]);
   }
@@ -9899,4 +9901,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.YUCUNMFT.js.map
+//# sourceMappingURL=powerpro.bundle.5AQXEVER.js.map
