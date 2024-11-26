@@ -173,25 +173,10 @@ class CostEstimation(Document):
 		# don't igonore this key
 		# doc.raw_material
 
-		# the order in which the product dimension are stored
-		# does not impact the hash (but it will if we don't sort them)
-		width = form_data.get("ancho_producto", 0)
-		height = form_data.get("alto_producto", 0)
-
-		# store the original values first
-		form_data["_ancho_producto"] = width
-		form_data["_alto_producto"] = height
-
-		# swap the values if the width is greater than the height
-		if width > height:
-			width, height = height, width
-
-		# store the swapped values in the position of the original values	
-		form_data["ancho_producto"] = width
-		form_data["alto_producto"] = height
 
 		self.clean_up_data(form_data)
 		self.sort_colors(form_data)
+		self.sort_product_dimension(form_data)
 		self.sort_utility_dimension(form_data)
 
 		# ignore this keys from the form_data (self.data)
@@ -206,8 +191,8 @@ class CostEstimation(Document):
 			"ancho_material",
 			"alto_material",
 			"tipo_de_empaque",
-			"_ancho_producto",
-			"_alto_producto",
+			"ancho_producto",
+			"alto_producto",
 			"tinta_seleccionada_tiro_1",
 			"tinta_seleccionada_tiro_2",
 			"tinta_seleccionada_tiro_3",
@@ -366,14 +351,24 @@ class CostEstimation(Document):
 		width = form_data.get("cinta_doble_cara_ancho_punto", 0)
 		height = form_data.get("cinta_doble_cara_alto_punto", 0)
 
-		dimensions = [
-			str(width),
-			str(height),
-		]
+		# swap the values if the width is greater than the height
+		if width > height:
+			width, height = height, width
+		
+		form_data["cinta_doble_cara_dimension_punto"] = f"{width}x{height}"
 
-		form_data["cinta_doble_cara_dimension_punto"] = "x".join(
-			sorted(dimensions)
-		)
+	@staticmethod
+	def sort_product_dimension(form_data):
+		# the order in which the product dimension are stored
+		# does not impact the hash (but it will if we don't sort them)
+		width = form_data.get("ancho_producto", 0)
+		height = form_data.get("alto_producto", 0)
+
+		# swap the values if the width is greater than the height
+		if width > height:
+			width, height = height, width
+
+		form_data["dimension_producto"] = f"{width}x{height}"
 
 	@frappe.whitelist()
 	def does_smart_hash_exist(self, smart_hash: str, as_name: bool=False) -> bool:
