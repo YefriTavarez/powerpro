@@ -178,6 +178,7 @@ class CostEstimation(Document):
 		self.sort_colors(form_data)
 		self.sort_product_dimension(form_data)
 		self.sort_utility_dimension(form_data)
+		self.sort_special_effects_dimension(form_data)
 
 		# ignore this keys from the form_data (self.data)
 		ignore_list = {
@@ -227,6 +228,16 @@ class CostEstimation(Document):
 			"hex_tinta_seleccionada_retiro_8",
 			"cinta_doble_cara_ancho_punto",
 			"cinta_doble_cara_alto_punto",
+			"ancho_elemento_relieve_1",
+			"ancho_elemento_relieve_2",
+			"ancho_elemento_relieve_3",
+			"ancho_elemento_relieve_4",
+			"ancho_elemento_relieve_5",
+			"alto_elemento_relieve_1",
+			"alto_elemento_relieve_2",
+			"alto_elemento_relieve_3",
+			"alto_elemento_relieve_4",
+			"alto_elemento_relieve_5",
 		}
 	
 		out = f"{self.raw_material} - "
@@ -369,6 +380,29 @@ class CostEstimation(Document):
 			width, height = height, width
 
 		form_data["dimension_producto"] = f"{width}x{height}"
+
+	@staticmethod
+	def sort_special_effects_dimension(form_data):
+		# ancho_elemento_relieve_[0-5]
+		# alto_elemento_relieve_[0-5]
+
+		dimensions = list()
+
+		for index in range(1, 6):
+			width = form_data.get(f"ancho_elemento_relieve_{index}", 0)
+			height = form_data.get(f"alto_elemento_relieve_{index}", 0)
+
+			# swap the values if the width is greater than the height
+			if width > height:
+				width, height = height, width
+
+			dimensions.append(
+				f"{width}x{height}"
+			)
+		
+		form_data["dimension_elemento_relieve"] = ",".join(
+			sorted(dimensions)
+		)
 
 	@frappe.whitelist()
 	def does_smart_hash_exist(self, smart_hash: str, as_name: bool=False) -> bool:
