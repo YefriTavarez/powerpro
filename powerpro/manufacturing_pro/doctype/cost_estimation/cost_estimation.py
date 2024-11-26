@@ -319,8 +319,9 @@ class CostEstimation(Document):
 		for index in range(1, 9):
 			fieldname = front_color_prefix.format(index=index)
 			if index <= front_colors_qty:
+				color_code = form_data.get(fieldname)
 				front_colors.append(
-					form_data.get(fieldname)
+					str(color_code)
 				)
 				continue
 
@@ -333,8 +334,9 @@ class CostEstimation(Document):
 		for index in range(1, 9):
 			fieldname = back_color_prefix.format(index=index)
 			if index <= back_colors_qty:
+				color_code = form_data.get(fieldname)
 				back_colors.append(
-					form_data.get(fieldname)
+					str(color_code)
 				)
 				continue
 
