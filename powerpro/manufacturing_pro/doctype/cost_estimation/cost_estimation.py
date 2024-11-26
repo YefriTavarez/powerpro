@@ -5,6 +5,7 @@ from typing import Literal, TYPE_CHECKING
 
 import frappe
 from frappe import _
+from frappe.utils import cint
 
 from frappe.model.document import Document
 
@@ -43,6 +44,13 @@ class CostEstimation(Document):
 
 		# enable the form_data view in the form
 		self.set_onload("debug", False)
+
+	def on_update(self):
+		form_data = frappe.parse_json(self.data)
+		self.clean_up_data(form_data)
+		self.sort_colors(form_data)
+
+		self.db_set("data", frappe.as_json(form_data))
 
 	@frappe.whitelist()
 	def create_sku(self):
@@ -183,6 +191,7 @@ class CostEstimation(Document):
 		form_data["alto_producto"] = height
 
 		self.clean_up_data(form_data)
+		self.sort_colors(form_data)
 
 		# ignore this keys from the form_data (self.data)
 		ignore_list = {
@@ -190,6 +199,7 @@ class CostEstimation(Document):
 			"cantidad_de_producto",
 			"porcentaje_adicional",
 			"margen_de_utilidad",
+			"troquel_en_inventario",
 			"ancho_montaje",
 			"alto_montaje",
 			"ancho_material",
@@ -197,6 +207,38 @@ class CostEstimation(Document):
 			"tipo_de_empaque",
 			"_ancho_producto",
 			"_alto_producto",
+			"tinta_seleccionada_tiro_1",
+			"tinta_seleccionada_tiro_2",
+			"tinta_seleccionada_tiro_3",
+			"tinta_seleccionada_tiro_4",
+			"tinta_seleccionada_tiro_5",
+			"tinta_seleccionada_tiro_6",
+			"tinta_seleccionada_tiro_7",
+			"tinta_seleccionada_tiro_8",
+			"tinta_seleccionada_retiro_1",
+			"tinta_seleccionada_retiro_2",
+			"tinta_seleccionada_retiro_3",
+			"tinta_seleccionada_retiro_4",
+			"tinta_seleccionada_retiro_5",
+			"tinta_seleccionada_retiro_6",
+			"tinta_seleccionada_retiro_7",
+			"tinta_seleccionada_retiro_8",
+			"hex_tinta_seleccionada_tiro_1",
+			"hex_tinta_seleccionada_tiro_2",
+			"hex_tinta_seleccionada_tiro_3",
+			"hex_tinta_seleccionada_tiro_4",
+			"hex_tinta_seleccionada_tiro_5",
+			"hex_tinta_seleccionada_tiro_6",
+			"hex_tinta_seleccionada_tiro_7",
+			"hex_tinta_seleccionada_tiro_8",
+			"hex_tinta_seleccionada_retiro_1",
+			"hex_tinta_seleccionada_retiro_2",
+			"hex_tinta_seleccionada_retiro_3",
+			"hex_tinta_seleccionada_retiro_4",
+			"hex_tinta_seleccionada_retiro_5",
+			"hex_tinta_seleccionada_retiro_6",
+			"hex_tinta_seleccionada_retiro_7",
+			"hex_tinta_seleccionada_retiro_8",
 		}
 	
 		out = f"{self.raw_material} - "
@@ -253,6 +295,60 @@ class CostEstimation(Document):
 			if "tipo_pegado" in form_data:
 				del form_data["tipo_pegado"]
 
+	@staticmethod
+	def sort_colors(form_data):
+		front_colors = []
+		back_colors = []
+
+		# tinta_seleccionada_tiro_[0-8]
+		front_color_prefix = "tinta_seleccionada_tiro_{index}"
+
+		front_colors_qty = cint(
+			form_data.get("cantidad_de_tintas_tiro")
+		)
+
+		# tinta_seleccionada_retiro_[0-8]
+		back_color_prefix = "tinta_seleccionada_retiro_{index}"
+
+		back_colors_qty = cint(
+			form_data.get("cantidad_de_tintas_retiro")
+		)
+
+		for index in range(1, 9):
+			fieldname = front_color_prefix.format(index=index)
+			if index <= front_colors_qty:
+				front_colors.append(
+					form_data.get(fieldname)
+				)
+				continue
+
+			if fieldname in form_data:
+				del form_data[fieldname]
+
+			if f"hex_{fieldname}" in form_data:
+				del form_data[f"hex_{fieldname}"]
+
+		for index in range(1, 9):
+			fieldname = back_color_prefix.format(index=index)
+			if index <= back_colors_qty:
+				back_colors.append(
+					form_data.get(fieldname)
+				)
+				continue
+
+			if fieldname in form_data:
+				del form_data[fieldname]
+
+			if f"hex_{fieldname}" in form_data:
+				del form_data[f"hex_{fieldname}"]
+
+		form_data["front_colors"] = ",".join(
+			sorted(front_colors)
+		)
+
+		form_data["back_colors"] = ",".join(
+			sorted(back_colors)
+		)
 
 	@frappe.whitelist()
 	def does_smart_hash_exist(self, smart_hash: str, as_name: bool=False) -> bool:
