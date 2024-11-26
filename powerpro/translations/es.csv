@@ -137,3 +137,5 @@
 "Item Name Template for Product","Plantilla del Nombre del Producto para el Producto"
 "'Item Name Template for Raw Material' is not set in the Power-Pro Settings","'Plantilla del Nombre del Producto para Materia Prima' no ha sido definido en la Configuración de Power-Pro"
 "'Item Name Template for Product' is not set in the Power-Pro Settings","'Plantilla del Nombre del Producto para el Producto' no ha sido definido en la Configuración de Power-Pro"
+"Margin of Utility must be between {min_margin}% and {max_margin}%","El Margen de Utilidad debe estar entre {min_margin}% and {max_margin}%"
+"Margin of Utility is required","Margen de Utilidad es obligatorio"

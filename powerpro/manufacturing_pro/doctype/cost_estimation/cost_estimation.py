@@ -5,7 +5,7 @@ from typing import Literal, TYPE_CHECKING
 
 import frappe
 from frappe import _
-from frappe.utils import cint
+from frappe.utils import cint, flt
 
 from frappe.model.document import Document
 
@@ -45,8 +45,32 @@ class CostEstimation(Document):
 		# enable the form_data view in the form
 		self.set_onload("debug", False)
 
+	def validate(self):
+		form_data = self.get_form_data()
+
+		margin = flt(form_data.margen_de_utilidad)
+
+		# if not margin:
+		# 	frappe.throw(
+		# 		_("Margin of Utility is required")
+		# 	)
+
+		settings = frappe.get_single("Power-Pro Settings")
+
+		min_margin = flt(settings.min_margin)
+		max_margin = flt(settings.max_margin)
+		
+		if margin < min_margin or margin > max_margin:
+			frappe.throw(
+				_("Margin of Utility must be between {min_margin}% and {max_margin}%")
+				.format(min_margin=min_margin, max_margin=max_margin)
+			)
+	
+	def get_form_data(self):
+		return frappe.parse_json(self.data)
+
 	def on_update(self):
-		form_data = frappe.parse_json(self.data)
+		form_data = self.get_form_data()
 		self.clean_up_data(form_data)
 		self.sort_colors(form_data)
 
