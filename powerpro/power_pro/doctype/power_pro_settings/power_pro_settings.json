@@ -13,8 +13,10 @@
   "material_roll_uom",
   "material_sheet_uom",
   "section_break_kdai",
+  "item_name_template_for_raw_material",
   "description_template_for_raw_material",
   "section_break_0luf",
+  "item_name_template_for_product",
   "description_template_for_product",
   "cost_estimation_tab",
   "margins_section",
@@ -175,12 +177,22 @@
    "fieldname": "html_haqn",
    "fieldtype": "HTML",
    "options": "<p>Especifique cuales son los colores que deben ser usados para representar la Cuatricom\u00eda</p>"
+  },
+  {
+   "fieldname": "item_name_template_for_raw_material",
+   "fieldtype": "Small Text",
+   "label": "Item Name Template for Raw Material"
+  },
+  {
+   "fieldname": "item_name_template_for_product",
+   "fieldtype": "Small Text",
+   "label": "Item Name Template for Product"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-11-25 18:16:15.398558",
+ "modified": "2024-11-25 23:07:57.468888",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Power-Pro Settings",
