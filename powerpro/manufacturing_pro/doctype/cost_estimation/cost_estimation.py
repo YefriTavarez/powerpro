@@ -264,8 +264,10 @@ class CostEstimation(Document):
 		if not form_data.incluye_relieve:
 			if "tipo_de_relieve" in form_data:
 				del form_data["tipo_de_relieve"]
-			if "tipo_de_material_relieve" in form_data:
+
+			if "tipo_de_material_relieve" in form_data and form_data.tipo_de_relieve != "Estampado":
 				del form_data["tipo_de_material_relieve"]
+
 			if "cantidad_de_elementos_en_relieve" in form_data:
 				del form_data["cantidad_de_elementos_en_relieve"]
 

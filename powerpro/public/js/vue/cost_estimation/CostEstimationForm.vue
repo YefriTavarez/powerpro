@@ -488,7 +488,7 @@ export default {
                             @after_select="
                                 (value) => (form_data.tipo_de_material_relieve = value)
                             "
-                            v-if="form_data.incluye_relieve"
+                            v-if="form_data.incluye_relieve && form_data.tipo_de_relieve === 'Estampado'"
                             :read_only="readonly"
                         />
 

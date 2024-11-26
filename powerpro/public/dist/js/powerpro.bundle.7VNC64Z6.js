@@ -9604,7 +9604,7 @@ Expected function or array of functions, received type ${typeof value}.`
                 onAfter_select: _cache[18] || (_cache[18] = (value) => _ctx.form_data.tipo_de_relieve = value),
                 read_only: _ctx.readonly
               }, null, 8, ["selected", "read_only"])) : createCommentVNode("v-if", true),
-              _ctx.form_data.incluye_relieve ? (openBlock(), createBlock(_component_select_field, {
+              _ctx.form_data.incluye_relieve && _ctx.form_data.tipo_de_relieve === "Estampado" ? (openBlock(), createBlock(_component_select_field, {
                 key: 1,
                 label: "Color de Lamina",
                 options: _ctx.select_options["color_lamina"],
@@ -9901,4 +9901,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.5AQXEVER.js.map
+//# sourceMappingURL=powerpro.bundle.7VNC64Z6.js.map
