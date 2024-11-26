@@ -159,6 +159,7 @@ override_doctype_class = {
     "Payroll Entry": "powerpro.controllers.payroll_entry.PayrollEntry",
     "Asset Maintenance": "powerpro.controllers.asset_maintenance.AssetMaintenance",
     "Asset Maintenance Log": "powerpro.controllers.asset_maintenance_log.AssetMaintenanceLog",
+	"Web Form": "powerpro.controllers.web_form.WebForm",
 }
 
 # Document Events
