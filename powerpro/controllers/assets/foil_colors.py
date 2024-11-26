@@ -6,4 +6,4 @@ import frappe
 
 @frappe.whitelist()
 def get_foil_color_options():
-	return frappe.get_all("Foil Color", pluck="name")
+	return frappe.get_all("Foil Color", pluck="name", order_by="name Asc")

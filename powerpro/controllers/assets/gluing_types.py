@@ -7,4 +7,4 @@ import frappe
 @frappe.whitelist()
 def get_gluing_type_options():
 	doctype = "Gluing Type"
-	return frappe.get_all(doctype, pluck="name")
+	return frappe.get_all(doctype, pluck="name", order_by="name Asc")
