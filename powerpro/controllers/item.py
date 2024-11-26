@@ -36,18 +36,28 @@ def get_next_value(doc):
 
 def get_serie(doc):
 	# based on the first two characters of each item_group level
-	# we will determine the serie
+	# we will determine the serie of the item
 
-	return "".join([
-		item_group[:2] for item_group in [
-			doc.custom_item_group_1,
-			doc.custom_item_group_2,
-			doc.custom_item_group_3,
-			doc.custom_item_group_4,
-			doc.custom_item_group_5
-		] if item_group
-	])
+	out = []
 
+	for item_group in [
+		doc.custom_item_group_1,
+		doc.custom_item_group_2,
+		doc.custom_item_group_3,
+		doc.custom_item_group_4,
+		doc.custom_item_group_5
+	]:
+		if item_group:
+			parts = item_group.split(" ")
+
+			if len(parts) > 1: # take the first char of each word
+				out.append("".join([
+					part[0] for part in parts
+				]))
+			else:
+				out.append(item_group[:2])
+
+	return "".join(out)
 	
 def get_last_value(serie):
 	# from a list of values like:
