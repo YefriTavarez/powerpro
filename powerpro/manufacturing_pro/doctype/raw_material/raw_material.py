@@ -33,12 +33,15 @@ class RawMaterial(Document):
 	# end: auto-generated types
 	def autoname(self):
 		out = list()
-		for part in self.get_description(as_list=True):
+		desc = self.get_description(as_list=False)
+		for part in desc.split(","):
 			if "(" in part \
 				or "[" in part:
 				continue
 
-			out.append(cstr(part)[:2].upper())
+			out.append(
+				cstr(part).strip()[:2].upper()
+			)
 		
 		serie = f"{''.join(out)}-.#####"
 		self.name = naming.make_autoname(serie)
