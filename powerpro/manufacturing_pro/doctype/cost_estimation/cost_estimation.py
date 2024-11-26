@@ -192,6 +192,7 @@ class CostEstimation(Document):
 
 		self.clean_up_data(form_data)
 		self.sort_colors(form_data)
+		self.sort_utility_dimension(form_data)
 
 		# ignore this keys from the form_data (self.data)
 		ignore_list = {
@@ -239,6 +240,8 @@ class CostEstimation(Document):
 			"hex_tinta_seleccionada_retiro_6",
 			"hex_tinta_seleccionada_retiro_7",
 			"hex_tinta_seleccionada_retiro_8",
+			"cinta_doble_cara_ancho_punto",
+			"cinta_doble_cara_alto_punto",
 		}
 	
 		out = f"{self.raw_material} - "
@@ -352,6 +355,24 @@ class CostEstimation(Document):
 
 		form_data["back_colors"] = ",".join(
 			sorted(back_colors)
+		)
+
+	@staticmethod
+	def sort_utility_dimension(form_data):
+		# we need to make sure that no matter the order in which the dimensions are stored
+		# the hash is always the same
+		# we will sort the dimensions based on the width and height
+
+		width = form_data.get("cinta_doble_cara_ancho_punto", 0)
+		height = form_data.get("cinta_doble_cara_alto_punto", 0)
+
+		dimensions = [
+			str(width),
+			str(height),
+		]
+
+		form_data["cinta_doble_cara_dimension_punto"] = "x".join(
+			sorted(dimensions)
 		)
 
 	@frappe.whitelist()
