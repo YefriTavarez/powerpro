@@ -83,7 +83,7 @@ class CostEstimation(Document):
 
 		item.update({
 			# "item_code": primary_key,
-			"item_name": product_type_id,
+			"item_name": self.get_product_item_name(vue_data),
 			# "naming_series": naming_series,
 			"description": self.get_product_description(vue_data),
 			"is_purchase_item": 0,
@@ -111,6 +111,27 @@ class CostEstimation(Document):
 
 		return item.name
 
+	def get_product_item_name(self, data):
+		settings = frappe.get_single("Power-Pro Settings")
+
+		if not settings.item_name_template_for_product:
+			frappe.throw(
+				_("'Item Name Template for Product' is not set in the Power-Pro Settings")
+			)
+
+		context = dict(
+			mat=self.get_material_as_dict(self.raw_material),
+			est=frappe._dict(data),
+			doc=self.as_dict(),
+			frappe=frappe._dict(
+				utils=frappe.utils
+			)
+		)
+
+		return frappe.render_template(
+			settings.item_name_template_for_product, context
+		)
+	
 	def get_product_description(self, data):
 		settings = frappe.get_single("Power-Pro Settings")
 
