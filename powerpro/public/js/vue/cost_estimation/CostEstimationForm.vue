@@ -470,8 +470,8 @@ export default {
                         <select-field
                             label="Tipo de Relieve"
                             :options="[
-                                { value: 'Repujado' },
                                 { value: 'Estampado' },
+                                { value: 'Repujado' },
                             ]"
                             :selected="form_data.tipo_de_relieve"
                             @after_select="
