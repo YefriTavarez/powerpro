@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "hash",
+ "allow_rename": 1,
  "creation": "2024-10-14 20:02:35.109501",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -91,11 +91,11 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2024-11-18 19:14:12.642384",
+ "modified": "2024-11-26 14:11:48.751587",
  "modified_by": "Administrator",
  "module": "Manufacturing Pro",
  "name": "Raw Material",
- "naming_rule": "Random",
+ "naming_rule": "By script",
  "owner": "Administrator",
  "permissions": [
   {

@@ -4,9 +4,9 @@
 import frappe
 
 from frappe import _
+from frappe.model import naming
 from frappe.model.document import Document
-from frappe.utils import get_link_to_form
-
+from frappe.utils import get_link_to_form, cstr
 
 from .utils import hash_key
 from powerpro.utils import (
@@ -31,6 +31,18 @@ class RawMaterial(Document):
 		option_3: DF.Literal["[Select]"]
 		smart_hash: DF.Data | None
 	# end: auto-generated types
+	def autoname(self):
+		out = list()
+		for part in self.get_description(as_list=True):
+			if "(" in part \
+				or "[" in part:
+				continue
+
+			out.append(cstr(part)[:2].upper())
+		
+		serie = f"{''.join(out)}-.#####"
+		self.name = naming.make_autoname(serie)
+
 	def validate(self):
 		# self.round_dimensions()
 		self.set_description()
