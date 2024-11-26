@@ -8282,10 +8282,9 @@ Expected function or array of functions, received type ${typeof value}.`
           }
         },
         render_input: true,
-        parent: self2.$refs.tipo_de_producto
+        parent: self2.$refs.tipo_de_producto,
+        doc: self2.form_data
       });
-      internal = true;
-      this.product_type_field.set_value(self2.form_data.tipo_de_producto);
     },
     mount_raw_material_field() {
       const self2 = this;
@@ -8293,7 +8292,7 @@ Expected function or array of functions, received type ${typeof value}.`
       this.raw_material_field = frappe.ui.form.make_control({
         df: {
           fieldtype: "Link",
-          fieldname: "raw_material",
+          fieldname: "material",
           options: "Raw Material",
           label: __("Raw Material"),
           reqd: 1,
@@ -8316,10 +8315,9 @@ Expected function or array of functions, received type ${typeof value}.`
           }
         },
         render_input: true,
-        parent: this.$refs.material
+        parent: this.$refs.material,
+        doc: self2.form_data
       });
-      internal = true;
-      this.raw_material_field.set_value(self2.form_data.material);
     },
     handle_utility_type_change(value) {
       this.form_data.tipo_utilidad = value;
@@ -9173,9 +9171,12 @@ Expected function or array of functions, received type ${typeof value}.`
     /* @__PURE__ */ createBaseVNode("h3", null, "Tecnolog\xEDa de Impresi\xF3n")
   ], -1));
   var _hoisted_282 = { class: "form-column col-sm-6" };
-  var _hoisted_29 = { class: "row" };
+  var _hoisted_29 = {
+    key: 0,
+    class: "row"
+  };
   var _hoisted_30 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("div", {
-    class: "px-3",
+    class: "px-3 pt-3",
     style: { "width": "100%" }
   }, [
     /* @__PURE__ */ createBaseVNode("h3", null, "Colores")
@@ -9200,10 +9201,10 @@ Expected function or array of functions, received type ${typeof value}.`
   var _hoisted_46 = ["list", "onUpdate:modelValue", "onChange", "onInput", "readonly"];
   var _hoisted_47 = ["onClick", "disabled"];
   var _hoisted_48 = {
-    key: 0,
+    key: 1,
     class: "row"
   };
-  var _hoisted_49 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("div", { class: "form-column col-sm-6" }, [
+  var _hoisted_49 = /* @__PURE__ */ _withScopeId4(() => /* @__PURE__ */ createBaseVNode("div", { class: "form-column col-sm-6 mt-3" }, [
     /* @__PURE__ */ createBaseVNode("p", {
       class: "full-color-text",
       style: { "color": "greenyellow" }
@@ -9420,7 +9421,7 @@ Expected function or array of functions, received type ${typeof value}.`
         ]),
         createBaseVNode("section", null, [
           createCommentVNode(` <hr v-if="['Digital', 'Offset'].includes(form_data.tecnologia)" /> `),
-          createBaseVNode("div", _hoisted_29, [
+          _ctx.form_data.tecnologia == "Offset" ? (openBlock(), createElementBlock("div", _hoisted_29, [
             _hoisted_30,
             createBaseVNode("div", _hoisted_31, [
               createVNode(_component_select_field, {
@@ -9537,7 +9538,7 @@ Expected function or array of functions, received type ${typeof value}.`
                 ]);
               }), 256))
             ])
-          ]),
+          ])) : createCommentVNode("v-if", true),
           _ctx.form_data.tecnologia === "Digital" ? (openBlock(), createElementBlock("div", _hoisted_48, [..._hoisted_50])) : createCommentVNode("v-if", true)
         ]),
         createBaseVNode("section", null, [
@@ -9901,4 +9902,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.7VNC64Z6.js.map
+//# sourceMappingURL=powerpro.bundle.RGJFLBWK.js.map

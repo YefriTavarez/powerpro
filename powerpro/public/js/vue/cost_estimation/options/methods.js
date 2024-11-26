@@ -388,10 +388,11 @@ export default {
 			},
 			render_input: true,
 			parent: self.$refs.tipo_de_producto,
+			doc: self.form_data,
 		});
 
-		internal = true;
-		this.product_type_field.set_value(self.form_data.tipo_de_producto);
+		// internal = true;
+		// this.product_type_field.set_value(self.form_data.tipo_de_producto);
 	},
 	mount_raw_material_field() {
 		const self = this;
@@ -400,7 +401,7 @@ export default {
 		this.raw_material_field = frappe.ui.form.make_control({
 			df: {
 				fieldtype: "Link",
-				fieldname: "raw_material",
+				fieldname: "material",
 				options: "Raw Material",
 				label: __("Raw Material"),
 				reqd: 1,
@@ -425,10 +426,11 @@ export default {
 			},
 			render_input: true,
 			parent: this.$refs.material,
+			doc: self.form_data,
 		});
 
-		internal = true;
-		this.raw_material_field.set_value(self.form_data.material);
+		// internal = true;
+		// this.raw_material_field.set_value(self.form_data.material);
 	},
 	handle_utility_type_change(value) {
 		this.form_data.tipo_utilidad = value;
