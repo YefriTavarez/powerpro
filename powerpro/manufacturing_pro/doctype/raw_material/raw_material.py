@@ -33,10 +33,17 @@ class RawMaterial(Document):
 	# end: auto-generated types
 	def autoname(self):
 		out = list()
-		desc = self.get_description(as_list=False)
-		for part in desc.split(","):
+		for part in self.get_description(as_list=True):
 			if "(" in part \
 				or "[" in part:
+				continue
+
+			if " " in part:
+				subparts = part.split(" ")
+				for p in subparts:
+					out.append(
+						cstr(p).strip()[:2].upper()
+					)
 				continue
 
 			out.append(
