@@ -67,12 +67,20 @@
         fetch(url).then((response) => response.json()).then(({ message }) => {
           item_group_details = message;
         });
-        fetch(`/api/resource/Raw Material/${docname}`).then((response) => response.json()).then(({ message }) => {
-          doc = message;
-          if (doc.base_material === "Paper") {
-          }
+        fetch(`/api/resource/Raw Material/${docname}`).then((response) => response.json()).then(({ data }) => {
+          doc = data;
+          const description_field = dialog.get_field("material_description");
+          description_field.$wrapper.html(`
+				<p class="text-muted">Material</p>
+				<h3>${doc.description}</h3>
+			`);
         });
         dialog = frappe.prompt([
+          {
+            fieldtype: "HTML",
+            fieldname: "material_description",
+            options: `Loading...`
+          },
           {
             fieldtype: "Section Break",
             label: __("Material Specification")
@@ -331,4 +339,4 @@
   var functions = __toESM(require_functions());
   var create_material_sku = __toESM(require_create_material_sku());
 })();
-//# sourceMappingURL=app.bundle.6GLS336F.js.map
+//# sourceMappingURL=app.bundle.SNTTPQIX.js.map
