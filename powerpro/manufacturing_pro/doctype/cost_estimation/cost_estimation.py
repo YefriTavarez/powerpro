@@ -131,6 +131,10 @@ class CostEstimation(Document):
 			"smart_hash": smart_hash,
 		})
 
+
+		item.flags.ignore_permissions = True
+		item.flags.ignore_mandatory = True
+
 		item.insert()
 
 		return item.name
