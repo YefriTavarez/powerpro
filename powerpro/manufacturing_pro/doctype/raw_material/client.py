@@ -100,6 +100,7 @@ def create_material_sku(
 		"valuation_method": "FIFO",
 	})
 
+	item.flags.ignore_permissions = True
 	item.flags.ignore_mandatory = True
 	try:
 		item.save()
