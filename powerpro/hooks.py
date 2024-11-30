@@ -67,7 +67,7 @@ doctype_list_js = {
 # Svg Icons
 # ------------------
 # include app icons in desk
-# app_include_icons = "powerpro/public/icons.svg"
+app_include_icons = "powerpro/icons/igcaribe/icons.svg"
 
 # Home Pages
 # ----------
