@@ -4,6 +4,8 @@
 import frappe
 
 
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
 def get_item_connectivity(doctype, txt, searchfield="name", start=0, page_len=20, filters=None):
 	"""
 	Retrieve item connectivity information based on the search text.
