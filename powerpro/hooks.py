@@ -51,8 +51,9 @@ fixtures = [
                 "Item Name Link",
             ],
         ]
-    }
-    }
+    },
+    },
+	{"doctype": "Item Group", "filters": {}},
 ]
 
 # Includes in <head>
