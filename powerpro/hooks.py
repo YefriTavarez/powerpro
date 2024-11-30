@@ -21,6 +21,39 @@ app_license = "mit"
 # 	}
 # ]
 
+fixtures = [
+   {
+	"doctype": "DocType",
+	"filters": {
+		"name": [
+			"in", [
+    				"Item Generator",
+    				"Item Use",
+    				"Item Name",
+    				"Item Phase",
+   				"Item Current",
+    				"Item Packaging",
+    				"Item Selectable Fields",
+    				"UOMs",
+    				"Item Voltage",
+    				"Item Connectivity",
+    				"Item Flavour",
+    				"Item Model",
+    				"Item Size",
+    				"Item Shape",
+    				"Item Finish",
+    				"Item Material",
+    				"Item Brand",
+    				"Item Specs 1",
+    				"Item Specs 2",
+    				"Item Color",
+			],
+
+		]
+	}
+    }
+]
+
 # Includes in <head>
 # ------------------
 
