@@ -23,34 +23,34 @@ app_license = "mit"
 
 fixtures = [
    {
-	"doctype": "DocType",
-	"filters": {
-		"name": [
-			"in", [
-    				"Item Generator",
-    				"Item Use",
-    				"Item Name",
-    				"Item Phase",
-   				"Item Current",
-    				"Item Packaging",
-    				"Item Selectable Fields",
-    				"UOMs",
-    				"Item Voltage",
-    				"Item Connectivity",
-    				"Item Flavour",
-    				"Item Model",
-    				"Item Size",
-    				"Item Shape",
-    				"Item Finish",
-    				"Item Material",
-    				"Item Brand",
-    				"Item Specs 1",
-    				"Item Specs 2",
-    				"Item Color",
-			],
-
-		]
-	}
+    "doctype": "DocType",
+    "filters": {
+        "name": [
+            "in", [
+                "Item Generator",
+                "Item Use",
+                "Item Name",
+                "Item Phase",
+                "Item Current",
+                "Item Packaging",
+                "Item Selectable Fields",
+                "UOMs",
+                "Item Voltage",
+                "Item Connectivity",
+                "Item Flavour",
+                "Item Model",
+                "Item Size",
+                "Item Shape",
+                "Item Finish",
+                "Item Material",
+                "Item Brand",
+                "Item Specs 1",
+                "Item Specs 2",
+                "Item Color",
+                "Item Color",
+            ],
+        ]
+    }
     }
 ]
 
@@ -60,9 +60,9 @@ fixtures = [
 # include js, css files in header of desk.html
 # app_include_css = "/assets/powerpro/css/powerpro.css"
 app_include_js = [
-	"/assets/powerpro/js/powerpro.js?v=1.0.1",
-	"/assets/powerpro/js/frappe/indicator.js?v=1.0.1",
-	"app.bundle.js",
+    "/assets/powerpro/js/powerpro.js?v=1.0.1",
+    "/assets/powerpro/js/frappe/indicator.js?v=1.0.1",
+    "app.bundle.js",
 ]
 
 # include js, css files in header of web template
@@ -81,7 +81,7 @@ app_include_js = [
 
 # include js in doctype views
 doctype_js = {
-	"Item" : "public/js/item.js",
+    "Item" : "public/js/item.js",
     "Salary Structure": "public/js/salary_structure.js",
     "Purchase Invoice": "public/js/purchase_invoice.js",
     "Payment Entry": "public/js/payment_entry.js",
@@ -92,7 +92,7 @@ doctype_js = {
 }
 
 doctype_list_js = {
-	"Quality Procedure": "public/js/doctype/quality_procedure/list.js",
+    "Quality Procedure": "public/js/doctype/quality_procedure/list.js",
 }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -167,12 +167,12 @@ app_include_icons = "powerpro/icons/igcaribe/icons.svg"
 # Permissions evaluated in scripted ways
 
 permission_query_conditions = {
-	"Customer": "powerpro.utils.query.customer_query_conditions",
+    "Customer": "powerpro.utils.query.customer_query_conditions",
     "Quotation": "powerpro.utils.query.quotation_query_conditions",
     "Sales Order": "powerpro.utils.query.sales_order_query_conditions",
     "Sales Invoice": "powerpro.utils.query.sales_invoice_query_conditions",
-	"Payment Entry": "powerpro.utils.query.payment_entry_query_conditions",
-	"Delivery Note": "powerpro.utils.query.delivery_note_query_conditions",
+    "Payment Entry": "powerpro.utils.query.payment_entry_query_conditions",
+    "Delivery Note": "powerpro.utils.query.delivery_note_query_conditions",
     "Asset Maintenance Log": "powerpro.utils.query.asset_maintenance_log_query_conditions",
     "ToDo": "powerpro.utils.query.todo_query_conditions",
 }
@@ -186,13 +186,13 @@ permission_query_conditions = {
 # Override standard doctype classes
 
 override_doctype_class = {
-	"Quality Procedure": "powerpro.controllers.quality_procedure.QualityProcedure",
-	"Custom Field": "powerpro.controllers.custom_field.CustomField",
-	"Salary Slip": "powerpro.controllers.salary_slip.SalarySlip",
+    "Quality Procedure": "powerpro.controllers.quality_procedure.QualityProcedure",
+    "Custom Field": "powerpro.controllers.custom_field.CustomField",
+    "Salary Slip": "powerpro.controllers.salary_slip.SalarySlip",
     "Payroll Entry": "powerpro.controllers.payroll_entry.PayrollEntry",
     "Asset Maintenance": "powerpro.controllers.asset_maintenance.AssetMaintenance",
     "Asset Maintenance Log": "powerpro.controllers.asset_maintenance_log.AssetMaintenanceLog",
-	"Web Form": "powerpro.controllers.web_form.WebForm",
+    "Web Form": "powerpro.controllers.web_form.WebForm",
 }
 
 # Document Events
@@ -200,29 +200,29 @@ override_doctype_class = {
 # Hook on document methods and events
 
 doc_events = {
-	"Item": {
-		"autoname": "powerpro.controllers.item.autoname",
-		"before_save": "powerpro.controllers.item.before_save",
-	},
-	"Sales Invoice": {
-		"before_insert": "powerpro.controllers.sales_invoice.before_insert",
-		"on_submit": "powerpro.controllers.sales_invoice.on_submit",
+    "Item": {
+        "autoname": "powerpro.controllers.item.autoname",
+        "before_save": "powerpro.controllers.item.before_save",
+    },
+    "Sales Invoice": {
+        "before_insert": "powerpro.controllers.sales_invoice.before_insert",
+        "on_submit": "powerpro.controllers.sales_invoice.on_submit",
         "on_cancel": "powerpro.controllers.sales_invoice.on_cancel",
-	},
-	"Salary Structure Assignment": {
-		"validate": "powerpro.controllers.salary_structure_assignment.validate",
-	},
+    },
+    "Salary Structure Assignment": {
+        "validate": "powerpro.controllers.salary_structure_assignment.validate",
+    },
     "Timesheet": {
         "before_save": "powerpro.controllers.timesheet.before_save",
         "validate": "powerpro.controllers.timesheet.validate",
-	},
+    },
     "Purchase Invoice": {
         "validate": "powerpro.controllers.purchase_invoice.validate",
         "before_submit": "powerpro.controllers.purchase_invoice.before_submit",
-	},
+    },
     "Asset Maintenance Log": {
         "on_update_after_submit": "powerpro.controllers.asset_maintenance_log.on_update_after_submit",
-	},
+    },
 }
 
 # Scheduled Tasks
@@ -255,7 +255,7 @@ doc_events = {
 # ------------------------------
 #
 override_whitelisted_methods = {
-	"hrms.payroll.doctype.salary_slip.salary_lip.make_salary_slip_from_timesheet": "powerpro.controllers.salary_slip.make_salary_slip_from_timesheet",
+    "hrms.payroll.doctype.salary_slip.salary_lip.make_salary_slip_from_timesheet": "powerpro.controllers.salary_slip.make_salary_slip_from_timesheet",
 }
 #
 # each overriding function accepts a `data` argument;
