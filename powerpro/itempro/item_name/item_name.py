@@ -6,5 +6,4 @@ import frappe
 from frappe.model.document import Document
 
 class Item_name(Document):
-	def onload(self):
-		frappe.msgprint("Hello from the other side!")
+	pass
