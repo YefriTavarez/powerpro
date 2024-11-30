@@ -48,6 +48,7 @@ fixtures = [
                 "Item Specs 2",
                 "Item Color",
                 "Item Color",
+                "Item Name Link",
             ],
         ]
     }
