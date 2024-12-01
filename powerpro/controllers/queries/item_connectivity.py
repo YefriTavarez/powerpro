@@ -25,6 +25,17 @@ def get_item_connectivity(doctype, txt, searchfield="name", start=0, page_len=20
 	if txt:
 		searchstr = f"%{txt}%"
 
+	if filters is None:
+		filters = {}
+
+	if isinstance(filters, list):
+		frappe.msgprint("Please provide a dictionary as filters.", alert=True)
+		return []
+
+	if "item_name" not in filters:
+		frappe.msgprint("Please provide an item name to search for item connectivity.", alert=True)
+		return []
+
 	out = frappe.db.sql(
 		f"""
 			Select
@@ -37,7 +48,8 @@ def get_item_connectivity(doctype, txt, searchfield="name", start=0, page_len=20
 					And child.parentfield = "item_names"
 					And child.parent = parent.name
 			Where
-				item_connectivity Like {searchstr!r}
+				child.item_name = {filters["item_name"]!r}
+				And item_connectivity Like {searchstr!r}
 		""", as_list=True
 	)
 	return out
