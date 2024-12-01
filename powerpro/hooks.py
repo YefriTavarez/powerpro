@@ -22,49 +22,9 @@ app_license = "mit"
 # ]
 
 fixtures = [
-   {
-    "doctype": "DocType",
-    "filters": {
-        "name": [
-            "in", [
-                "Item Generator",
-                "Item Use",
-                "Item Name",
-                "Item Phase",
-                "Item Current",
-                "Item Packaging",
-                "Item Selectable Fields",
-                "UOMs",
-                "Item Voltage",
-                "Item Connectivity",
-                "Item Flavour",
-                "Item Model",
-                "Item Size",
-                "Item Shape",
-                "Item Finish",
-                "Item Material",
-                "Item Brand",
-                "Item Specs 1",
-                "Item Specs 2",
-                "Item Color",
-                "Item Color",
-                "Item Name Link",
-            ],
-        ]
-    },
-    },
 	{"doctype": "Item Group", "filters": {}},
-        {"doctype": "UOM", "filters": {}},
-        {"doctype": "UOM Category", "filters": {}},
-
-
-	{"doctype": "Server Script", "filters": {"name": ["in", [
-    "igcaribe.query.get_item_connectivity",
-    "igcaribe.client.create_sku_based_on_item_generator",
-    "Item Generator - Before Save",
-    "igcaribe.client.get_all_item_groups",
-    "igcaribe.client.get_uom_categories"
-]]}},
+    {"doctype": "UOM", "filters": {}},
+    {"doctype": "UOM Category", "filters": {}},
 ]
 
 # Includes in <head>
