@@ -8,6 +8,7 @@ __all__ = (
 	"get_item_specs_2",
 	"get_item_use",
 	"get_item_packaging",
+	"get_item_size",
 	"get_item_material",
 	"get_item_color",
 	"get_item_finish",
@@ -27,6 +28,7 @@ from powerpro.controllers.queries.item_specs_1 import get_item_specs_1
 from powerpro.controllers.queries.item_specs_2 import get_item_specs_2
 from powerpro.controllers.queries.item_use import get_item_use
 from powerpro.controllers.queries.item_packaging import get_item_packaging
+from powerpro.controllers.queries.item_size import get_item_size
 # from powerpro.controllers.queries.uom import get_uom
 from powerpro.controllers.queries.item_material import get_item_material
 from powerpro.controllers.queries.item_color import get_item_color

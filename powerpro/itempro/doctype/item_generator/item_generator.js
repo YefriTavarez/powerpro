@@ -151,6 +151,14 @@
                 return { filters, query };
             });
 
+            frm.set_query("size", function() {
+                const query = "powerpro.controllers.queries.get_item_size";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
             // frm.set_query("presentation_uom", function() {
             //     const query = "powerpro.controllers.queries.get_uom";
             //     const filters = {

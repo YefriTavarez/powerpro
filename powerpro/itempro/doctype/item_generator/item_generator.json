@@ -173,8 +173,9 @@
   },
   {
    "fieldname": "size",
-   "fieldtype": "Data",
-   "label": "Tama\u00f1o"
+   "fieldtype": "Link",
+   "label": "Tama\u00f1o",
+   "options": "Item Size"
   },
   {
    "fieldname": "gauge",
@@ -356,7 +357,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-30 22:00:15.700284",
+ "modified": "2024-11-30 23:00:15.700284",
  "modified_by": "Administrator",
  "module": "ItemPRO",
  "name": "Item Generator",
