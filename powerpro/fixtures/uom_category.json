@@ -1,0 +1,205 @@
+[
+ {
+  "category_name": "Zona",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-09-04 17:16:24.304662",
+  "name": "Zona",
+  "udms": []
+ },
+ {
+  "category_name": "Speed",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-09-04 17:16:24.337608",
+  "name": "Speed",
+  "udms": []
+ },
+ {
+  "category_name": "Mass",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-09-04 17:16:24.368085",
+  "name": "Mass",
+  "udms": []
+ },
+ {
+  "category_name": "Volume",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-09-04 17:16:24.413818",
+  "name": "Volume",
+  "udms": []
+ },
+ {
+  "category_name": "Hora",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-09-04 17:16:24.499882",
+  "name": "Hora",
+  "udms": []
+ },
+ {
+  "category_name": "Pressure",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-09-04 17:16:24.527946",
+  "name": "Pressure",
+  "udms": []
+ },
+ {
+  "category_name": "Fuerza",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-09-04 17:16:24.572760",
+  "name": "Fuerza",
+  "udms": []
+ },
+ {
+  "category_name": "Energía",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-09-04 17:16:24.607310",
+  "name": "Energía",
+  "udms": []
+ },
+ {
+  "category_name": "Power",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-09-04 17:16:24.654467",
+  "name": "Power",
+  "udms": []
+ },
+ {
+  "category_name": "Density",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-09-04 17:16:24.684942",
+  "name": "Density",
+  "udms": []
+ },
+ {
+  "category_name": "Temperature",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-09-04 17:16:24.795352",
+  "name": "Temperature",
+  "udms": []
+ },
+ {
+  "category_name": "Frequency and Wavelength",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-09-04 17:16:24.806467",
+  "name": "Frequency and Wavelength",
+  "udms": []
+ },
+ {
+  "category_name": "Electrical Charge",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-09-04 17:16:24.828515",
+  "name": "Electrical Charge",
+  "udms": []
+ },
+ {
+  "category_name": "Electric Current",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-11-26 16:02:10.078584",
+  "name": "Electric Current",
+  "udms": []
+ },
+ {
+  "category_name": "Magnetic Induction",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-09-04 17:16:24.870201",
+  "name": "Magnetic Induction",
+  "udms": []
+ },
+ {
+  "category_name": "Agricultura",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-09-04 17:16:24.878691",
+  "name": "Agricultura",
+  "udms": []
+ },
+ {
+  "category_name": "Longitud IMP",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-11-26 22:56:27.618777",
+  "name": "Longitud IMP",
+  "udms": [
+   {
+    "parent": "Longitud IMP",
+    "parentfield": "udms",
+    "parenttype": "UOM Category",
+    "uom": "ft"
+   },
+   {
+    "parent": "Longitud IMP",
+    "parentfield": "udms",
+    "parenttype": "UOM Category",
+    "uom": "in"
+   }
+  ]
+ },
+ {
+  "category_name": "Presentation UOMs",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-11-27 01:01:24.994788",
+  "name": "Presentation UOMs",
+  "udms": [
+   {
+    "parent": "Presentation UOMs",
+    "parentfield": "udms",
+    "parenttype": "UOM Category",
+    "uom": "caj."
+   },
+   {
+    "parent": "Presentation UOMs",
+    "parentfield": "udms",
+    "parenttype": "UOM Category",
+    "uom": "ud(s)"
+   }
+  ]
+ },
+ {
+  "category_name": "Longitud SI",
+  "docstatus": 0,
+  "doctype": "UOM Category",
+  "modified": "2024-11-26 16:03:24.529520",
+  "name": "Longitud SI",
+  "udms": [
+   {
+    "parent": "Longitud SI",
+    "parentfield": "udms",
+    "parenttype": "UOM Category",
+    "uom": "cm"
+   },
+   {
+    "parent": "Longitud SI",
+    "parentfield": "udms",
+    "parenttype": "UOM Category",
+    "uom": "mt"
+   },
+   {
+    "parent": "Longitud SI",
+    "parentfield": "udms",
+    "parenttype": "UOM Category",
+    "uom": "mm"
+   },
+   {
+    "parent": "Longitud SI",
+    "parentfield": "udms",
+    "parenttype": "UOM Category",
+    "uom": "m"
+   }
+  ]
+ }
+]

@@ -54,6 +54,8 @@ fixtures = [
     },
     },
 	{"doctype": "Item Group", "filters": {}},
+        {"doctype": "UOM", "filters": {}},
+        {"doctype": "UOM Category", "filters": {}},
 ]
 
 # Includes in <head>
