@@ -199,6 +199,14 @@
                 return { filters, query };
             });
 
+            frm.set_query("model", function() {
+                const query = "powerpro.controllers.queries.get_item_model";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
             // frm.set_query("gauge_uom", function() {
             //     const query = "powerpro.controllers.queries.get_uom";
             //     const filters = {

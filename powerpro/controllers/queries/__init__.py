@@ -32,6 +32,7 @@ from powerpro.controllers.queries.item_color import get_item_color
 from powerpro.controllers.queries.item_finish import get_item_finish
 from powerpro.controllers.queries.item_flavour import get_item_flavour
 from powerpro.controllers.queries.item_brand import get_item_brand
+from powerpro.controllers.queries.item_model import get_item_model
 from powerpro.controllers.queries.item_voltage import get_item_voltage
 from powerpro.controllers.queries.item_current import get_item_current
 from powerpro.controllers.queries.item_phase import get_item_phase
