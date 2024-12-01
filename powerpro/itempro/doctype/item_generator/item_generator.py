@@ -1,7 +1,7 @@
 # Copyright (c) 2024, Yefri Tavarez and contributors
 # For license information, please see license.txt
 
-# import frappe
+import frappe
 from frappe.model.document import Document
 
 
@@ -60,4 +60,23 @@ class ItemGenerator(Document):
 		width_uom: DF.Link | None
 		year: DF.Literal["", "1970", "1971", "1972", "1973", "1974", "1975", "1976", "1977", "1978", "1979", "1980", "1981", "1982", "1983", "1984", "1985", "1986", "1987", "1988", "1989", "1990", "1991", "1992", "1993", "1994", "1995", "1996", "1997", "1998", "1999", "2000", "2001", "2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"]
 	# end: auto-generated types
-	pass
+	def on_update(self):
+		self.enqueue_doc(
+			method="update_existing_items",
+			doctype=self.doctype,
+			name=self.name,
+			enqueue_after_commit=True,
+			queue="default",
+		)
+
+	def update_existing_items(self):
+		doctype = "Item"
+		filters = {
+			"reference_type": self.doctype,
+			"reference_name": self.name,
+		}
+
+		for item in frappe.get_all(doctype, filters):
+			doc = frappe.get_doc(doctype, item.name)
+			doc.description = self.description
+			doc.save()
