@@ -56,6 +56,15 @@ fixtures = [
 	{"doctype": "Item Group", "filters": {}},
         {"doctype": "UOM", "filters": {}},
         {"doctype": "UOM Category", "filters": {}},
+
+
+	{"doctype": "Server Script", "filters": {"name": ["in", [
+    "igcaribe.query.get_item_connectivity",
+    "igcaribe.client.create_sku_based_on_item_generator",
+    "Item Generator - Before Save",
+    "igcaribe.client.get_all_item_groups",
+    "igcaribe.client.get_uom_categories"
+]]}},
 ]
 
 # Includes in <head>
