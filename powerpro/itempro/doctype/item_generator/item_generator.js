@@ -84,6 +84,9 @@
             frm.trigger("setup_fields");
         },
         onload: function (frm) {
+            frm.trigger("setup_queries");
+        },
+        toggle_display_data_fields: function (frm) {
             // Ocultar todos los campos excepto "item" y los breaks por defecto
             frm.fields.forEach(field => {
                 if (
@@ -104,6 +107,17 @@
     
         item: function (frm) {
             frm.trigger("setup_fields");
+        },
+    
+        setup_queries: function (frm) {
+            frm.set_query("conectividad", function() {
+                const query = "powerpro.controllers.queries.item_connectivity.get_item_connectivity";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+            
+                return { filters, query };
+            });
         },
     
         setup_fields: function (frm) {
