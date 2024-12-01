@@ -1,0 +1,51 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:item_color",
+ "creation": "2024-11-30 20:02:50.477974",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item_color",
+  "item_names"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_color",
+   "fieldtype": "Data",
+   "label": "Item Color",
+   "unique": 1
+  },
+  {
+   "fieldname": "item_names",
+   "fieldtype": "Table",
+   "label": "Item Names",
+   "options": "Item Name Link"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-11-30 20:07:55.799857",
+ "modified_by": "Administrator",
+ "module": "ItemPRO",
+ "name": "Item Color",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,382 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "ITEM-GEN-.#####",
+ "creation": "2024-11-30 20:02:50.722688",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item",
+  "description",
+  "section_break_eifz",
+  "spec1",
+  "spec2",
+  "use",
+  "packaging",
+  "pcs",
+  "presentation",
+  "presentation_uom",
+  "material",
+  "color",
+  "finish",
+  "flavour",
+  "brand",
+  "model",
+  "year",
+  "column_break_vgxq",
+  "shape",
+  "size",
+  "gauge",
+  "gauge_uom",
+  "width",
+  "width_uom",
+  "height",
+  "height_uom",
+  "depth",
+  "depth_uom",
+  "diameter",
+  "diameter_uom",
+  "capacity",
+  "capacity_uom",
+  "weight",
+  "weight_uom",
+  "section_break_zhot",
+  "voltage",
+  "current",
+  "phase",
+  "column_break_lyjl",
+  "frequency",
+  "production_capacity",
+  "capcidad_udm",
+  "column_break_vjpp",
+  "autonomy",
+  "autonomy_uom",
+  "section_break_erns",
+  "conectividad",
+  "garant\u00eda",
+  "garant\u00eda_udm",
+  "column_break_tddy",
+  "custom",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Item",
+   "options": "Item Name"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Long Text",
+   "in_list_view": 1,
+   "label": "Description",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_eifz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "spec1",
+   "fieldtype": "Link",
+   "label": "Caracter\u00edstica",
+   "options": "Item Specs 1"
+  },
+  {
+   "fieldname": "spec2",
+   "fieldtype": "Link",
+   "label": "Caracter\u00edstica 2",
+   "options": "Item Specs 2"
+  },
+  {
+   "fieldname": "use",
+   "fieldtype": "Link",
+   "label": "Uso",
+   "options": "Item Use"
+  },
+  {
+   "fieldname": "packaging",
+   "fieldtype": "Link",
+   "label": "Conjunto",
+   "options": "Item Packaging"
+  },
+  {
+   "fieldname": "pcs",
+   "fieldtype": "Int",
+   "label": "N\u00famero de Piezas"
+  },
+  {
+   "fieldname": "presentation",
+   "fieldtype": "Float",
+   "label": "Presentaci\u00f3n"
+  },
+  {
+   "fieldname": "presentation_uom",
+   "fieldtype": "Link",
+   "label": "Presentaci\u00f3n UdM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "material",
+   "fieldtype": "Link",
+   "label": "Material",
+   "options": "Item Material"
+  },
+  {
+   "fieldname": "color",
+   "fieldtype": "Link",
+   "label": "Color",
+   "options": "Item Color"
+  },
+  {
+   "fieldname": "finish",
+   "fieldtype": "Link",
+   "label": "Acabado",
+   "options": "Item Finish"
+  },
+  {
+   "fieldname": "flavour",
+   "fieldtype": "Link",
+   "label": "Sabor",
+   "options": "Item Flavour"
+  },
+  {
+   "fieldname": "brand",
+   "fieldtype": "Link",
+   "label": "Marca",
+   "options": "Brand"
+  },
+  {
+   "fieldname": "model",
+   "fieldtype": "Data",
+   "label": "Modelo"
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Select",
+   "label": "A\u00f1o",
+   "options": "\n1970\n1971\n1972\n1973\n1974\n1975\n1976\n1977\n1978\n1979\n1980\n1981\n1982\n1983\n1984\n1985\n1986\n1987\n1988\n1989\n1990\n1991\n1992\n1993\n1994\n1995\n1996\n1997\n1998\n1999\n2000\n2001\n2002\n2003\n2004\n2005\n2006\n2007\n2008\n2009\n2010\n2011\n2012\n2013\n2014\n2015\n2016\n2017\n2018\n2019\n2020\n2021\n2022\n2023\n2024\n2025\n2026"
+  },
+  {
+   "fieldname": "column_break_vgxq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "shape",
+   "fieldtype": "Select",
+   "label": "Forma / Dise\u00f1o (Ej: Dise\u00f1o ergon\u00f3mico curvo)",
+   "options": "\nCircular\nCuadrado(a)\nCurvo\nOvalado(a)\nRectangular\nTriangular"
+  },
+  {
+   "fieldname": "size",
+   "fieldtype": "Data",
+   "label": "Tama\u00f1o"
+  },
+  {
+   "fieldname": "gauge",
+   "fieldtype": "Float",
+   "label": "Calibre"
+  },
+  {
+   "fieldname": "gauge_uom",
+   "fieldtype": "Link",
+   "label": "Calibre UdM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "width",
+   "fieldtype": "Float",
+   "label": "Longitud (x)"
+  },
+  {
+   "fieldname": "width_uom",
+   "fieldtype": "Link",
+   "label": "Longitud (x) UdM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "height",
+   "fieldtype": "Float",
+   "label": "Altura (y)"
+  },
+  {
+   "fieldname": "height_uom",
+   "fieldtype": "Link",
+   "label": "Altura (y) UdM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "depth",
+   "fieldtype": "Float",
+   "label": "Profundidad (z)"
+  },
+  {
+   "fieldname": "depth_uom",
+   "fieldtype": "Link",
+   "label": "Profundidad (z) UdM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "diameter",
+   "fieldtype": "Float",
+   "label": "Diametro"
+  },
+  {
+   "fieldname": "diameter_uom",
+   "fieldtype": "Link",
+   "label": "Diametro UdM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "capacity",
+   "fieldtype": "Float",
+   "label": "Capacidad"
+  },
+  {
+   "fieldname": "capacity_uom",
+   "fieldtype": "Link",
+   "label": "Capacidad UdM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "weight",
+   "fieldtype": "Float",
+   "label": "Peso"
+  },
+  {
+   "fieldname": "weight_uom",
+   "fieldtype": "Link",
+   "label": "Peso UdM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "section_break_zhot",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "voltage",
+   "fieldtype": "Link",
+   "label": "Voltaje",
+   "options": "Item Voltage"
+  },
+  {
+   "fieldname": "current",
+   "fieldtype": "Link",
+   "label": "Corriente",
+   "options": "Item Current"
+  },
+  {
+   "fieldname": "phase",
+   "fieldtype": "Link",
+   "label": "Fase",
+   "options": "Item Phase"
+  },
+  {
+   "fieldname": "column_break_lyjl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "frequency",
+   "fieldtype": "Select",
+   "label": "Frecuencia",
+   "options": "\n50Hz\n60Hz"
+  },
+  {
+   "fieldname": "production_capacity",
+   "fieldtype": "Int",
+   "label": "Potencia"
+  },
+  {
+   "fieldname": "capcidad_udm",
+   "fieldtype": "Link",
+   "label": "Potencia UdM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "column_break_vjpp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "autonomy",
+   "fieldtype": "Int",
+   "label": "Autonom\u00eda"
+  },
+  {
+   "fieldname": "autonomy_uom",
+   "fieldtype": "Link",
+   "label": "Autonom\u00eda UdM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "section_break_erns",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "conectividad",
+   "fieldtype": "Link",
+   "label": "Conectividad",
+   "options": "Item Connectivity"
+  },
+  {
+   "fieldname": "garant\u00eda",
+   "fieldtype": "Int",
+   "label": "Garant\u00eda"
+  },
+  {
+   "fieldname": "garant\u00eda_udm",
+   "fieldtype": "Link",
+   "label": "Garant\u00eda UdM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "column_break_tddy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "custom",
+   "fieldtype": "Select",
+   "label": "Personalizaci\u00f3n",
+   "options": "\nBordado\nGrabado\nImpreso"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Item Generator",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-11-30 20:08:29.089140",
+ "modified_by": "Administrator",
+ "module": "ItemPRO",
+ "name": "Item Generator",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "item"
+}

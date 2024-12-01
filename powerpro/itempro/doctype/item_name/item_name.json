@@ -1,0 +1,128 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:item_name",
+ "creation": "2024-11-30 20:02:51.039580",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item_name",
+  "item_type",
+  "item_group_1",
+  "item_group_2",
+  "item_group_3",
+  "item_group_4",
+  "item_group_5",
+  "column_break_qzvf",
+  "default_stock_uom",
+  "item_description_template",
+  "section_break_ltsb",
+  "fields",
+  "item_reference"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Nombre Item",
+   "unique": 1
+  },
+  {
+   "fieldname": "item_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Item Type",
+   "options": "Bienes\nServicios",
+   "reqd": 1
+  },
+  {
+   "fieldname": "item_group_1",
+   "fieldtype": "Link",
+   "label": "Item Group 1",
+   "options": "Item Group"
+  },
+  {
+   "fieldname": "item_group_2",
+   "fieldtype": "Link",
+   "label": "Item Group 2",
+   "options": "Item Group"
+  },
+  {
+   "fieldname": "item_group_3",
+   "fieldtype": "Link",
+   "label": "Item Group 3",
+   "options": "Item Group"
+  },
+  {
+   "fieldname": "item_group_4",
+   "fieldtype": "Link",
+   "label": "Item Group 4",
+   "options": "Item Group"
+  },
+  {
+   "fieldname": "item_group_5",
+   "fieldtype": "Link",
+   "label": "Item Group 5",
+   "options": "Item Group"
+  },
+  {
+   "fieldname": "column_break_qzvf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_stock_uom",
+   "fieldtype": "Link",
+   "label": "Default Stock UOM",
+   "options": "UOM",
+   "reqd": 1
+  },
+  {
+   "default": "{% if spec1 %}, {{ spec1 }}{% endif %}{% if spec2 %}, {{ spec2 }}{% endif %}{% if use %}, {{ use }}{% endif %}{% if pack %}, {{ pack }}{% endif %}{% if pcs %}, {{ pcs }}{% endif %}{% if presentation %}, {{ presentation }}{% endif %}{% if presentation_uom %}, {{ presentation_uom }}{% endif %}{% if material %}, {{ material }}{% endif %}{% if color %}, {{ color }}{% endif %}{% if finish %}, {{ finish }}{% endif %}{% if flavour %}, {{ flavour }}{% endif %}{% if brand %}, {{ brand }}{% endif %}{% if model %}, {{ model }}{% endif %}{% if year %}, {{ year }}{% endif %}{% if form_design %}, {{ form_design }}{% endif %}{% if size %}, {{ size }}{% endif %}{% if gauge %}, {{ gauge }}{% endif %}{% if gauge_uom %}, {{ gauge_uom }}{% endif %}{% if width %}, {{ width }}{% endif %}{% if width_uom %}, {{ width_uom }}{% endif %}{% if height %}, {{ height }}{% endif %}{% if height_uom %}, {{ height_uom }}{% endif %}{% if depth %}, {{ depth }}{% endif %}{% if depth_uom %}, {{ depth_uom }}{% endif %}{% if diameter %}, {{ diameter }}{% endif %}{% if diameter_uom %}, {{ diameter_uom }}{% endif %}{% if capacity %}, {{ capacity }}{% endif %}{% if capacity_uom %}, {{ capacity_uom }}{% endif %}{% if weight %}, {{ weight }}{% endif %}{% if weight_uom %}, {{ weight_uom }}{% endif %}{% if voltage %}, {{ voltage }}{% endif %}{% if current %}, {{ current }}{% endif %}{% if phase %}, {{ phase }}{% endif %}{% if frequency %}, {{ frequency }}{% endif %}{% if production_capacity %}, {{ production_capacity }}{% endif %}{% if capcidad_udm %}, {{ capcidad_udm }}{% endif %}{% if autonomy %}, {{ autonomy }}{% endif %}{% if autonomy_uom %}, {{ autonomy_uom }}{% endif %}{% if conectividad %}, {{ conectividad }}{% endif %}{% if garant\u00eda %}, {{ garant\u00eda }}{% endif %}{% if garant\u00eda_udm %}, {{ garant\u00eda_udm }}{% endif %}{% if custom %}, {{ custom }}{% endif %}",
+   "fieldname": "item_description_template",
+   "fieldtype": "Code",
+   "label": "Item Description Template"
+  },
+  {
+   "fieldname": "section_break_ltsb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "fields",
+   "fieldtype": "Table",
+   "label": "Field Name",
+   "options": "Item Selectable Fields"
+  },
+  {
+   "fieldname": "item_reference",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Item Reference",
+   "options": "Item Name"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-11-30 20:07:55.108176",
+ "modified_by": "Administrator",
+ "module": "ItemPRO",
+ "name": "Item Name",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

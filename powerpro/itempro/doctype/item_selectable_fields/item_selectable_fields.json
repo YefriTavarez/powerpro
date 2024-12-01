@@ -1,0 +1,76 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-11-30 20:02:50.939960",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_field_name",
+  "field_type",
+  "uom_category",
+  "options",
+  "column_break_xdup",
+  "item_show_field",
+  "item_obligatory_field"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_field_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Field Name"
+  },
+  {
+   "fieldname": "field_type",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Field Type"
+  },
+  {
+   "depends_on": "eval:doc.field_type===\"Link\"&&doc.options===\"UOM\"",
+   "fieldname": "uom_category",
+   "fieldtype": "Link",
+   "label": "UOM Category",
+   "mandatory_depends_on": "eval:doc.field_type===\"Link\"&&doc.options===\"UOM\"&&doc.item_show_field",
+   "options": "UOM Category"
+  },
+  {
+   "depends_on": "eval:doc.field_type===\"Link\"&&doc.options===\"UOM\"",
+   "fieldname": "options",
+   "fieldtype": "Small Text",
+   "label": "Options",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_xdup",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "item_show_field",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Show Field"
+  },
+  {
+   "default": "0",
+   "fieldname": "item_obligatory_field",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Obligatory Field"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-11-30 20:07:55.292680",
+ "modified_by": "Administrator",
+ "module": "ItemPRO",
+ "name": "Item Selectable Fields",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
