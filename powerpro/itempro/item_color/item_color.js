@@ -1,13 +1,30 @@
 // Copyright (c) 2024, Yefri Tavarez and contributors
 // For license information, please see license.txt
-/* eslint-disable */
 
 {
-	function refresh(frm) {
-		frappe.msgprint("Hello World!");
+	function onload(frm) {
+		_set_queries(frm);
 	}
 
-	frappe.ui.form.on("Item Color", {
-		refresh,
+	function _set_queries(frm) {
+		frm.set_query("item_name", "item_names", function(parent, doctype, name) {
+			const doc = frappe.get_doc(doctype, name);
+			const ignore_list = parent
+				.item_names
+				.filter(d => d.item_name && d.item_name !== doc.item_name)
+				.map(d => d.item_name)
+			;
+
+			
+			const filters = {
+				"name": ["Not In", ignore_list],
+			};
+
+			return { filters };
+		});
+	}
+
+	frappe.ui.form.on(cur_frm.doctype, {
+		onload,
 	});
 }
