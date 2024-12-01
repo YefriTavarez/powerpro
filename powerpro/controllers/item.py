@@ -63,14 +63,26 @@ def get_last_value(serie):
 	# from a list of values like:
 	# ['PrCaPl-0001', 'PrCaPl-0002', 'PrCaPl-0003']
 	# we will return the max value
-	result = frappe.db.sql_list(f"""
+	
+	serie = serie.replace("(", "") \
+		.replace(")", "") \
+		.replace("[", "") \
+		.replace("]", "") \
+		.replace("{", "") \
+		.replace("}", "") \
+		.replace(" ", "")
+
+	query = f"""
 		Select
 			Max(name)
 		From
 			`tabItem`
 		Where
 			name Rlike "{serie}-[0-9]+"
-	""")
+	"""
+
+	frappe.errprint(query)
+	result = frappe.db.sql_list(query, debug=True)
 
 	if result:
 		[lastval] = result
