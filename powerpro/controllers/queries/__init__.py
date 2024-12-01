@@ -16,6 +16,7 @@ __all__ = (
 	"get_item_voltage",
 	"get_item_current",
 	"get_item_phase",
+	"get_item_model",
 	"get_item_connectivity",
 )
 
