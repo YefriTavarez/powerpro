@@ -110,14 +110,206 @@
         },
     
         setup_queries: function (frm) {
-            frm.set_query("conectividad", function() {
-                const query = "powerpro.controllers.queries.item_connectivity.get_item_connectivity";
+            // frm.set_query("conectividad", function() {
+            //     const query = "powerpro.controllers.queries.item_connectivity.get_item_connectivity";
+            //     const filters = {
+            //         item_name: frm.doc.item,
+            //     };
+            
+            //     return { filters, query };
+            // });
+
+            frm.set_query("spec1", function() {
+                const query = "powerpro.controllers.queries.get_item_specs_1";
                 const filters = {
                     item_name: frm.doc.item,
                 };
-            
                 return { filters, query };
             });
+
+            frm.set_query("spec2", function() {
+                const query = "powerpro.controllers.queries.get_item_specs_2";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
+            frm.set_query("use", function() {
+                const query = "powerpro.controllers.queries.get_item_use";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
+            frm.set_query("packaging", function() {
+                const query = "powerpro.controllers.queries.get_item_packaging";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
+            // frm.set_query("presentation_uom", function() {
+            //     const query = "powerpro.controllers.queries.get_uom";
+            //     const filters = {
+            //         item_name: frm.doc.item,
+            //     };
+            //     return { filters, query };
+            // });
+
+            frm.set_query("material", function() {
+                const query = "powerpro.controllers.queries.get_item_material";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
+            frm.set_query("color", function() {
+                const query = "powerpro.controllers.queries.get_item_color";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
+            frm.set_query("finish", function() {
+                const query = "powerpro.controllers.queries.get_item_finish";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
+            frm.set_query("flavour", function() {
+                const query = "powerpro.controllers.queries.get_item_flavour";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
+            frm.set_query("brand", function() {
+                const query = "powerpro.controllers.queries.get_item_brand";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
+            // frm.set_query("gauge_uom", function() {
+            //     const query = "powerpro.controllers.queries.get_uom";
+            //     const filters = {
+            //         item_name: frm.doc.item,
+            //     };
+            //     return { filters, query };
+            // });
+
+            // frm.set_query("width_uom", function() {
+            //     const query = "powerpro.controllers.queries.get_uom";
+            //     const filters = {
+            //         item_name: frm.doc.item,
+            //     };
+            //     return { filters, query };
+            // });
+
+            // frm.set_query("height_uom", function() {
+            //     const query = "powerpro.controllers.queries.get_uom";
+            //     const filters = {
+            //         item_name: frm.doc.item,
+            //     };
+            //     return { filters, query };
+            // });
+
+            // frm.set_query("depth_uom", function() {
+            //     const query = "powerpro.controllers.queries.get_uom";
+            //     const filters = {
+            //         item_name: frm.doc.item,
+            //     };
+            //     return { filters, query };
+            // });
+
+            // frm.set_query("diameter_uom", function() {
+            //     const query = "powerpro.controllers.queries.get_uom";
+            //     const filters = {
+            //         item_name: frm.doc.item,
+            //     };
+            //     return { filters, query };
+            // });
+
+            // frm.set_query("capacity_uom", function() {
+            //     const query = "powerpro.controllers.queries.get_uom";
+            //     const filters = {
+            //         item_name: frm.doc.item,
+            //     };
+            //     return { filters, query };
+            // });
+
+            // frm.set_query("weight_uom", function() {
+            //     const query = "powerpro.controllers.queries.get_uom";
+            //     const filters = {
+            //         item_name: frm.doc.item,
+            //     };
+            //     return { filters, query };
+            // });
+
+            frm.set_query("voltage", function() {
+                const query = "powerpro.controllers.queries.get_item_voltage";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
+            frm.set_query("current", function() {
+                const query = "powerpro.controllers.queries.get_item_current";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
+            frm.set_query("phase", function() {
+                const query = "powerpro.controllers.queries.get_item_phase";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
+            // frm.set_query("capcidad_udm", function() {
+            //     const query = "powerpro.controllers.queries.get_uom";
+            //     const filters = {
+            //         item_name: frm.doc.item,
+            //     };
+            //     return { filters, query };
+            // });
+
+            // frm.set_query("autonomy_uom", function() {
+            //     const query = "powerpro.controllers.queries.get_uom";
+            //     const filters = {
+            //         item_name: frm.doc.item,
+            //     };
+            //     return { filters, query };
+            // });
+
+            frm.set_query("conectividad", function() {
+                const query = "powerpro.controllers.queries.get_item_connectivity";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
+            // frm.set_query("garantía_udm", function() {
+            //     const query = "powerpro.controllers.queries.get_uom";
+            //     const filters = {
+            //         item_name: frm.doc.item,
+            //     };
+            //     return { filters, query };
+            // });
         },
     
         setup_fields: function (frm) {
