@@ -609,6 +609,7 @@
     
                                     if (is_associated) {
                                         finish_options.push(row.item_use);
+
                                         frm.set_df_property('finish', 'options', finish_options.join('\n'));
                                         frm.refresh_field('finish');
                                     }
@@ -627,24 +628,34 @@
     // Función para reiniciar campos dependientes
     function reset_fields(frm) {
         frm.fields.forEach(field => {
-            if (field.df.fieldtype === "Column Break" || field.df.fieldtype === "Section Break" || field.df.fieldname === "item") {
+            if (
+                field.df.fieldtype === "Column Break"
+                || field.df.fieldtype === "Section Break"
+                || field.df.fieldname === "item"
+            ) {
                 frm.set_df_property(field.df.fieldname, "hidden", false);
             } else {
                 frm.set_df_property(field.df.fieldname, "hidden", true);
                 frm.set_df_property(field.df.fieldname, "reqd", false);
+                frm.doc[field.df.fieldname] = null;
             }
         });
     
-        frm.set_df_property('material', 'options', []);
-        frm.set_df_property('spec1', 'options', []);
-        frm.set_df_property('spec2', 'options', []);
-        frm.set_df_property('color', 'options', []);
-        frm.set_df_property('use', 'options', []);
-        frm.refresh_field('material');
-        frm.refresh_field('spec1');
-        frm.refresh_field('spec2');
-        frm.refresh_field('color');
-        frm.refresh_field('use');
+        // frm.set_df_property('material', 'options', []);
+        // frm.refresh_field('material');
+        
+        // frm.set_df_property('spec1', 'options', []);
+        // frm.refresh_field('spec1');
+
+        // frm.set_df_property('spec2', 'options', []);
+        // frm.refresh_field('spec2');
+        
+        // frm.set_df_property('color', 'options', []);
+        // frm.refresh_field('color');
+        
+        // frm.set_df_property('use', 'options', []);
+        // frm.refresh_field('use');
+        
         frm.refresh();
     }
 }
