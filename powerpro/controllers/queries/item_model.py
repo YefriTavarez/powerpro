@@ -36,6 +36,10 @@ def get_item_model(doctype, txt, searchfield="name", start=0, page_len=20, filte
 		frappe.msgprint("Please provide an item name to search for item model.", alert=True)
 		return []
 
+	if "item_brand" not in filters:
+		frappe.msgprint("Please provide an item brand to search for item model.", alert=True)
+		return []
+
 	out = frappe.db.sql(
 		f"""
 			Select
@@ -47,8 +51,14 @@ def get_item_model(doctype, txt, searchfield="name", start=0, page_len=20, filte
 				On item_name.parenttype = "Item Model"
 					And item_name.parentfield = "item_names"
 					And item_name.parent = parent.name
+			Inner Join
+				`tabItem Brands` As item_brand
+				On item_brand.parenttype = "Item Model"
+				And item_brand.parentfield = "item_brands"
+				And item_brand.parent = parent.name
 			Where
 				item_name.item_name = {filters["item_name"]!r}
+				And item_brand.item_brand = {filters["item_brand"]!r}
 				And item_model Like {searchstr!r}
 		""", as_list=True
 	)
