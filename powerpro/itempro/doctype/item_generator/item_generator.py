@@ -105,9 +105,11 @@ class ItemGenerator(Document):
 			# it in the error message.
 			self.render_description()
 
-			link_to_form = get_link_to_form(self.doctype, name, label=self.description)
+			link_to_form = get_link_to_form(self.doctype, name, label=name)
 			frappe.throw(
-				f"fYa existe un Item Generator con el mismo hash inteligente: {link_to_form}"
+				f"Ya existe un Item Generator con el mismo hash inteligente: {link_to_form}"
+				f"<br><br>Descripción: <strong>{self.description}</strong>"
+				f"<br><br><button class='btn btn-info' onclick='frappe.utils.copy_to_clipboard(\"{name}\")'>Copiar al Clipboard</button>"
 			)
 
 	def self_generate_smart_hash(self):
