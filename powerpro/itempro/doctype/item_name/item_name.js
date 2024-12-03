@@ -20,7 +20,9 @@
                                    field.fieldtype !== "Section Break" &&
                                    field.fieldtype !== "Tab Break" &&
                                    field.fieldname !== "item" &&
-                                   field.fieldname !== "description"
+                                   field.fieldname !== "description" &&
+                                   field.fieldname !== "amended_from" &&
+                                   field.fieldname !== "smart_hash"
                                 ; // Excluir el campo "item"
                         });
 
