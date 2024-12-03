@@ -79,7 +79,7 @@ class ItemGenerator(Document):
 			frappe.throw("No se especificó el valor para el campo 'Plantilla para la Descripción' en el doctype Nombre de Producto")
 
 	def on_update(self):
-		self.enqueue_doc(
+		frappe.enqueue_doc(
 			method="update_existing_items",
 			doctype=self.doctype,
 			name=self.name,
