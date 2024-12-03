@@ -57,7 +57,8 @@
   "garant\u00eda_udm",
   "column_break_tddy",
   "custom",
-  "amended_from"
+  "amended_from",
+  "smart_hash"
  ],
  "fields": [
   {
@@ -352,12 +353,18 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "smart_hash",
+   "fieldtype": "Small Text",
+   "label": "Smart Hash",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-30 23:10:15.700284",
+ "modified": "2024-12-02 22:49:47.471407",
  "modified_by": "Administrator",
  "module": "ItemPRO",
  "name": "Item Generator",
