@@ -211,6 +211,7 @@
                 const query = "powerpro.controllers.queries.get_item_model";
                 const filters = {
                     item_name: frm.doc.item,
+                    item_brand: frm.doc.brand || "N/A",
                 };
                 return { filters, query };
             });
