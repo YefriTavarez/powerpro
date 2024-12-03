@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "item_model",
+  "item_brands",
   "item_names"
  ],
  "fields": [
@@ -22,11 +23,17 @@
    "fieldtype": "Table",
    "label": "Item Names",
    "options": "Item Name Link"
+  },
+  {
+   "fieldname": "item_brands",
+   "fieldtype": "Table MultiSelect",
+   "label": "Item Brands",
+   "options": "Item Brands"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-11-30 20:07:54.066416",
+ "modified": "2024-12-02 22:29:01.953982",
  "modified_by": "Administrator",
  "module": "ItemPRO",
  "name": "Item Model",
