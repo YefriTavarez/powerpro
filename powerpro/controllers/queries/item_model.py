@@ -43,12 +43,12 @@ def get_item_model(doctype, txt, searchfield="name", start=0, page_len=20, filte
 			From
 				`tabItem Model` As parent
 			Inner Join
-				`tabItem Name Link` As child
-				On child.parenttype = "Item Model"
-					And child.parentfield = "item_names"
-					And child.parent = parent.name
+				`tabItem Name Link` As item_name
+				On item_name.parenttype = "Item Model"
+					And item_name.parentfield = "item_names"
+					And item_name.parent = parent.name
 			Where
-				child.item_name = {filters["item_name"]!r}
+				item_name.item_name = {filters["item_name"]!r}
 				And item_model Like {searchstr!r}
 		""", as_list=True
 	)
