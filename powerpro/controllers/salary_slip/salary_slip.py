@@ -13,33 +13,11 @@ from frappe import _
 from frappe.utils import flt
 from hrms.payroll.doctype.salary_slip.salary_slip import SalarySlip
 
+from . import helper
+
 
 class SalarySlip(SalarySlip):
-    def set_dgii_payroll_settings(self):
-        self.dgii_payroll_settings = self.get_dgii_payroll_settings()
-        self.update({
-            "weekly_expected_hours": self.dgii_payroll_settings.weekly_expected_hours,
-            "max_weekly_extra_hours": self.dgii_payroll_settings.max_weekly_extra_hours,
-            "start_night_hours": self.dgii_payroll_settings.start_night_hours,
-            "end_night_hours": self.dgii_payroll_settings.end_night_hours,
-            "extra_hours_rate": self.dgii_payroll_settings.extra_hours_rate,
-            "extraordinary_hours_rate": self.dgii_payroll_settings.extraordinary_hours_rate,
-            "night_hours_rate": self.dgii_payroll_settings.night_hours_rate,
-            "pension_fund_provider": self.dgii_payroll_settings.pension_fund_provider,
-            "health_insurance_rate": self.dgii_payroll_settings.health_insurance_rate,
-        })
-
-    def set_mid_month_start(self):
-        start_date: "datetime.date" = frappe.utils.getdate(self.start_date)
-        if start_date.strftime("%d") >= "15" or self.payroll_frequency == "Monthly":
-            self.mid_month_start = True
-        else:
-            self.mid_month_start = False
-
-    def get_dgii_payroll_settings(self):
-        doctype = "DGII Payroll Settings"
-        return frappe.get_single(doctype)
-
+    # @overrides
     def pull_sal_struct(self):
         from hrms.payroll.doctype.salary_structure.salary_structure import make_salary_slip
 
@@ -57,6 +35,7 @@ class SalarySlip(SalarySlip):
 
         make_salary_slip(self._salary_structure_doc.name, self)
 
+    # @overrides
     def set_time_sheet(self):
         self.set("timesheets", [])
 
@@ -80,8 +59,8 @@ class SalarySlip(SalarySlip):
                 "night_hours": data.night_hours,
             })
         
-        self.set_dgii_payroll_settings()
-        self.set_mid_month_start()
+        helper.set_dgii_payroll_settings(self)
+        helper.set_mid_month_start(self)
 
 
 @frappe.whitelist()
