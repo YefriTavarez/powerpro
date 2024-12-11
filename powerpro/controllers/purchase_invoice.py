@@ -185,8 +185,8 @@ def validate_retention_type(doc):
         [ d.account for d in matched_other_rows ]
     )
     
-    if not matched_accounts and doc.include_retention:
-        frappe.throw("Marcaste la casilla de incluir retención de ITBIS, pero no se encontró una cuenta de retención de ITBIS configurada para esta empresa")
+    # if not matched_accounts and doc.include_retention:
+    #     frappe.throw("Marcaste la casilla de incluir retención de ITBIS, pero no se encontró una cuenta de retención de ITBIS configurada para esta empresa")
     if matched_accounts and not doc.include_retention:
         frappe.throw(f"""
             No marcaste la casilla de incluir retención de ITBIS, pero se encontraron cuentas de retención de ITBIS configuradas para esta empresa.

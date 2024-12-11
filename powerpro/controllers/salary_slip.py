@@ -1,6 +1,12 @@
 # Copyright (c) 2024, Miguel Higuera and Contributors
 # For license information, please see license.txt
 
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import datetime
+
 import frappe
 
 from frappe import _
@@ -24,7 +30,8 @@ class SalarySlip(SalarySlip):
         })
 
     def set_mid_month_start(self):
-        if self.start_date[-2:] >= "15" or self.payroll_frequency == "Monthly":
+        start_date: "datetime.date" = frappe.utils.getdate(self.start_date)
+        if start_date.strftime("%d") >= "15" or self.payroll_frequency == "Monthly":
             self.mid_month_start = True
         else:
             self.mid_month_start = False
@@ -102,5 +109,3 @@ def set_missing_values(time_sheet, target):
             "extraordinary_hours": doc.extraordinary_hours,
             "night_hours": doc.night_hours,
         })
-
-
