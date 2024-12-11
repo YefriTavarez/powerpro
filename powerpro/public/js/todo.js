@@ -13,7 +13,12 @@ frappe.ui.form.on("ToDo", {
         }
 
         if (!doc.__islocal) {
-            if (doc.status == "Open" && doc.reference_type == "Asset Maintenance Task") {
+            const allowed_doctypes = [
+                "Asset Maintenance Task",
+                "Training Event",
+            ];
+
+            if (doc.status == "Open" && allowed_doctypes.includes(doc.reference_type)) {
                 frm.add_custom_button(
                     __("Close"),
                     function () {
@@ -41,7 +46,19 @@ frappe.ui.form.on("ToDo", {
                             }
 
                             frappe.call({ method, args, callback });
-                        } else {
+                        } else if (doc.reference_type == "Training Event") {
+                            frappe.confirm(
+                                __("¿Está seguro que desea cerrar y firmar su asistencia a este evento?"),
+                                function () {
+                                    frm.set_value("status", "Closed");
+                                    frm.save(null, function () {
+                                        // back to list
+                                        frappe.set_route("List", "ToDo");
+                                    });
+                                }
+                            );
+                        } 
+                        else {
                             frm.set_value("status", "Closed");
                             frm.save(null, function () {
                                 // back to list
