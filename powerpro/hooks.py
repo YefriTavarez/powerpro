@@ -185,6 +185,12 @@ doc_events = {
     "Salary Structure Assignment": {
         "validate": "powerpro.controllers.salary_structure_assignment.validate",
     },
+    "Salary Slip": {
+        "validate": [
+            "powerpro.controllers.salary_slip.helper.set_dgii_payroll_settings",
+            "powerpro.controllers.salary_slip.helper.set_mid_month_start",
+        ],
+    },
     "Timesheet": {
         "before_save": "powerpro.controllers.timesheet.before_save",
         "validate": "powerpro.controllers.timesheet.validate",
