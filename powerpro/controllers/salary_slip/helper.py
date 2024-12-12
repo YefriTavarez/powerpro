@@ -16,7 +16,7 @@ __all__ = (
 
 
 settings = None
-def set_dgii_payroll_settings(doc):
+def set_dgii_payroll_settings(doc, _=None):
 	global settings
 
 	if settings is None:
@@ -35,7 +35,7 @@ def set_dgii_payroll_settings(doc):
 	})
 
 
-def set_mid_month_start(doc, method=None):
+def set_mid_month_start(doc, _=None):
 	start_date: "datetime.date" = frappe.utils.getdate(doc.start_date)
 	if start_date.strftime("%d") >= "15" or doc.payroll_frequency == "Monthly":
 		doc.mid_month_start = True
