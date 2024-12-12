@@ -6,11 +6,12 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 from frappe.desk.reportview import get_match_cond
-from hrms.payroll.doctype.payroll_entry.payroll_entry import PayrollEntry
+from hrms.payroll.doctype.payroll_entry import payroll_entry
 
 
-class PayrollEntry(PayrollEntry):
-    def make_filters(self):
+class PayrollEntry(payroll_entry.PayrollEntry):
+    # @disabled
+    def __make_filters(self):
         filters = frappe._dict(
             company=self.company,
             branch=self.branch,
