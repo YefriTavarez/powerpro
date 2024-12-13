@@ -10,6 +10,7 @@
   "itbis_account",
   "column_break_lovq",
   "excise_tax",
+  "non_formal_tax_category",
   "other_taxes_section",
   "other_tax_detail",
   "update_taxes",
@@ -72,12 +73,18 @@
    "fieldtype": "Table",
    "label": "Multi Other Tax Detail",
    "options": "Multi Other Tax Detail"
+  },
+  {
+   "fieldname": "non_formal_tax_category",
+   "fieldtype": "Link",
+   "label": "Non Formal Tax Category",
+   "options": "Tax Category"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-09-17 19:58:48.034904",
+ "modified": "2024-12-12 22:40:37.625463",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "DGII Settings",
