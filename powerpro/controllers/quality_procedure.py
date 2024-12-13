@@ -14,7 +14,7 @@ from erpnext.quality_management.doctype.quality_procedure import quality_procedu
 class QualityProcedure(quality_procedure.QualityProcedure):
 	def autoname(self):
 		department_prefix = self.department[:3]
-		naming_series = f"PRO-CAL-{department_prefix.upper()}-.#####"
+		naming_series = f"PRO-{department_prefix.upper()}-.#####"
 		self.name = naming.make_autoname(naming_series)
 
 	def validate(self):
