@@ -9,14 +9,18 @@ from frappe.utils import flt
 def validate(doc, event):
     set_taxes(doc)
     calculate_totals(doc)
-    validate_duplicate_ncf(doc)
     valid_prefix(doc)
     validate_rnc(doc)
     validate_retention_type(doc)
 
+    tax_category = frappe.db.get_value("Supplier", doc.supplier, "tax_category")
+    if not tax_category:
+        educate_user_about_missing_tax_category()
+
 
 def before_submit(doc, event):
-    generate_new(doc)
+    validate_duplicate_ncf(doc)
+    assign_informal_supplier_ncf(doc)
 
 
 def calculate_totals(doc):
@@ -33,18 +37,65 @@ def calculate_totals(doc):
     doc.monto_facturado_servicios = total_servicios
 
 
-def generate_new(doc):
-    tax_category = frappe.db.get_value("Supplier", doc.supplier, "tax_category")
-    if doc.ncf or not tax_category:
-        return
+def assign_informal_supplier_ncf(doc):
+    # si ya tiene un NCF asignado, no hacer nada
+    if doc.ncf and doc.amended_from:
+        # si es una factura rectificativa, no hacer nada
+        return # salir de la función
 
-    ncf_serie = get_serie_for_(doc)
+
+    # traer la Categoría de Impuestos del proveedor
+    tax_category = frappe.db.get_value("Supplier", doc.supplier, "tax_category")
+
+    # si no tiene categoría de impuestos asignada, mostrar un mensaje de advertencia
+    # y salir de la función
+    if not tax_category:
+        educate_user_about_missing_tax_category()
+        return # salir de la función
+
+    # traer la Categoría de Impuestos no formales para comparar
+    # si el proveedor es informal y generar su respectivo NCF
+    informal_tax_category = frappe.db.get_single_value(
+        "DGII Settings", "non_formal_tax_category"
+    )
+
+    ncf_serie = None
+
+    # si el proveedor es informal, leer la configuracion en el modulo NCF Manager
+    # para obtener la serie de comprobantes a utilizar
+    if tax_category == informal_tax_category:
+        if doc.ncf and doc.amended_from:
+            # si no es una factura rectificativa, mostrar un mensaje de advertencia
+            frappe.msgprint(
+                """
+                <p>
+                Esta factura ya tiene un NCF asignado. Y no se ha detectado que sea una factura rectificativa.
+                Se procederá a sobre-escribir el NCF actual. 
+                </p>
+                """, alert=True
+            )
+
+        if name := frappe.db.exists(
+            "NCF Manager",
+            {
+                "company": doc.company,
+                "tax_category": informal_tax_category,
+            }
+        ):
+            ncf_serie = frappe.get_doc("NCF Manager", name)
+        else:
+            frappe.throw(
+                f"No se ha configurado un registro en el módulo 'NCF Manager' para manejar los comprobantes para la 'Categoría de Impuestos: {tax_category}'"
+            )
+    else:
+        # solo se generan NCF para proveedores informales (creo que tambien para gastos menores, pero eso es en otro episodio)
+        return # salir de la función
 
     current = cint(ncf_serie.current)
 
     if cint(ncf_serie.top) and current >= cint(ncf_serie.top):
         frappe.throw(
-            "Ha llegado al máximo establecido para esta serie de comprobantes!"
+            f"Ha llegado al máximo establecido para la serie de comprobantes {ncf_serie.name!r}!"
         )
 
     current += 1
@@ -54,7 +105,7 @@ def generate_new(doc):
 
     doc.ncf = "{0}{1:08d}".format(ncf_serie.serie.split(".")[0], current)
     doc.vencimiento_ncf = ncf_serie.expiration
-    doc.db_update()
+    # doc.db_update() # no es necesario, ya que el documento se actualiza automaticamente al finalizar la funcion
 
 
 def get_serie_for_(doc):
@@ -223,6 +274,7 @@ def valid_prefix(doc):
     valid_prefix = [
         "B01",
         "B02",
+        "B03",
         "B04",
         "B11",
         "B13",
@@ -270,3 +322,21 @@ def get_retention_details(base_total_taxes_and_charges, total, retention_type):
     return {
         "amount": amount,
     }
+
+
+def educate_user_about_missing_tax_category():
+    frappe.msgprint(
+        """
+        <p>
+        El proveedor seleccionado no tiene una categoría de impuestos asignada. 
+        Esto puede ser aceptable si se trata de un proveedor internacional, pero es importante que
+        el sistema lo refleje correctamente para evitar ambigüedades.
+        </p>
+
+        <p>
+        Por favor, asegúrate de asignar la categoría de impuestos correspondiente. Para proveedores 
+        internacionales, selecciona una categoría que indique explícitamente su condición (por ejemplo, 
+        “Internacional - Exento”). Esto garantiza una correcta clasificación y trazabilidad en el sistema.
+        </p>
+        """, alert=True, indicator="yellow"
+    )
