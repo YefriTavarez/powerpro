@@ -55,7 +55,6 @@ def generate_new(doc):
     doc.ncf = '{0}{1:08d}'.format(ncf_serie.serie.split(".")[0], current)
     doc.vencimiento_ncf = ncf_serie.expiration
     doc.db_update()
-    frappe.db.commit()
 
 
 def get_serie_for_(doc):
