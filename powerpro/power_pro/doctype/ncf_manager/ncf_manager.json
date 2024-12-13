@@ -47,7 +47,7 @@
    "fieldname": "serie",
    "fieldtype": "Select",
    "label": "Serie",
-   "options": "B01.########\nB02.########\nB03.########\nB04.########\nB011.########\nB012.########\nB013.########\nB014.########\nB015.########\nB016.########\nB017.########"
+   "options": "B01.########\nB02.########\nB03.########\nB04.########\nB11.########\nB12.########\nB13.########\nB14.########\nB15.########\nB16.########\nB17.########"
   },
   {
    "fieldname": "column_break_3",
@@ -107,7 +107,7 @@
   }
  ],
  "links": [],
- "modified": "2024-09-16 20:34:54.081281",
+ "modified": "2024-12-13 20:34:54.081281",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "NCF Manager",
