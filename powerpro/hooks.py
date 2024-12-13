@@ -21,11 +21,10 @@ app_license = "mit"
 # 	}
 # ]
 
-fixtures = [
-	{"doctype": "Item Group", "filters": {}},
-    {"doctype": "UOM", "filters": {}},
-    {"doctype": "UOM Category", "filters": {}},
-]
+# Fixtures
+# --------
+
+fixtures = []
 
 # Includes in <head>
 # ------------------
