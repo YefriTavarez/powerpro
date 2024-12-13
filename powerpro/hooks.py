@@ -172,6 +172,9 @@ override_doctype_class = {
 # Hook on document methods and events
 
 doc_events = {
+    "Customer": {
+        "on_update": "powerpro.controllers.customer.on_update",
+    },
     "Item": {
         "autoname": "powerpro.controllers.item.autoname",
         "before_save": "powerpro.controllers.item.before_save",
