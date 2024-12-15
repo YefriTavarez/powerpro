@@ -17,9 +17,10 @@
   "column_break_kekz",
   "night_hours_rate",
   "deductions_section",
-  "pension_fund_provider",
+  "health_insurance_rate",
+  "dependents_rate",
   "column_break_jdsg",
-  "health_insurance_rate"
+  "pension_fund_provider"
  ],
  "fields": [
   {
@@ -95,12 +96,21 @@
    "fieldname": "health_insurance_rate",
    "fieldtype": "Percent",
    "label": "Health Insurance Rate (ARS)"
+  },
+  {
+   "default": "1715.46",
+   "description": "Especifique el monto por cada dependiente inscrito en el seguro para hacer la correcta deducci\u00f3n en la n\u00f3mina.",
+   "fieldname": "dependents_rate",
+   "fieldtype": "Currency",
+   "label": "Monto por Dependiente",
+   "non_negative": 1,
+   "precision": "2"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-10-03 08:14:52.004142",
+ "modified": "2024-12-15 19:08:31.413948",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "DGII Payroll Settings",

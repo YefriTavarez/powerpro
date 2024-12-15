@@ -16,6 +16,8 @@ __all__ = (
 
 
 settings = None
+
+
 def set_dgii_payroll_settings(doc, _=None):
 	global settings
 
@@ -31,6 +33,7 @@ def set_dgii_payroll_settings(doc, _=None):
 		"extraordinary_hours_rate": settings.extraordinary_hours_rate,
 		"night_hours_rate": settings.night_hours_rate,
 		"pension_fund_provider": settings.pension_fund_provider,
+		"dependents_rate": settings.dependents_rate,
 		"health_insurance_rate": settings.health_insurance_rate,
 	})
 
