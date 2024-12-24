@@ -58,6 +58,7 @@ doctype_js = {
     "Purchase Invoice": "public/js/purchase_invoice.js",
     "Payment Entry": "public/js/payment_entry.js",
     "Payroll Entry": "public/js/payroll_entry.js",
+    "Operation": "public/js/operation.js",
     "Quality Procedure": "public/js/doctype/quality_procedure/form.js",
     "ToDo": "public/js/todo.js",
     "Asset Maintenance": "public/js/asset_maintenance.js",
