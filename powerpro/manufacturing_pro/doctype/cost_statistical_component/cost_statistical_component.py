@@ -1,6 +1,8 @@
 # Copyright (c) 2024, Yefri Tavarez and contributors
 # For license information, please see license.txt
 
+import re
+
 import frappe
 
 from frappe.utils.safe_exec import (
@@ -27,23 +29,24 @@ class CostStatisticalComponent(Document):
 		formula: DF.Code | None
 		variables: DF.Table[CostStatisticalVariable]
 	# end: auto-generated types
-	
+
 	def validate(self):
 		if self.formula:
 			self.validate_formula(self.formula)
 
 		if self.variables:
 			self.validate_variables()
-	
+
 	def validate_formula(self, formula):
 		if is_safe_exec_enabled():
 			try:
 				safe_exec(formula, self.get_safe_globals())
 			except Exception as e:
+				frappe.errprint(type(e))
 				frappe.throw(str(e))
 		else:
 			frappe.throw("Safe Execution is disabled")
-	
+
 	def validate_variables(self):
 		for variable in self.variables:
 			if variable.formula:
@@ -56,9 +59,29 @@ class CostStatisticalComponent(Document):
 					frappe.throw(f"Error in formula for variable {varname} at row {index}: {str(e)}")
 
 	def get_safe_globals(self):
-		return {
+		context = {
 			"frappe": frappe,
 			"doc": self,
 			"self": frappe._dict(),
 		}
-		
+
+		if self.variables:
+			for variable in self.variables:
+				context[variable.variable_name] = 0
+
+		# add as zero all variables
+		# in order to avoid NameError
+		# when evaluating the formula
+		for variable in self.variables:
+			formula: str = variable.formula
+
+			if formula:
+				# get all variables in the formula
+				# and add them to the context
+				variables = re.findall(r"\b\w+\b", formula)
+
+				for varname in variables:
+					if varname not in context:
+						context[varname] = 0
+
+		return context
