@@ -4,6 +4,7 @@
 import frappe
 
 
+@frappe.whitelist()
 def get_workstation(doctype, txt, searchfield="name", start=0, page_len=20, filters=None):
 	"""
 	Retrieve workstation information based on the search text.
@@ -36,22 +37,19 @@ def get_workstation(doctype, txt, searchfield="name", start=0, page_len=20, filt
 
 	additionals = ""
 	if searchstr != "%%":
-		additionals = f" And workstation.name Like {searchstr!r}"
+		additionals = f"And workstation.name Like {searchstr!r}"
 
 	out = frappe.db.sql(
 		f"""
 			Select
 				workstation.name
 			From
-				`tabOperation` As operation
-			Inner Join
 				`tabOperation Type` As operation_type
-				On operation_type.name = operation.operation_type
 			Inner Join
 				`tabWorkstation` As workstation
-				On workstation.name = operation.workstation
+				On workstation.workstation_type = operation_type.workstation_type
 			Where
-				operation.operation_type = {filters["operation_type"]!r}
+				operation_type.name = {filters["operation_type"]!r}
 				{additionals}
 		""", as_list=True
 	)
