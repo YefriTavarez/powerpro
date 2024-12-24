@@ -1,0 +1,70 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "OPER-COST-",
+ "creation": "2024-12-23 20:54:57.215284",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "operation",
+  "column_break_fvxi",
+  "workstations",
+  "section_break_peof",
+  "statistical_components"
+ ],
+ "fields": [
+  {
+   "fieldname": "operation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Operation",
+   "options": "Operation",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_fvxi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "workstations",
+   "fieldtype": "Table MultiSelect",
+   "label": "Workstations",
+   "options": "Workstations"
+  },
+  {
+   "fieldname": "section_break_peof",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "statistical_components",
+   "fieldtype": "Table MultiSelect",
+   "label": "Statistical Components",
+   "options": "Statistical Components"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-12-23 20:58:39.283583",
+ "modified_by": "Administrator",
+ "module": "Manufacturing Pro",
+ "name": "Operation Cost",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
