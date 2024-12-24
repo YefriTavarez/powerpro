@@ -20,6 +20,7 @@ __all__ = (
 	"get_item_model",
 	"get_item_shape",
 	"get_item_connectivity",
+	"get_workstation",
 )
 
 from powerpro.controllers.queries.raw_material import raw_material_query
@@ -42,3 +43,4 @@ from powerpro.controllers.queries.item_voltage import get_item_voltage
 from powerpro.controllers.queries.item_current import get_item_current
 from powerpro.controllers.queries.item_phase import get_item_phase
 from powerpro.controllers.queries.item_connectivity import get_item_connectivity
+from powerpro.controllers.queries.workstation import get_workstation
