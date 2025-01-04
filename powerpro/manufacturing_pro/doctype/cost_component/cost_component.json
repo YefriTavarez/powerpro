@@ -1,0 +1,190 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:cost_component",
+ "creation": "2024-12-27 21:12:05.117845",
+ "doctype": "DocType",
+ "document_type": "Setup",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "overview_tab",
+  "cost_component",
+  "cost_component_abbr",
+  "description",
+  "column_break_4",
+  "variable_based_on_taxable_salary",
+  "round_to_the_nearest_integer",
+  "statistical_component",
+  "do_not_include_in_total",
+  "disabled",
+  "section_break_5",
+  "accounts",
+  "configure_component_tab",
+  "condition_and_formula",
+  "condition",
+  "amount",
+  "amount_based_on_formula",
+  "formula",
+  "column_break_28",
+  "help"
+ ],
+ "fields": [
+  {
+   "fieldname": "overview_tab",
+   "fieldtype": "Tab Break",
+   "label": "Overview"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Description"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.type == \"Deduction\"",
+   "description": "If enabled, the component will be considered as a tax component and the amount will be auto-calculated as per the configured income tax slabs",
+   "fieldname": "variable_based_on_taxable_salary",
+   "fieldtype": "Check",
+   "label": "Variable Based On Taxable Salary",
+   "search_index": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "round_to_the_nearest_integer",
+   "fieldtype": "Check",
+   "label": "Round to the Nearest Integer"
+  },
+  {
+   "default": "0",
+   "description": "If enabled, the value specified or calculated in this component will not contribute to the earnings or deductions. However, it's value can be referenced by other components that can be added or deducted. ",
+   "fieldname": "statistical_component",
+   "fieldtype": "Check",
+   "label": "Statistical Component"
+  },
+  {
+   "default": "0",
+   "fieldname": "do_not_include_in_total",
+   "fieldtype": "Check",
+   "label": "Do Not Include in Total"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "depends_on": "eval:doc.statistical_component != 1",
+   "fieldname": "section_break_5",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Accounts"
+  },
+  {
+   "fieldname": "accounts",
+   "fieldtype": "Table",
+   "label": "Accounts",
+   "options": "Salary Component Account"
+  },
+  {
+   "fieldname": "configure_component_tab",
+   "fieldtype": "Tab Break",
+   "label": "Condition & Formula"
+  },
+  {
+   "depends_on": "eval:doc.is_flexible_benefit != 1 && doc.variable_based_on_taxable_salary != 1",
+   "fieldname": "condition_and_formula",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "condition",
+   "fieldtype": "Code",
+   "label": "Condition",
+   "options": "PythonExpression"
+  },
+  {
+   "depends_on": "eval:doc.amount_based_on_formula!==1",
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount"
+  },
+  {
+   "default": "0",
+   "fieldname": "amount_based_on_formula",
+   "fieldtype": "Check",
+   "label": "Amount based on formula"
+  },
+  {
+   "depends_on": "amount_based_on_formula",
+   "fieldname": "formula",
+   "fieldtype": "Code",
+   "label": "Formula",
+   "options": "PythonExpression"
+  },
+  {
+   "fieldname": "column_break_28",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "help",
+   "fieldtype": "HTML",
+   "label": "Help",
+   "options": "<h3>Help</h3>\n\n<p>Notes:</p>\n\n<ol>\n<li>Use field <code>base</code> for using base salary of the Employee</li>\n<li>Use Salary Component abbreviations in conditions and formulas. <code>BS = Basic Salary</code></li>\n<li>Use field name for employee details in conditions and formulas. <code>Employment Type = employment_type</code><code>Branch = branch</code></li>\n<li>Use field name from Salary Slip in conditions and formulas. <code>Payment Days = payment_days</code><code>Leave without pay = leave_without_pay</code></li>\n<li>Direct Amount can also be entered based on Condition. See example 3</li></ol>\n\n<h4>Examples</h4>\n<ol>\n<li>Calculating Basic Salary based on <code>base</code>\n<pre><code>Condition: base &lt; 10000</code></pre>\n<pre><code>Formula: base * .2</code></pre></li>\n<li>Calculating HRA based on Basic Salary<code>BS</code> \n<pre><code>Condition: BS &gt; 2000</code></pre>\n<pre><code>Formula: BS * .1</code></pre></li>\n<li>Calculating TDS based on Employment Type<code>employment_type</code> \n<pre><code>Condition: employment_type==\"Intern\"</code></pre>\n<pre><code>Amount: 1000</code></pre></li>\n</ol>"
+  },
+  {
+   "fieldname": "cost_component",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "cost_component_abbr",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Abbr",
+   "print_width": "120px",
+   "reqd": 1,
+   "width": "120px"
+  }
+ ],
+ "icon": "fa fa-flag",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-12-27 21:22:30.900790",
+ "modified_by": "Administrator",
+ "module": "Manufacturing Pro",
+ "name": "Cost Component",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Employee"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

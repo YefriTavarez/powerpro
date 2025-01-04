@@ -1,0 +1,140 @@
+{
+ "actions": [],
+ "creation": "2024-12-28 18:59:33.728962",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "cost_component",
+  "abbr",
+  "column_break_3",
+  "amount",
+  "section_break_5",
+  "statistical_component",
+  "column_break_11",
+  "section_break_2",
+  "condition",
+  "column_break_18",
+  "amount_based_on_formula",
+  "formula",
+  "section_break_19",
+  "default_amount",
+  "column_break_24"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "depends_on": "eval:doc.parenttype=='Cost Structure'",
+   "fetch_from": "cost_component.cost_component_abbr",
+   "fieldname": "abbr",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Abbr",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.amount_based_on_formula!==1 && doc.parenttype!=='Cost Structure'",
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount",
+   "options": "currency"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_5",
+   "fieldtype": "Section Break",
+   "label": "Component properties and references "
+  },
+  {
+   "default": "0",
+   "description": "If selected, the value specified or calculated in this component will not contribute to the earnings or deductions. However, it's value can be referenced by other components that can be added or deducted. ",
+   "fetch_from": "cost_component.statistical_component",
+   "fieldname": "statistical_component",
+   "fieldtype": "Check",
+   "label": "Statistical Component"
+  },
+  {
+   "fieldname": "column_break_11",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break",
+   "label": "Condition and formula"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.parenttype=='Cost Structure'",
+   "fieldname": "condition",
+   "fieldtype": "Code",
+   "label": "Condition",
+   "options": "PythonExpression"
+  },
+  {
+   "fieldname": "column_break_18",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.parenttype=='Cost Structure'",
+   "fieldname": "amount_based_on_formula",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Amount based on formula"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.amount_based_on_formula!==0 && doc.parenttype==='Cost Structure'",
+   "fieldname": "formula",
+   "fieldtype": "Code",
+   "in_list_view": 1,
+   "label": "Formula",
+   "options": "PythonExpression"
+  },
+  {
+   "fieldname": "section_break_19",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:doc.parenttype=='Cost Structure'",
+   "fieldname": "default_amount",
+   "fieldtype": "Currency",
+   "label": "Default Amount",
+   "options": "currency",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "column_break_24",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 2,
+   "fieldname": "cost_component",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Component",
+   "options": "Cost Component",
+   "reqd": 1,
+   "search_index": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2024-12-29 19:17:25.729790",
+ "modified_by": "Administrator",
+ "module": "Manufacturing Pro",
+ "name": "Cost Detail",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

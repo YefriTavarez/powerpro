@@ -1,0 +1,111 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "Prompt",
+ "creation": "2024-12-23 22:41:43.400875",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "is_active",
+  "section_break_bn4312r",
+  "components",
+  "net_cost_detail",
+  "column_break_gelt",
+  "column_break2",
+  "net_amount"
+ ],
+ "fields": [
+  {
+   "allow_on_submit": 1,
+   "default": "Yes",
+   "fieldname": "is_active",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Is Active",
+   "oldfieldname": "is_active",
+   "oldfieldtype": "Select",
+   "options": "\nYes\nNo",
+   "reqd": 1
+  },
+  {
+   "description": "Cost breakup based on Earning and Deduction.",
+   "fieldname": "section_break_bn4312r",
+   "fieldtype": "Tab Break",
+   "label": "Cost Components",
+   "oldfieldname": "section_break_bn4312r",
+   "oldfieldtype": "Section Break",
+   "precision": "2"
+  },
+  {
+   "fieldname": "net_cost_detail",
+   "fieldtype": "Section Break",
+   "options": "Simple"
+  },
+  {
+   "fieldname": "column_break2",
+   "fieldtype": "Column Break",
+   "width": "50%"
+  },
+  {
+   "fieldname": "components",
+   "fieldtype": "Table",
+   "label": "Cost Components",
+   "options": "Cost Detail"
+  },
+  {
+   "fieldname": "column_break_gelt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "net_amount",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "Net Amount",
+   "options": "currency",
+   "read_only": 1
+  }
+ ],
+ "icon": "fa fa-file-text",
+ "idx": 1,
+ "links": [],
+ "modified": "2025-01-03 09:02:00.794420",
+ "modified_by": "Administrator",
+ "module": "Manufacturing Pro",
+ "name": "Cost Structure",
+ "naming_rule": "Set by user",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "show_name_in_global_search": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
