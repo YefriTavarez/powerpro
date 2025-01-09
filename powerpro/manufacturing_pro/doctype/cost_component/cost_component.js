@@ -29,8 +29,8 @@ frappe.ui.form.on("Cost Component", {
 	refresh: function (frm) {
 		// hrms.payroll_utils.set_autocompletions_for_condition_and_formula(frm);
 
-		// if (!frm.doc.__islocal) {
-		// 	frm.trigger("add_update_structure_button");
+		if (!frm.doc.__islocal) {
+			frm.trigger("add_update_structure_button");
 		// 	frm.add_custom_button(
 		// 		__("Cost Structure"),
 		// 		() => {
@@ -38,7 +38,7 @@ frappe.ui.form.on("Cost Component", {
 		// 		},
 		// 		__("Create"),
 		// 	);
-		// }
+		}
 	},
 
 	variable_based_on_taxable_salary: function (frm) {

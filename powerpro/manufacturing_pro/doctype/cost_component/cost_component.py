@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import copy
+from typing import TYPE_CHECKING, List
 
 import frappe
 from frappe import _
@@ -83,40 +84,38 @@ class CostComponent(Document):
 
 	@frappe.whitelist()
 	def get_structures_to_be_updated(self):
-		...
-		# CostStructure = frappe.qb.DocType("Cost Structure")
-		# SalaryDetail = frappe.qb.DocType("Salary Detail")
-		# return (
-		# 	frappe.qb.from_(CostStructure)
-		# 	.inner_join(SalaryDetail)
-		# 	.on(CostStructure.name == SalaryDetail.parent)
-		# 	.select(CostStructure.name)
-		# 	.where((SalaryDetail.cost_component == self.name) & (CostStructure.docstatus != 2))
-		# 	.run(pluck=True)
-		# )
+		CostStructure = frappe.qb.DocType("Cost Structure")
+		CostDetail = frappe.qb.DocType("Cost Detail")
+		return (
+			frappe.qb.from_(CostStructure)
+			.inner_join(CostDetail)
+			.on(CostStructure.name == CostDetail.parent)
+			.select(CostStructure.name)
+			.where((CostDetail.cost_component == self.name) & (CostStructure.docstatus != 2))
+			.run(pluck=True)
+		)
 
 	@frappe.whitelist()
-	def update_salary_structures(self, field, value, structures=None):
-		...
-		# if not structures:
-		# 	structures = self.get_structures_to_be_updated()
+	def update_cost_structures(self, field, value, structures=None):
+		if not structures:
+			structures = self.get_structures_to_be_updated()
 
-		# for structure in structures:
-		# 	salary_structure = frappe.get_doc("Cost Structure", structure)
-		# 	# this is only used for versioning and we do not want
-		# 	# to make separate db calls by using load_doc_before_save
-		# 	# which proves to be expensive while doing bulk replace
-		# 	salary_structure._doc_before_save = copy.deepcopy(salary_structure)
+		for structure in structures:
+			salary_structure = frappe.get_doc("Cost Structure", structure)
+			# this is only used for versioning and we do not want
+			# to make separate db calls by using load_doc_before_save
+			# which proves to be expensive while doing bulk replace
+			salary_structure._doc_before_save = copy.deepcopy(salary_structure)
 
-		# 	salary_detail_row = next(
-		# 		(d for d in salary_structure.get(f"{self.type.lower()}s") if d.cost_component == self.name),
-		# 		None,
-		# 	)
-		# 	salary_detail_row.set(field, value)
-		# 	salary_structure.db_update_all()
-		# 	salary_structure.flags.updater_reference = {
-		# 		"doctype": self.doctype,
-		# 		"docname": self.name,
-		# 		"label": _("via Cost Component sync"),
-		# 	}
-		# 	salary_structure.save_version()
+			salary_detail_row = next(
+				(d for d in salary_structure.get("components") if d.cost_component == self.name),
+				None,
+			)
+			salary_detail_row.set(field, value)
+			salary_structure.db_update_all()
+			salary_structure.flags.updater_reference = {
+				"doctype": self.doctype,
+				"docname": self.name,
+				"label": _("via Cost Component sync"),
+			}
+			salary_structure.save_version()
