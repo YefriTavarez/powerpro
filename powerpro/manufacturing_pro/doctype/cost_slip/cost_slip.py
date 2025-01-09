@@ -105,112 +105,12 @@ class CostSlip(TransactionBase):
 		self.name = make_autoname(self.series)
 
 	def validate(self):
-		self.check_salary_withholding()
-		self.status = self.get_status()
-		validate_active_employee(self.employee)
-		self.validate_dates()
-		self.check_existing()
-
-		if not self.salary_slip_based_on_timesheet:
-			self.get_date_details()
-
-		if not (len(self.get("earnings")) or len(self.get("deductions"))):
-			# get details from salary structure
-			self.get_emp_and_working_day_details()
-		else:
-			self.get_working_days_details(lwp=self.leave_without_pay)
-
 		self.set_salary_structure_assignment()
 		self.calculate_net_pay()
-		self.compute_year_to_date()
-		self.compute_month_to_date()
-		self.compute_component_wise_year_to_date()
-
-		self.add_leave_balances()
-
-		max_working_hours = frappe.db.get_single_value(
-			"Payroll Settings", "max_working_hours_against_timesheet"
-		)
-		if max_working_hours:
-			if self.salary_slip_based_on_timesheet and (self.total_working_hours > int(max_working_hours)):
-				frappe.msgprint(
-					_("Total working hours should not be greater than max working hours {0}").format(
-						max_working_hours
-					),
-					alert=True,
-				)
-
-	def check_salary_withholding(self):
-		withholding = get_salary_withholdings(self.start_date, self.end_date, self.employee)
-		if withholding:
-			self.salary_withholding = withholding[0].salary_withholding
-			self.salary_withholding_cycle = withholding[0].salary_withholding_cycle
-		else:
-			self.salary_withholding = None
-
-	def set_net_total_in_words(self):
-		doc_currency = self.currency
-		company_currency = erpnext.get_company_currency(self.company)
-		total = self.net_pay if self.is_rounding_total_disabled() else self.rounded_total
-		base_total = self.base_net_pay if self.is_rounding_total_disabled() else self.base_rounded_total
-		self.total_in_words = money_in_words(total, doc_currency)
-		self.base_total_in_words = money_in_words(base_total, company_currency)
-
-	def on_update(self):
-		self.publish_update()
 
 	def on_submit(self):
 		if self.net_pay < 0:
 			frappe.throw(_("Net Pay cannot be less than 0"))
-		else:
-			self.set_status()
-			self.update_status(self.name)
-
-			make_loan_repayment_entry(self)
-
-			if not frappe.flags.via_payroll_entry and not frappe.flags.in_patch:
-				email_salary_slip = cint(
-					frappe.db.get_single_value("Payroll Settings", "email_salary_slip_to_employee")
-				)
-				if email_salary_slip:
-					self.email_salary_slip()
-
-		self.update_payment_status_for_gratuity()
-
-	def update_payment_status_for_gratuity(self):
-		additional_salary = frappe.db.get_all(
-			"Additional Cost",
-			filters={
-				"payroll_date": ("between", [self.start_date, self.end_date]),
-				"employee": self.employee,
-				"ref_doctype": "Gratuity",
-				"docstatus": 1,
-			},
-			fields=["ref_docname", "name"],
-			limit=1,
-		)
-
-		if additional_salary:
-			status = "Paid" if self.docstatus == 1 else "Unpaid"
-			if additional_salary[0].name in [entry.additional_salary for entry in self.earnings]:
-				frappe.db.set_value("Gratuity", additional_salary[0].ref_docname, "status", status)
-
-	def on_cancel(self):
-		self.set_status()
-		self.update_status()
-		self.update_payment_status_for_gratuity()
-
-		cancel_loan_repayment_entry(self)
-		self.publish_update()
-
-	def publish_update(self):
-		employee_user = frappe.db.get_value("Operation", self.employee, "user_id", cache=True)
-		frappe.publish_realtime(
-			event="hrms:update_salary_slips",
-			message={"employee": self.employee},
-			user=employee_user,
-			after_commit=True,
-		)
 
 	def on_trash(self):
 		from frappe.model.naming import revert_series_if_last
@@ -221,12 +121,12 @@ class CostSlip(TransactionBase):
 		if self.docstatus == 2:
 			return "Cancelled"
 		else:
-			if self.salary_withholding:
-				return "Withheld"
-			elif self.docstatus == 0:
+			if self.docstatus == 0:
 				return "Draft"
 			elif self.docstatus == 1:
 				return "Submitted"
+			elif self.docstatus == 2:
+				return "Cancelled"
 
 	def validate_dates(self):
 		self.validate_from_to_dates("start_date", "end_date")
