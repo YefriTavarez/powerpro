@@ -28,8 +28,8 @@ export default {
 			// validate percentage
 			if (value < 0) {
 				self.percentage = 0;
-			} else if (value > 100) {
-				self.percentage = 100;
+			// } else if (value > 100) {
+			// 	self.percentage = 100;
 			}
 
 			// let timeoutId;
