@@ -117,150 +117,41 @@ class CostSlip(TransactionBase):
 
 		revert_series_if_last(self.series, self.name)
 
-	def get_status(self):
-		if self.docstatus == 2:
-			return "Cancelled"
-		else:
-			if self.docstatus == 0:
-				return "Draft"
-			elif self.docstatus == 1:
-				return "Submitted"
-			elif self.docstatus == 2:
-				return "Cancelled"
-
-	def validate_dates(self):
-		self.validate_from_to_dates("start_date", "end_date")
-
-		if not self.joining_date:
-			frappe.throw(
-				_("Please set the Date Of Joining for employee {0}").format(frappe.bold(self.employee_name))
-			)
-
-		if date_diff(self.end_date, self.joining_date) < 0:
-			frappe.throw(_("Cannot create Cost Slip for Operation joining after Payroll Period"))
-
-		if self.relieving_date and date_diff(self.relieving_date, self.start_date) < 0:
-			frappe.throw(_("Cannot create Cost Slip for Operation who has left before Payroll Period"))
-
-	def is_rounding_total_disabled(self):
-		return cint(frappe.db.get_single_value("Payroll Settings", "disable_rounded_total"))
-
-	def check_existing(self):
-		if not self.salary_slip_based_on_timesheet:
-			ss = frappe.qb.DocType("Cost Slip")
-			query = (
-				frappe.qb.from_(ss)
-				.select(ss.name)
-				.where(
-					(ss.start_date == self.start_date)
-					& (ss.end_date == self.end_date)
-					& (ss.docstatus != 2)
-					& (ss.employee == self.employee)
-					& (ss.name != self.name)
-				)
-			)
-
-			if self.payroll_entry:
-				query = query.where(ss.payroll_entry == self.payroll_entry)
-
-			ret_exist = query.run()
-
-			if ret_exist:
-				frappe.throw(
-					_("Cost Slip of employee {0} already created for this period").format(self.employee)
-				)
-		else:
-			for data in self.timesheets:
-				if frappe.db.get_value("Timesheet", data.time_sheet, "status") == "Payrolled":
-					frappe.throw(
-						_("Cost Slip of employee {0} already created for time sheet {1}").format(
-							self.employee, data.time_sheet
-						)
-					)
-
-	def get_date_details(self):
-		if not self.end_date:
-			date_details = get_start_end_dates(self.payroll_frequency, self.start_date or self.posting_date)
-			self.start_date = date_details.start_date
-			self.end_date = date_details.end_date
-
-	@frappe.whitelist()
-	def get_emp_and_working_day_details(self):
-		"""First time, load all the components from salary structure"""
-		if self.employee:
-			self.set("earnings", [])
-			self.set("deductions", [])
-
-			if not self.salary_slip_based_on_timesheet:
-				self.get_date_details()
-
-			self.validate_dates()
-
-			# getin leave details
-			self.get_working_days_details()
-			struct = self.check_sal_struct()
-
-			if struct:
-				self.set_salary_structure_doc()
-				self.salary_slip_based_on_timesheet = (
-					self._salary_structure_doc.salary_slip_based_on_timesheet or 0
-				)
-				self.set_time_sheet()
-				self.pull_sal_struct()
-
-	def set_time_sheet(self):
-		if self.salary_slip_based_on_timesheet:
-			self.set("timesheets", [])
-
-			Timesheet = frappe.qb.DocType("Timesheet")
-			timesheets = (
-				frappe.qb.from_(Timesheet)
-				.select(Timesheet.star)
-				.where(
-					(Timesheet.employee == self.employee)
-					& (Timesheet.start_date.between(self.start_date, self.end_date))
-					& ((Timesheet.status == "Submitted") | (Timesheet.status == "Billed"))
-				)
-			).run(as_dict=1)
-
-			for data in timesheets:
-				self.append("timesheets", {"time_sheet": data.name, "working_hours": data.total_hours})
-
-	def check_sal_struct(self):
-		ss = frappe.qb.DocType("Cost Structure")
-		ssa = frappe.qb.DocType("Cost Structure Assignment")
+	def check_cost_struct(self):
+		cs = frappe.qb.DocType("Cost Structure")
+		csa = frappe.qb.DocType("Cost Structure Assignment")
 
 		query = (
-			frappe.qb.from_(ssa)
-			.join(ss)
-			.on(ssa.salary_structure == ss.name)
-			.select(ssa.salary_structure)
+			frappe.qb.from_(csa)
+			.join(cs)
+			.on(csa.cost_structure == cs.name)
+			.select(csa.cost_structure)
 			.where(
-				(ssa.docstatus == 1)
-				& (ss.docstatus == 1)
-				& (ss.is_active == "Yes")
-				& (ssa.employee == self.employee)
+				(csa.docstatus == 1)
+				& (cs.docstatus == 1)
+				& (cs.is_active == "Yes")
+				& (csa.employee == self.employee)
 				& (
-					(ssa.from_date <= self.start_date)
-					| (ssa.from_date <= self.end_date)
-					| (ssa.from_date <= self.joining_date)
+					(csa.from_date <= self.start_date)
+					| (csa.from_date <= self.end_date)
+					| (csa.from_date <= self.joining_date)
 				)
 			)
-			.orderby(ssa.from_date, order=Order.desc)
+			.orderby(csa.from_date, order=Order.desc)
 			.limit(1)
 		)
 
 		if not self.salary_slip_based_on_timesheet and self.payroll_frequency:
-			query = query.where(ss.payroll_frequency == self.payroll_frequency)
+			query = query.where(cs.payroll_frequency == self.payroll_frequency)
 
 		st_name = query.run()
 
 		if st_name:
-			self.salary_structure = st_name[0][0]
-			return self.salary_structure
+			self.cost_structure = st_name[0][0]
+			return self.cost_structure
 
 		else:
-			self.salary_structure = None
+			self.cost_structure = None
 			frappe.msgprint(
 				_("No active or default Cost Structure found for employee {0} for the given dates").format(
 					self.employee
@@ -269,10 +160,10 @@ class CostSlip(TransactionBase):
 			)
 
 	def pull_sal_struct(self):
-		from hrms.payroll.doctype.salary_structure.salary_structure import make_salary_slip
+		from hrms.payroll.doctype.cost_structure.cost_structure import make_salary_slip
 
 		if self.salary_slip_based_on_timesheet:
-			self.salary_structure = self._salary_structure_doc.name
+			self.cost_structure = self._salary_structure_doc.name
 			self.hour_rate = self._salary_structure_doc.hour_rate
 			self.base_hour_rate = flt(self.hour_rate) * flt(self.exchange_rate)
 			self.total_working_hours = sum([d.working_hours or 0.0 for d in self.timesheets]) or 0.0
@@ -618,7 +509,7 @@ class CostSlip(TransactionBase):
 			"Cost Structure Assignment",
 			{
 				"employee": self.employee,
-				"salary_structure": self.salary_structure,
+				"cost_structure": self.cost_structure,
 				"from_date": ("<=", self.actual_start_date),
 				"docstatus": 1,
 			},
@@ -644,7 +535,7 @@ class CostSlip(TransactionBase):
 				flt(self.gross_pay) * flt(self.exchange_rate), self.precision("base_gross_pay")
 			)
 
-		if self.salary_structure:
+		if self.cost_structure:
 			self.calculate_component_amounts("earnings")
 
 		# get remaining numbers of sub-period (period for which one salary is processed)
@@ -661,7 +552,7 @@ class CostSlip(TransactionBase):
 
 		set_gross_pay_and_base_gross_pay()
 
-		if self.salary_structure:
+		if self.cost_structure:
 			self.calculate_component_amounts("deductions")
 
 		set_loan_repayment(self)
@@ -968,7 +859,7 @@ class CostSlip(TransactionBase):
 			self.add_tax_components()
 
 	def set_salary_structure_doc(self) -> None:
-		self._salary_structure_doc = frappe.get_cached_doc("Cost Structure", self.salary_structure)
+		self._salary_structure_doc = frappe.get_cached_doc("Cost Structure", self.cost_structure)
 		# sanitize condition and formula fields
 		for table in ("earnings", "deductions"):
 			for row in self._salary_structure_doc.get(table):
@@ -1182,7 +1073,7 @@ class CostSlip(TransactionBase):
 				alert=True,
 			)
 
-		if tax_components and self.payroll_period and self.salary_structure:
+		if tax_components and self.payroll_period and self.cost_structure:
 			self.tax_slab = self.get_income_tax_slabs()
 			self.compute_taxable_earnings_for_year()
 
@@ -1605,7 +1496,7 @@ class CostSlip(TransactionBase):
 		timesheet_component = self._salary_structure_doc.salary_component
 
 		if (
-			self.salary_structure
+			self.cost_structure
 			and cint(row.depends_on_payment_days)
 			and cint(self.total_working_days)
 			and not (
@@ -1840,7 +1731,7 @@ class CostSlip(TransactionBase):
 		wages_amount = self.total_working_hours * self.hour_rate
 		self.base_hour_rate = flt(self.hour_rate) * flt(self.exchange_rate)
 		salary_component = frappe.db.get_value(
-			"Cost Structure", {"name": self.salary_structure}, "salary_component", cache=True
+			"Cost Structure", {"name": self.cost_structure}, "salary_component", cache=True
 		)
 		if self.earnings:
 			for i, earning in enumerate(self.earnings):
