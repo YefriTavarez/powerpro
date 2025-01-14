@@ -73,8 +73,34 @@ class ItemGenerator(Document):
 	def render_description(self):
 		item_name = frappe.get_doc("Item Name", self.item)
 
+		def remove_trailing_zeroes(value):
+			value = str(value)
+
+			if "." not in value:
+				return value
+
+			if value.endswith("0"):
+				return remove_trailing_zeroes(value[:-1])
+			
+			if value.endswith("."):
+				return value[:-1]
+			
+			return value
+
+
 		if template := item_name.item_description_template:
-			self.description = frappe.render_template(template, self.as_dict())
+			context = frappe._dict()
+
+			self_dict = self.as_dict()
+			for key in self_dict.keys():
+				value = self_dict[key]
+				if isinstance(value, float):
+					formatted = "{:.3f}".format(value)
+
+					value = remove_trailing_zeroes(formatted)
+				context[key] = value
+
+			self.description = frappe.render_template(template, context=context)
 		else:
 			frappe.throw("No se especificó el valor para el campo 'Plantilla para la Descripción' en el doctype Nombre de Producto")
 
