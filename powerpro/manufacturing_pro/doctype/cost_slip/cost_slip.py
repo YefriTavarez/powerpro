@@ -25,26 +25,12 @@ from frappe.utils import (
 	money_in_words,
 	rounded,
 )
-from frappe.utils.background_jobs import enqueue
+# from frappe.utils.background_jobs import enqueue
 
-import erpnext
+# import erpnext
 from erpnext.accounts.utils import get_fiscal_year
 from erpnext.utilities.transaction_base import TransactionBase
 
-from hrms.hr.utils import validate_active_employee
-from hrms.payroll.doctype.additional_salary.additional_salary import get_additional_salaries
-from hrms.payroll.doctype.employee_benefit_application.employee_benefit_application import (
-	get_benefit_component_amount,
-)
-from hrms.payroll.doctype.employee_benefit_claim.employee_benefit_claim import (
-	get_benefit_claim_amount,
-	get_last_payroll_period_benefits,
-)
-from hrms.payroll.doctype.payroll_entry.payroll_entry import get_salary_withholdings, get_start_end_dates
-from hrms.payroll.doctype.payroll_period.payroll_period import (
-	get_payroll_period,
-	get_period_factor,
-)
 from hrms.payroll.utils import sanitize_expression
 # from hrms.utils.holiday_list import get_holiday_dates_between
 
@@ -161,9 +147,6 @@ class CostSlip(TransactionBase):
 			self.hour_rate = self._cost_structure_doc.hour_rate
 			self.base_hour_rate = flt(self.hour_rate) * flt(self.exchange_rate)
 			self.total_working_hours = sum([d.working_hours or 0.0 for d in self.timesheets]) or 0.0
-			wages_amount = self.hour_rate * self.total_working_hours
-
-			self.add_earning_for_hourly_wages(self, self._cost_structure_doc.salary_component, wages_amount)
 
 		make_cost_slip(self._cost_structure_doc.name, self)
 
@@ -236,64 +219,9 @@ class CostSlip(TransactionBase):
 
 		return attendance_details
 
-	def calculate_lwp_ppl_and_absent_days_based_on_attendance(
-		self, holidays, daily_wages_fraction_for_half_day, consider_marked_attendance_on_holidays
-	):
-		lwp = 0
-		absent = 0
-
-		leave_type_map = self.get_leave_type_map()
-		attendance_details = self.get_employee_attendance(
-			start_date=self.start_date, end_date=self.actual_end_date
-		)
-
-		for d in attendance_details:
-			if (
-				d.status in ("Half Day", "On Leave")
-				and d.leave_type
-				and d.leave_type not in leave_type_map.keys()
-			):
-				continue
-
-			# skip counting absent on holidays
-			if not consider_marked_attendance_on_holidays and getdate(d.attendance_date) in holidays:
-				if d.status in ["Absent", "Half Day"] or (
-					d.leave_type
-					and d.leave_type in leave_type_map.keys()
-					and not leave_type_map[d.leave_type]["include_holiday"]
-				):
-					continue
-
-			if d.leave_type:
-				fraction_of_daily_salary_per_leave = leave_type_map[d.leave_type][
-					"fraction_of_daily_salary_per_leave"
-				]
-
-			if d.status == "Half Day":
-				equivalent_lwp = 1 - daily_wages_fraction_for_half_day
-
-				if d.leave_type in leave_type_map.keys() and leave_type_map[d.leave_type]["is_ppl"]:
-					equivalent_lwp *= (
-						fraction_of_daily_salary_per_leave if fraction_of_daily_salary_per_leave else 1
-					)
-				lwp += equivalent_lwp
-
-			elif d.status == "On Leave" and d.leave_type and d.leave_type in leave_type_map.keys():
-				equivalent_lwp = 1
-				if leave_type_map[d.leave_type]["is_ppl"]:
-					equivalent_lwp *= (
-						fraction_of_daily_salary_per_leave if fraction_of_daily_salary_per_leave else 1
-					)
-				lwp += equivalent_lwp
-
-			elif d.status == "Absent":
-				absent += 1
-
-		return lwp, absent
-
 	def add_earning_for_hourly_wages(self, doc, salary_component, amount):
 		row_exists = False
-		for row in doc.earnings:
+		for row in doc.components:
 			if row.salary_component == salary_component:
 				row.amount = amount
 				row_exists = True
@@ -309,7 +237,7 @@ class CostSlip(TransactionBase):
 				"default_amount": 0.0,
 				"additional_amount": 0.0,
 			}
-			doc.append("earnings", wages_row)
+			doc.append("components", wages_row)
 
 	def set_cost_structure_assignment(self):
 		self._cost_structure_assignment = frappe.db.get_value(
@@ -334,13 +262,14 @@ class CostSlip(TransactionBase):
 
 	def calculate_net_amount(self, skip_tax_breakup_computation: bool = False):
 		# def set_gross_pay_and_base_gross_pay():
-		# 	self.gross_pay = self.get_component_totals("earnings", depends_on_payment_days=1)
 		# 	self.base_gross_pay = flt(
 		# 		flt(self.gross_pay) * flt(self.exchange_rate), self.precision("base_gross_pay")
 		# 	)
 
 		if self.cost_structure:
 			self.calculate_component_amounts("components")
+
+		self.net_amount = self.get_component_totals("components")
 
 		# get remaining numbers of sub-period (period for which one salary is processed)
 		# if self.payroll_period:
@@ -362,7 +291,7 @@ class CostSlip(TransactionBase):
 		# set_loan_repayment(self)
 
 		self.set_precision_for_component_amounts()
-		self.set_net_amount()
+		# self.set_net_amount()
 
 	def set_net_amount(self):
 		# self.total_deduction = self.get_component_totals("deductions")
@@ -370,7 +299,7 @@ class CostSlip(TransactionBase):
 		# self.base_total_deduction = flt(
 		# 	flt(self.total_deduction) * flt(self.exchange_rate), self.precision("base_total_deduction")
 		# )
-		self.net_amount = flt(self.gross_pay)
+		# self.net_amount = flt(self.gross_pay)
 		self.rounded_total = rounded(self.net_amount)
 		self.base_net_pay = flt(flt(self.net_amount) * flt(self.exchange_rate), self.precision("base_net_pay"))
 		self.base_rounded_total = flt(rounded(self.base_net_pay), self.precision("base_net_pay"))
@@ -542,26 +471,12 @@ class CostSlip(TransactionBase):
 			)
 			raise
 
-	def add_additional_salary_components(self, component_type):
-		additional_salaries = get_additional_salaries(
-			self.operation, self.start_date, self.end_date, component_type
-		)
-
-		for additional_salary in additional_salaries:
-			self.update_component_row(
-				get_salary_component_data(additional_salary.component),
-				additional_salary.amount,
-				component_type,
-				additional_salary,
-				is_recurring=additional_salary.is_recurring,
-			)
-
 	def update_component_row(
 		self,
 		component_data,
 		amount,
 		component_type,
-		additional_salary=None,
+		additional_cost=None,
 		is_recurring=0,
 		data=None,
 		default_amount=None,
@@ -572,13 +487,13 @@ class CostSlip(TransactionBase):
 			if d.salary_component != component_data.salary_component:
 				continue
 
-			if (not d.additional_salary and (not additional_salary or additional_salary.overwrite)) or (
-				additional_salary and additional_salary.name == d.additional_salary
+			if (not d.additional_cost and (not additional_cost or additional_cost.overwrite)) or (
+				additional_cost and additional_cost.name == d.additional_cost
 			):
 				component_row = d
 				break
 
-		if additional_salary and additional_salary.overwrite:
+		if additional_cost and additional_cost.overwrite:
 			# Additional Cost with overwrite checked, remove default rows of same component
 			self.set(
 				component_type,
@@ -586,7 +501,7 @@ class CostSlip(TransactionBase):
 					d
 					for d in self.get(component_type)
 					if d.salary_component != component_data.salary_component
-					or (d.additional_salary and additional_salary.name != d.additional_salary)
+					or (d.additional_cost and additional_cost.name != d.additional_cost)
 					or d == component_row
 				],
 			)
@@ -608,8 +523,8 @@ class CostSlip(TransactionBase):
 			):
 				component_row.set(attr, component_data.get(attr))
 
-		if additional_salary:
-			if additional_salary.overwrite:
+		if additional_cost:
+			if additional_cost.overwrite:
 				component_row.additional_amount = flt(
 					flt(amount) - flt(component_row.get("default_amount", 0)),
 					component_row.precision("additional_amount"),
@@ -618,10 +533,10 @@ class CostSlip(TransactionBase):
 				component_row.default_amount = 0
 				component_row.additional_amount = amount
 
-			component_row.is_recurring_additional_salary = is_recurring
-			component_row.additional_salary = additional_salary.name
+			component_row.is_recurring_additional_cost = is_recurring
+			component_row.additional_cost = additional_cost.name
 			component_row.deduct_full_tax_on_selected_payroll_date = (
-				additional_salary.deduct_full_tax_on_selected_payroll_date
+				additional_cost.deduct_full_tax_on_selected_payroll_date
 			)
 		else:
 			component_row.default_amount = default_amount or amount
@@ -771,7 +686,7 @@ class CostSlip(TransactionBase):
 		return flt(result[0][0]) if result else 0.0
 
 	def get_tax_paid_in_period(self, start_date, end_date, tax_component):
-		# find total_tax_paid, tax paid for benefit, additional_salary
+		# find total_tax_paid, tax paid for benefit, additional_cost
 		total_tax_paid = self.get_salary_slip_details(
 			start_date,
 			end_date,
@@ -808,9 +723,9 @@ class CostSlip(TransactionBase):
 					additional_income += additional_amount
 
 					# Get additional amount based on future recurring additional salary
-					if additional_amount and earning.is_recurring_additional_salary:
+					if additional_amount and earning.is_recurring_additional_cost:
 						additional_income += self.get_future_recurring_additional_amount(
-							earning.additional_salary, earning.additional_amount
+							earning.additional_cost, earning.additional_amount
 						)  # Used earning.additional_amount to consider the amount for the full month
 
 					if earning.deduct_full_tax_on_selected_payroll_date:
@@ -827,9 +742,9 @@ class CostSlip(TransactionBase):
 					additional_income -= additional_amount
 					amount_exempted_from_income_tax = flt(amount - additional_amount)
 
-					if additional_amount and ded.is_recurring_additional_salary:
+					if additional_amount and ded.is_recurring_additional_cost:
 						additional_income -= self.get_future_recurring_additional_amount(
-							ded.additional_salary, ded.additional_amount
+							ded.additional_cost, ded.additional_amount
 						)  # Used ded.additional_amount to consider the amount for the full month
 
 		return frappe._dict(
@@ -844,7 +759,7 @@ class CostSlip(TransactionBase):
 
 	def get_future_recurring_period(
 		self,
-		additional_salary,
+		additional_cost,
 	):
 		to_date = None
 
@@ -852,7 +767,7 @@ class CostSlip(TransactionBase):
 			to_date = self.relieving_date
 
 		if not to_date:
-			to_date = frappe.db.get_value("Additional Cost", additional_salary, "to_date", cache=True)
+			to_date = frappe.db.get_value("Additional Cost", additional_cost, "to_date", cache=True)
 
 		# future month count excluding current
 		from_date, to_date = getdate(self.start_date), getdate(to_date)
@@ -866,10 +781,10 @@ class CostSlip(TransactionBase):
 
 		return future_recurring_period
 
-	def get_future_recurring_additional_amount(self, additional_salary, monthly_additional_amount):
+	def get_future_recurring_additional_amount(self, additional_cost, monthly_additional_amount):
 		future_recurring_additional_amount = 0
 
-		future_recurring_period = self.get_future_recurring_period(additional_salary)
+		future_recurring_period = self.get_future_recurring_period(additional_cost)
 
 		if future_recurring_period > 0:
 			future_recurring_additional_amount = (
@@ -879,41 +794,7 @@ class CostSlip(TransactionBase):
 
 	def get_amount_based_on_payment_days(self, row):
 		amount, additional_amount = row.amount, row.additional_amount
-		timesheet_component = self._cost_structure_doc.salary_component
-
-		if (
-			self.cost_structure
-			and cint(row.depends_on_payment_days)
-			and cint(self.total_working_days)
-			and not (
-				row.additional_salary and row.default_amount
-			)  # to identify overwritten additional salary
-			and (
-				row.salary_component != timesheet_component
-				or getdate(self.start_date) < self.joining_date
-				or (self.relieving_date and getdate(self.end_date) > self.relieving_date)
-			)
-		):
-			additional_amount = flt(
-				(flt(row.additional_amount) * flt(self.payment_days) / cint(self.total_working_days)),
-				row.precision("additional_amount"),
-			)
-			amount = (
-				flt(
-					(flt(row.default_amount) * flt(self.payment_days) / cint(self.total_working_days)),
-					row.precision("amount"),
-				)
-				+ additional_amount
-			)
-
-		elif (
-			not self.payment_days
-			and row.salary_component != timesheet_component
-			and cint(row.depends_on_payment_days)
-		):
-			amount, additional_amount = 0, 0
-		elif not row.amount:
-			amount = flt(row.default_amount) + flt(row.additional_amount)
+		amount = flt(row.default_amount) + flt(row.additional_amount)
 
 		# apply rounding
 		if frappe.db.get_value(
@@ -1025,7 +906,6 @@ class CostSlip(TransactionBase):
 
 	@frappe.whitelist()
 	def process_salary_based_on_working_days(self):
-		self.get_working_days_details(lwp=self.leave_without_pay)
 		self.calculate_net_amount()
 
 	@frappe.whitelist()
@@ -1359,8 +1239,8 @@ def throw_error_message(row, error, title, description=None):
 	frappe.throw(message, title=title)
 
 
-def on_doctype_update():
-	frappe.db.add_index("Cost Slip", ["operation", "posting_date"])
+# def on_doctype_update():
+# 	frappe.db.add_index("Cost Slip", ["operation", "posting_date"])
 
 
 def _safe_eval(code: str, eval_globals: dict | None = None, eval_locals: dict | None = None):
