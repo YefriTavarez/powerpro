@@ -106,7 +106,7 @@ class CostStructure(Document):
 
 	def validate_amount(self):
 		if flt(self.net_amount) < 0:
-			frappe.throw(_("Net amount cannot be negative"))
+			frappe.throw(_("Net Amount cannot be negative"))
 
 	def validate_payment_days_based_dependent_component(self):
 		abbreviations = self.get_component_abbreviations()
@@ -130,25 +130,8 @@ class CostStructure(Document):
 					frappe.throw(message, title=_("Payment Days Dependency"))
 
 	def get_component_abbreviations(self):
-		abbr = [d.abbr for d in self.earnings if d.depends_on_payment_days]
-		abbr += [d.abbr for d in self.deductions if d.depends_on_payment_days]
-
+		abbr = [d.abbr for d in self.components if d.depends_on_payment_days]
 		return abbr
-
-	def validate_timesheet_component(self):
-		if not self.salary_slip_based_on_timesheet:
-			return
-
-		for component in self.earnings:
-			if component.cost_component == self.cost_component:
-				frappe.msgprint(
-					_(
-						"Row #{0}: Timesheet amount will overwrite the Earning component amount for the Salary Component {1}"
-					).format(self.idx, frappe.bold(self.cost_component)),
-					title=_("Warning"),
-					indicator="orange",
-				)
-				break
 
 	def sanitize_condition_and_formula_fields(self):
 		for table in ("components",):
@@ -174,11 +157,11 @@ class CostStructure(Document):
 				conditions.append(f"{field}=%s")
 				values.append(value)
 
-		condition_str = " and " + " and ".join(conditions) if conditions else ""
+		condition_str = " where " + " and ".join(conditions) if conditions else ""
 
 		# nosemgrep: frappe-semgrep-rules.rules.frappe-using-db-sql
 		employees = frappe.db.sql_list(
-			f"select name from tabEmployee where status='Active' {condition_str}",
+			f"Select name From `tabOperation` {condition_str}",
 			tuple(values),
 		)
 
@@ -191,7 +174,7 @@ class CostStructure(Document):
 		grade=None,
 		department=None,
 		designation=None,
-		employee=None,
+		operation=None,
 		payroll_payable_account=None,
 		from_date=None,
 		base=None,
@@ -203,7 +186,7 @@ class CostStructure(Document):
 			grade=grade,
 			department=department,
 			designation=designation,
-			name=employee,
+			name=operation,
 			branch=branch,
 		)
 
@@ -213,7 +196,7 @@ class CostStructure(Document):
 					assign_salary_structure_for_employees,
 					timeout=3000,
 					employees=employees,
-					salary_structure=self,
+					cost_structure=self,
 					payroll_payable_account=payroll_payable_account,
 					from_date=from_date,
 					base=base,
@@ -231,12 +214,12 @@ class CostStructure(Document):
 					income_tax_slab=income_tax_slab,
 				)
 		else:
-			frappe.msgprint(_("No Employee Found"))
+			frappe.msgprint(_("No Operation Found"))
 
 
 def assign_salary_structure_for_employees(
 	employees,
-	salary_structure,
+	cost_structure,
 	payroll_payable_account=None,
 	from_date=None,
 	base=None,
@@ -244,23 +227,23 @@ def assign_salary_structure_for_employees(
 	income_tax_slab=None,
 ):
 	assignments = []
-	existing_assignments_for = get_existing_assignments(employees, salary_structure, from_date)
+	existing_assignments_for = get_existing_assignments(employees, cost_structure, from_date)
 	count = 0
 	savepoint = "before_assignment_submission"
 
-	for employee in employees:
+	for operation in employees:
 		try:
 			frappe.db.savepoint(savepoint)
-			if employee in existing_assignments_for:
+			if operation in existing_assignments_for:
 				continue
 
 			count += 1
 
 			assignment = create_salary_structure_assignment(
-				employee,
-				salary_structure.name,
-				salary_structure.company,
-				salary_structure.currency,
+				operation,
+				cost_structure.name,
+				cost_structure.company,
+				cost_structure.currency,
 				from_date,
 				payroll_payable_account,
 				base,
@@ -275,8 +258,8 @@ def assign_salary_structure_for_employees(
 		except Exception:
 			frappe.db.rollback(save_point=savepoint)
 			frappe.log_error(
-				f"Salary Structure Assignment failed for employee {employee}",
-				reference_doctype="Salary Structure Assignment",
+				f"Cost Structure Assignment failed for operation {operation}",
+				reference_doctype="Cost Structure Assignment",
 			)
 
 	if assignments:
@@ -284,8 +267,8 @@ def assign_salary_structure_for_employees(
 
 
 def create_salary_structure_assignment(
-	employee,
-	salary_structure,
+	operation,
+	cost_structure,
 	company,
 	currency,
 	from_date,
@@ -294,7 +277,7 @@ def create_salary_structure_assignment(
 	variable=None,
 	income_tax_slab=None,
 ):
-	assignment = frappe.new_doc("Salary Structure Assignment")
+	assignment = frappe.new_doc("Cost Structure Assignment")
 
 	if not payroll_payable_account:
 		payroll_payable_account = frappe.db.get_value("Company", company, "default_payroll_payable_account")
@@ -312,8 +295,8 @@ def create_salary_structure_assignment(
 			)
 		)
 
-	assignment.employee = employee
-	assignment.salary_structure = salary_structure
+	assignment.operation = operation
+	assignment.cost_structure = cost_structure
 	assignment.company = company
 	assignment.currency = currency
 	assignment.payroll_payable_account = payroll_payable_account
@@ -327,30 +310,30 @@ def create_salary_structure_assignment(
 	return assignment.name
 
 
-def get_existing_assignments(employees, salary_structure, from_date):
+def get_existing_assignments(employees, cost_structure, from_date):
 	# nosemgrep: frappe-semgrep-rules.rules.frappe-using-db-sql
-	salary_structures_assignments = frappe.db.sql_list(
+	cost_structures_assignments = frappe.db.sql_list(
 		f"""
-		SELECT DISTINCT employee FROM `tabSalary Structure Assignment`
-		WHERE salary_structure=%s AND employee IN ({", ".join(["%s"] * len(employees))})
+		SELECT DISTINCT operation FROM `tabCost Structure Assignment`
+		WHERE cost_structure=%s AND operation IN ({", ".join(["%s"] * len(employees))})
 		AND from_date=%s AND company=%s AND docstatus=1
 		""",
-		[salary_structure.name, *employees, from_date, salary_structure.company],
+		[cost_structure.name, *employees, from_date, cost_structure.company],
 	)
-	if salary_structures_assignments:
+	if cost_structures_assignments:
 		frappe.msgprint(
 			_(
-				"Skipping Salary Structure Assignment for the following employees, as Salary Structure Assignment records already exists against them. {0}"
-			).format("\n".join(salary_structures_assignments))
+				"Skipping Cost Structure Assignment for the following employees, as Cost Structure Assignment records already exists against them. {0}"
+			).format("\n".join(cost_structures_assignments))
 		)
-	return salary_structures_assignments
+	return cost_structures_assignments
 
 
 @frappe.whitelist()
-def make_salary_slip(
+def make_cost_slip(
 	source_name,
 	target_doc=None,
-	employee=None,
+	operation=None,
 	posting_date=None,
 	as_print=False,
 	print_format=None,
@@ -358,22 +341,22 @@ def make_salary_slip(
 	ignore_permissions=False,
 ):
 	def postprocess(source, target):
-		if employee:
-			target.employee = employee
+		if operation:
+			target.operation = operation
 			if posting_date:
 				target.posting_date = posting_date
 
 		target.run_method("process_salary_structure", for_preview=for_preview)
 
 	doc = get_mapped_doc(
-		"Salary Structure",
+		"Cost Structure",
 		source_name,
 		{
-			"Salary Structure": {
-				"doctype": "Salary Slip",
-				"field_map": {
+			"Cost Structure": {
+				"doctype": "Cost Slip",
+				"field_map": { # ToDo: Double check these fields
 					"total_earning": "gross_pay",
-					"name": "salary_structure",
+					"name": "cost_structure",
 					"currency": "currency",
 				},
 			}
@@ -386,25 +369,25 @@ def make_salary_slip(
 	)
 
 	if cint(as_print):
-		doc.name = f"Preview for {employee}"
+		doc.name = f"Preview for {operation}"
 		return frappe.get_print(doc.doctype, doc.name, doc=doc, print_format=print_format)
 	else:
 		return doc
 
 
 @frappe.whitelist()
-def get_employees(salary_structure):
+def get_employees(cost_structure):
 	employees = frappe.get_list(
-		"Salary Structure Assignment",
-		filters={"salary_structure": salary_structure, "docstatus": 1},
-		pluck="employee",
+		"Cost Structure Assignment",
+		filters={"cost_structure": cost_structure, "docstatus": 1},
+		pluck="operation",
 	)
 
 	if not employees:
 		frappe.throw(
 			_(
-				"There's no Employee with Salary Structure: {0}. Assign {1} to an Employee to preview Salary Slip"
-			).format(salary_structure, salary_structure)
+				"There's no Operation with Cost Structure: {0}. Assign {1} to an Operation to preview Cost Slip"
+			).format(cost_structure, cost_structure)
 		)
 
 	return list(set(employees))
