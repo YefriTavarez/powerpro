@@ -56,29 +56,36 @@
             if (frm.doc.docstatus !== 1) {
                 return ; // only aplicable for submitted documents
             }
-            frm.add_custom_button("Crear SKU", function() {
-                if (frm.doc.__unsaved) {
-                    frappe.throw("Favor de guardar el documento antes de intentar crear el SKU");
-                }
 
-                const method = "igcaribe.client.create_sku_based_on_item_generator";
-                const args = {
-                    item_generator_id: frm.doc.name,
-                };
-                
-                function callback({ message }) {
-                     frappe.prompt([
-                         {fieldtype: "HTML", options: 
-                                            `El SKU ${message} ha sido creado satisfactoriamente.<br>
-                                            <button class="btn btn-info" onclick="frappe.utils.copy_to_clipboard('${message}')">Copiar al Porta Papeles</button>
-                                            `}], function() {
-                        frappe.set_route(`/app/item/${message}`);
-                         }, "SKU Creado", "Ver SKU");
-                
-                }
 
-                frappe.call({ method, args, callback });
-            });
+            const { doc } = frm;
+
+            const { __onload: onload } = doc;
+            if (onload && !onload.item_exists) {
+                frm.add_custom_button("Crear SKU", function() {
+                    if (frm.doc.__unsaved) {
+                        frappe.throw("Favor de guardar el documento antes de intentar crear el SKU");
+                    }
+
+                    const method = "igcaribe.client.create_sku_based_on_item_generator";
+                    const args = {
+                        item_generator_id: frm.doc.name,
+                    };
+                    
+                    function callback({ message }) {
+                        frappe.prompt([
+                            {fieldtype: "HTML", options: 
+                                                `El SKU ${message} ha sido creado satisfactoriamente.<br>
+                                                <button class="btn btn-info" onclick="frappe.utils.copy_to_clipboard('${message}')">Copiar al Porta Papeles</button>
+                                                `}], function() {
+                            frappe.set_route(`/app/item/${message}`);
+                            }, "SKU Creado", "Ver SKU");
+                    
+                    }
+
+                    frappe.call({ method, args, callback });
+                });
+            }
         },
         before_load: function(frm) {
             frm.trigger("setup_fields");
