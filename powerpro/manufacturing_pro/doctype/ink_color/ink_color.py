@@ -20,6 +20,7 @@ class InkColor(Document):
 
 	def on_update(self):
 		self.update_rate_per_kg_if_applies()
+		self.update_rate_in_pantone_composition()
 
 	def clear_pantone_type_if_applies(self):
 		if self.ink_type != "Pantone":
@@ -56,6 +57,34 @@ class InkColor(Document):
 		# recalculate idx
 		for idx, item in enumerate(self.pantone_composition):
 			item.idx = idx + 1
+
+	def update_rate_in_pantone_composition(self):
+		if self.ink_type == "Pantone" \
+			and self.pantone_type == "Formula":
+			return # we don't want to update the rate in this case
+
+		completed_parents = set()
+
+		references = frappe.get_all("Pantone Composition", filters = {
+			"ink_color": self.name,
+		}, pluck="parent")
+
+		
+		for parent in references:
+			if parent in completed_parents:
+				continue
+			else:
+				completed_parents.add(parent)
+
+			ref = frappe.get_doc(self.doctype, parent)
+
+			for child in ref.pantone_composition:
+				if child.ink_color == self.name:
+					child.rate_per_kg = self.rate_per_kg
+					child.db_update()
+	
+			ref.update_rate_per_kg_if_applies()
+			ref.db_update()
 
 	def ensure_100_percent_pantone_composition(self):
 		def validate_pantone_composition():
