@@ -267,7 +267,7 @@
 				frappe.validated = false;
 			}
 	
-			if (!form_data.tipo_de_material_relieve) {
+			if (form_data.tipo_de_relieve === "Estampado" && !form_data.tipo_de_material_relieve) {
 				frappe.msgprint('El campo "Color de Lamina en Relieve" es obligatorio');
 				frappe.validated = false;
 			}
