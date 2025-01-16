@@ -224,30 +224,32 @@
 			frappe.msgprint('El campo "Tecnología" es obligatorio');
 			frappe.validated = false;
 		}
-	
-		if (!form_data.cantidad_de_tintas_tiro && form_data.cantidad_de_tintas_tiro !== 0) {
-			frappe.msgprint('El campo "Cantidad de Tintas en el Tiro" es obligatorio');
-			frappe.validated = false;
-		}
-	
-		// depende de la cantidad de tintas tiro
-		for (let i = 1; i <= cint(form_data.cantidad_de_tintas_tiro); i++) {
-			if (!form_data[`tinta_seleccionada_tiro_${i}`]) {
-				frappe.msgprint(`El campo "Tinta ${i} en el Tiro" es obligatorio`);
+
+		if (form_data.tecnologia === "Offset") {
+			if (!form_data.cantidad_de_tintas_tiro && form_data.cantidad_de_tintas_tiro !== 0) {
+				frappe.msgprint('El campo "Cantidad de Tintas en el Tiro" es obligatorio');
 				frappe.validated = false;
 			}
-		}
-	
-		if (!form_data.cantidad_de_tintas_retiro && form_data.cantidad_de_tintas_retiro !== 0) {
-			frappe.msgprint('El campo "Cantidad de Tintas en el Retiro" es obligatorio');
-			frappe.validated = false;
-		}
-	
-		// depende de la cantidad de tintas retiro
-		for (let i = 1; i <= cint(form_data.cantidad_de_tintas_retiro); i++) {
-			if (!form_data[`tinta_seleccionada_retiro_${i}`]) {
-				frappe.msgprint(`El campo "Listado de Tintas en el Retiro ${i}" es obligatorio`);
+		
+			// depende de la cantidad de tintas tiro
+			for (let i = 1; i <= cint(form_data.cantidad_de_tintas_tiro); i++) {
+				if (!form_data[`tinta_seleccionada_tiro_${i}`]) {
+					frappe.msgprint(`El campo "Tinta ${i} en el Tiro" es obligatorio`);
+					frappe.validated = false;
+				}
+			}
+		
+			if (!form_data.cantidad_de_tintas_retiro && form_data.cantidad_de_tintas_retiro !== 0) {
+				frappe.msgprint('El campo "Cantidad de Tintas en el Retiro" es obligatorio');
 				frappe.validated = false;
+			}
+		
+			// depende de la cantidad de tintas retiro
+			for (let i = 1; i <= cint(form_data.cantidad_de_tintas_retiro); i++) {
+				if (!form_data[`tinta_seleccionada_retiro_${i}`]) {
+					frappe.msgprint(`El campo "Listado de Tintas en el Retiro ${i}" es obligatorio`);
+					frappe.validated = false;
+				}
 			}
 		}
 	
