@@ -471,6 +471,7 @@ export default {
                             label="Tipo de Relieve"
                             :options="[
                                 { value: 'Estampado' },
+                                { value: 'Bajo Relieve' },
                                 { value: 'Repujado' },
                             ]"
                             :selected="form_data.tipo_de_relieve"
