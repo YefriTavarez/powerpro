@@ -100,7 +100,7 @@ class ItemGenerator(Document):
 			self_dict = self.as_dict()
 			for key in self_dict.keys():
 				value = self_dict[key]
-				if isinstance(value, float):
+				if value and isinstance(value, float):
 					formatted = "{:.3f}".format(value)
 
 					value = remove_trailing_zeroes(formatted)
