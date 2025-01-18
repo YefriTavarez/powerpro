@@ -4,9 +4,8 @@
 
 frappe.provide("power.utils");
 
-function round_to_nearest_multiple(number, multiple) {
-	const value = flt(number, 3);
-	return Math.round(value / multiple) * multiple;
+function round_to_nearest_multiple(value, multiple) {
+    return Math.ceil(value / multiple) * multiple;
 }
 
 function round_to_nearest_eighth(number) {

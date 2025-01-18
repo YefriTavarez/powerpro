@@ -1,6 +1,7 @@
 # Copyright (c) 2024, Yefri Tavarez and Contributors
 # For license information, please see license.txt
 
+import math
 
 __all__ = (
     "round_to_nearest_eighth",
@@ -25,7 +26,7 @@ def round_to_nearest_eighth(value: float) -> float:
     factor = 0.125
     
     # convert 1/8 to decimal (0.125) and round to the nearest 1/8
-    return round(rounded / factor) * factor
+    return math.ceil(rounded / factor) * factor
 
 
 def round_to_nearest_sixteenth(value: float) -> float:
@@ -45,4 +46,4 @@ def round_to_nearest_sixteenth(value: float) -> float:
     factor = 0.0625
 
     # convert 1/16 to decimal (0.0625) and round to the nearest 1/16
-    return round(rounded / factor) * factor
+    return math.ceil(rounded / factor) * factor
