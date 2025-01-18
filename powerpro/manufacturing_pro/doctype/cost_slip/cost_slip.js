@@ -2,23 +2,24 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Cost Slip", {
-	setup: function (frm) {
-		$.each(["components"], function (i, table_fieldname) {
-			frm.get_field(table_fieldname).grid.editable_fields = [
-				{ fieldname: "cost_component", columns: 6 },
-				{ fieldname: "amount", columns: 4 },
-			];
-		});
-	},
+	// setup: function (frm) {
+	// 	$.each(["components"], function (i, table_fieldname) {
+	// 		frm.get_field(table_fieldname).grid.editable_fields = [
+	// 			{ fieldname: "cost_component", columns: 6 },
+	// 			{ fieldname: "amount", columns: 4 },
+	// 		];
+	// 	});
+	// },
 
-	refresh: function (frm) {
-		var salary_detail_fields = [
-			"formula",
-			"abbr",
-			"statistical_component",
-		];
-		frm.fields_dict["components"].grid.set_column_disp(salary_detail_fields, false);
-	},
+	// refresh: function (frm) {
+	// 	var salary_detail_fields = [
+	// 		"formula",
+	// 		"abbr",
+	// 		"statistical_component",
+	// 		// "amount",
+	// 	];
+	// 	frm.fields_dict["components"].grid.set_column_disp(salary_detail_fields, false);
+	// },
 
 
 	cost_structure: function (frm) {

@@ -358,6 +358,7 @@ def make_cost_slip(
 					"total_earning": "gross_pay",
 					"name": "cost_structure",
 					"currency": "currency",
+					"components": "components",
 				},
 			}
 		},
