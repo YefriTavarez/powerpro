@@ -11,6 +11,7 @@
   "section_break_eifz",
   "spec1",
   "spec2",
+  "codigo",
   "use",
   "packaging",
   "pcs",
@@ -91,6 +92,11 @@
    "fieldtype": "Link",
    "label": "Caracter\u00edstica 2",
    "options": "Item Specs 2"
+  },
+  {
+   "fieldname": "codigo",
+   "fieldtype": "Data",
+   "label": "Código"
   },
   {
    "fieldname": "use",
@@ -364,7 +370,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-02 22:49:47.471407",
+ "modified": "2025-01-17 22:20:47.471407",
  "modified_by": "Administrator",
  "module": "ItemPRO",
  "name": "Item Generator",

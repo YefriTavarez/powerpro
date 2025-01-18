@@ -24,6 +24,7 @@ class ItemGenerator(Document):
 		capacity: DF.Float
 		capacity_uom: DF.Link | None
 		capcidad_udm: DF.Link | None
+		codigo: DF.Data | None
 		color: DF.Link | None
 		conectividad: DF.Link | None
 		current: DF.Link | None
