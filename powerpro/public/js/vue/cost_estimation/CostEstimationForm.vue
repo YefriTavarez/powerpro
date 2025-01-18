@@ -459,7 +459,7 @@ export default {
                 <div class="row">
                     <div class="form-column col-sm-6">
                         <checkbox-field
-                            label="Incluye Relieve?"
+                            label="Incluye Acabado Especial?"
                             :initial_value="form_data.incluye_relieve"
                             @after_select="
                                 (value) => (form_data.incluye_relieve = value)
@@ -470,9 +470,9 @@ export default {
                         <select-field
                             label="Tipo de Relieve"
                             :options="[
-                                { value: 'Estampado' },
+                                { value: 'Relieve' },
                                 { value: 'Bajo Relieve' },
-                                { value: 'Repujado' },
+                                { value: 'Estampado' },
                             ]"
                             :selected="form_data.tipo_de_relieve"
                             @after_select="
