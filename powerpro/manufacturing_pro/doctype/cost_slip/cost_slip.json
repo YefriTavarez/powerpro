@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_import": 1,
- "creation": "2025-01-04 03:52:24.980172",
+ "creation": "2025-01-17 10:21:10.753517",
  "doctype": "DocType",
  "document_type": "Setup",
  "engine": "InnoDB",
@@ -14,13 +14,12 @@
   "operation",
   "column_break_obdl",
   "posting_date",
+  "cost_estimation",
+  "selected",
   "column_break_18",
-  "currency",
-  "exchange_rate",
   "earnings_and_deductions_tab",
   "earning_deduction_sb",
   "components",
-  "column_break_k1jz",
   "totals",
   "net_amount",
   "column_break_25",
@@ -54,26 +53,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval:(doc.docstatus==1 || doc.salary_structure)",
-   "fetch_from": "salary_structure.currency",
-   "fieldname": "currency",
-   "fieldtype": "Link",
-   "label": "Currency",
-   "options": "Currency",
-   "print_hide": 1,
-   "read_only": 1,
-   "reqd": 1
-  },
-  {
-   "default": "1.0",
-   "fieldname": "exchange_rate",
-   "fieldtype": "Float",
-   "hidden": 1,
-   "label": "Exchange Rate",
-   "print_hide": 1,
-   "reqd": 1
-  },
-  {
    "fieldname": "earnings_and_deductions_tab",
    "fieldtype": "Tab Break",
    "label": "Earnings & Deductions"
@@ -82,10 +61,6 @@
    "fieldname": "earning_deduction_sb",
    "fieldtype": "Section Break",
    "oldfieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_k1jz",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "totals",
@@ -105,25 +80,28 @@
    "reqd": 1
   },
   {
+   "fetch_from": "cost_structure_assignment.cost_structure",
    "fieldname": "cost_structure",
    "fieldtype": "Link",
    "label": "Cost Structure",
    "options": "Cost Structure",
-   "reqd": 1
+   "read_only": 1
   },
   {
+   "fetch_from": "cost_structure_assignment.workstation",
    "fieldname": "workstation",
    "fieldtype": "Link",
    "label": "Workstation",
    "options": "Workstation",
-   "reqd": 1
+   "read_only": 1
   },
   {
+   "fetch_from": "cost_structure_assignment.operation",
    "fieldname": "operation",
    "fieldtype": "Link",
    "label": "Operation",
    "options": "Operation",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "components",
@@ -145,17 +123,31 @@
    "fieldtype": "Link",
    "label": "Amended From",
    "no_copy": 1,
-   "options": "Cost Breakdown",
+   "options": "Cost Slip",
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "cost_estimation",
+   "fieldtype": "Link",
+   "label": "Cost Estimation",
+   "options": "Cost Estimation",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "description": "With this field you can override the Cost Selection to use the desired Workstation or Machine in the Operation tied to this Cost Slip",
+   "fieldname": "selected",
+   "fieldtype": "Check",
+   "label": "Selected"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 9,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-04 04:32:55.649851",
+ "modified": "2025-01-17 14:52:26.792211",
  "modified_by": "Administrator",
  "module": "Manufacturing Pro",
  "name": "Cost Slip",

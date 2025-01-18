@@ -54,14 +54,14 @@ class CostSlip(TransactionBase):
 
 		amended_from: DF.Link | None
 		components: DF.Table[CostDetail]
-		cost_structure: DF.Link
+		cost_estimation: DF.Link
+		cost_structure: DF.Link | None
 		cost_structure_assignment: DF.Link
-		currency: DF.Link
-		exchange_rate: DF.Float
 		net_amount: DF.Currency
-		operation: DF.Link
+		operation: DF.Link | None
 		posting_date: DF.Date
-		workstation: DF.Link
+		selected: DF.Check
+		workstation: DF.Link | None
 	# end: auto-generated types
 
 	def __init__(self, *args, **kwargs):
@@ -97,6 +97,24 @@ class CostSlip(TransactionBase):
 
 		revert_series_if_last(self.series, self.name)
 
+	@frappe.whitelist()
+	def fetch_component_details(self):
+		if not self.operation:
+			frappe.throw(_("Please select Operation first"))
+
+		self.set_cost_structure_assignment()
+		self.set_salary_structure_doc()
+
+		if self.cost_structure:
+			self.pull_sal_struct()
+
+		else:
+			self.check_cost_struct()
+
+		self.calculate_net_amount()
+
+		return self.as_dict()
+
 	def check_cost_struct(self):
 		cs = frappe.qb.DocType("Cost Structure")
 		csa = frappe.qb.DocType("Cost Structure Assignment")
@@ -129,7 +147,6 @@ class CostSlip(TransactionBase):
 		if st_name:
 			self.cost_structure = st_name[0][0]
 			return self.cost_structure
-
 		else:
 			self.cost_structure = None
 			frappe.msgprint(
@@ -141,83 +158,7 @@ class CostSlip(TransactionBase):
 
 	def pull_sal_struct(self):
 		from powerpro.manufacturing_pro.doctype.cost_structure.cost_structure import make_cost_slip
-
-		if self.salary_slip_based_on_timesheet:
-			self.cost_structure = self._cost_structure_doc.name
-			self.hour_rate = self._cost_structure_doc.hour_rate
-			self.base_hour_rate = flt(self.hour_rate) * flt(self.exchange_rate)
-			self.total_working_hours = sum([d.working_hours or 0.0 for d in self.timesheets]) or 0.0
-
 		make_cost_slip(self._cost_structure_doc.name, self)
-
-	def calculate_lwp_or_ppl_based_on_leave_application(
-		self, holidays, working_days_list, daily_wages_fraction_for_half_day
-	):
-		lwp = 0
-		leaves = get_lwp_or_ppl_for_date_range(
-			self.operation,
-			self.start_date,
-			self.end_date,
-		)
-
-		for d in working_days_list:
-			if self.relieving_date and d > self.relieving_date:
-				continue
-
-			leave = leaves.get(d)
-
-			if not leave:
-				continue
-
-			if not leave.include_holiday and getdate(d) in holidays:
-				continue
-
-			equivalent_lwp_count = 0
-			fraction_of_daily_salary_per_leave = flt(leave.fraction_of_daily_salary_per_leave)
-
-			is_half_day_leave = False
-			if cint(leave.half_day) and (leave.half_day_date == d or leave.from_date == leave.to_date):
-				is_half_day_leave = True
-
-			equivalent_lwp_count = (1 - daily_wages_fraction_for_half_day) if is_half_day_leave else 1
-
-			if cint(leave.is_ppl):
-				equivalent_lwp_count *= (
-					fraction_of_daily_salary_per_leave if fraction_of_daily_salary_per_leave else 1
-				)
-
-			lwp += equivalent_lwp_count
-
-		return lwp
-
-	def get_leave_type_map(self) -> dict:
-		"""Returns (partially paid leaves/leave without pay) leave types by name"""
-
-		def _get_leave_type_map():
-			leave_types = frappe.get_all(
-				"Leave Type",
-				or_filters={"is_ppl": 1, "is_lwp": 1},
-				fields=["name", "is_lwp", "is_ppl", "fraction_of_daily_salary_per_leave", "include_holiday"],
-			)
-			return {leave_type.name: leave_type for leave_type in leave_types}
-
-		return frappe.cache().get_value(LEAVE_TYPE_MAP, _get_leave_type_map)
-
-	def get_employee_attendance(self, start_date, end_date):
-		attendance = frappe.qb.DocType("Attendance")
-
-		attendance_details = (
-			frappe.qb.from_(attendance)
-			.select(attendance.attendance_date, attendance.status, attendance.leave_type)
-			.where(
-				(attendance.status.isin(["Absent", "Half Day", "On Leave"]))
-				& (attendance.operation == self.operation)
-				& (attendance.docstatus == 1)
-				& (attendance.attendance_date.between(start_date, end_date))
-			)
-		).run(as_dict=1)
-
-		return attendance_details
 
 	def add_earning_for_hourly_wages(self, doc, salary_component, amount):
 		row_exists = False
@@ -307,7 +248,6 @@ class CostSlip(TransactionBase):
 			self.base_hour_rate = flt(
 				flt(self.hour_rate) * flt(self.exchange_rate), self.precision("base_hour_rate")
 			)
-		self.set_net_total_in_words()
 
 
 	def get_amount_from_formula(self, struct_row, sub_period=1):
@@ -804,76 +744,6 @@ class CostSlip(TransactionBase):
 
 		return amount, additional_amount
 
-	def calculate_unclaimed_taxable_benefits(self):
-		# get total sum of benefits paid
-		total_benefits_paid = self.get_salary_slip_details(
-			self.payroll_period.start_date,
-			self.start_date,
-			parentfield="earnings",
-			is_tax_applicable=1,
-			is_flexible_benefit=1,
-		)
-
-		# get total benefits claimed
-		BenefitClaim = frappe.qb.DocType("Operation Benefit Claim")
-		total_benefits_claimed = (
-			frappe.qb.from_(BenefitClaim)
-			.select(Sum(BenefitClaim.claimed_amount))
-			.where(
-				(BenefitClaim.docstatus == 1)
-				& (BenefitClaim.operation == self.operation)
-				& (BenefitClaim.claim_date.between(self.payroll_period.start_date, self.end_date))
-			)
-		).run()
-		total_benefits_claimed = flt(total_benefits_claimed[0][0]) if total_benefits_claimed else 0
-
-		unclaimed_taxable_benefits = (
-			total_benefits_paid - total_benefits_claimed
-		) + self.current_taxable_earnings_for_payment_days.flexi_benefits
-		return unclaimed_taxable_benefits
-
-	def get_total_exemption_amount(self):
-		total_exemption_amount = 0
-		if self.tax_slab.allow_tax_exemption:
-			if self.deduct_tax_for_unsubmitted_tax_exemption_proof:
-				exemption_proof = frappe.db.get_value(
-					"Operation Tax Exemption Proof Submission",
-					{"operation": self.operation, "payroll_period": self.payroll_period.name, "docstatus": 1},
-					"exemption_amount",
-					cache=True,
-				)
-				if exemption_proof:
-					total_exemption_amount = exemption_proof
-			else:
-				declaration = frappe.db.get_value(
-					"Operation Tax Exemption Declaration",
-					{"operation": self.operation, "payroll_period": self.payroll_period.name, "docstatus": 1},
-					"total_exemption_amount",
-					cache=True,
-				)
-				if declaration:
-					total_exemption_amount = declaration
-
-		if self.tax_slab.standard_tax_exemption_amount:
-			total_exemption_amount += flt(self.tax_slab.standard_tax_exemption_amount)
-
-		return total_exemption_amount
-
-	def get_income_form_other_sources(self):
-		return (
-			frappe.get_all(
-				"Operation Other Income",
-				filters={
-					"operation": self.operation,
-					"payroll_period": self.payroll_period.name,
-					"company": self.company,
-					"docstatus": 1,
-				},
-				fields="SUM(amount) as total_amount",
-			)[0].total_amount
-			or 0.0
-		)
-
 	def get_component_totals(self, component_type, depends_on_payment_days=0):
 		total = 0.0
 		for d in self.get(component_type):
@@ -885,27 +755,8 @@ class CostSlip(TransactionBase):
 				total += amount
 		return total
 
-	def update_status(self, salary_slip=None):
-		for data in self.timesheets:
-			if data.time_sheet:
-				timesheet = frappe.get_doc("Timesheet", data.time_sheet)
-				timesheet.salary_slip = salary_slip
-				timesheet.flags.ignore_validate_update_after_submit = True
-				timesheet.set_status()
-				timesheet.save()
-
-	def set_status(self, status=None):
-		"""Get and update status"""
-		if not status:
-			status = self.get_status()
-		self.db_set("status", status)
-
 	def process_cost_structure(self, for_preview=0):
 		"""Calculate salary after salary structure details have been updated"""
-		self.calculate_net_amount()
-
-	@frappe.whitelist()
-	def process_salary_based_on_working_days(self):
 		self.calculate_net_amount()
 
 	@frappe.whitelist()
@@ -915,152 +766,14 @@ class CostSlip(TransactionBase):
 			for earning in self.components:
 				self.net_amount += flt(earning.amount, earning.precision("amount"))
 		
-		self.set_base_totals()
+	# 	self.set_base_totals()
 
-	def set_base_totals(self):
-		self.base_net_amount = flt(self.net_amount) * flt(self.exchange_rate)
-		self.base_total_deduction = flt(self.total_deduction) * flt(self.exchange_rate)
-		self.rounded_total = rounded(self.net_amount or 0)
-		self.base_net_pay = flt(self.net_amount) * flt(self.exchange_rate)
-		self.base_rounded_total = rounded(self.base_net_pay or 0)
-		self.set_net_total_in_words()
-
-	# calculate total working hours, earnings based on hourly wages and totals
-	def calculate_total_for_salary_slip_based_on_timesheet(self):
-		if self.timesheets:
-			self.total_working_hours = 0
-			for timesheet in self.timesheets:
-				if timesheet.working_hours:
-					self.total_working_hours += timesheet.working_hours
-
-		wages_amount = self.total_working_hours * self.hour_rate
-		self.base_hour_rate = flt(self.hour_rate) * flt(self.exchange_rate)
-		salary_component = frappe.db.get_value(
-			"Cost Structure", {"name": self.cost_structure}, "salary_component", cache=True
-		)
-		if self.earnings:
-			for i, earning in enumerate(self.earnings):
-				if earning.salary_component == salary_component:
-					self.earnings[i].amount = wages_amount
-				self.gross_pay += flt(self.earnings[i].amount, earning.precision("amount"))
-		self.net_amount = flt(self.gross_pay) - flt(self.total_deduction)
-
-	def compute_year_to_date(self):
-		year_to_date = 0
-		period_start_date, period_end_date = self.get_year_to_date_period()
-
-		salary_slip_sum = frappe.get_list(
-			"Cost Slip",
-			fields=["sum(net_pay) as net_sum", "sum(gross_pay) as gross_sum"],
-			filters={
-				"operation": self.operation,
-				"start_date": [">=", period_start_date],
-				"end_date": ["<", period_end_date],
-				"name": ["!=", self.name],
-				"docstatus": 1,
-			},
-		)
-
-		year_to_date = flt(salary_slip_sum[0].net_sum) if salary_slip_sum else 0.0
-		gross_year_to_date = flt(salary_slip_sum[0].gross_sum) if salary_slip_sum else 0.0
-
-		year_to_date += self.net_amount
-		gross_year_to_date += self.gross_pay
-		self.year_to_date = year_to_date
-		self.gross_year_to_date = gross_year_to_date
-
-	def compute_month_to_date(self):
-		month_to_date = 0
-		first_day_of_the_month = get_first_day(self.start_date)
-		salary_slip_sum = frappe.get_list(
-			"Cost Slip",
-			fields=["sum(net_pay) as sum"],
-			filters={
-				"operation": self.operation,
-				"start_date": [">=", first_day_of_the_month],
-				"end_date": ["<", self.start_date],
-				"name": ["!=", self.name],
-				"docstatus": 1,
-			},
-		)
-
-		month_to_date = flt(salary_slip_sum[0].sum) if salary_slip_sum else 0.0
-
-		month_to_date += self.net_amount
-		self.month_to_date = month_to_date
-
-	def compute_component_wise_year_to_date(self):
-		period_start_date, period_end_date = self.get_year_to_date_period()
-
-		ss = frappe.qb.DocType("Cost Slip")
-		sd = frappe.qb.DocType("Cost Detail")
-
-		for key in ("earnings", "deductions"):
-			for component in self.get(key):
-				year_to_date = 0
-				component_sum = (
-					frappe.qb.from_(sd)
-					.inner_join(ss)
-					.on(sd.parent == ss.name)
-					.select(Sum(sd.amount).as_("sum"))
-					.where(
-						(ss.operation == self.operation)
-						& (sd.salary_component == component.salary_component)
-						& (ss.start_date >= period_start_date)
-						& (ss.end_date < period_end_date)
-						& (ss.name != self.name)
-						& (ss.docstatus == 1)
-					)
-				).run()
-
-				year_to_date = flt(component_sum[0][0]) if component_sum else 0.0
-				year_to_date += component.amount
-				component.year_to_date = year_to_date
-
-	def get_year_to_date_period(self):
-		if self.payroll_period:
-			period_start_date = self.payroll_period.start_date
-			period_end_date = self.payroll_period.end_date
-		else:
-			# get dates based on fiscal year if no payroll period exists
-			fiscal_year = get_fiscal_year(date=self.start_date, company=self.company, as_dict=1)
-			period_start_date = fiscal_year.year_start_date
-			period_end_date = fiscal_year.year_end_date
-
-		return period_start_date, period_end_date
-
-	def add_leave_balances(self):
-		self.set("leave_details", [])
-
-		if frappe.db.get_single_value("Payroll Settings", "show_leave_balances_in_salary_slip"):
-			from hrms.hr.doctype.leave_application.leave_application import get_leave_details
-
-			leave_details = get_leave_details(self.operation, self.end_date, True)
-
-			for leave_type, leave_values in leave_details["leave_allocation"].items():
-				self.append(
-					"leave_details",
-					{
-						"leave_type": leave_type,
-						"total_allocated_leaves": flt(leave_values.get("total_leaves")),
-						"expired_leaves": flt(leave_values.get("expired_leaves")),
-						"used_leaves": flt(leave_values.get("leaves_taken")),
-						"pending_leaves": flt(leave_values.get("leaves_pending_approval")),
-						"available_leaves": flt(leave_values.get("remaining_leaves")),
-					},
-				)
-
-
-def unlink_ref_doc_from_salary_slip(doc, method=None):
-	"""Unlinks accrual Journal Entry from Cost Slips on cancellation"""
-	linked_ss = frappe.get_all(
-		"Cost Slip", filters={"journal_entry": doc.name, "docstatus": ["<", 2]}, pluck="name"
-	)
-
-	if linked_ss:
-		for ss in linked_ss:
-			ss_doc = frappe.get_doc("Cost Slip", ss)
-			frappe.db.set_value("Cost Slip", ss_doc.name, "journal_entry", "")
+	# def set_base_totals(self):
+	# 	self.base_net_amount = flt(self.net_amount) * flt(self.exchange_rate)
+	# 	self.base_total_deduction = flt(self.total_deduction) * flt(self.exchange_rate)
+	# 	self.rounded_total = rounded(self.net_amount or 0)
+	# 	self.base_net_pay = flt(self.net_amount) * flt(self.exchange_rate)
+	# 	self.base_rounded_total = rounded(self.base_net_pay or 0)
 
 
 def generate_password_for_pdf(policy_template, operation):
