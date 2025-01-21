@@ -4,6 +4,7 @@
 __all__ = (
 	"raw_material_query",
 
+	"get_item_by_product_type_query",
 	"get_item_specs_1",
 	"get_item_specs_2",
 	"get_item_use",
@@ -25,6 +26,7 @@ __all__ = (
 
 from powerpro.controllers.queries.raw_material import raw_material_query
 
+from powerpro.controllers.queries.item import get_item_by_product_type_query
 # from Item Generator
 from powerpro.controllers.queries.item_specs_1 import get_item_specs_1
 from powerpro.controllers.queries.item_specs_2 import get_item_specs_2
