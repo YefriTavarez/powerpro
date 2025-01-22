@@ -66,6 +66,7 @@ doctype_js = {
 
 doctype_list_js = {
     "Quality Procedure": "public/js/doctype/quality_procedure/list.js",
+    "PrintCard": "public/js/doctype/printcard/list.js",
 }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
