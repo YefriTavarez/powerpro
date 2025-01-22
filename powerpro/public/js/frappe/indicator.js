@@ -8,13 +8,22 @@
 	frappe.has_indicator = function(doctype) {
 		const skip_list = [
 			"Raw Material",
-			"PrintCard",
 		];
-
+		
 		if (
 			skip_list.includes(doctype)
 		) {
 			return false;
+		}
+
+		const always_list = [
+			"PrintCard",
+		];
+
+		if (
+			always_list.includes(doctype)
+		) {
+			return true;
 		}
 		
 		return original(doctype);
