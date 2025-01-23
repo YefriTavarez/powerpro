@@ -9,7 +9,8 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     # "frappe~=15.0.0" # Installed and managed by bench.
-    "semver>=3.0.2"
+    "semver>=3.0.2",
+    "PyMuPDF~=1.24.14"
 ]
 
 [build-system]
