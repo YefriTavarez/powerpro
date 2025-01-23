@@ -8,16 +8,18 @@ from frappe.utils.pdf import get_pdf
 @frappe.whitelist()
 def generate_pdf_for_printcard(canvas, printcard):
 	cv = frappe.get_doc("PrintCard Canvas", canvas)
-	# pc = frappe.get_doc("PrintCard", printcard)
+	pc = frappe.get_doc("PrintCard", printcard)
 
-	html = f"""
+	html = frappe.render_template(f"""
 		<div>
 			{cv.codigo_html}
 			<style>
 				{cv.codigo_css}
 			</style>
 		</div>
-	"""
+	""", {
+		"doc": pc,
+	})
 
 	pdf_options = {
 		"page-width": f"{cv.ancho_pdf}in",
