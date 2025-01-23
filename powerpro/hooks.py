@@ -239,6 +239,7 @@ doc_events = {
 #
 override_whitelisted_methods = {
     "hrms.payroll.doctype.salary_slip.salary_lip.make_salary_slip_from_timesheet": "powerpro.controllers.salary_slip.make_salary_slip_from_timesheet",
+    "igcaribe.client.generate_pdf_for_printcard": "powerpro.controllers.printcard.generate_pdf_for_printcard",
 }
 #
 # each overriding function accepts a `data` argument;
