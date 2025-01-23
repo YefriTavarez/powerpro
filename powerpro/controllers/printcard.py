@@ -11,10 +11,12 @@ def generate_pdf_for_printcard(canvas, printcard):
 	# pc = frappe.get_doc("PrintCard", printcard)
 
 	html = f"""
-		<style>
-			{cv.codigo_css}
-		</style>
-		{cv.codigo_html}
+		<div>
+			{cv.codigo_html}
+			<style>
+				{cv.codigo_css}
+			</style>
+		</div>
 	"""
 
 	pdf_options = {
@@ -25,9 +27,9 @@ def generate_pdf_for_printcard(canvas, printcard):
 		"margin-bottom": "0",
 		"margin-left": "0",
 		"no-outline": None,
-		"disable-smart-shrinking": None,
-		"print-media-type": None,
-		"background": None
+		# "disable-smart-shrinking": None,
+		# "print-media-type": None,
+		# "background": None
 	}
 
 
