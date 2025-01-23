@@ -18,8 +18,8 @@ def generate_pdf_for_printcard(canvas, printcard):
 	"""
 
 	pdf_options = {
-		"page-width": cv.ancho_pdf,
-		"page-height": cv.alto_pdf,
+		"page-width": f"{cv.ancho_pdf}in",
+		"page-height": f"{cv.alto_pdf}in",
 		"margin-top": "0",
 		"margin-right": "0",
 		"margin-bottom": "0",
