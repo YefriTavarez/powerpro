@@ -19,7 +19,7 @@ def generate_pdf_for_printcard(canvas, printcard):
 				{cv.codigo_css}
 				@page {{
 					size: {cv.ancho_pdf}in {cv.alto_pdf}in;
-					margin: 1in; /* Set margins (optional) */
+					margin: 0in; /* Set margins (optional) */
 				}}
 			</style>
 		</div>
