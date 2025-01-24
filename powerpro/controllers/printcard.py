@@ -1,9 +1,11 @@
 # Copyright (c) 2025, Yefri Tavarez and Contributors
 # For license information, please see license.txt
 
+import io
+from weasyprint import HTML, CSS
 
 import frappe
-from frappe.utils.pdf import get_pdf
+
 
 @frappe.whitelist()
 def generate_pdf_for_printcard(canvas, printcard):
@@ -15,30 +17,21 @@ def generate_pdf_for_printcard(canvas, printcard):
 			{cv.codigo_html}
 			<style>
 				{cv.codigo_css}
+				@page {{
+					size: {cv.ancho_pdf}in {cv.alto_pdf}in;
+					margin: 1in; /* Set margins (optional) */
+				}}
 			</style>
 		</div>
 	""", {
 		"doc": pc,
 	})
 
-	pdf_options = {
-		"page-width": f"{cv.ancho_pdf}in",
-		"page-height": f"{cv.alto_pdf}in",
-		"margin-top": "0",
-		"margin-right": "0",
-		"margin-bottom": "0",
-		"margin-left": "0",
-		"no-outline": None,
-		# "disable-smart-shrinking": None,
-		# "print-media-type": None,
-		# "background": None
-	}
+	# Generate the PDF and write to the buffer
+	pdf_buffer = io.BytesIO()
+	HTML(string=html).write_pdf(pdf_buffer)
 
-
-	output = None # for now
-
-	pdf_file = get_pdf(html, options=pdf_options, output=output)
 
 	frappe.local.response.filename = "{name}.pdf".format(name=printcard.replace(" ", "-").replace("/", "-"))
-	frappe.local.response.filecontent = pdf_file
+	frappe.local.response.filecontent = pdf_buffer.getvalue()
 	frappe.local.response.type = "pdf"
