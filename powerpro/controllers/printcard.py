@@ -25,6 +25,9 @@ def generate_pdf_for_printcard(canvas, printcard):
 		</div>
 	""", {
 		"doc": pc,
+		"frappe": frappe._dict({
+			"get_value": frappe.db.get_value,
+		})
 	})
 
 	# Generate the PDF and write to the buffer
