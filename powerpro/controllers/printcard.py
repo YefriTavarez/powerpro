@@ -6,6 +6,7 @@ from weasyprint import HTML
 
 import frappe
 
+from powerpro.controllers.pdf_manager import pdf_manipulator as pdf_manager 
 
 @frappe.whitelist()
 def generate_pdf_for_printcard(canvas, printcard):
@@ -35,10 +36,25 @@ def generate_pdf_for_printcard(canvas, printcard):
 	# Generate the PDF and write to the buffer
 	pdf_buffer = io.BytesIO()
 	HTML(string=html).write_pdf(pdf_buffer)
+	pdf_buffer.seek(0)  # Ensure the buffer is at the beginning
+
+	is_private=pc.archivo.startswith("/private")
+	files_folder = frappe.utils.get_files_path(is_private=is_private)
+
+	if is_private:
+		filepath = pc.archivo.replace("/private/files/", "")
+	else:
+		filepath = pc.archivo.replace("/files/", "")
+
+	pdf_to_render = f"{files_folder}/{filepath}"
+	
+	# Render the PDF on the template
+	output = pdf_manager.render_pdf_on_template(pdf_buffer, pdf_to_render)
 
 
 	frappe.local.response.filename = "{name}.pdf".format(name=printcard.replace(" ", "-").replace("/", "-"))
-	frappe.local.response.filecontent = pdf_buffer.getvalue()
+	# frappe.local.response.filecontent = pdf_buffer.getvalue()
+	frappe.local.response.filecontent = output.getvalue()
 	frappe.local.response.type = "pdf"
 
 
