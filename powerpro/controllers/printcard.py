@@ -25,7 +25,8 @@ def generate_pdf_for_printcard(canvas, printcard):
 		</div>
 	""", {
 		"doc": pc,
-		"get_contrast": get_contrast,
+		"get_ink_color": get_ink_color,
+		"get_constrast_of_ink_color": get_constrast_of_ink_color,
 		"frappe": frappe._dict({
 			"get_value": frappe.db.get_value,
 		})
