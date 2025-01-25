@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 import io
-from weasyprint import HTML, CSS
+from weasyprint import HTML
 
 import frappe
 
