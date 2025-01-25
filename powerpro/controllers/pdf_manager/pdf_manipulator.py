@@ -21,9 +21,9 @@ def render_pdf_on_template(pdf1_buffer, pdf2_path):
     
     # Definir márgenes en pulgadas y convertirlos a puntos
     left_margin = 7.5 * 72  # 7 pulgadas = 7 * 72 puntos
-    right_margin = 0.5 * 72  # 0.5 pulgadas = 0.5 * 72 puntos
-    top_margin = 0.5 * 72  # 0.5 pulgadas = 0.5 * 72 puntos
-    bottom_margin = 0.5 * 72  # 0.5 pulgadas = 0.5 * 72 puntos
+    right_margin = 0 * 72  # 0.5 pulgadas = 0.5 * 72 puntos
+    top_margin = 1.0 * 72  # 0.5 pulgadas = 0.5 * 72 puntos
+    bottom_margin = 1.0 * 72  # 0.5 pulgadas = 0.5 * 72 puntos
     
     # Calcular ancho y altura disponibles para PDF2
     available_width = pdf1_width - left_margin - right_margin  # Ancho disponible en puntos
