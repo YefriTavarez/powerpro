@@ -41,6 +41,20 @@ def generate_pdf_for_printcard(canvas, printcard):
 	frappe.local.response.type = "pdf"
 
 
+def get_ink_color(ink_color_id):
+	doctype = "Ink Color"
+	name = ink_color_id
+	fieldname = "hexadecimal_color"
+
+	return frappe.db.get_value(doctype, name, fieldname) or "#ffffff"
+
+
+def get_constrast_of_ink_color(ink_color_id):
+	ink_color = get_ink_color(ink_color_id)
+
+	return get_contrast(ink_color)
+
+
 def get_contrast(hex_color):
     """
     Determines the most legible text color (black or white) based on the background color.
