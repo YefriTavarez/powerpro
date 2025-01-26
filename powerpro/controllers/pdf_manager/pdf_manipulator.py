@@ -3,10 +3,13 @@
 
 # import fitz  # PyMuPDF
 # import io
+
+from frappe.utils import flt
+
 from pypdf import PdfReader, PdfWriter, PageObject, Transformation
 from io import BytesIO
 
-def render_pdf_on_template(pdf1_buffer, pdf2_path):
+def render_pdf_on_template(pdf1_buffer, pdf2_path, canvas):
     # Leer PDF1 (template) desde el buffer
     pdf1 = PdfReader(pdf1_buffer)
     pdf1_page = pdf1.pages[0]
@@ -20,10 +23,17 @@ def render_pdf_on_template(pdf1_buffer, pdf2_path):
     pdf2_height = float(pdf2_page.mediabox.height)  # En puntos
     
     # Definir márgenes en pulgadas y convertirlos a puntos
-    left_margin = 7.25 * 72  # 7 pulgadas = 7 * 72 puntos
-    right_margin = 0.25 * 72  # 0.5 pulgadas = 0.5 * 72 puntos
-    top_margin = 0.25 * 72  # 0.5 pulgadas = 0.5 * 72 puntos
-    bottom_margin = 0.25 * 72  # 0.5 pulgadas = 0.5 * 72 puntos
+    left_margin = flt(canvas.margin_left) * 72
+    bottom_margin = flt(canvas.margin_bottom) * 72  # 0.5 pulgadas = 0.5 * 72 puntos
+    if canvas.orientation == "Portrait":
+        bottom_margin = flt(canvas.ancho_specs) + flt(canvas.margin_bottom) * 72
+    else: # Landscape
+        left_margin = flt(canvas.ancho_specs) + flt(canvas.margin_left) * 72
+
+    left_margin =   # 7 pulgadas = 7 * 72 puntos
+    right_margin = flt(canvas.margin_right) * 72  # 0.5 pulgadas = 0.5 * 72 puntos
+    top_margin = flt(canvas.margin_top) * 72  # 0.5 pulgadas = 0.5 * 72 puntos
+    
     
     # Calcular ancho y altura disponibles para PDF2
     available_width = pdf1_width - left_margin - right_margin  # Ancho disponible en puntos

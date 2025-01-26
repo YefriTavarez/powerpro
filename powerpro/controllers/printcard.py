@@ -50,7 +50,7 @@ def generate_pdf_for_printcard(canvas, printcard):
 	pdf_to_render = f"{files_folder}/{filepath}"
 	
 	# Render the PDF on the template
-	output = pdf_manager.render_pdf_on_template(pdf_buffer, pdf_to_render)
+	output = pdf_manager.render_pdf_on_template(pdf_buffer, pdf_to_render, canvas=cv)
 
 
 	frappe.local.response.filename = "{name}.pdf".format(name=printcard.replace(" ", "-").replace("/", "-"))
