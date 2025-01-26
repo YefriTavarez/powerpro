@@ -26,9 +26,9 @@ def render_pdf_on_template(pdf1_buffer, pdf2_path, canvas):
     left_margin = flt(canvas.margin_left) * 72
     bottom_margin = flt(canvas.margin_bottom) * 72  # 0.5 pulgadas = 0.5 * 72 puntos
     if canvas.orientation == "Portrait":
-        bottom_margin = flt(canvas.ancho_specs) + flt(canvas.margin_bottom) * 72
+        bottom_margin = (flt(canvas.ancho_specs) + flt(canvas.margin_bottom)) * 72
     else: # Landscape
-        left_margin = flt(canvas.ancho_specs) + flt(canvas.margin_left) * 72
+        left_margin = (flt(canvas.ancho_specs) + flt(canvas.margin_left)) * 72
 
     right_margin = flt(canvas.margin_right) * 72  # 0.5 pulgadas = 0.5 * 72 puntos
     top_margin = flt(canvas.margin_top) * 72  # 0.5 pulgadas = 0.5 * 72 puntos
