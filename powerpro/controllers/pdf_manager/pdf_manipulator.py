@@ -30,7 +30,6 @@ def render_pdf_on_template(pdf1_buffer, pdf2_path, canvas):
     else: # Landscape
         left_margin = flt(canvas.ancho_specs) + flt(canvas.margin_left) * 72
 
-    left_margin =   # 7 pulgadas = 7 * 72 puntos
     right_margin = flt(canvas.margin_right) * 72  # 0.5 pulgadas = 0.5 * 72 puntos
     top_margin = flt(canvas.margin_top) * 72  # 0.5 pulgadas = 0.5 * 72 puntos
     
