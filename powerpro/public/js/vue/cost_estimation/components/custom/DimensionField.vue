@@ -91,6 +91,10 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+		roundup: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	data() {
 		return {
@@ -101,7 +105,7 @@ export default {
 	methods: {
 		on_width_change(event) {
 			const { value } = event.target;
-			this._width = power.utils.round_to_nearest_eighth(value);
+			this._width = power.utils.round_to_nearest_eighth(value, this.roundup);
 
 			this.$emit("on_change", {
 				width: this._width,
@@ -110,7 +114,7 @@ export default {
 		},
 		on_height_change(event) {
 			const { value } = event.target;
-			this._height = power.utils.round_to_nearest_eighth(value);
+			this._height = power.utils.round_to_nearest_eighth(value, this.roundup);
 
 			this.$emit("on_change", {
 				width: this._width,

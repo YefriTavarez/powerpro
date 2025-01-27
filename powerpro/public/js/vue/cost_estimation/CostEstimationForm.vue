@@ -194,6 +194,7 @@ export default {
                                         alto_material,
                                     })
                             "
+                            :roundup="false"
                             :read_only="readonly"
                         />
                     </div>
