@@ -26,11 +26,6 @@ def get_items_based_on_original_art(doctype, txt, searchfield="name", start=0, p
 	if txt:
 		searchstr = f"%{txt}%"
 
-	conditions = "1 = 1" # default condition
-	if txt:
-		conditions = f"items.name Like {searchstr!r}" # replace default condition
-		conditions += f"Or items.description Like {searchstr!r}"
-
 	if filters is None:
 		filters = {}
 
@@ -41,6 +36,15 @@ def get_items_based_on_original_art(doctype, txt, searchfield="name", start=0, p
 	if "original_art" not in filters:
 		frappe.msgprint("Please provide an original art to search for items.", alert=True)
 		return []
+
+	original_art = filters["original_art"]
+
+	conditions = f"items.parent = {original_art!r}" # default condition
+	if txt:
+		conditions += f"""And (
+			item.name Like {searchstr!r}
+			Or item.description Like {searchstr!r}
+		)"""
 
 	out = frappe.db.sql(
 		f"""
