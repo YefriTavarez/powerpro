@@ -5,9 +5,8 @@
 import frappe
 
 
-
 @frappe.whitelist()
-@frappe.validate_and_sanitize_search
+@frappe.validate_and_sanitize_search_inputs
 def get_items_based_on_original_art(doctype, txt, searchfield="name", start=0, page_len=20, filters=None):
 	"""
 	Get items based on the original art.
