@@ -55,7 +55,7 @@ def get_items_based_on_original_art(doctype, txt, searchfield="name", start=0, p
 				`tabItem` As item
 			Inner Join
 				`tabMultiple Items` As items
-				On items.parent = item.name
+				On items.item = item.name
 			Where
 				{conditions}
 		""", as_list=True
