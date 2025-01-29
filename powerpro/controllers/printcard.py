@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 import io
-import uuid
+# import uuid
 
 from weasyprint import HTML
 
@@ -87,7 +87,11 @@ def generate_pdf_for_printcard(canvas=None, printcard=None, pdf_path=None):
 	output = pdf_manager.render_pdf_on_template(pdf_buffer, pdf_to_render, canvas=cv)
 
 	if pdf_path:
-		unique_filename = f"{uuid.uuid4()}.pdf"
+		# unique_filename = f"{uuid.uuid4()}.pdf"
+
+		princard_id = pc.name
+		repl_customer = f"{pc.cliente} - "
+		unique_filename = f"{princard_id.replace(repl_customer, '')}.pdf"
 		path = f"/files/{unique_filename}"
 
 		with open(
