@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 frappe.listview_settings["Raw Material"] = {
-	hide_name_column: true,
+	hide_name_column: false,
 	disable_comment_count: true,
 	disable_auto_refresh: true,
 	ignore_fields_in_listview: [
