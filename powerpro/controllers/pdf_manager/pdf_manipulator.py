@@ -92,12 +92,12 @@ def select_best_canvas(pdf_width, pdf_height, canvas_list, margin=0.5):
     """
     # Filter canvas options that fit the dimensions with margin
     fitting_canvases = [
-        (cw, ch) for cw, ch in canvas_list
+        (canvas_id, cw, ch) for canvas_id, cw, ch in canvas_list
         if cw >= pdf_width + margin and ch >= pdf_height + margin
     ]
     
     # Sort by area (smallest to largest) to prioritize smaller canvases
-    fitting_canvases.sort(key=lambda dims: dims[0] * dims[1])
+    fitting_canvases.sort(key=lambda dims: dims[1] * dims[2])
     
     return fitting_canvases[0] if fitting_canvases else None
 

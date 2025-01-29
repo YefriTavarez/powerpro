@@ -25,9 +25,12 @@ def generate_pdf_for_printcard(canvas=None, printcard=None):
 
 		minimum_canvas_margin = get_minimum_canvas_margin()
 
-		canvas = pdf_manager.select_best_canvas(
+		out = pdf_manager.select_best_canvas(
 			width, height, canvas_list, minimum_canvas_margin
 		)
+
+		if out:
+			canvas, _, __ = out
 
 	if not canvas:
 		frappe.throw("No canvas found for the specified PrintCard")
@@ -137,6 +140,7 @@ def get_canvas_list_without_ancho_specs():
 	for canvas in frappe.get_all("PrintCard Canvas", filters={
 		"disabled": 0,
 	}, fields=[
+		"name",
 		"ancho_pdf",
 		"alto_pdf",
 		"ancho_specs",
@@ -149,7 +153,9 @@ def get_canvas_list_without_ancho_specs():
 			height = canvas.alto_pdf
 			width = canvas.ancho_pdf - canvas.ancho_specs
 
-		out.append((width, height))
+		out.append(
+			(canvas.name, width, height)
+		)
 
 	return out
 
