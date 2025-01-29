@@ -7,6 +7,7 @@ import uuid
 from weasyprint import HTML
 
 import frappe
+from frappe.utils import flt
 
 from powerpro.controllers.pdf_manager import pdf_manipulator as pdf_manager 
 
@@ -34,8 +35,21 @@ def generate_pdf_for_printcard(canvas=None, printcard=None, pdf_path=None):
 		if out:
 			canvas, _, __ = out
 
+
 	if not canvas:
-		frappe.throw("No canvas found for the specified PrintCard")
+		frappe.respond_as_web_page(
+			title="Canvas no encontrado",
+			html=f"""
+				El Archivo adjunto al PrintCard > {printcard} tiene una dimensión
+				no esperada de {flt(width, 3)} x {flt(height, 3)} pulgadas y no se encontró un Canvas que
+				coincida con dicha dimensión. Por favor, contacte al administrador del sistema.
+				""",
+			indicator_color="red",
+			http_status_code=404,
+			fullpage=True,
+		)
+
+		return
 
 
 	cv = frappe.get_doc("PrintCard Canvas", canvas)
