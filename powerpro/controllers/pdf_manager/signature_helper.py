@@ -12,8 +12,12 @@ from PIL import Image
 
 def sign_pdf_with_base64(
     pdf_path, base64_signature, output_path, x=100, y=500, width=200, height=50
-):
+) -> bool:
     """Overlay a Base64-encoded signature onto a PDF with unique file handling."""
+
+    # Remove the "data:image/png;base64," prefix if it exists
+    if base64_signature.startswith("data:image"):
+        base64_signature = base64_signature.split(",")[1]
 
     # Decode the Base64 signature
     signature_data = base64.b64decode(base64_signature)
