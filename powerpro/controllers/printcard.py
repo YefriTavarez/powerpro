@@ -132,3 +132,12 @@ def get_canvas_list_without_ancho_specs():
 			height = canvas.alto_pdf - canvas.alto_specs
 
 		out.append((width, height))
+
+	return out
+
+
+def get_minimum_canvas_margin():
+	doctype = "PreProIGC Settings"
+	fieldname = "minimum_canvas_margin"
+
+	return frappe.db.get_single_value(doctype, fieldname)
