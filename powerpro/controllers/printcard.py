@@ -87,9 +87,8 @@ def generate_pdf_for_printcard(canvas=None, printcard=None, pdf_path=None):
 	if pdf_path:
 		# unique_filename = f"{uuid.uuid4()}.pdf"
 
-		princard_id = pc.name
-		repl_customer = f"{pc.cliente} - "
-		unique_filename = f"{princard_id.replace(repl_customer, '')}.pdf"
+		unique_filename = get_unique_filename(pc.name, pc.cliente)
+
 		path = f"/files/{unique_filename}"
 
 		with open(
@@ -212,20 +211,19 @@ def get_best_canvas(pdf_width, pdf_height) -> str:
 
 
 @frappe.whitelist()
-def sign_pdf_with_base64(princard_id: str) -> bool:
+def sign_pdf_with_base64(printcard) -> bool:
 	"""Sign the PDF of a PrintCard with a Base64-encoded signature."""
 	
-	# Get the PrintCard document
-	pc = get_princard(princard_id)
-	
 	# Get the signature from the PrintCard
-	signature = pc.firma_cliente
+	signature = printcard.firma_cliente
 	
 	# Get the file path of the PDF
-	filepath = get_file_path(pc.printcard_file)
+	filepath = get_file_path(printcard.printcard_file)
+
+	signed_pdf_filename = get_unique_filename(printcard.name, printcard.cliente, suffix="signed")
 	
 	# Generate a unique filename for the signed PDF
-	signed_pdf_path = f"/files/{princard_id}_signed.pdf"
+	signed_pdf_path = f"/files/{signed_pdf_filename}"
 
 	width, height = pdf_manager.get_pdf_dimensions(filepath)
 
@@ -245,11 +243,10 @@ def sign_pdf_with_base64(princard_id: str) -> bool:
 	)
 
 	if signed:
-		pc.printcard_file_signed = signed_pdf_path
-		pc.db_update()
+		printcard.printcard_file_signed = signed_pdf_path
 
 		frappe.msgprint(
-			f"El PrintCard {princard_id} ha sido firmado correctamente.",
+			f"El PrintCard {printcard.name} ha sido firmado correctamente.",
 			indicator="green",
 			alert=True,
 		)
@@ -267,3 +264,13 @@ def get_princard(name: str) -> "document.Document":
 def get_canvas(name: str) -> "document.Document":
 	doctype = "PrintCard Canvas"
 	return frappe.get_doc(doctype, name)
+
+
+def get_unique_filename(princard_id: str, customer: str, suffix=None) -> str:
+	repl_customer = f"{customer} - "
+
+	filename = f"{princard_id.replace(repl_customer, '')}"
+	if suffix:
+		filename = f"{filename}_{suffix}"
+
+	return f"{filename}.pdf"
