@@ -105,3 +105,30 @@ def get_contrast(hex_color):
     
     # Return black (#000000) for light backgrounds and white (#ffffff) for dark backgrounds
     return '#000000' if luminance > 0.5 else '#ffffff'
+
+
+def get_canvas_list_without_ancho_specs():
+	# read all PrintCard Canvas documents
+	# and return a list of tuples with the canvas dimensions
+	# we need to substract the ancho_specs to the width if the canvas is horizontal
+	# (orientation == "Landscape") and the alto_specs to the height if the canvas is vertical (orientation == "Portrait")
+
+	out = list()
+
+	for canvas in frappe.get_all("PrintCard Canvas", filters={
+		"disabled": 0,
+	}, fields=[
+		"ancho_pdf",
+		"alto_pdf",
+		"ancho_specs",
+		"alto_specs",
+		"orientation",
+	]):
+		if canvas.orientation == "Portrait":
+			width = canvas.ancho_pdf - canvas.ancho_specs
+			height = canvas.alto_pdf
+		else:
+			width = canvas.ancho_pdf
+			height = canvas.alto_pdf - canvas.alto_specs
+
+		out.append((width, height))
