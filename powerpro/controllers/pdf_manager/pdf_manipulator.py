@@ -76,6 +76,33 @@ def get_pdf_dimensions(pdf_path):
     return width, height
 
 
+def select_best_canvas(pdf_width, pdf_height, canvas_list, margin=0.5):
+    """
+    Select the best canvas dimensions that fits the given PDF dimensions
+    and is the next bigger one, considering margin.
+
+    Args:
+        pdf_width (float): Width of the PDF.
+        pdf_height (float): Height of the PDF.
+        canvas_list (list of tuple): List of available canvas dimensions (width, height).
+        margin (float): Minimum margin to respect (in the same unit as the dimensions).
+
+    Returns:
+        tuple: Selected canvas dimensions (width, height) or None if no suitable canvas is found.
+    """
+    # Filter canvas options that fit the dimensions with margin
+    fitting_canvases = [
+        (cw, ch) for cw, ch in canvas_list
+        if cw >= pdf_width + margin and ch >= pdf_height + margin
+    ]
+    
+    # Sort by area (smallest to largest) to prioritize smaller canvases
+    fitting_canvases.sort(key=lambda dims: dims[0] * dims[1])
+    
+    return fitting_canvases[0] if fitting_canvases else None
+
+
+
 # from pypdf import PdfReader, PdfWriter, PageObject
 # from io import BytesIO
 
