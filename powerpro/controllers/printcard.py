@@ -9,7 +9,10 @@ import frappe
 from powerpro.controllers.pdf_manager import pdf_manipulator as pdf_manager 
 
 @frappe.whitelist()
-def generate_pdf_for_printcard(canvas, printcard):
+def generate_pdf_for_printcard(canvas=None, printcard=None):
+	if not printcard:
+		frappe.throw("You must specify a PrintCard to generate the PDF")
+
 	cv = frappe.get_doc("PrintCard Canvas", canvas)
 	pc = frappe.get_doc("PrintCard", printcard)
 
