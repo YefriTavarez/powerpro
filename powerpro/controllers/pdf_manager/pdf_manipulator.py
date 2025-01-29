@@ -73,7 +73,7 @@ def get_pdf_dimensions(pdf_path):
     width = float(page.mediabox.width)
     height = float(page.mediabox.height)
     
-    return width, height
+    return width / 72, height / 72  # Convertir de puntos a pulgadas
 
 
 def select_best_canvas(pdf_width, pdf_height, canvas_list, margin=0.5):
