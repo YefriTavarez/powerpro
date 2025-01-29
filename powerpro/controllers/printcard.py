@@ -8,13 +8,32 @@ import frappe
 
 from powerpro.controllers.pdf_manager import pdf_manipulator as pdf_manager 
 
+
 @frappe.whitelist()
 def generate_pdf_for_printcard(canvas=None, printcard=None):
 	if not printcard:
 		frappe.throw("You must specify a PrintCard to generate the PDF")
 
-	cv = frappe.get_doc("PrintCard Canvas", canvas)
 	pc = frappe.get_doc("PrintCard", printcard)
+
+	if not canvas:
+		filepath = get_file_path(pc.archivo)
+
+		width, height = pdf_manager.get_pdf_dimensions(filepath)
+
+		canvas_list = get_canvas_list_without_ancho_specs()
+
+		minimum_canvas_margin = get_minimum_canvas_margin()
+
+		canvas = pdf_manager.select_best_canvas(
+			width, height, canvas_list, minimum_canvas_margin
+		)
+
+	if not canvas:
+		frappe.throw("No canvas found for the specified PrintCard")
+
+
+	cv = frappe.get_doc("PrintCard Canvas", canvas)
 
 	html = frappe.render_template(f"""
 		<div>
