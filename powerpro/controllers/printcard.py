@@ -1,6 +1,13 @@
 # Copyright (c) 2025, Yefri Tavarez and Contributors
 # For license information, please see license.txt
 
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+	from frappe.model import document as document
+
+
 import io
 # import uuid
 
@@ -10,6 +17,7 @@ import frappe
 from frappe.utils import flt
 
 from powerpro.controllers.pdf_manager import pdf_manipulator as pdf_manager 
+from powerpro.controllers.pdf_manager import signature_helper as signature_helper
 
 
 @frappe.whitelist()
@@ -17,7 +25,7 @@ def generate_pdf_for_printcard(canvas=None, printcard=None, pdf_path=None):
 	if not printcard:
 		frappe.throw("You must specify a PrintCard to generate the PDF")
 
-	pc = frappe.get_doc("PrintCard", printcard)
+	pc = get_princard(printcard)
 
 	filepath = get_file_path(pc.archivo)
 
@@ -42,7 +50,7 @@ def generate_pdf_for_printcard(canvas=None, printcard=None, pdf_path=None):
 		return
 
 
-	cv = frappe.get_doc("PrintCard Canvas", canvas)
+	cv = get_canvas(canvas)
 
 	html = frappe.render_template(f"""
 		<div>
@@ -201,3 +209,61 @@ def get_best_canvas(pdf_width, pdf_height) -> str:
 		return out[0] # Return the canvas name
 	
 	return None
+
+
+@frappe.whitelist()
+def sign_pdf_with_base64(princard_id: str) -> bool:
+	"""Sign the PDF of a PrintCard with a Base64-encoded signature."""
+	
+	# Get the PrintCard document
+	pc = get_princard(princard_id)
+	
+	# Get the signature from the PrintCard
+	signature = pc.firma_cliente
+	
+	# Get the file path of the PDF
+	filepath = get_file_path(pc.printcard_file)
+	
+	# Generate a unique filename for the signed PDF
+	signed_pdf_path = f"/files/{princard_id}_signed.pdf"
+
+	width, height = pdf_manager.get_pdf_dimensions(filepath)
+
+	canvas = get_canvas(
+		get_best_canvas(width, height)
+	)
+	
+	# Sign the PDF
+	signed = signature_helper.sign_pdf_with_base64(
+		pdf_path=filepath,
+		base64_signature=signature,
+		output_path=get_file_path(signed_pdf_path),
+		x=canvas.signature_x_position,
+		y=canvas.signature_y_position,
+		width=canvas.signature_width,
+		height=canvas.signature_height,
+	)
+
+	if signed:
+		pc.printcard_file_signed = signed_pdf_path
+		pc.db_update()
+
+		frappe.msgprint(
+			f"El PrintCard {princard_id} ha sido firmado correctamente.",
+			indicator="green",
+			alert=True,
+		)
+	else:
+		frappe.throw(
+			"Ha ocurrido un error al firmar el PrintCard. Por favor, intente de nuevo."
+		)
+
+
+def get_princard(name: str) -> "document.Document":
+	doctype = "PrintCard"
+	return frappe.get_doc(doctype, name)
+
+
+def get_canvas(name: str) -> "document.Document":
+	doctype = "PrintCard Canvas"
+	return frappe.get_doc(doctype, name)
