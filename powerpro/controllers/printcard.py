@@ -88,7 +88,7 @@ def generate_pdf_for_printcard(canvas=None, printcard=None, pdf_path=None):
 
 	if pdf_path:
 		unique_filename = f"{uuid.uuid4()}.pdf"
-		path = get_file_path(f"/files/{unique_filename}")
+		path = f"/files/{unique_filename}"
 
 		with open(path, "wb") as f:
 			f.write(output.getvalue())
