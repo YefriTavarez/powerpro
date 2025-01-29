@@ -19,22 +19,12 @@ def generate_pdf_for_printcard(canvas=None, printcard=None, pdf_path=None):
 
 	pc = frappe.get_doc("PrintCard", printcard)
 
+	filepath = get_file_path(pc.archivo)
+
+	width, height = pdf_manager.get_pdf_dimensions(filepath)
+
 	if not canvas:
-		filepath = get_file_path(pc.archivo)
-
-		width, height = pdf_manager.get_pdf_dimensions(filepath)
-
-		canvas_list = get_canvas_list_without_ancho_specs()
-
-		minimum_canvas_margin = get_minimum_canvas_margin()
-
-		out = pdf_manager.select_best_canvas(
-			width, height, canvas_list, minimum_canvas_margin
-		)
-
-		if out:
-			canvas, _, __ = out
-
+		canvas = get_best_canvas(width, height)
 
 	if not canvas:
 		frappe.respond_as_web_page(
@@ -196,3 +186,18 @@ def get_minimum_canvas_margin():
 	fieldname = "minimum_canvas_margin"
 
 	return frappe.db.get_single_value(doctype, fieldname)
+
+
+def get_best_canvas(pdf_width, pdf_height) -> str:
+	canvas_list = get_canvas_list_without_ancho_specs()
+
+	minimum_canvas_margin = get_minimum_canvas_margin()
+
+	out = pdf_manager.select_best_canvas(
+		pdf_width, pdf_height, canvas_list, minimum_canvas_margin
+	)
+
+	if out:
+		return out[0] # Return the canvas name
+	
+	return None
