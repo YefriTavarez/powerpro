@@ -42,13 +42,6 @@ def generate_pdf_for_printcard(canvas=None, printcard=None):
 	HTML(string=html).write_pdf(pdf_buffer)
 	pdf_buffer.seek(0)  # Ensure the buffer is at the beginning
 
-	is_private=pc.archivo.startswith("/private")
-	files_folder = frappe.utils.get_files_path(is_private=is_private)
-
-	if is_private:
-		filepath = pc.archivo.replace("/private/files/", "")
-	else:
-		filepath = pc.archivo.replace("/files/", "")
 
 	pdf_to_render = f"{files_folder}/{filepath}"
 	
@@ -60,6 +53,18 @@ def generate_pdf_for_printcard(canvas=None, printcard=None):
 	# frappe.local.response.filecontent = pdf_buffer.getvalue()
 	frappe.local.response.filecontent = output.getvalue()
 	frappe.local.response.type = "pdf"
+
+
+def get_file_path(filename):
+	is_private=filename.startswith("/private")
+	files_folder = frappe.utils.get_files_path(is_private=is_private)
+
+	if is_private:
+		filepath = filename.replace("/private/files/", "")
+	else:
+		filepath = filename.replace("/files/", "")
+
+	return f"{files_folder}/{filepath}"
 
 
 def get_ink_color(ink_color_id):
