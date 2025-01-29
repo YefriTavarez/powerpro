@@ -121,15 +121,14 @@ def get_canvas_list_without_ancho_specs():
 		"ancho_pdf",
 		"alto_pdf",
 		"ancho_specs",
-		"alto_specs",
 		"orientation",
 	]):
 		if canvas.orientation == "Portrait":
-			width = canvas.ancho_pdf - canvas.ancho_specs
-			height = canvas.alto_pdf
-		else:
 			width = canvas.ancho_pdf
-			height = canvas.alto_pdf - canvas.alto_specs
+			height = canvas.alto_pdf - canvas.ancho_specs
+		else:
+			height = canvas.alto_pdf
+			width = canvas.ancho_pdf - canvas.ancho_specs
 
 		out.append((width, height))
 
