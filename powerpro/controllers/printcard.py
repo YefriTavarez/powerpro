@@ -43,7 +43,7 @@ def generate_pdf_for_printcard(canvas=None, printcard=None):
 	pdf_buffer.seek(0)  # Ensure the buffer is at the beginning
 
 
-	pdf_to_render = f"{files_folder}/{filepath}"
+	pdf_to_render = get_file_path(pc.archivo)
 	
 	# Render the PDF on the template
 	output = pdf_manager.render_pdf_on_template(pdf_buffer, pdf_to_render, canvas=cv)
