@@ -66,6 +66,16 @@ def render_pdf_on_template(pdf1_buffer, pdf2_path, canvas):
     
     return output_buffer
 
+
+def get_pdf_dimensions(pdf_path):
+    pdf = PdfReader(pdf_path)
+    page = pdf.pages[0]
+    width = float(page.mediabox.width)
+    height = float(page.mediabox.height)
+    
+    return width, height
+
+
 # from pypdf import PdfReader, PdfWriter, PageObject
 # from io import BytesIO
 
