@@ -2,6 +2,8 @@
 # For license information, please see license.txt
 
 import io
+import uuid
+
 from weasyprint import HTML
 
 import frappe
@@ -10,7 +12,7 @@ from powerpro.controllers.pdf_manager import pdf_manipulator as pdf_manager
 
 
 @frappe.whitelist()
-def generate_pdf_for_printcard(canvas=None, printcard=None):
+def generate_pdf_for_printcard(canvas=None, printcard=None, pdf_path=None):
 	if not printcard:
 		frappe.throw("You must specify a PrintCard to generate the PDF")
 
@@ -70,7 +72,16 @@ def generate_pdf_for_printcard(canvas=None, printcard=None):
 	# Render the PDF on the template
 	output = pdf_manager.render_pdf_on_template(pdf_buffer, pdf_to_render, canvas=cv)
 
+	if pdf_path:
+		unique_filename = f"{uuid.uuid4()}.pdf"
+		path = get_file_path(f"/files/{unique_filename}")
 
+		with open(path, "wb") as f:
+			f.write(output.getvalue())
+		
+		return path
+
+	# Set the response to download the PDF
 	frappe.local.response.filename = "{name}.pdf".format(name=printcard.replace(" ", "-").replace("/", "-"))
 	# frappe.local.response.filecontent = pdf_buffer.getvalue()
 	frappe.local.response.filecontent = output.getvalue()
