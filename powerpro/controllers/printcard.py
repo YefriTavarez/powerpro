@@ -210,7 +210,6 @@ def get_best_canvas(pdf_width, pdf_height) -> str:
 	return None
 
 
-@frappe.whitelist()
 def sign_pdf_with_base64(printcard) -> bool:
 	"""Sign the PDF of a PrintCard with a Base64-encoded signature."""
 	
