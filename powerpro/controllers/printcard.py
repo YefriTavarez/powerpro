@@ -247,6 +247,7 @@ def sign_pdf_with_base64(printcard_id) -> bool:
 
 	if signed:
 		printcard.printcard_file_signed = signed_pdf_path
+		printcard.save()
 
 		frappe.msgprint(
 			f"El PrintCard {printcard.name} ha sido firmado correctamente.",
