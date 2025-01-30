@@ -239,10 +239,10 @@ def sign_pdf_with_base64(printcard_id) -> bool:
 		pdf_path=filepath,
 		base64_signature=signature,
 		output_path=get_file_path(signed_pdf_path),
-		x=canvas.signature_x_position,
-		y=canvas.signature_y_position,
-		width=canvas.signature_width,
-		height=canvas.signature_height,
+		x=canvas.signature_x_position * 72,
+		y=canvas.signature_y_position * 72,
+		width=canvas.signature_width * 72,
+		height=canvas.signature_height * 72,
 	)
 
 	if signed:
