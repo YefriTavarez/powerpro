@@ -265,6 +265,10 @@ def _sign_pdf_with_base64(printcard_id) -> bool:
 		y=canvas.signature_y_position * 72,
 		width=canvas.signature_width * 72,
 		height=canvas.signature_height * 72,
+		date_x_pos=canvas.date_x_position,
+		date_y_pos=canvas.date_y_position,
+		date_size=canvas.font_size,
+		date_color=convert_hex_to_rgb(canvas.date_font_color),
 	)
 
 	if signed:
@@ -303,3 +307,11 @@ def get_unique_filename(princard_id: str, customer: str, suffix=None) -> str:
 		filename = f"{filename}_{suffix}"
 
 	return f"{filename}.pdf"
+
+
+def convert_hex_to_rgb(hex_color: str) -> tuple:
+	"""Convert a hexadecimal color to an RGB tuple."""
+	hex_color = hex_color.lstrip("#")  # Remove the "#" if present
+	r, g, b = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+
+	return r, g, b
