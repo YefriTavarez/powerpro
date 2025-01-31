@@ -4,6 +4,7 @@
 # import fitz  # PyMuPDF
 # import io
 
+from frappe import db
 from frappe.utils import flt
 
 from pypdf import PdfReader, PdfWriter, PageObject, Transformation
@@ -92,26 +93,13 @@ def select_best_canvas(pdf_width, pdf_height, canvas_list, margin=0.5):
     """
     # Filter canvas options that fit the dimensions with margin
     fitting_canvases = [
-        [canvas_id, cw, ch, None] for canvas_id, cw, ch in canvas_list
+        (canvas_id, cw, ch, orientation) for canvas_id, cw, ch, orientation in canvas_list
         if cw >= pdf_width + margin and ch >= pdf_height + margin
     ]
 
     # Determine the orientation of the PDF
 
     orientation = "Portrait" if pdf_height > pdf_width else "Landscape"
-
-
-    agregated_canvases = []
-    for canvas in fitting_canvases:
-        _, cw, ch, __ = canvas
-
-        if cw >= ch:
-            orientation = "Landscape"
-        else:
-            orientation = "Portrait"
-        
-        canvas[3] = orientation
-        agregated_canvases.append(canvas)
 
     # # Sort the fitting canvases by their orientation to give priority to the same orientation
     # agregated_canvases.sort(key=lambda dims: 1 if dims[3] == orientation else 0)
@@ -121,9 +109,44 @@ def select_best_canvas(pdf_width, pdf_height, canvas_list, margin=0.5):
     # agregated_canvases.sort(key=lambda dims: dims[1] * dims[2])
 
     # Sort the fitting canvases by area (smallest to largest) and then by orientation
-    agregated_canvases.sort(key=lambda dims: (dims[1] * dims[2], 1 if dims[3] == orientation else 0))
+    # fitting_canvases.sort(key=lambda dims: (dims[1] * dims[2], 1 if dims[3] == orientation else 0))
+
+    if fitting_canvases:
+        if len(fitting_canvases) == 1:
+            conditions = f"name = {fitting_canvases[0][0]}"
+        else:
+            conditions = f"name In {tuple([canvas[0] for canvas in fitting_canvases])}"
+
+        # order = "Desc" if orientation == "Portrait" else "Asc"
+        order = "Asc" if orientation == "Portrait" else "Desc"
+
+        query = f"""Select
+                name, ancho_pdf, alto_pdf, orientation
+            From (
+                    Select
+                        name,
+                        alto_pdf,
+                        ancho_pdf,
+                        (alto_pdf * ancho_pdf) As area,
+                        IF(
+                            ancho_pdf > alto_pdf,
+                            "Landscape", "Portrait"
+                        ) As orientation
+                    From
+                        `tabPrintCard Canvas`
+                    Where
+                        {conditions}
+                ) As temp
+                Order By
+                    orientation {order},
+                    area Asc
+            """
+
+        return db.sql(
+            query
+        )[0]
     
-    return agregated_canvases[0] if agregated_canvases else None
+    return None
 
 # from pypdf import PdfReader, PdfWriter, PageObject
 # from io import BytesIO

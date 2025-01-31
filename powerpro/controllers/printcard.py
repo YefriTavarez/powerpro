@@ -31,6 +31,14 @@ def generate_pdf_for_printcard(canvas=None, printcard=None, pdf_path=None):
 
 	width, height = pdf_manager.get_pdf_dimensions(filepath)
 
+	# frappe.respond_as_web_page(
+	# 	title="Generando PDF",
+	# 	html=f"""
+	# 		width {width} x {height})
+	# 	""",
+	# )
+	# return
+
 	if not canvas:
 		canvas = get_best_canvas(width, height)
 
@@ -174,15 +182,16 @@ def get_canvas_list_without_ancho_specs():
 		"ancho_specs",
 		"orientation",
 	]):
-		if canvas.orientation == "Portrait":
+		# if canvas.orientation == "Portrait":
+		if canvas.ancho_pdf < canvas.alto_pdf: # Vertical (Portrait)
 			width = canvas.ancho_pdf
 			height = canvas.alto_pdf - canvas.ancho_specs
-		else:
+		else: # Horizontal (Landscape)
 			height = canvas.alto_pdf
 			width = canvas.ancho_pdf - canvas.ancho_specs
 
 		out.append(
-			(canvas.name, width, height)
+			(canvas.name, width, height, "Portrait" if height > width else "Landscape")
 		)
 
 	return out
