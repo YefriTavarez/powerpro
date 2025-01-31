@@ -195,8 +195,13 @@ def get_minimum_canvas_margin():
 	return frappe.db.get_single_value(doctype, fieldname)
 
 
-def get_best_canvas(pdf_width, pdf_height) -> str:
+def get_best_canvas(pdf_width, pdf_height, raise_if_empty=False) -> str:
 	canvas_list = get_canvas_list_without_ancho_specs()
+
+	if not canvas_list:
+		if raise_if_empty:
+			frappe.throw("No PrintCard Canvas documents found.")
+		return None
 
 	minimum_canvas_margin = get_minimum_canvas_margin()
 
@@ -213,7 +218,13 @@ def get_best_canvas(pdf_width, pdf_height) -> str:
 @frappe.whitelist()
 def sign_pdf_with_base64(printcard_id) -> bool:
 	"""Sign the PDF of a PrintCard with a Base64-encoded signature."""
-	
+	frappe.enqueue(
+		_sign_pdf_with_base64,
+		printcard_id=printcard_id,
+		enqueue_after_commit=True,
+	)
+
+def _sign_pdf_with_base64(printcard_id) -> bool:
 	# Get the PrintCard
 	printcard = get_princard(printcard_id)
 
@@ -221,6 +232,7 @@ def sign_pdf_with_base64(printcard_id) -> bool:
 	signature = printcard.firma_cliente
 	
 	# Get the file path of the PDF
+	ofilepath = get_file_path(printcard.archivo)
 	filepath = get_file_path(printcard.printcard_file)
 
 	signed_pdf_filename = get_unique_filename(printcard.name, printcard.cliente, suffix="signed")
@@ -228,10 +240,10 @@ def sign_pdf_with_base64(printcard_id) -> bool:
 	# Generate a unique filename for the signed PDF
 	signed_pdf_path = f"/files/{signed_pdf_filename}"
 
-	width, height = pdf_manager.get_pdf_dimensions(filepath)
+	width, height = pdf_manager.get_pdf_dimensions(ofilepath)
 
 	canvas = get_canvas(
-		get_best_canvas(width, height)
+		get_best_canvas(width, height, raise_if_empty=True)
 	)
 	
 	# Sign the PDF
@@ -266,6 +278,9 @@ def get_princard(name: str) -> "document.Document":
 
 
 def get_canvas(name: str) -> "document.Document":
+	if not name:
+		frappe.throw("You must specify a PrintCard Canvas to get.")
+
 	doctype = "PrintCard Canvas"
 	return frappe.get_doc(doctype, name)
 
