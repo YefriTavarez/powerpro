@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 import io
-# import uuid
+import uuid
 
 from weasyprint import HTML
 
@@ -238,7 +238,8 @@ def _sign_pdf_with_base64(printcard_id) -> bool:
 	signed_pdf_filename = get_unique_filename(printcard.name, printcard.cliente, suffix="signed")
 	
 	# Generate a unique filename for the signed PDF
-	signed_pdf_path = f"/files/{signed_pdf_filename}"
+	# signed_pdf_path = f"/files/{signed_pdf_filename}"
+	signed_pdf_path = f"/files/{uuid.uuid4()}.pdf"
 
 	width, height = pdf_manager.get_pdf_dimensions(ofilepath)
 
