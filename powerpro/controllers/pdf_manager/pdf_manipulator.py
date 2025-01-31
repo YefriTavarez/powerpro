@@ -109,44 +109,9 @@ def select_best_canvas(pdf_width, pdf_height, canvas_list, margin=0.5):
     # agregated_canvases.sort(key=lambda dims: dims[1] * dims[2])
 
     # Sort the fitting canvases by area (smallest to largest) and then by orientation
-    # fitting_canvases.sort(key=lambda dims: (dims[1] * dims[2], 1 if dims[3] == orientation else 0))
-
-    if fitting_canvases:
-        if len(fitting_canvases) == 1:
-            conditions = f"name = {fitting_canvases[0][0]}"
-        else:
-            conditions = f"name In {tuple([canvas[0] for canvas in fitting_canvases])}"
-
-        # order = "Desc" if orientation == "Portrait" else "Asc"
-        order = "Asc" if orientation == "Portrait" else "Desc"
-
-        query = f"""Select
-                name, ancho_pdf, alto_pdf, orientation
-            From (
-                    Select
-                        name,
-                        alto_pdf,
-                        ancho_pdf,
-                        (alto_pdf * ancho_pdf) As area,
-                        IF(
-                            ancho_pdf > alto_pdf,
-                            "Landscape", "Portrait"
-                        ) As orientation
-                    From
-                        `tabPrintCard Canvas`
-                    Where
-                        {conditions}
-                ) As temp
-                Order By
-                    orientation {order},
-                    area Asc
-            """
-
-        return db.sql(
-            query
-        )[0]
+    fitting_canvases.sort(key=lambda dims: (dims[1] * dims[2], 1 if dims[3] != orientation else 0))
     
-    return None
+    return fitting_canvases[0] if fitting_canvases else None
 
 # from pypdf import PdfReader, PdfWriter, PageObject
 # from io import BytesIO
