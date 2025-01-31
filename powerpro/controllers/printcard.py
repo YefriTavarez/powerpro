@@ -235,11 +235,11 @@ def _sign_pdf_with_base64(printcard_id) -> bool:
 	ofilepath = get_file_path(printcard.archivo)
 	filepath = get_file_path(printcard.printcard_file)
 
-	signed_pdf_filename = get_unique_filename(printcard.name, printcard.cliente, suffix="signed")
+	signed_pdf_filename = get_unique_filename(printcard.name, printcard.cliente, suffix="firmado")
 	
 	# Generate a unique filename for the signed PDF
-	# signed_pdf_path = f"/files/{signed_pdf_filename}"
-	signed_pdf_path = f"/files/{uuid.uuid4()}.pdf"
+	signed_pdf_path = f"/files/{signed_pdf_filename}"
+	# signed_pdf_path = f"/files/{uuid.uuid4()}.pdf"
 
 	width, height = pdf_manager.get_pdf_dimensions(ofilepath)
 

@@ -92,16 +92,38 @@ def select_best_canvas(pdf_width, pdf_height, canvas_list, margin=0.5):
     """
     # Filter canvas options that fit the dimensions with margin
     fitting_canvases = [
-        (canvas_id, cw, ch) for canvas_id, cw, ch in canvas_list
+        (canvas_id, cw, ch, None) for canvas_id, cw, ch in canvas_list
         if cw >= pdf_width + margin and ch >= pdf_height + margin
     ]
+
+    # Determine the orientation of the PDF
+
+    orientation = "Portrait" if pdf_height > pdf_width else "Landscape"
+
+
+    agregated_canvases = []
+    for canvas in fitting_canvases:
+        canvas_id, cw, ch = canvas
+
+        if cw >= ch:
+            orientation = "Landscape"
+        else:
+            orientation = "Portrait"
+        
+        canvas[3] = orientation
+        agregated_canvases.append(canvas)
+
+    # # Sort the fitting canvases by their orientation to give priority to the same orientation
+    # agregated_canvases.sort(key=lambda dims: 1 if dims[3] == orientation else 0)
+
     
-    # Sort by area (smallest to largest) to prioritize smaller canvases
-    fitting_canvases.sort(key=lambda dims: dims[1] * dims[2])
+    # # Sort by area (smallest to largest) to prioritize smaller canvases
+    # agregated_canvases.sort(key=lambda dims: dims[1] * dims[2])
+
+    # Sort the fitting canvases by area (smallest to largest) and then by orientation
+    agregated_canvases.sort(key=lambda dims: (dims[1] * dims[2], 1 if dims[3] == orientation else 0))
     
     return fitting_canvases[0] if fitting_canvases else None
-
-
 
 # from pypdf import PdfReader, PdfWriter, PageObject
 # from io import BytesIO
