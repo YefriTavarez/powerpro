@@ -34,6 +34,7 @@ fixtures = []
 app_include_js = [
     "/assets/powerpro/js/powerpro.js?v=1.0.1",
     "/assets/powerpro/js/frappe/indicator.js?v=1.0.1",
+    "/assets/powerpro/js/frappe/signature.js?v=1.0.1",
     "app.bundle.js",
 ]
 
