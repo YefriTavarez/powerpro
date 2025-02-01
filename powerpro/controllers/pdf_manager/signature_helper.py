@@ -10,7 +10,7 @@ import fitz  # PyMuPDF
 from PIL import Image
 
 from frappe import utils
-
+from frappe import log_error
 
 def sign_pdf_with_base64(
     pdf_path,
@@ -86,6 +86,7 @@ def sign_pdf_with_base64(
         return True
         # print(f"Signed PDF saved as: {output_path}")
     except Exception as e:
+        log_error()
         return False
 
     finally:
