@@ -50,12 +50,12 @@ def get_serie(doc):
 		if item_group:
 			parts = item_group.split(" ")
 
-			if len(parts) > 1: # take the first char of each word
+			if len(parts) > 1: # take the first two chars of each word
 				out.append("".join([
-					part[0] for part in parts
+					part[:2] for part in parts
 				]))
 			else:
-				out.append(item_group[:2])
+				out.append(item_group[:3])
 
 	return "".join(out)
 	
