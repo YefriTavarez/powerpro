@@ -40,7 +40,7 @@ class PrintCard(Document):
             arte.save()
 
         # Si estamos en la última versión, aplicar lógica existente
-        if f"{self.version_arte_interna}.{self.version}" == frappe.utils.cint(latest_version[0][0]):
+        if f"{self.version_arte_interna}.{self.version}" == latest_version[0][0]:
             arte.estado = self.estado if self.estado not in {"Reemplazado"} else "Pendiente"
 
             if self.estado == "Aprobado":
