@@ -88,7 +88,7 @@ class PrintCard(Document):
             # arte.version_actual = ""
             # arte.versión_del_cliente = ""
             # arte.producto = ""
-            arte.archivo_actual = ""
+            # arte.archivo_actual = ""
 
             # Last Approved Info Section
             arte.version_actual = None
@@ -129,6 +129,60 @@ class PrintCard(Document):
 
                 arte.flags.ignore_permissions = True
                 arte.flags.ignore_mandatory = True
+
+                # Fetch the second latest PrintCard
+                second_latest_printcard = frappe.db.sql("""
+                    SELECT name, estado
+                    FROM `tabPrintCard`
+                    WHERE codigo_arte = %s
+                    ORDER BY version_arte_interna DESC, version DESC
+                    LIMIT 1 OFFSET 1
+                """, (self.codigo_arte,), as_dict=True)
+
+                if second_latest_printcard:
+                    second_latest_name = second_latest_printcard[0].get("name")
+                    second_latest_estado = second_latest_printcard[0].get("estado")
+
+                    # Handle the "Reemplazado" state
+                    if second_latest_estado == "Reemplazado":
+                        arte.estado = "Aprobado"
+                        arte.ultima_version_aprobada = frappe.db.get_value(
+                            "PrintCard",
+                            {"name": second_latest_name},
+                            "version_arte_interna"
+                        )
+                        arte.archivo_printcard_aprobado = frappe.db.get_value(
+                            "PrintCard",
+                            {"name": second_latest_name},
+                            "archivo"
+                        )
+                        arte.producto_aprobado = frappe.db.get_value(
+                            "PrintCard",
+                            {"name": second_latest_name},
+                            "producto"
+                        )
+                        arte.versión_interna_del_aprobada = frappe.db.get_value(
+                            "PrintCard",
+                            {"name": second_latest_name},
+                            "version_arte_cliente"
+                        )
+
+                    # Update the "Last Submitted Info Section"
+                    arte.version_actual = frappe.db.get_value(
+                        "PrintCard",
+                        {"name": second_latest_name},
+                        "version"
+                    )
+                    arte.archivo_actual = frappe.db.get_value(
+                        "PrintCard",
+                        {"name": second_latest_name},
+                        "archivo"
+                    )
+                    arte.estado = second_latest_estado
+
+                arte.flags.ignore_permissions = True
+                arte.flags.ignore_mandatory = True
+                arte.save()
 
         # Guardar los cambios en Arte
         arte.flags.ignore_version_validations = True
