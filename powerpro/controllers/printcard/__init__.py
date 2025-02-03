@@ -22,5 +22,5 @@ from .printcard import (
 )
 
 from .client import (
-	get_art_list,
+	get_printcard_list,
 )
