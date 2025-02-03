@@ -18,6 +18,8 @@ def get_art_list(arte_id):
     # Concatenate 'version_arte_interna' and 'version' using a dot (.)
     for record in results:
         record["version_combined"] = f"{record['version_arte_interna']}.{record['version']}"
+
+    # sort records by 'version_combined' in descending order
+    results = sorted(results, key=lambda x: x["version_combined"], reverse=True)
     
     return results
-	
