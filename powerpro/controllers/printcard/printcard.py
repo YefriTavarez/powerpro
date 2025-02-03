@@ -187,12 +187,16 @@ class PrintCard(Document):
                     alert=True,
                 )
 
+        # Handle the "Rechazado" state
+        if self.estado == "Rechazado":
+            arte.estado = "Rechazado"
+            arte.save()
+
         # ToDo: double check why this is necessary
         if codigo := frappe.db.get_value("Producto del Cliente", {
             "nombre_arte": self.nombre_arte,
         }, ["codigo"]):
             self.codigo = codigo
-
 
     def save_arte(self):
         arte = self._get_arte()
