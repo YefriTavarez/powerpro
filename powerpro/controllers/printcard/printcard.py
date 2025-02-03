@@ -11,6 +11,9 @@ from powerpro.controllers.printcard import (
 )
 
 class PrintCard(Document):
+    def before_insert(self):
+        self.set_version()
+
     def before_save(self):
         self.update_arte_status()
         self.update_arte_fields()
@@ -26,6 +29,26 @@ class PrintCard(Document):
     
     def on_trash(self):
         self.revert_art_on_printcard_trash()
+
+    def set_version(self):
+        query = f"""
+            Select Max(version)
+            From `tabPrintCard`
+            Where codigo_arte={self.codigo_arte!r}
+            And version_arte_interna = {self.version_arte_interna}
+        """
+
+        result = frappe.db.sql(query)
+
+        self.version = result[0][0] or 0
+
+        if not frappe.utils.cint(self.version):
+            self.version = 0
+
+        # ensure an integer value
+        version = frappe.utils.cint(self.version)
+
+        self.version = version + 1
 
     def revert_art_on_printcard_trash(self):
         """
