@@ -445,12 +445,19 @@ class PrintCard(Document):
         )
 
     def remove_assignee_from_arte(self, user: str):
+        # remove_assignee(
+        #     {
+        #         "assign_to": [user],
+        #         "doctype": self.doctype,
+        #         "name": self.name,
+        #     },
+        #     ignore_permissions=True,
+        # )
+
         remove_assignee(
-            {
-                "assign_to": [user],
-                "doctype": self.doctype,
-                "name": self.name,
-            },
+            self.doctype,
+            self.name,
+            user,
             ignore_permissions=True,
         )
 
