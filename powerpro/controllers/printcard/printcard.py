@@ -266,9 +266,10 @@ class PrintCard(Document):
                     SELECT name, estado
                     FROM `tabPrintCard`
                     WHERE codigo_arte = %s
+                    AND name != %s
                     ORDER BY version_arte_interna DESC, version DESC
                     LIMIT 1 OFFSET 1
-                """, (self.codigo_arte,), as_dict=True)
+                """, (self.codigo_arte, self.name), as_dict=True)
 
                 if second_latest_printcard:
                     second_latest_name = second_latest_printcard[0].get("name")
@@ -297,6 +298,9 @@ class PrintCard(Document):
                             {"name": second_latest_name},
                             "version_arte_cliente"
                         )
+
+                        
+                        frappe.db.set_value("PrintCard", second_latest_name, "estado", "Aprobado")
 
                     # Update the "Last Submitted Info Section"
                     arte.version_actual = frappe.db.get_value(
