@@ -434,15 +434,20 @@ class PrintCard(Document):
             self.remove_assignee_from_arte(user)
 
     def add_assignee_to_arte(self, user: str):
-        assign_to(
-            {
-                "assign_to": [user],
-                "doctype": self.doctype,
-                "name": self.name,
-                "description": f"PrintCard #{self.name} has been assigned to you.",
-            },
-            ignore_permissions=True,
-        )
+        if not frappe.flags.in_install:
+            frappe.flags.in_install = True
+                
+            assign_to(
+                {
+                    "assign_to": [user],
+                    "doctype": self.doctype,
+                    "name": self.name,
+                    "description": f"PrintCard #{self.name} has been assigned to you.",
+                },
+                ignore_permissions=True,
+            )
+
+            frappe.flags.in_install = False
 
     def remove_assignee_from_arte(self, user: str):
         # remove_assignee(
@@ -454,12 +459,17 @@ class PrintCard(Document):
         #     ignore_permissions=True,
         # )
 
-        remove_assignee(
-            self.doctype,
-            self.name,
-            user,
-            ignore_permissions=True,
-        )
+        if not frappe.flags.in_install:
+            frappe.flags.in_install = True
+
+            remove_assignee(
+                self.doctype,
+                self.name,
+                user,
+                ignore_permissions=True,
+            )
+
+            frappe.flags.in_install = False
 
     def _get_arte(self):
         if not hasattr(self, "_arte"):
