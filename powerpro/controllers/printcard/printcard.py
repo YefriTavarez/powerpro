@@ -462,13 +462,6 @@ class PrintCard(Document):
     def update_arte_status(self):
         arte = self._get_arte()
 
-        # # Actualizar el estado del Arte si el estado del PrintCard cambia a "Pendiente"
-        # if self.estado == "Pendiente":
-        #     arte.estado = "Pendiente"
-        #     arte.flags.ignore_permissions = True
-        #     arte.flags.ignore_mandatory = True
-        #     arte.save()
-
         # Si estamos en la última versión, aplicar lógica existente
         if self.is_latest_version():
             arte.estado = self.estado
@@ -482,8 +475,6 @@ class PrintCard(Document):
                 arte.versión_interna_del_aprobada = arte.versión_del_cliente
 
             self.mark_as_replaced_previous_printcards()
-
-            # frappe.msgprint(f"El Arte {arte.name} ha sido actualizada satisfactoriamente.", alert=True)
 
             db_doc = self.get_doc_before_save()
 
@@ -539,11 +530,11 @@ class PrintCard(Document):
                             break
 
                     # arte.db_set("estado", "Rechazado")
-                if self.estado not in {"Borrador",}:
-                # if it's the latest version, the status of the arte should be the same as the printcard
-                    arte.db_set("estado", self.estado)
 
     def update_arte_fields(self):
+        if not self.is_latest_version():
+            return # don't update the arte if it's not the latest version
+
         arte = self._get_arte()
 
         db_doc = self.get_doc_before_save()
@@ -583,11 +574,6 @@ class PrintCard(Document):
                     f"El archivo PDF del PrintCard ha sido generado satisfactoriamente.",
                     alert=True,
                 )
-
-        # Handle the "Rechazado" state
-        if self.estado == "Rechazado":
-            arte.estado = "Rechazado"
-            arte.save()
 
         # ToDo: double check why this is necessary
         if codigo := frappe.db.get_value("Producto del Cliente", {
