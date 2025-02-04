@@ -332,7 +332,10 @@ class PrintCard(Document):
                         {"name": second_latest_name},
                         "archivo"
                     )
-                    arte.estado = second_latest_estado
+
+                    if not second_latest_printcard \
+                         or second_latest_estado != "Reemplazado":
+                        arte.estado = second_latest_estado
 
         # Desvincular el PrintCard del Arte para que pueda ser eliminado
         for row in arte.cambios:
@@ -381,7 +384,6 @@ class PrintCard(Document):
             else:
                 frappe.msgprint("No se encontró ningún registro asociado en la Tabla de Cambios del Arte", alert=True)
 
-
     def update_change_log(self):
         arte = self._get_arte()
 
@@ -406,6 +408,9 @@ class PrintCard(Document):
                 "fecha": frappe.utils.today(),
                 "archivo_link": frappe.utils.get_url(self.archivo),
             })
+
+        if self.estado != "Borrador":
+            frappe.throw("Ehhh....! Un PrintCard nuevo que no esta en Borrador")
 
         arte.estado = "Borrador"
         arte.archivo_actual = self.archivo
@@ -549,7 +554,7 @@ class PrintCard(Document):
                 arte.estado_últ_aprobada = self.estado
                 arte.versión_interna_del_aprobada = arte.versión_del_cliente
 
-            self.mark_as_replaced_previous_printcards()
+                self.mark_as_replaced_previous_printcards()
 
             db_doc = self.get_doc_before_save()
 
