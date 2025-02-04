@@ -11,6 +11,97 @@ from powerpro.controllers.printcard import (
 )
 
 class PrintCard(Document):
+    # begin: auto-generated types
+    # This code is auto-generated. Do not modify anything in this block.
+
+    from typing import TYPE_CHECKING
+
+    if TYPE_CHECKING:
+        from frappe.model.document import Document
+        from frappe.types import DF
+
+        acabado_especial: DF.Check
+        alto_elemento_relieve_1: DF.Float
+        alto_elemento_relieve_2: DF.Float
+        alto_elemento_relieve_3: DF.Float
+        alto_elemento_relieve_4: DF.Float
+        alto_elemento_relieve_5: DF.Float
+        alto_total_in: DF.Float
+        alto_total_mm: DF.Float
+        amended_from: DF.Link | None
+        ancho_elemento_relieve_1: DF.Float
+        ancho_elemento_relieve_2: DF.Float
+        ancho_elemento_relieve_3: DF.Float
+        ancho_elemento_relieve_4: DF.Float
+        ancho_elemento_relieve_5: DF.Float
+        ancho_in: DF.Float
+        ancho_mm: DF.Float
+        ancho_total_in: DF.Float
+        ancho_total_mm: DF.Float
+        aprobado: DF.Check
+        archivo: DF.Attach
+        barnizado: DF.Check
+        cantidad_de_elementos_en_relieve: DF.Int
+        cantidad_de_tintas_retiro: DF.Int
+        cantidad_de_tintas_tiro: DF.Int
+        cinta_doble_cara: DF.Check
+        cliente: DF.Link
+        codigo: DF.Data | None
+        codigo_arte: DF.Link
+        codigo_barra: DF.Check
+        corte: DF.Literal["Refilado", "Troquelado"]
+        dimension_sku: DF.Data
+        dimensiones_empaque_cerrada: DF.Check
+        direccion_hilo: DF.Literal["", "No Especificada", "Lado Corto", "Lado Largo"]
+        especificaciones: DF.Text | None
+        estado: DF.Literal["Borrador", "Pendiente", "Aprobado", "Rechazado", "Reemplazado"]
+        laminado: DF.Check
+        largo_in: DF.Float
+        largo_mm: DF.Float
+        material: DF.Link
+        no_codigo_barra: DF.Int
+        nombre_arte: DF.Data
+        pegado: DF.Check
+        printcard_file: DF.Attach | None
+        printcard_file_signed: DF.Attach | None
+        producto: DF.Link
+        profundidad_in: DF.Float
+        profundidad_mm: DF.Float
+        proyecto: DF.Link | None
+        puntos_cinta_doble_cara: DF.Literal["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+        qr: DF.Check
+        razon_rechazo: DF.SmallText | None
+        status: DF.Data | None
+        tamano_cinta_doble_cara: DF.Data | None
+        tinta_seleccionada_retiro_1: DF.Data | None
+        tinta_seleccionada_retiro_2: DF.Data | None
+        tinta_seleccionada_retiro_3: DF.Data | None
+        tinta_seleccionada_retiro_4: DF.Data | None
+        tinta_seleccionada_retiro_5: DF.Data | None
+        tinta_seleccionada_retiro_6: DF.Data | None
+        tinta_seleccionada_retiro_7: DF.Data | None
+        tinta_seleccionada_retiro_8: DF.Data | None
+        tinta_seleccionada_tiro_1: DF.Data | None
+        tinta_seleccionada_tiro_2: DF.Data | None
+        tinta_seleccionada_tiro_3: DF.Data | None
+        tinta_seleccionada_tiro_4: DF.Data | None
+        tinta_seleccionada_tiro_5: DF.Data | None
+        tinta_seleccionada_tiro_6: DF.Data | None
+        tinta_seleccionada_tiro_7: DF.Data | None
+        tinta_seleccionada_tiro_8: DF.Data | None
+        tipo_acabado: DF.Literal["", "Relieve", "Bajo Relieve", "Estampado"]
+        tipo_barnizado: DF.Literal["", "Base Aceite (Brillo)", "Base Aceite (Mate)", "Base Aceite Combinado (Brillo/Mate)", "Base Agua (Acuoso)", "UV (Brillo)", "UV (Mate)", "UV Combinado (Brillo/Mate)", "UV Selectivo (Brillo)", "UV Selectivo (Mate)"]
+        tipo_de_material_relieve: DF.Data | None
+        tipo_impresion: DF.Literal["", "Digital", "Offset"]
+        tipo_laminado: DF.Literal["", "Brillo", "Mate", "Soft-Touch"]
+        tipo_pegado: DF.Literal["", "Cuatro (4) Puntos", "Especial", "Fondo Autom\u00e1tico", "Lineal", "Seis (6) Puntos"]
+        tipo_producto: DF.Link
+        usuario_cliente_aprobaciones: DF.Link | None
+        usuarios_asignados: DF.TableMultiSelect[Document]
+        version: DF.Int
+        version_arte_cliente: DF.Int
+        version_arte_interna: DF.Int
+    # end: auto-generated types
     def before_insert(self):
         self.set_version()
 
@@ -509,84 +600,3 @@ class PrintCard(Document):
         arte.flags.ignore_permissions = True
         arte.flags.ignore_mandatory = True
         arte.save()
-
-
-    printcard_file_signed: str
-    printcard_file: str
-    cliente: str
-    producto: str
-    tipo_producto: str
-    nombre_arte: str
-    archivo: str
-    codigo_arte: str
-    proyecto: str
-    codigo: str
-    estado: str
-    status: str
-    version_arte_interna: int
-    version_arte_cliente: int
-    version: int
-    material: str
-    corte: str
-    direccion_hilo: str
-    tipo_impresion: str
-    dimensiones_empaque_cerrada: bool
-    dimension_sku: str
-    ancho_total_mm: float
-    ancho_total_in: float
-    alto_total_mm: float
-    alto_total_in: float
-    largo_mm: float
-    largo_in: float
-    ancho_mm: float
-    ancho_in: float
-    profundidad_mm: float
-    profundidad_in: float
-    cantidad_de_tintas_tiro: int
-    tinta_seleccionada_tiro_1: str
-    tinta_seleccionada_tiro_2: str
-    tinta_seleccionada_tiro_3: str
-    tinta_seleccionada_tiro_4: str
-    tinta_seleccionada_tiro_5: str
-    tinta_seleccionada_tiro_6: str
-    tinta_seleccionada_tiro_7: str
-    tinta_seleccionada_tiro_8: str
-    cantidad_de_tintas_retiro: int
-    tinta_seleccionada_retiro_1: str
-    tinta_seleccionada_retiro_2: str
-    tinta_seleccionada_retiro_3: str
-    tinta_seleccionada_retiro_4: str
-    tinta_seleccionada_retiro_5: str
-    tinta_seleccionada_retiro_6: str
-    tinta_seleccionada_retiro_7: str
-    tinta_seleccionada_retiro_8: str
-    pegado: bool
-    tipo_pegado: str
-    cinta_doble_cara: bool
-    puntos_cinta_doble_cara: str
-    tamano_cinta_doble_cara: str
-    laminado: bool
-    tipo_laminado: str
-    barnizado: bool
-    tipo_barnizado: str
-    acabado_especial: bool
-    tipo_acabado: str
-    tipo_de_material_relieve: str
-    cantidad_de_elementos_en_relieve: int
-    ancho_elemento_relieve_1: float
-    ancho_elemento_relieve_2: float
-    ancho_elemento_relieve_3: float
-    ancho_elemento_relieve_4: float
-    ancho_elemento_relieve_5: float
-    alto_elemento_relieve_1: float
-    alto_elemento_relieve_2: float
-    alto_elemento_relieve_3: float
-    alto_elemento_relieve_4: float
-    alto_elemento_relieve_5: float
-    codigo_barra: bool
-    no_codigo_barra: int
-    qr: bool
-    especificaciones: str
-    firma_cliente: str
-    razon_rechazo: str
-    aprobado: bool

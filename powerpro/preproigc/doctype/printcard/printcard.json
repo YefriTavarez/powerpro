@@ -1,0 +1,932 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{cliente} - [PC]{codigo_arte}.v{version_arte_interna}.{version}",
+ "beta": 1,
+ "creation": "2025-02-03 20:30:49.195396",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "usuarios_asignados",
+  "section_break_vykm",
+  "column_break_lltm",
+  "column_break_wfuz",
+  "printcard_file_signed",
+  "column_break_sbtd",
+  "printcard_file",
+  "generales_section",
+  "cliente",
+  "producto",
+  "tipo_producto",
+  "nombre_arte",
+  "column_break_fxca",
+  "archivo",
+  "codigo_arte",
+  "proyecto",
+  "codigo",
+  "column_break_svgn",
+  "estado",
+  "status",
+  "version_arte_interna",
+  "version_arte_cliente",
+  "version",
+  "material_section",
+  "material",
+  "column_break_eigo",
+  "corte",
+  "column_break_dcxo",
+  "direccion_hilo",
+  "section_break_nmbn",
+  "tipo_impresion",
+  "column_break_okku",
+  "column_break_cnoh",
+  "column_break_xfqs",
+  "section_break_zjll",
+  "dimensiones_empaque_cerrada",
+  "dimensiones_section",
+  "dimension_sku",
+  "ancho_total_mm",
+  "ancho_total_in",
+  "alto_total_mm",
+  "alto_total_in",
+  "column_break_ukbn",
+  "largo_mm",
+  "largo_in",
+  "ancho_mm",
+  "ancho_in",
+  "column_break_lnoz",
+  "profundidad_mm",
+  "profundidad_in",
+  "section_break_wxaq",
+  "cantidad_de_tintas_tiro",
+  "column_break_oxuv",
+  "tinta_seleccionada_tiro_1",
+  "tinta_seleccionada_tiro_2",
+  "tinta_seleccionada_tiro_3",
+  "tinta_seleccionada_tiro_4",
+  "column_break_fwhl",
+  "tinta_seleccionada_tiro_5",
+  "tinta_seleccionada_tiro_6",
+  "tinta_seleccionada_tiro_7",
+  "tinta_seleccionada_tiro_8",
+  "column_break_ffsz",
+  "cantidad_de_tintas_retiro",
+  "column_break_lkdy",
+  "tinta_seleccionada_retiro_1",
+  "tinta_seleccionada_retiro_2",
+  "tinta_seleccionada_retiro_3",
+  "tinta_seleccionada_retiro_4",
+  "column_break_lkpb",
+  "tinta_seleccionada_retiro_5",
+  "tinta_seleccionada_retiro_6",
+  "tinta_seleccionada_retiro_7",
+  "tinta_seleccionada_retiro_8",
+  "section_break_gtgk",
+  "column_break_dkrg",
+  "pegado",
+  "tipo_pegado",
+  "cinta_doble_cara",
+  "puntos_cinta_doble_cara",
+  "tamano_cinta_doble_cara",
+  "laminado",
+  "tipo_laminado",
+  "column_break_kdds",
+  "barnizado",
+  "tipo_barnizado",
+  "acabado_especial",
+  "tipo_acabado",
+  "tipo_de_material_relieve",
+  "cantidad_de_elementos_en_relieve",
+  "column_break_dpkc",
+  "ancho_elemento_relieve_1",
+  "ancho_elemento_relieve_2",
+  "ancho_elemento_relieve_3",
+  "ancho_elemento_relieve_4",
+  "ancho_elemento_relieve_5",
+  "column_break_orwe",
+  "alto_elemento_relieve_1",
+  "alto_elemento_relieve_2",
+  "alto_elemento_relieve_3",
+  "alto_elemento_relieve_4",
+  "alto_elemento_relieve_5",
+  "section_break_mzzr",
+  "codigo_barra",
+  "no_codigo_barra",
+  "column_break_qgls",
+  "qr",
+  "column_break_mudl",
+  "column_break_zhkn",
+  "section_break_mpwo",
+  "especificaciones_display",
+  "especificaciones",
+  "section_break_bqom",
+  "firma_cliente",
+  "usuario_cliente_aprobaciones",
+  "section_break_qgwa",
+  "razon_rechazo",
+  "column_break_qnre",
+  "aprobacion",
+  "aprobado",
+  "aprobacion_btn",
+  "amended_from",
+  "section_break_hvox",
+  "html_daui"
+ ],
+ "fields": [
+  {
+   "fieldname": "usuarios_asignados",
+   "fieldtype": "Table MultiSelect",
+   "label": "Usuarios Aprobaci\u00f3n",
+   "options": "Usuario Aprobacion"
+  },
+  {
+   "fieldname": "section_break_vykm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_lltm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_wfuz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "printcard_file_signed",
+   "fieldtype": "Attach",
+   "label": "PrintCard File Signed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_sbtd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "printcard_file",
+   "fieldtype": "Attach",
+   "label": "PrintCard File",
+   "read_only": 1
+  },
+  {
+   "fieldname": "generales_section",
+   "fieldtype": "Section Break",
+   "label": "GENERALES"
+  },
+  {
+   "fieldname": "cliente",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Cliente",
+   "options": "Customer",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fetch_from": "codigo_arte.producto",
+   "fetch_if_empty": 1,
+   "fieldname": "producto",
+   "fieldtype": "Link",
+   "label": "SKU Producto",
+   "options": "Item",
+   "read_only_depends_on": "eval:doc.estado!==\"Borrador\"",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tipo_producto",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Tipo de Producto",
+   "options": "Product Type",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "nombre_arte",
+   "fieldtype": "Data",
+   "label": "Nombre del Producto (Arte)",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_fxca",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "archivo",
+   "fieldtype": "Attach",
+   "label": "Archivo",
+   "read_only_depends_on": "eval:doc.estado!==\"Borrador\"",
+   "reqd": 1
+  },
+  {
+   "fieldname": "codigo_arte",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "C\u00f3digo Arte",
+   "options": "Arte",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "proyecto",
+   "fieldtype": "Link",
+   "label": "Proyecto",
+   "options": "Project"
+  },
+  {
+   "fieldname": "codigo",
+   "fieldtype": "Data",
+   "label": "C\u00f3digo",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_svgn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Borrador",
+   "fieldname": "estado",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Estado",
+   "options": "Borrador\nPendiente\nAprobado\nRechazado\nReemplazado",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Status",
+   "print_hide": 1,
+   "report_hide": 1
+  },
+  {
+   "fetch_from": "codigo_arte.version_actual",
+   "fieldname": "version_arte_interna",
+   "fieldtype": "Int",
+   "label": "Version Arte (IGCARIBE)"
+  },
+  {
+   "fetch_from": "codigo_arte.versi\u00f3n_del_cliente",
+   "fetch_if_empty": 1,
+   "fieldname": "version_arte_cliente",
+   "fieldtype": "Int",
+   "label": "Version Arte (Cliente)",
+   "read_only_depends_on": "eval:doc.estado!==\"Borrador\""
+  },
+  {
+   "fieldname": "version",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Versi\u00f3n PrintCard",
+   "read_only": 1
+  },
+  {
+   "fieldname": "material_section",
+   "fieldtype": "Section Break",
+   "label": "MATERIAL"
+  },
+  {
+   "fieldname": "material",
+   "fieldtype": "Link",
+   "label": "Material",
+   "options": "Raw Material",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_eigo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "corte",
+   "fieldtype": "Select",
+   "label": "Corte",
+   "options": "Refilado\nTroquelado",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_dcxo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "direccion_hilo",
+   "fieldtype": "Select",
+   "label": "Direcci\u00f3n Hilo",
+   "options": "\nNo Especificada\nLado Corto\nLado Largo",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_nmbn",
+   "fieldtype": "Section Break",
+   "label": "IMPRESI\u00d3N"
+  },
+  {
+   "fieldname": "tipo_impresion",
+   "fieldtype": "Select",
+   "label": "Tipo Impresi\u00f3n",
+   "options": "\nDigital\nOffset",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_okku",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_cnoh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_xfqs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_zjll",
+   "fieldtype": "Section Break",
+   "label": "DIMENSIONES"
+  },
+  {
+   "default": "0",
+   "fieldname": "dimensiones_empaque_cerrada",
+   "fieldtype": "Check",
+   "label": "Dimensiones Empaque (Cerrada)"
+  },
+  {
+   "fieldname": "dimensiones_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "dimension_sku",
+   "fieldtype": "Data",
+   "label": "Dimensi\u00f3n SKU",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "ancho_total_mm",
+   "fieldtype": "Float",
+   "label": "Ancho Total (mm)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ancho_total_in",
+   "fieldtype": "Float",
+   "label": "Ancho Total (in)",
+   "precision": "3",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "alto_total_mm",
+   "fieldtype": "Float",
+   "label": "Alto Total (mm)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "alto_total_in",
+   "fieldtype": "Float",
+   "label": "Alto Total (in)",
+   "precision": "3",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_ukbn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.dimensiones_empaque_cerrada",
+   "fieldname": "largo_mm",
+   "fieldtype": "Float",
+   "label": "Largo 3D (mm)",
+   "mandatory_depends_on": "eval:doc.dimensiones_empaque_cerrada"
+  },
+  {
+   "depends_on": "eval:doc.dimensiones_empaque_cerrada",
+   "fieldname": "largo_in",
+   "fieldtype": "Float",
+   "label": "Largo 3D (in)",
+   "mandatory_depends_on": "eval:doc.dimensiones_empaque_cerrada",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.dimensiones_empaque_cerrada",
+   "fieldname": "ancho_mm",
+   "fieldtype": "Float",
+   "label": "Ancho 3D (mm)",
+   "mandatory_depends_on": "eval:doc.dimensiones_empaque_cerrada"
+  },
+  {
+   "depends_on": "eval:doc.dimensiones_empaque_cerrada",
+   "fieldname": "ancho_in",
+   "fieldtype": "Float",
+   "label": "Ancho 3D (in)",
+   "mandatory_depends_on": "eval:doc.dimensiones_empaque_cerrada",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_lnoz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.dimensiones_empaque_cerrada",
+   "fieldname": "profundidad_mm",
+   "fieldtype": "Float",
+   "label": "Profundidad 3D (mm)",
+   "mandatory_depends_on": "eval:doc.dimensiones_empaque_cerrada"
+  },
+  {
+   "depends_on": "eval:doc.dimensiones_empaque_cerrada",
+   "fieldname": "profundidad_in",
+   "fieldtype": "Float",
+   "label": "Profundidad 3D (in)",
+   "mandatory_depends_on": "eval:doc.dimensiones_empaque_cerrada",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_wxaq",
+   "fieldtype": "Section Break",
+   "label": "TINTAS / COLORES"
+  },
+  {
+   "fieldname": "cantidad_de_tintas_tiro",
+   "fieldtype": "Int",
+   "label": "Cantidad de Tintas Tiro",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_oxuv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tinta_seleccionada_tiro_1",
+   "fieldtype": "Data",
+   "label": "Tinta Tiro #1",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tinta_seleccionada_tiro_2",
+   "fieldtype": "Data",
+   "label": "Tinta Tiro #2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tinta_seleccionada_tiro_3",
+   "fieldtype": "Data",
+   "label": "Tinta Tiro #3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tinta_seleccionada_tiro_4",
+   "fieldtype": "Data",
+   "label": "Tinta Tiro #4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_fwhl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tinta_seleccionada_tiro_5",
+   "fieldtype": "Data",
+   "label": "Tinta Tiro #5",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tinta_seleccionada_tiro_6",
+   "fieldtype": "Data",
+   "label": "Tinta Tiro #6",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tinta_seleccionada_tiro_7",
+   "fieldtype": "Data",
+   "label": "Tinta Tiro #7",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tinta_seleccionada_tiro_8",
+   "fieldtype": "Data",
+   "label": "Tinta Tiro #8",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ffsz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cantidad_de_tintas_retiro",
+   "fieldtype": "Int",
+   "label": "Cantidad de Tintas Retiro",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_lkdy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tinta_seleccionada_retiro_1",
+   "fieldtype": "Data",
+   "label": "Tinta Retiro #1",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tinta_seleccionada_retiro_2",
+   "fieldtype": "Data",
+   "label": "Tinta Retiro #2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tinta_seleccionada_retiro_3",
+   "fieldtype": "Data",
+   "label": "Tinta Retiro #3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tinta_seleccionada_retiro_4",
+   "fieldtype": "Data",
+   "label": "Tinta Retiro #4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_lkpb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tinta_seleccionada_retiro_5",
+   "fieldtype": "Data",
+   "label": "Tinta Retiro #5",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tinta_seleccionada_retiro_6",
+   "fieldtype": "Data",
+   "label": "Tinta Retiro #6",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tinta_seleccionada_retiro_7",
+   "fieldtype": "Data",
+   "label": "Tinta Retiro #7",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tinta_seleccionada_retiro_8",
+   "fieldtype": "Data",
+   "label": "Tinta Retiro #8",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_gtgk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_dkrg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "pegado",
+   "fieldtype": "Check",
+   "label": "Pegado",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.pegado",
+   "fieldname": "tipo_pegado",
+   "fieldtype": "Select",
+   "label": "Tipo de Pegado",
+   "mandatory_depends_on": "eval:doc.pegado",
+   "options": "\nCuatro (4) Puntos\nEspecial\nFondo Autom\u00e1tico\nLineal\nSeis (6) Puntos",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "cinta_doble_cara",
+   "fieldtype": "Check",
+   "label": "Cinta Doble Cara",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.cinta_doble_cara",
+   "fieldname": "puntos_cinta_doble_cara",
+   "fieldtype": "Select",
+   "label": "Puntos Cinta Doble Cara",
+   "mandatory_depends_on": "eval:doc.cinta_doble_cara",
+   "options": "1\n2\n3\n4\n5\n6\n7\n8\n9",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tamano_cinta_doble_cara",
+   "fieldtype": "Data",
+   "label": "Tama\u00f1o Cinta Doble Cara",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "laminado",
+   "fieldtype": "Check",
+   "label": "Laminado",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.laminado",
+   "fieldname": "tipo_laminado",
+   "fieldtype": "Select",
+   "label": "Tipo de Laminado",
+   "mandatory_depends_on": "eval:doc.laminado",
+   "options": "\nBrillo\nMate\nSoft-Touch",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_kdds",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "barnizado",
+   "fieldtype": "Check",
+   "label": "Barnizado",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.barnizado",
+   "fieldname": "tipo_barnizado",
+   "fieldtype": "Select",
+   "label": "Tipo de Barnizado",
+   "mandatory_depends_on": "eval:doc.barnizado",
+   "options": "\nBase Aceite (Brillo)\nBase Aceite (Mate)\nBase Aceite Combinado (Brillo/Mate)\nBase Agua (Acuoso)\nUV (Brillo)\nUV (Mate)\nUV Combinado (Brillo/Mate)\nUV Selectivo (Brillo)\nUV Selectivo (Mate)",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "acabado_especial",
+   "fieldtype": "Check",
+   "label": "Acabado Especial",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.acabado_especial",
+   "fieldname": "tipo_acabado",
+   "fieldtype": "Select",
+   "label": "Tipo de Acabado",
+   "mandatory_depends_on": "eval:doc.acabado_especial",
+   "options": "\nRelieve\nBajo Relieve\nEstampado",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.tipo_acabado === \"Estampado\"",
+   "fieldname": "tipo_de_material_relieve",
+   "fieldtype": "Data",
+   "label": "Color L\u00e1mina Estampado",
+   "mandatory_depends_on": "eval:doc.tipo_acabado === \"Estampado\"",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.acabado_especial",
+   "fieldname": "cantidad_de_elementos_en_relieve",
+   "fieldtype": "Int",
+   "label": "Cantidad Elementos",
+   "mandatory_depends_on": "eval:doc.acabado_especial",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_dpkc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.ancho_elemento_relieve_1",
+   "fieldname": "ancho_elemento_relieve_1",
+   "fieldtype": "Float",
+   "label": "Ancho Elemento 1",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.ancho_elemento_relieve_2",
+   "fieldname": "ancho_elemento_relieve_2",
+   "fieldtype": "Float",
+   "label": "Ancho Elemento 2",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.ancho_elemento_relieve_3",
+   "fieldname": "ancho_elemento_relieve_3",
+   "fieldtype": "Float",
+   "label": "Ancho Elemento 3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.ancho_elemento_relieve_4",
+   "fieldname": "ancho_elemento_relieve_4",
+   "fieldtype": "Float",
+   "label": "Ancho Elemento 4",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.ancho_elemento_relieve_5",
+   "fieldname": "ancho_elemento_relieve_5",
+   "fieldtype": "Float",
+   "label": "Ancho Elemento 5",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_orwe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.alto_elemento_relieve_1",
+   "fieldname": "alto_elemento_relieve_1",
+   "fieldtype": "Float",
+   "label": "Alto Elemento 1",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.alto_elemento_relieve_2",
+   "fieldname": "alto_elemento_relieve_2",
+   "fieldtype": "Float",
+   "label": "Alto Elemento 2",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.alto_elemento_relieve_3",
+   "fieldname": "alto_elemento_relieve_3",
+   "fieldtype": "Float",
+   "label": "Alto Elemento 3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.alto_elemento_relieve_4",
+   "fieldname": "alto_elemento_relieve_4",
+   "fieldtype": "Float",
+   "label": "Alto Elemento 4",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.alto_elemento_relieve_5",
+   "fieldname": "alto_elemento_relieve_5",
+   "fieldtype": "Float",
+   "label": "Alto Elemento 5",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_mzzr",
+   "fieldtype": "Section Break",
+   "label": "CONTROL"
+  },
+  {
+   "default": "0",
+   "fieldname": "codigo_barra",
+   "fieldtype": "Check",
+   "label": "C\u00f3digo de Barrra"
+  },
+  {
+   "depends_on": "eval:doc.codigo_barra",
+   "fieldname": "no_codigo_barra",
+   "fieldtype": "Int",
+   "label": "N\u00famero C\u00f3digo de Barra",
+   "length": 16,
+   "mandatory_depends_on": "eval:doc.codigo_barra"
+  },
+  {
+   "fieldname": "column_break_qgls",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "qr",
+   "fieldtype": "Check",
+   "label": "C\u00f3digo QR"
+  },
+  {
+   "fieldname": "column_break_mudl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_zhkn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_mpwo",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "especificaciones_display",
+   "fieldtype": "HTML",
+   "hidden": 1
+  },
+  {
+   "fetch_from": "producto.product_details",
+   "fieldname": "especificaciones",
+   "fieldtype": "Text",
+   "label": "Especificaciones",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_bqom",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "firma_cliente",
+   "fieldtype": "Signature",
+   "label": "Firma Autorizada",
+   "width": "400"
+  },
+  {
+   "fieldname": "usuario_cliente_aprobaciones",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Usuario Cliente Aprobaciones",
+   "options": "User"
+  },
+  {
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "section_break_qgwa",
+   "fieldtype": "Section Break",
+   "label": "APROBACION CLIENTE"
+  },
+  {
+   "fieldname": "razon_rechazo",
+   "fieldtype": "Small Text",
+   "label": "Raz\u00f3n Rechazo"
+  },
+  {
+   "fieldname": "column_break_qnre",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "aprobacion",
+   "fieldtype": "HTML",
+   "label": "Aprobaci\u00f3n",
+   "options": "<b>Aprobaci\u00f3n</b><br><br><p align=\"justify\">Por medio de la presente, el cliente <b>confirma su aprobaci\u00f3n y autoriza la producci\u00f3n del proyecto seg\u00fan las caracter\u00edsticas</b>, especificaciones y detalles definidos en este documento. El cliente declara haber revisado cuidadosamente toda la informaci\u00f3n aqu\u00ed contenida y acepta que la producci\u00f3n se realizar\u00e1 conforme a estos t\u00e9rminos, liberando al proveedor de cualquier responsabilidad derivada de errores no comunicados previamente.</p>"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.firma_cliente",
+   "fieldname": "aprobado",
+   "fieldtype": "Check",
+   "label": "He leido y apruebo estos t\u00e9rminos.",
+   "mandatory_depends_on": "eval:true"
+  },
+  {
+   "fieldname": "aprobacion_btn",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "PrintCard",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_break_hvox",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:doc.__islocal",
+   "fieldname": "html_daui",
+   "fieldtype": "HTML",
+   "options": "<h2 class=\"jumbotron\">Guarde para continuar...</h2>"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-02-03 20:34:43.098113",
+ "modified_by": "Administrator",
+ "module": "PreProIGC",
+ "name": "PrintCard",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "track_seen": 1,
+ "track_views": 1
+}
