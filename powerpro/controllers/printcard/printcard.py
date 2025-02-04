@@ -5,6 +5,8 @@
 import frappe
 from frappe.model.document import Document
 
+from frappe.desk.form.assign_to import add as assign_to, remove as remove_assignee
+
 from powerpro.controllers.printcard import (
     sign_pdf_with_base64,
     generate_pdf_for_printcard,
@@ -113,6 +115,7 @@ class PrintCard(Document):
     
     def on_update(self):
         self.sign_pdf_if_approved()
+        self.check_for_changes_on_usuarios_asignados()
 
     def after_insert(self):
         self.update_change_log()
@@ -407,6 +410,49 @@ class PrintCard(Document):
 
         if db_doc.estado != "Aprobado" and self.estado == "Aprobado":
             sign_pdf_with_base64(printcard_id=self.name)
+
+    def check_for_changes_on_usuarios_asignados(self):
+        # we need to compare the current state of the list usuarios_asignados with the previous state
+        # to determine if we need to update the arte. We add as Assignees the users that are not in the previous state
+        # and remove the users that are not in the current state.
+        db_doc = self.get_doc_before_save()
+
+        if not db_doc:
+            return
+
+        current_users = {d.user for d in self.usuarios_asignados}
+        previous_users = {d.user for d in db_doc.usuarios_asignados}
+
+        users_to_add = current_users - previous_users
+
+        for user in users_to_add:
+            self.add_assignee_to_arte(user)
+
+        users_to_remove = previous_users - current_users
+
+        for user in users_to_remove:
+            self.remove_assignee_from_arte(user)
+
+    def add_assignee_to_arte(self, user: str):
+        assign_to(
+            {
+                "assign_to": [user],
+                "doctype": self.doctype,
+                "name": self.name,
+                "description": f"PrintCard #{self.name} has been assigned to you.",
+            },
+            ignore_permissions=True,
+        )
+
+    def remove_assignee_from_arte(self, user: str):
+        remove_assignee(
+            {
+                "assign_to": [user],
+                "doctype": self.doctype,
+                "name": self.name,
+            },
+            ignore_permissions=True,
+        )
 
     def _get_arte(self):
         if not hasattr(self, "_arte"):
