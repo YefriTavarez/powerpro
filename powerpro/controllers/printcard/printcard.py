@@ -138,20 +138,37 @@ class PrintCard(Document):
                 # get the state of the second latest printcard and revert 
 
                 
-                estado = frappe.db.get_value("PrintCard", {
-                    "codigo_arte": self.codigo_arte,
-                    "version": arte.version_actual
-                }, "estado") or "Pendiente"
+                # estado = frappe.db.get_value("PrintCard", {
+                #     "codigo_arte": self.codigo_arte,
+                #     "version": arte.version_actual
+                # }, "estado") or "Pendiente"
 
                 arte.estado = arte.estado if arte.estado not in {"Reemplazado"} else "Pendiente"
-                arte.ultima_version_aprobada = frappe.db.get_value("PrintCard", {
-                    "codigo_arte": self.codigo_arte,
-                    "estado": "Aprobado",
-                    "name": ["!=", self.name]
-                }, "Max(version)") or 0
+                # arte.ultima_version_aprobada = frappe.db.get_value("PrintCard", {
+                #     "codigo_arte": self.codigo_arte,
+                #     "estado": "Aprobado",
+                #     "name": ["!=", self.name]
+                # }, "Max(version)") or 0
 
-                arte.flags.ignore_permissions = True
-                arte.flags.ignore_mandatory = True
+                res = frappe.db.sql(f"""
+                    Select
+                        Max(
+                            Concat_Ws(
+                                ".",
+                                IfNull(version_arte_interna, 0),
+                                IfNull(version, 0)
+                            )
+                        ) As version
+                    From
+                        `tabPrintCard`
+                    Where
+                        codigo_arte = {self.codigo_arte!r}
+                        And name != {self.name!r}
+                        And estado = 'Aprobado'
+                """)
+
+                if res:
+                    arte.ultima_version_aprobada = res[0][0]
 
                 # Fetch the second latest PrintCard
                 second_latest_printcard = frappe.db.sql("""
@@ -321,8 +338,8 @@ class PrintCard(Document):
                 Max(
                     Concat_Ws(
                         ".",
-                        IfNull(version, 0),
-                        IfNull(version_arte_interna, 0)
+                        IfNull(version_arte_interna, 0),
+                        IfNull(version, 0)
                     )
                 ) As version
             From

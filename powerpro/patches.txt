@@ -18,3 +18,4 @@ powerpro.patches.v1.create_initial_records_for_lamination_type
 powerpro.patches.v1.create_initial_records_for_gluing_type
 powerpro.patches.v1.create_initial_records_for_ink_color
 powerpro.patches.v1.update_table_in_asset_maintenance_member
+powerpro.patches.v1.disable_printcard_server_scripts
