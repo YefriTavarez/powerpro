@@ -296,7 +296,7 @@ class PrintCard(Document):
                     second_latest_estado = second_latest_printcard[0].get("estado")
 
                     # Handle the "Reemplazado" state
-                    if second_latest_estado == "Reemplazado":
+                    if second_latest_estado == "Reemplazado" and self.estado in { "Aprobado" }:
                         # arte.estado = "Aprobado" # What? Why?
                         arte.ultima_version_aprobada = frappe.db.get_value(
                             "PrintCard",
@@ -335,11 +335,11 @@ class PrintCard(Document):
                         "archivo"
                     )
 
-                    if not second_latest_printcard \
-                         or second_latest_estado != "Reemplazado":
-                        arte.estado = second_latest_estado
+                    # if not second_latest_printcard \
+                    #      or second_latest_estado != "Reemplazado":
+                    #     arte.estado = second_latest_estado
 
-                if self.estado == "Aprobado":
+                if self.estado in { "Aprobado", "Borrador", "Rechazado" }:
                     arte.estado = "PrintCard por Crear"
 
         # Desvincular el PrintCard del Arte para que pueda ser eliminado
