@@ -218,7 +218,7 @@ class PrintCard(Document):
         else:
             # Si no es el único PrintCard y es la última versión, aplicar lógica existente
             if self.is_latest_version():
-                arte.archivo_printcard_aprobado = None
+                # arte.archivo_printcard_aprobado = None
 
                 # If the PrintCard being deleted is in Approved state, then...
 
