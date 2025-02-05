@@ -209,7 +209,7 @@ class PrintCard(Document):
             # arte.archivo_actual = ""
 
             # Last Approved Info Section
-            arte.version_actual = None
+            arte.version_actual = 1
             arte.estado_últ_aprobada = None
             arte.ultima_version_aprobada = None
             arte.archivo_printcard_aprobado = None
