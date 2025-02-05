@@ -123,6 +123,7 @@ class PrintCard(Document):
     
     def on_trash(self):
         self.revert_art_on_printcard_trash()
+        self.save_arte()
 
     def set_version(self):
         query = f"""
@@ -237,7 +238,6 @@ class PrintCard(Document):
                 #     "version": arte.version_actual
                 # }, "estado") or "Pendiente"
 
-                arte.estado = arte.estado if arte.estado not in {"Reemplazado"} else "Pendiente"
                 # arte.ultima_version_aprobada = frappe.db.get_value("PrintCard", {
                 #     "codigo_arte": self.codigo_arte,
                 #     "estado": "Aprobado",
@@ -246,7 +246,7 @@ class PrintCard(Document):
 
                 # this only matters if the PrintCard being deleted is the 
                 # last one and at the same time is approved
-                if self.estado == "Aprobado": 
+                if self.estado == "Aprobado":
                     res = frappe.db.sql(f"""
                         Select
                             Max(
@@ -288,7 +288,7 @@ class PrintCard(Document):
                         And name != {self.name!r}
                     Order By
                         Concat_Ws(".", IfNull(version_arte_interna, 0), IfNull(version, 0)) Desc
-                    """
+                    """, as_dict=True
                 )
 
                 if second_latest_printcard:
@@ -297,7 +297,7 @@ class PrintCard(Document):
 
                     # Handle the "Reemplazado" state
                     if second_latest_estado == "Reemplazado":
-                        arte.estado = "Aprobado"
+                        # arte.estado = "Aprobado" # What? Why?
                         arte.ultima_version_aprobada = frappe.db.get_value(
                             "PrintCard",
                             {"name": second_latest_name},
@@ -322,11 +322,13 @@ class PrintCard(Document):
                         frappe.db.set_value("PrintCard", second_latest_name, "estado", "Aprobado")
 
                     # Update the "Last Submitted Info Section"
-                    arte.version_actual = frappe.db.get_value(
-                        "PrintCard",
-                        {"name": second_latest_name},
-                        "version"
-                    )
+                    # 
+                    # remember the user had to create a version for this to happen
+                    # arte.version_actual = frappe.db.get_value(
+                    #     "PrintCard",
+                    #     {"name": second_latest_name},
+                    #     "version"
+                    # )
                     arte.archivo_actual = frappe.db.get_value(
                         "PrintCard",
                         {"name": second_latest_name},
@@ -336,6 +338,9 @@ class PrintCard(Document):
                     if not second_latest_printcard \
                          or second_latest_estado != "Reemplazado":
                         arte.estado = second_latest_estado
+
+                if self.estado == "Aprobado":
+                    arte.estado = "PrintCard por Crear"
 
         # Desvincular el PrintCard del Arte para que pueda ser eliminado
         for row in arte.cambios:
@@ -350,29 +355,19 @@ class PrintCard(Document):
 
         # Validar y actualizar estado según condiciones adicionales
         if self.is_latest_version():
-            arte.archivo_printcard_aprobado = None
+            # arte.archivo_printcard_aprobado = None
 
-            # Validar que arte.version_actual sea mayor a 1 antes de restar
-            if frappe.utils.cint(arte.version_actual) > 1:
-                arte.version_actual = frappe.utils.cint(arte.version_actual) - 1
-            else:
-                arte.version_actual = 1  # Garantizar que nunca sea menor a 1
+            # # estado = frappe.db.get_value("PrintCard", {
+            # #     "codigo_arte": self.codigo_arte,
+            # #     "version": arte.version_actual
+            # # }, "estado") or "Pendiente"
 
-            # estado = frappe.db.get_value("PrintCard", {
+            # arte.estado = arte.estado if arte.estado not in {"Reemplazado"} else "Pendiente"
+            # arte.ultima_version_aprobada = frappe.db.get_value("PrintCard", {
             #     "codigo_arte": self.codigo_arte,
-            #     "version": arte.version_actual
-            # }, "estado") or "Pendiente"
-
-            arte.estado = arte.estado if arte.estado not in {"Reemplazado"} else "Pendiente"
-            arte.ultima_version_aprobada = frappe.db.get_value("PrintCard", {
-                "codigo_arte": self.codigo_arte,
-                "estado": "Aprobado",
-                "name": ["!=", self.name]
-            }, "Max(version)") or 0
-
-            arte.flags.ignore_permissions = True
-            arte.flags.ignore_mandatory = True
-            arte.save()
+            #     "estado": "Aprobado",
+            #     "name": ["!=", self.name]
+            # }, "Max(version)") or 0
 
             # Desvincula el PrintCard del Arte para que pueda ser eliminado
             for row in arte.cambios:
@@ -526,7 +521,7 @@ class PrintCard(Document):
         return "0.0"
 
     def is_latest_version(self):
-        return self.get_lastest_version_of_printcard(self.codigo_arte) == f"{self.version}.{self.version_arte_interna}"
+        return self.get_lastest_version_of_printcard(self.codigo_arte) == f"{self.version_arte_interna}.{self.version}"
 
     def mark_as_replaced_previous_printcards(self):
         if self.estado == "Aprobado":
@@ -665,4 +660,6 @@ class PrintCard(Document):
         arte = self._get_arte()
         arte.flags.ignore_permissions = True
         arte.flags.ignore_mandatory = True
-        arte.save()
+        arte.modified = frappe.utils.now()
+        arte.notify_update()
+        arte.db_update()
