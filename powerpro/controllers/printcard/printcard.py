@@ -547,6 +547,7 @@ class PrintCard(Document):
                 arte.ultima_version_aprobada = self.version_arte_interna
                 arte.producto_aprobado = self.producto
                 arte.estado_últ_aprobada = self.estado
+                arte.archivo_printcard_aprobado = self.archivo
                 arte.versión_interna_del_aprobada = arte.versión_del_cliente
 
                 self.mark_as_replaced_previous_printcards()
