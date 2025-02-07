@@ -168,7 +168,9 @@ override_doctype_class = {
     "Asset Maintenance": "powerpro.controllers.asset_maintenance.AssetMaintenance",
     "Asset Maintenance Log": "powerpro.controllers.asset_maintenance_log.AssetMaintenanceLog",
     "Web Form": "powerpro.controllers.web_form.WebForm",
-    "PrintCard": "powerpro.controllers.printcard.PrintCard",
+    # Custom DocTypes
+    "Arte": "powerpro.controllers.arte.Arte",
+    "PrintCard": "powerpro.controllers.printcard.PrintCard", # noa
     "Arte Original": "powerpro.controllers.arte_original.ArteOriginal",
 }
 
