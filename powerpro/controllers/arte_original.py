@@ -17,7 +17,7 @@ class ArteOriginal(Document):
 			if not row.arte:
 				continue # no file to rename
 
-			filename = f"AO-{self.codigo_arte}.v{row.idx}.pdf"
+			filename = f"[AO]{self.codigo_arte}.v{row.idx}.pdf"
 
 			if filename in row.arte:
 				continue # the current file is already named correctly
@@ -43,6 +43,9 @@ class ArteOriginal(Document):
 
 		# get the base path
 		base_path = frappe.utils.get_site_path()
+
+		if old_filepath.startswith("/files"):
+			old_filepath = f"/public{old_filepath}"
 
 		# check if the file is private
 		path, old_filename = old_filepath.rsplit("/", 1)
