@@ -169,6 +169,7 @@ override_doctype_class = {
     "Asset Maintenance Log": "powerpro.controllers.asset_maintenance_log.AssetMaintenanceLog",
     "Web Form": "powerpro.controllers.web_form.WebForm",
     "PrintCard": "powerpro.controllers.printcard.PrintCard",
+    "Arte Original": "powerpro.controllers.arte_original.ArteOriginal",
 }
 
 # Document Events
@@ -179,6 +180,9 @@ doc_events = {
     "Customer": {
         "on_update": "powerpro.controllers.customer.on_update",
     },
+	"File": {
+		# "on_update": "powerpro.controllers.file.on_update",
+	},
     "Item": {
         "autoname": "powerpro.controllers.item.autoname",
         "before_save": "powerpro.controllers.item.before_save",
