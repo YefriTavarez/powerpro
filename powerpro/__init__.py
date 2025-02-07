@@ -1,10 +1,10 @@
 __version__ = "1.0.1"
 
-# from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 
 # hack: to load the overridden controller of a custom doctype.
-if False: # why type checking? I think this is to speed up the import process
+if not TYPE_CHECKING: # why type checking? I think this is to speed up the import process
 	from frappe.model import base_document
 
 	def import_controller(doctype):
