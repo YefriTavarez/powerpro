@@ -50,8 +50,14 @@ class ArteOriginal(Document):
 		# check if the file is private
 		path, old_filename = old_filepath.rsplit("/", 1)
 
-		# do the renaming
-		shutil.move(
+		# # do the renaming
+		# shutil.move(
+		# 	f"{base_path}{old_filepath}",
+		# 	f"{base_path}/public/files/{new_filename}",
+		# )
+
+		# copy instead
+		shutil.copy(
 			f"{base_path}{old_filepath}",
 			f"{base_path}/public/files/{new_filename}",
 		)

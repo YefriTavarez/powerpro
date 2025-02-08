@@ -46,7 +46,13 @@ class Arte(Document):
 		path, old_filename = old_filepath.rsplit("/", 1)
 
 		# do the renaming
-		shutil.move(
+		# shutil.move(
+		# 	f"{base_path}{old_filepath}",
+		# 	f"{base_path}/public/files/{new_filename}",
+		# )
+
+		# copy instead
+		shutil.copy(
 			f"{base_path}{old_filepath}",
 			f"{base_path}/public/files/{new_filename}",
 		)
@@ -54,15 +60,38 @@ class Arte(Document):
 		return f"/files/{new_filename}"
 	
 	def update_file_refs(self, old_filepath, new_filepath):
-		frappe.db.sql(
-			f"""
-			UPDATE `tabFile`
-			SET file_url = {new_filepath!r}
-			WHERE file_url = {old_filepath!r}
-			AND attached_to_doctype = {self.doctype!r}
-			AND attached_to_name = {self.name!r}
-			"""
-		)
+		for (
+			name,
+			attached_to_doctype,
+			attached_to_name,
+			attached_to_field,
+		) in frappe.db.sql(f"""
+			Select
+				name,
+				attached_to_doctype,
+				attached_to_name,
+				attached_to_field
+			From
+				`tabFile`
+			Where
+				file_url = {old_filepath!r}
+		"""):
+			if attached_to_doctype \
+				and attached_to_name \
+				and attached_to_field:
+				frappe.db.set_value(
+					attached_to_doctype,
+					attached_to_name,
+					attached_to_field,
+					new_filepath,
+				)
+
+			frappe.db.set_value(
+				"File",
+				name,
+				"file_url",
+				new_filepath,
+			)
 
 	def silently_self_update(self):
 		self.db_update()
