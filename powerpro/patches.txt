@@ -20,3 +20,4 @@ powerpro.patches.v1.create_initial_records_for_ink_color
 powerpro.patches.v1.update_table_in_asset_maintenance_member
 powerpro.patches.v1.disable_printcard_server_scripts
 powerpro.patches.v1.create_supplier_classification_records
+powerpro.patches.v1.create_meta_records_regarding_supplier_classification
