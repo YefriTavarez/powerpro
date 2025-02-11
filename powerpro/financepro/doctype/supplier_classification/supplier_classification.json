@@ -1,0 +1,59 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:supplier_classification",
+ "creation": "2025-02-10 21:04:43.822471",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "supplier_classification",
+  "supplier_type",
+  "column_break_jplj"
+ ],
+ "fields": [
+  {
+   "default": "Company",
+   "fieldname": "supplier_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Supplier Type",
+   "options": "Company\nIndividual\nPartnership",
+   "reqd": 1
+  },
+  {
+   "fieldname": "supplier_classification",
+   "fieldtype": "Data",
+   "label": "Supplier Classification",
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_jplj",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-02-10 21:26:57.158005",
+ "modified_by": "Administrator",
+ "module": "FinancePRO",
+ "name": "Supplier Classification",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
