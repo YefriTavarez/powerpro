@@ -22,7 +22,8 @@ class DGIISettings(Document):
 		legal_tip_account: DF.Link | None
 		multi_company: DF.Table[DGIISettingsMultiCompany]
 		multi_other_tax_detail: DF.Table[MultiOtherTaxDetail]
-		non_formal_tax_category: DF.Link | None
+		ncf_manager: DF.Link | None
+		non_formal_supplier_classification: DF.Link | None
 		other_tax_detail: DF.Table[OtherTaxDetail]
 	# end: auto-generated types
 	pass

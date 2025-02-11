@@ -10,7 +10,8 @@
   "itbis_account",
   "column_break_lovq",
   "excise_tax",
-  "non_formal_tax_category",
+  "non_formal_supplier_classification",
+  "ncf_manager",
   "other_taxes_section",
   "other_tax_detail",
   "update_taxes",
@@ -75,16 +76,24 @@
    "options": "Multi Other Tax Detail"
   },
   {
-   "fieldname": "non_formal_tax_category",
+   "fieldname": "non_formal_supplier_classification",
    "fieldtype": "Link",
-   "label": "Non Formal Tax Category",
-   "options": "Tax Category"
+   "label": "Non Formal Supplier Classification",
+   "options": "Supplier Classification"
+  },
+  {
+   "description": "for Non Formal Supplier Classification",
+   "fieldname": "ncf_manager",
+   "fieldtype": "Link",
+   "label": "NCF Manager",
+   "mandatory_depends_on": "non_formal_supplier_classification",
+   "options": "NCF Manager"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-12-12 22:40:37.625463",
+ "modified": "2025-02-11 10:27:24.201957",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "DGII Settings",
