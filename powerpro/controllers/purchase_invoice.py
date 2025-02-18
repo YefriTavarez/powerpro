@@ -131,17 +131,19 @@ def get_serie_for_(doc):
 def set_taxes(doc):
     dgi_setting = frappe.get_single("DGII Settings")
 
-    total_tip = total_excise = 0.000
+    total_tip = 0.000
+    total_itbis = 0.000
+    total_excise = 0.000
 
     if dgi_setting.multi_company:
         for row in dgi_setting.multi_company:
             if row.company == doc.company:
-                total_tip = sum(
+                total_itbis = sum(
                     tax.base_tax_amount_after_discount_amount
                     for tax in doc.taxes
                     if tax.account_head == row.itbis_account
                 )
-                doc.total_itbis = total_tip
+                doc.total_itbis = total_itbis
 
                 total_tip = sum(
                     tax.base_tax_amount_after_discount_amount
@@ -160,7 +162,7 @@ def set_taxes(doc):
                 return
 
     if dgi_setting.itbis_account:
-        total_tip = sum(
+        total_itbis = sum(
             [
                 row.base_tax_amount_after_discount_amount
                 for row in filter(
@@ -168,7 +170,7 @@ def set_taxes(doc):
                 )
             ]
         )
-        doc.total_itbis = total_tip
+        doc.total_itbis = total_itbis
 
     if dgi_setting.legal_tip_account:
         total_tip = sum(
