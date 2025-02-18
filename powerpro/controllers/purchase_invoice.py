@@ -129,14 +129,14 @@ def get_serie_for_(doc):
 
 
 def set_taxes(doc):
-    dgi_setting = frappe.get_single("DGII Settings")
+    dgii_settings = frappe.get_single("DGII Settings")
 
     total_tip = 0.000
     total_itbis = 0.000
     total_excise = 0.000
 
-    if dgi_setting.multi_company:
-        for row in dgi_setting.multi_company:
+    if dgii_settings.multi_company:
+        for row in dgii_settings.multi_company:
             if row.company == doc.company:
                 total_itbis = sum(
                     tax.base_tax_amount_after_discount_amount
@@ -161,41 +161,41 @@ def set_taxes(doc):
 
                 return
 
-    if dgi_setting.itbis_account:
+    if dgii_settings.itbis_account:
         total_itbis = sum(
             [
                 row.base_tax_amount_after_discount_amount
                 for row in filter(
-                    lambda x: x.account_head == dgi_setting.itbis_account, doc.taxes
+                    lambda x: x.account_head == dgii_settings.itbis_account, doc.taxes
                 )
             ]
         )
         doc.total_itbis = total_itbis
 
-    if dgi_setting.legal_tip_account:
+    if dgii_settings.legal_tip_account:
         total_tip = sum(
             [
                 row.base_tax_amount_after_discount_amount
                 for row in filter(
-                    lambda x: x.account_head == dgi_setting.legal_tip_account, doc.taxes
+                    lambda x: x.account_head == dgii_settings.legal_tip_account, doc.taxes
                 )
             ]
         )
         doc.legal_tip = total_tip
 
-    if dgi_setting.excise_tax:
+    if dgii_settings.excise_tax:
         total_excise = sum(
             [
                 row.base_tax_amount_after_discount_amount
                 for row in filter(
-                    lambda x: x.account_head == dgi_setting.excise_tax, doc.taxes
+                    lambda x: x.account_head == dgii_settings.excise_tax, doc.taxes
                 )
             ]
         )
         doc.excise_tax = total_excise
 
-    if dgi_setting.other_tax_detail:
-        for tax in dgi_setting.other_tax_detail:
+    if dgii_settings.other_tax_detail:
+        for tax in dgii_settings.other_tax_detail:
             total_amount = 0.000
             total_amount = sum(
                 [
