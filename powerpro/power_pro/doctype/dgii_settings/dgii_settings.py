@@ -19,6 +19,7 @@ class DGIISettings(Document):
 
 		excise_tax: DF.Link | None
 		itbis_account: DF.Link | None
+		itbis_rate: DF.Percent
 		legal_tip_account: DF.Link | None
 		multi_company: DF.Table[DGIISettingsMultiCompany]
 		multi_other_tax_detail: DF.Table[MultiOtherTaxDetail]

@@ -8,6 +8,7 @@
  "field_order": [
   "legal_tip_account",
   "itbis_account",
+  "itbis_rate",
   "column_break_lovq",
   "excise_tax",
   "non_formal_supplier_classification",
@@ -88,12 +89,18 @@
    "label": "NCF Manager",
    "mandatory_depends_on": "non_formal_supplier_classification",
    "options": "NCF Manager"
+  },
+  {
+   "fieldname": "itbis_rate",
+   "fieldtype": "Percent",
+   "label": "ITBIS Rate",
+   "precision": "2"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-02-11 10:27:24.201957",
+ "modified": "2025-02-18 10:46:55.257866",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "DGII Settings",
