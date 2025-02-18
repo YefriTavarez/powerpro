@@ -17,6 +17,7 @@ class DGIISettings(Document):
 		from powerpro.power_pro.doctype.multi_other_tax_detail.multi_other_tax_detail import MultiOtherTaxDetail
 		from powerpro.power_pro.doctype.other_tax_detail.other_tax_detail import OtherTaxDetail
 
+		auto_tax: DF.Check
 		excise_tax: DF.Link | None
 		itbis_account: DF.Link | None
 		itbis_rate: DF.Percent

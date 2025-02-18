@@ -9,6 +9,7 @@
   "legal_tip_account",
   "itbis_account",
   "itbis_rate",
+  "auto_tax",
   "column_break_lovq",
   "excise_tax",
   "non_formal_supplier_classification",
@@ -95,12 +96,19 @@
    "fieldtype": "Percent",
    "label": "ITBIS Rate",
    "precision": "2"
+  },
+  {
+   "default": "0",
+   "description": "Will enforce the generation of taxes regardless of the user choice in Purchase Invoice module",
+   "fieldname": "auto_tax",
+   "fieldtype": "Check",
+   "label": "Auto Tax"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-02-18 10:46:55.257866",
+ "modified": "2025-02-18 12:56:55.792302",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "DGII Settings",

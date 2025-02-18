@@ -131,6 +131,9 @@ def get_serie_for_(doc):
 def set_taxes(doc):
     dgii_settings = frappe.get_single("DGII Settings")
 
+    if not dgii_settings.auto_tax:
+        return
+
     total_tip = 0.000
     total_itbis = 0.000
     total_excise = 0.000
