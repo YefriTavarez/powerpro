@@ -6,7 +6,6 @@ import frappe
 
 def boot_session(bootinfo):
 	bootinfo.powerpro_settings = get_powerpro_settings()
-	bootinfo.dgii_settings = get_dgii_settings()
 
 
 def get_powerpro_settings():
@@ -14,13 +13,4 @@ def get_powerpro_settings():
 
 	return {
 		"root_item_group_for_raw_materials": settings.root_item_group_for_raw_materials,
-	}
-
-
-def get_dgii_settings():
-	settings = frappe.get_single("DGII Settings")
-
-	return {
-		"buying_itbis_account": settings.itbis_account,
-		"buying_itbis_rate": settings.itbis_rate,
 	}
