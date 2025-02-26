@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe.utils import nestedset, cint
+from frappe.utils import cint
 
 
 def autoname(doc, method=None):
@@ -101,7 +101,7 @@ def get_serie(doc):
 		doc.custom_item_group_2,
 		doc.custom_item_group_3,
 		doc.custom_item_group_4,
-		doc.custom_item_group_5
+		doc.custom_item_group_5,
 	]:
 		if item_group:
 			parts = item_group.split(" ")
@@ -114,7 +114,8 @@ def get_serie(doc):
 				out.append(item_group[:3])
 
 	return "".join(out)
-	
+
+
 def get_last_value(serie):
 	# from a list of values like:
 	# ['PrCaPl-0001', 'PrCaPl-0002', 'PrCaPl-0003']
@@ -137,7 +138,7 @@ def get_last_value(serie):
 			name Rlike "{serie}-[0-9]+"
 	"""
 
-	result = frappe.db.sql_list(query, debug=True)
+	result = frappe.db.sql_list(query, debug=False)
 
 	if result:
 		[lastval] = result
