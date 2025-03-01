@@ -19,6 +19,7 @@ def queue_update_of_items(doc):
 	)
 
 
+@frappe.whitelist()
 def update_item_tax_of_items(item_group_id):
 	"""Will update the Item Tax in all Items related to this Item Group"""
 	doctype = "Item Group"
