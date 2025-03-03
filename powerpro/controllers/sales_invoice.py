@@ -67,8 +67,10 @@ def set_ncf(doc):
 
     ncf_manager.current = current
     ncf_manager.db_update()
+
     # doc.ncf = '{0}{1:08d}'.format(ncf_manager.serie.split(".")[0], current)
     doc.db_set("ncf", '{0}{1:08d}'.format(ncf_manager.serie.split(".")[0], current))
+    doc.db_set("vencimiento_secuencia", ncf_manager.expiration)
 
 
 def get_serie(doc):
