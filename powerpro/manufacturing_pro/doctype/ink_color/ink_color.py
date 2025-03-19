@@ -37,6 +37,7 @@ class InkColor(Document):
 		if self.ink_type == "Pantone" \
 			and self.pantone_type == "Formula":
 			self.rate_per_kg = self.calculate_rate_per_kg()
+			self.db_update()
 
 	def calculate_rate_per_kg(self):
 		out = 0.000
