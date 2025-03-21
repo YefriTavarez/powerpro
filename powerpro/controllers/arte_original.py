@@ -10,6 +10,21 @@ from frappe.model.document import Document
 class ArteOriginal(Document):
 	def on_update(self):
 		rename_files_in_versiones_arte(self)
+		sync_with_producto_del_cliente(self)
+
+
+def sync_with_producto_del_cliente(doc):
+	product = _get_producto_del_cliente(doc.nombre_arte)
+
+	if product:
+		product.possible_items = [
+			frappe.copy_doc(item)
+			for item in doc.items
+		]
+
+		product.flags.ignore_permissions = True
+		product.flags.ignore_mandatory = True
+		product.save()
 
 
 def rename_files_in_versiones_arte(doc):
@@ -35,6 +50,15 @@ def rename_files_in_versiones_arte(doc):
 
 	if updates_count:
 		_silently_doc_update(doc)
+
+def _get_producto_del_cliente(name):
+	doctype = "Producto del Cliente"
+
+	if name := frappe.db.exists(doctype, {"nombre_arte": name}):
+		return frappe.get_doc(doctype, name)
+	else:
+		return None
+
 
 def _rename_file(doc, old_filepath, new_filename):
 	# old_filepath is a path /private/files/abc.pdf
@@ -65,6 +89,7 @@ def _rename_file(doc, old_filepath, new_filename):
 
 	return f"/files/{new_filename}"
 
+
 def _update_file_refs(doc, old_filepath, new_filepath):
 	# We need to update the file references in the database
 	doctype = "File"
@@ -84,6 +109,7 @@ def _update_file_refs(doc, old_filepath, new_filepath):
 			And IfNull(`attached_to_name`, "") = ""
 		"""
 	)
+
 
 def _silently_doc_update(doc):
 	for child in doc.get_all_children():
