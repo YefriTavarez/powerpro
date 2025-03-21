@@ -7,7 +7,8 @@ from frappe.model.document import Document
 
 class ProductoDelCliente(Document):
     def on_update(self):
-        sync_with_arte_original(self)
+        if not self.flags.from_sync:
+            sync_with_arte_original(self)
 
 
 def sync_with_arte_original(doc):
@@ -21,6 +22,7 @@ def sync_with_arte_original(doc):
 
         arte.flags.ignore_permissions = True
         arte.flags.ignore_mandatory = True
+        arte.flags.from_sync = True
         arte.save()
 
 

@@ -10,7 +10,9 @@ from frappe.model.document import Document
 class ArteOriginal(Document):
     def on_update(self):
         rename_files_in_versiones_arte(self)
-        sync_with_producto_del_cliente(self)
+
+        if not self.flags.from_sync:
+            sync_with_producto_del_cliente(self)
 
 
 def sync_with_producto_del_cliente(doc):
@@ -21,6 +23,7 @@ def sync_with_producto_del_cliente(doc):
 
         product.flags.ignore_permissions = True
         product.flags.ignore_mandatory = True
+        product.flags.from_sync = True
         product.save()
 
 
