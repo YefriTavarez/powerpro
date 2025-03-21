@@ -37,11 +37,16 @@ def get_producto_del_cliente(doctype, txt, searchfield, start, page_len, filters
         frappe.msgprint("Please provide an 'Item Code' to search for 'Producto del Cliente'.", alert=True)
         return []
 
+    if "customer" not in filters:
+        frappe.msgprint("Please provide a 'Customer' to search for 'Producto del Cliente'.", alert=True)
+        return []
+
     out = frappe.db.sql(
         f"""
             Select
                 parent.name,
-                parent.nombre_arte 
+                parent.codigo,
+                parent.tipo_producto
             From
                 `tabProducto del Cliente` As parent
             Inner Join
@@ -51,6 +56,7 @@ def get_producto_del_cliente(doctype, txt, searchfield, start, page_len, filters
                     And child.parent = parent.name
             Where
                 child.item = {filters["item_code"]!r}
+                And parent.cliente = {filters["customer"]!r}
                 And parent.name Like {searchstr!r}
         """, as_list=True
     )
