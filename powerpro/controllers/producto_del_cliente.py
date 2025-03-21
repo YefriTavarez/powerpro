@@ -16,7 +16,7 @@ def sync_with_arte_original(doc):
     if arte:
         arte.possible_items = [
             frappe.copy_doc(item)
-            for item in doc.items
+            for item in doc.possible_items
         ]
 
         arte.flags.ignore_permissions = True
