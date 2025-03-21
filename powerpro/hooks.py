@@ -175,6 +175,7 @@ override_doctype_class = {
     "Arte": "powerpro.controllers.arte.Arte",
     "PrintCard": "powerpro.controllers.printcard.PrintCard", # noa
     "Arte Original": "powerpro.controllers.arte_original.ArteOriginal",
+    "Producto del Cliente": "powerpro.controllers.producto_del_cliente.ProductoDelCliente",
 }
 
 # Document Events
