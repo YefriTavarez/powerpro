@@ -10,7 +10,8 @@ from frappe.model.document import Document
 class ArteOriginal(Document):
 	def on_update(self):
 		rename_files_in_versiones_arte(self)
-	
+
+
 def rename_files_in_versiones_arte(doc):
 	updates_count = 0
 	for row in getattr(doc, "versiones_arte", []):
@@ -23,9 +24,9 @@ def rename_files_in_versiones_arte(doc):
 			continue # the current file is already named correctly
 
 		# let's rename the file in the file system
-		filepath = doc.rename_file(row.arte, filename)
+		filepath = _rename_file(doc, row.arte, filename)
 
-		doc.update_file_refs(row.arte, filepath)
+		_update_file_refs(doc, row.arte, filepath)
 
 		# let's update the row in the database
 		row.arte = filepath
@@ -33,9 +34,9 @@ def rename_files_in_versiones_arte(doc):
 		updates_count += 1
 
 	if updates_count:
-		doc.silently_doc_update()
+		_silently_doc_update(doc)
 
-def rename_file(doc, old_filepath, new_filename):
+def _rename_file(doc, old_filepath, new_filename):
 	# old_filepath is a path /private/files/abc.pdf
 	# new_filename is a filename cde.pdf
 	# we need to keep the same path, but change the filename
@@ -64,7 +65,7 @@ def rename_file(doc, old_filepath, new_filename):
 
 	return f"/files/{new_filename}"
 
-def update_file_refs(doc, old_filepath, new_filepath):
+def _update_file_refs(doc, old_filepath, new_filepath):
 	# We need to update the file references in the database
 	doctype = "File"
 	fieldname = "file_url"
@@ -84,7 +85,7 @@ def update_file_refs(doc, old_filepath, new_filepath):
 		"""
 	)
 
-def silently_doc_update(doc):
+def _silently_doc_update(doc):
 	for child in doc.get_all_children():
 		child.db_update()
 	
