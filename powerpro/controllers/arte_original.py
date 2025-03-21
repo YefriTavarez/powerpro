@@ -17,7 +17,7 @@ def sync_with_producto_del_cliente(doc):
     product = _get_producto_del_cliente(doc.nombre_arte)
 
     if product:
-        product.possible_items = [frappe.copy_doc(item) for item in doc.items]
+        product.possible_items = [frappe.copy_doc(item) for item in doc.possible_items]
 
         product.flags.ignore_permissions = True
         product.flags.ignore_mandatory = True
