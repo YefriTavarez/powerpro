@@ -150,6 +150,7 @@ permission_query_conditions = {
     "Delivery Note": "powerpro.utils.query.delivery_note_query_conditions",
     "Asset Maintenance Log": "powerpro.utils.query.asset_maintenance_log_query_conditions",
     "ToDo": "powerpro.utils.query.todo_query_conditions",
+    "Task": "powerpro.utils.query.get_task_query_permissions",
 }
 #
 # has_permission = {

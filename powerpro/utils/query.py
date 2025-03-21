@@ -148,6 +148,31 @@ def get_informal_customers():
     return data
 
 
+def get_task_query_permissions(user=None):
+    settings = get_igc_settings()
+
+    allowed_roles = {
+        "System Manager",
+    }
+
+    if settings.project_template_manager:
+        allowed_roles.add(
+            settings.project_template_manager
+        )
+    
+    user_roles = set(
+        frappe.get_roles()
+    )
+
+    # if user is System Manager or the role specified in IGC Settings
+    # show all records...
+    if allowed_roles.intersection(user_roles):
+        return ""
+
+    # otherwise show only non template records
+    return "is_template = 0"
+
+
 def get_igc_settings():
     doctype = "IGC Settings"
     return frappe.get_single(doctype)

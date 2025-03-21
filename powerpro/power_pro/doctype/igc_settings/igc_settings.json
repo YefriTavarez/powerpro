@@ -5,7 +5,9 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "hide_informal_customers"
+  "hide_informal_customers",
+  "projects_tab",
+  "project_template_manager"
  ],
  "fields": [
   {
@@ -13,12 +15,24 @@
    "fieldname": "hide_informal_customers",
    "fieldtype": "Check",
    "label": "Hide Informal Customers"
+  },
+  {
+   "fieldname": "projects_tab",
+   "fieldtype": "Tab Break",
+   "label": "Projects"
+  },
+  {
+   "description": "Role which is allowed to manage Project Templates (Including their tasks)",
+   "fieldname": "project_template_manager",
+   "fieldtype": "Link",
+   "label": "Project Template Manager",
+   "options": "Role"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-10-09 20:28:55.868599",
+ "modified": "2025-03-20 22:30:10.280235",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "IGC Settings",
