@@ -75,6 +75,10 @@
 		}
 	}
 
+	function approximatelyEqual(a, b, tolerance = Number.EPSILON * 100) {
+		return Math.abs(a - b) < tolerance;
+	}
+
 	function _validate_sum_of_percentages(frm) {
 		const { doc } = frm;
 
@@ -92,8 +96,12 @@
 			.map(row => row.percentage)
 			.reduce((acc, cur) => acc + cur, 0);
 
-		if (sum !== 100) {
-			frappe.throw(__("The sum of all percentages must be 100!"));
+		if (
+			!approximatelyEqual(sum, 100)
+		) {
+			// __("The sum of all percentages must be 100!")
+			frappe.throw(`La suma de todos los porcentajes debe ser
+				100, pero actualmente es ${flt(sum, 2)}!`);
 		}
 	}
 
