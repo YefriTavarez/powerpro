@@ -90,12 +90,18 @@ class InkColor(Document):
 	def ensure_100_percent_pantone_composition(self):
 		def validate_pantone_composition():
 			total_percentage = sum([
-				item.get("percentage", 0)
-				for item in self.pantone_composition
+				flt(
+					item.get("percentage")
+				) for item in self.pantone_composition
 			])
 
 			if total_percentage != 100:
-				frappe.throw("The total percentage of the Pantone composition must be 100")
+				# The total percentage of the Pantone composition must be 100
+				frappe.throw(f"""
+					La suma total de las composiciones de Pantone debe ser 100.
+					Actualmente, la suma total es {total_percentage}.
+				""")
+
 
 		if self.ink_type == "Pantone" \
 			and self.pantone_type == "Formula":
