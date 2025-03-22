@@ -3,6 +3,8 @@
 
 from typing import List, Literal, TYPE_CHECKING
 
+from decimal import Decimal, getcontext
+
 import frappe
 from frappe.model.document import Document
 
@@ -89,13 +91,16 @@ class InkColor(Document):
 
 	def ensure_100_percent_pantone_composition(self):
 		def validate_pantone_composition():
+			# Set the precision to 10
+			getcontext().prec = 10
+
 			total_percentage = sum([
-				flt(
-					item.get("percentage")
+				Decimal(
+					str(item.get("percentage"))
 				) for item in self.pantone_composition
 			])
 
-			if total_percentage != 100:
+			if flt(total_percentage, 2) != 100:
 				# The total percentage of the Pantone composition must be 100
 				frappe.throw(f"""
 					La suma total de las composiciones de Pantone debe ser 100.
