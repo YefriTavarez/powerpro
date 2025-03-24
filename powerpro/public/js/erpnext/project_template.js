@@ -8,7 +8,26 @@
 		frm.set_df_property("project_docfields", "cannot_delete_rows", true);
 	}
 
+	function onload(frm) {
+		_dirty_form_if_new_docfields(frm);
+	}
+
+	function _dirty_form_if_new_docfields(frm) {
+		const { doc } = frm;
+
+		const any = doc
+			.project_docfields
+			.filter(d => d.__islocal)
+			.length
+		;
+
+		if (any) {
+			frm.dirty();
+		}
+	}
+
 	frappe.ui.form.on("Project Template", {
 		refresh,
+		onload,
 	});
 }
