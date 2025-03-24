@@ -84,6 +84,8 @@ def get_project_fields():
 	non_negotiable_fields = [
 		"naming_series",
 		"project_name",
+		"status",
+		"project_type",
 		"project_template",
 		"company"
 	]
