@@ -62,6 +62,7 @@ doctype_js = {
     "Operation": "public/js/operation.js",
     "Quality Procedure": "public/js/doctype/quality_procedure/form.js",
     "ToDo": "public/js/todo.js",
+    "Project Template": "public/js/erpnext/project_template.js",
     "Asset Maintenance": "public/js/asset_maintenance.js",
 }
 
