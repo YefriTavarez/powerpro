@@ -2,9 +2,8 @@
 # For license information, please see license.txt
 
 import frappe
-
-
 from frappe.model import no_value_fields
+
 from erpnext.projects.doctype.project_template import project_template
 
 
