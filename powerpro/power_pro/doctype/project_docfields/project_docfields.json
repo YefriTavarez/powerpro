@@ -3,8 +3,10 @@
  "allow_rename": 1,
  "creation": "2025-03-23 12:12:19.643119",
  "doctype": "DocType",
+ "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "label",
   "fieldname",
   "reqd",
   "read_only",
@@ -15,7 +17,8 @@
    "fieldname": "fieldname",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Fieldname"
+   "label": "Fieldname",
+   "read_only": 1
   },
   {
    "default": "0",
@@ -37,12 +40,19 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Hidden"
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-03-23 12:14:05.236723",
+ "modified": "2025-03-23 19:59:12.576879",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Project DocFields",

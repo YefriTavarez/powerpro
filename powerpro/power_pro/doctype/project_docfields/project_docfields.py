@@ -16,6 +16,7 @@ class ProjectDocFields(Document):
 
 		fieldname: DF.Data | None
 		hidden: DF.Check
+		label: DF.Data | None
 		parent: DF.Data
 		parentfield: DF.Data
 		parenttype: DF.Data
