@@ -8,6 +8,38 @@
 		_set_queries(frm);
 	}
 
+	function project_template(frm) {
+		_render_docfields(frm);
+	}
+
+
+	function _render_docfields(frm) {
+		const { doc } = frm;
+
+		// if (!doc.project_template) {
+		// 	return ; // Do nothing
+		// }
+
+		frappe.call({
+			method: "powerpro.controllers.project_template.get_project_docfields",
+			args: {
+				"project_template_id": cur_frm.doc.project_template,
+			},
+			callback({ message: docfield }) {
+				const { fieldname, read_only, reqd, hidden } = docfield;
+				for (
+					const { property, value } of [
+						{ read_only },
+						{ reqd },
+						{ hidden },
+					]
+				) {
+					frm.set_df_property(fieldname, property, value);
+				}
+			},
+		});
+	}
+
 	function _set_queries(frm) {
 		frappe.run_serially([
 			() => {
@@ -27,5 +59,6 @@
 
 	frappe.ui.form.on("Project", {
 		refresh,
+		project_template,
 	});
 }
