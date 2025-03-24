@@ -11,8 +11,28 @@ class ProjectTemplate(project_template.ProjectTemplate):
 	def onload(self):
 		self.set_project_docfields()
 
+	def validate(self):
+		self.validate_project_docfields()
+	
 	def before_insert(self):
 		self.set_project_docfields()
+
+	def validate_project_docfields(self):
+		for field in self.project_docfields:
+			if not field.reqd:
+				continue
+
+			if field.hidden:
+				frappe.throw(
+					f"""El campo {field.label!r} en la fila #{field.idx} no puede ser oculto y requerido al mismo tiempo""",
+					title="Error de Validación"
+				)
+			
+			if field.read_only:
+				frappe.throw(
+					f"""El campo {field.label!r} en la fila #{field.idx} no puede ser de solo lectura y requerido al mismo tiempo""",
+					title="Error de Validación"
+				)
 
 	def set_project_docfields(self):
 		if not self.project_docfields:
