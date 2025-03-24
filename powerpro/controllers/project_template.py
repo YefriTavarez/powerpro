@@ -29,21 +29,21 @@ def get_project_fields():
 
 	def _get_read_only_fields():
 		return [
-			field
+			field.fieldname
 			for field in doctype.fields
 			if field.read_only
 		]
 	
 	def _get_hidden_fields():
 		return [
-			field
+			field.fieldname
 			for field in doctype.fields
 			if field.hidden
 		]
 	
 	def _get_reqd_fields():
 		return [
-			field
+			field.fieldname
 			for field in doctype.fields
 			if field.reqd
 		]
@@ -61,19 +61,26 @@ def get_project_fields():
 	# get reqd fields
 	reqd_fields = _get_reqd_fields()
 
+	non_negotiable_fields = [
+		"naming_series",
+		"project_name",
+		"project_template",
+		"company"
+	]
+
 	# get read_only fields
 	read_only_fields = _get_read_only_fields()
 
 	# exclude reqd and read_only fields
 	exclude_fields = set(
-		reqd_fields + hidden_fields + read_only_fields
+		reqd_fields + non_negotiable_fields + hidden_fields + read_only_fields
 	)
 
 	# get project fields
 	return [
 		field
 		for field in value_fields
-		if field not in exclude_fields
+		if field.fieldname not in exclude_fields
 	]
 
 
