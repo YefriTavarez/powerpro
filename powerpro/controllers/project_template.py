@@ -34,13 +34,21 @@ class ProjectTemplate(project_template.ProjectTemplate):
 					title="Error de Validación"
 				)
 
-	def set_project_docfields(self):
+	@frappe.whitelist()
+	def set_project_docfields(self, for_reload=False):
+		if for_reload:
+			self.project_docfields = []
+
 		if not self.project_docfields:
 			for df in get_project_fields():
 				self.append("project_docfields", {
 					"label": frappe._(df.label, "es"),
 					"fieldname": df.fieldname,
 				})
+		
+		if for_reload:
+			self.flags.ignore_mandatory = True
+			self.save()
 
 def get_project_fields():
 	meta = frappe.get_meta("Project")
