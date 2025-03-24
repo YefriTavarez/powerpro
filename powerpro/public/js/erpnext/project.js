@@ -58,6 +58,23 @@
 
 				frm.set_query(fieldname, get_query);
 			},
+			() => {
+				const fieldname = "producto";
+				const get_query = function () {
+					const query = "powerpro.controllers.queries.get_sales_order_items";
+					const filters = {
+						"sales_order": frm.doc.sales_order || "",
+					};
+
+					if (!frm.doc.sales_order) {
+						return { filters };
+					}
+
+					return { query, filters };
+				};
+
+				frm.set_query(fieldname, get_query);
+			},
 		]);
 	}
 
