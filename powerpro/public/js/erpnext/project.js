@@ -13,6 +13,10 @@
 		_render_docfields(frm);
 	}
 
+	function sales_order(frm) {
+		frm.set_value("producto", "");
+	}
+
 
 	function _render_docfields(frm) {
 		const { doc } = frm;
@@ -80,6 +84,7 @@
 
 	frappe.ui.form.on("Project", {
 		refresh,
+		sales_order,
 		project_template,
 	});
 }
