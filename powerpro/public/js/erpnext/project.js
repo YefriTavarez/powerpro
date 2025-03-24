@@ -2,9 +2,12 @@
 // For license information, please see license.txt
 /* eslint-disable */
 
+frappe.provide("powerpro.masks");
 
 {
+
 	function refresh(frm) {
+		_set_qty_mask(frm);
 		_set_queries(frm);
 		_render_docfields(frm);
 	}
@@ -46,6 +49,53 @@
 				}
 			},
 		});
+	}
+
+	function _set_qty_mask(frm) {
+		// function formatNumberInput(input) {
+		// 	let value = input.value.replace(/\D/g, ''); // Elimina todo lo que no sea dígito
+		// 	value = new Intl.NumberFormat('es-DO').format(value); // Formato latino (puntos para miles)
+		// 	input.value = value;
+		// }
+
+		// powerpro.masks.formatNumberInput = formatNumberInput;
+
+		const field = frm.get_field("cantidad_a_producir");
+		const { $input } = field;
+		// field.$input.attr("oninput", "powerpro.masks.formatNumberInput(this)");
+
+
+		async function formatNumber(value) {
+			await frappe.timeout(.1);
+			// Elimina todo excepto dígitos y el punto decimal
+			value = value.replace(/[^0-9.]/g, '');
+			if (!value) return '';
+
+			const parts = value.split('.');
+			const integerPart = parts[0];
+			const decimalPart = parts[1] || '';
+
+			// Formatea la parte entera al estilo es-DO
+			const formattedInt = new Intl.NumberFormat('es-DO').format(Number(integerPart));
+
+			return decimalPart ? `${formattedInt}.${decimalPart}` : formattedInt;
+		}
+
+		async function formatNumberInput(input) {
+			const cursorPos = input.selectionStart;
+			input.value = await formatNumber(input.value);
+			// Opcional: restaurar posición del cursor
+			input.setSelectionRange(cursorPos, cursorPos);
+		}
+
+		// Aplica formato en tiempo real
+		$input[0].addEventListener('input', function () {
+			formatNumberInput(this);
+		});
+
+
+		// const input = $input[0];
+		// input.value = formatNumber(input.value);
 	}
 
 	function _set_queries(frm) {
