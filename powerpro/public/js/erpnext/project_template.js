@@ -4,12 +4,16 @@
 
 {
 	function refresh(frm) {
-		frm.set_df_property("project_docfields", "cannot_add_rows", true);
-		frm.set_df_property("project_docfields", "cannot_delete_rows", true);
+		_setup_docfields_table_as_readonly(frm);
 	}
 
 	function onload(frm) {
 		_dirty_form_if_new_docfields(frm);
+	}
+
+	function _setup_docfields_table_as_readonly(frm) {
+		frm.set_df_property("project_docfields", "cannot_add_rows", true);
+		frm.set_df_property("project_docfields", "cannot_delete_rows", true);
 	}
 
 	function _dirty_form_if_new_docfields(frm) {
