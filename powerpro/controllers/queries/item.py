@@ -76,6 +76,12 @@ def get_sales_order_items(doctype, txt, searchfield, start, page_len, filters):
 
 	sales_order = filters.get("sales_order")
 
+	if not txt:
+		txt = "%%"
+	else:
+		if "%" not in txt:
+			txt = f"%{txt}%"
+
 	if not sales_order:
 		frappe.msgprint("Please provide a sales order to search for items.", alert=True)
 		return []
@@ -90,7 +96,15 @@ def get_sales_order_items(doctype, txt, searchfield, start, page_len, filters):
 				`tabSales Order Item`
 			Where
 				parent = {sales_order!r}
-				And item_code Like {txt!r}
+				And (
+					item_code Like {txt!r}
+					Or item_name Like {txt!r}
+					Or description Like {txt!r}
+				)
+			Order By
+				item_code Asc
+			Limit
+				{start}, {page_len}
 		""", as_list=True
 	)
 	return out
