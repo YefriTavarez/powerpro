@@ -6,6 +6,7 @@
 {
 	function refresh(frm) {
 		_set_queries(frm);
+		_render_docfields(frm);
 	}
 
 	function project_template(frm) {
@@ -25,16 +26,19 @@
 			args: {
 				"project_template_id": cur_frm.doc.project_template,
 			},
-			callback({ message: docfield }) {
-				const { fieldname, read_only, reqd, hidden } = docfield;
-				for (
-					const { property, value } of [
-						{ read_only },
-						{ reqd },
-						{ hidden },
-					]
-				) {
-					frm.set_df_property(fieldname, property, value);
+			callback({ message: docfields }) {
+				for (const docfield of docfields) {
+					const { fieldname, read_only, reqd, hidden } = docfield;
+
+					for (
+						const { property, value } of [
+							{ property: "read_only", value: read_only },
+							{ property: "reqd", value: reqd },
+							{ property: "hidden", value: hidden },
+						]
+					) {
+						frm.set_df_property(fieldname, property, value);
+					}
 				}
 			},
 		});
