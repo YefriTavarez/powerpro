@@ -51,3 +51,46 @@ def get_item_by_product_type_query(doctype, txt, searchfield="name", start=0, pa
 		""", as_list=True
 	)
 	return out
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_sales_order_items(doctype, txt, searchfield, start, page_len, filters):
+	"""
+	Retrieve item information based on the search text.
+
+	Args:
+		doctype (str): The type of document to search within.
+		txt (str): The text to search for within item.
+		searchfield (str, optional): The field to search within. Defaults to "name".
+		start (int, optional): The starting index for the search results. Defaults to 0.
+		page_len (int, optional): The number of results to return. Defaults to 20.
+		filters (dict, optional): Additional filters to apply to the search. Defaults to None.
+
+	Returns:
+		list: A list of item results matching the search criteria.
+	"""
+	if not filters:
+		frappe.msgprint("Please provide a sales order to search for items.", alert=True)
+		return []
+
+	sales_order = filters.get("sales_order")
+
+	if not sales_order:
+		frappe.msgprint("Please provide a sales order to search for items.", alert=True)
+		return []
+
+	out = frappe.db.sql(
+		f"""
+			Select
+				item_code,
+				item_name,
+				description
+			From
+				`tabSales Order Item`
+			Where
+				parent = {sales_order!r}
+				And item_code Like {txt!r}
+		""", as_list=True
+	)
+	return out
