@@ -35,7 +35,16 @@ class ProjectTemplate(project_template.ProjectTemplate):
 				)
 
 	@frappe.whitelist()
-	def set_project_docfields(self, for_reload=False):
+	def set_project_docfields(self, for_reload=False, with_memory=False):
+		if with_memory:
+			if not for_reload:
+				frappe.throw(
+					"La opción 'with_memory' solo puede ser usada en conjunto con la opción 'for_reload'",
+					title="Error de Validación"
+				)
+			
+			self.before_save_project_docfields = self.project_docfields
+
 		if for_reload:
 			self.project_docfields = []
 
@@ -45,6 +54,18 @@ class ProjectTemplate(project_template.ProjectTemplate):
 					"label": frappe._(df.label, "es"),
 					"fieldname": df.fieldname,
 				})
+		
+		if with_memory:
+			for field in self.before_save_project_docfields:
+				# will find the previous value for hidden, reqd and read_only fields
+				# and set it back
+				fieldname = field.fieldname
+				[_field] = self.get("project_docfields", {"fieldname": fieldname})
+				if _field:
+					_field.hidden = field.hidden
+					_field.reqd = field.reqd
+					_field.read_only = field.read_only
+				
 		
 		if for_reload:
 			self.flags.ignore_mandatory = True
