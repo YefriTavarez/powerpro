@@ -25,6 +25,29 @@ class ProjectTemplate(project_template.ProjectTemplate):
 def get_project_fields():
 	meta = frappe.get_meta("Project")
 
+	doctype = frappe.get_doc("DocType", "Project")
+
+	def _get_read_only_fields():
+		return [
+			field
+			for field in doctype.fields
+			if field.read_only
+		]
+	
+	def _get_hidden_fields():
+		return [
+			field
+			for field in doctype.fields
+			if field.hidden
+		]
+	
+	def _get_reqd_fields():
+		return [
+			field
+			for field in doctype.fields
+			if field.reqd
+		]
+
 	# only value fields
 	value_fields = [
 		field
@@ -32,23 +55,19 @@ def get_project_fields():
 		if field.fieldtype not in no_value_fields
 	]
 
-	# get reqd fields
-	reqd_fields = [
-		field
-		for field in value_fields
-		if field.reqd
-	]
+	# get hidden fields
+	hidden_fields = _get_hidden_fields()
 
+	# get reqd fields
+	reqd_fields = _get_reqd_fields()
 
 	# get read_only fields
-	read_only_fields = [
-		field
-		for field in value_fields
-		if field.read_only
-	]
+	read_only_fields = _get_read_only_fields()
 
 	# exclude reqd and read_only fields
-	exclude_fields = reqd_fields + read_only_fields
+	exclude_fields = set(
+		reqd_fields + hidden_fields + read_only_fields
+	)
 
 	# get project fields
 	return [
