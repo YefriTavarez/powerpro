@@ -21,7 +21,7 @@ class ProjectTemplate(project_template.ProjectTemplate):
 					"label": frappe._(df.label, "es"),
 					"fieldname": df.fieldname,
 				})
-	
+
 	def get_project_fields(self):
 		meta = frappe.get_meta("Project")
 
@@ -56,3 +56,22 @@ class ProjectTemplate(project_template.ProjectTemplate):
 			for field in value_fields
 			if field not in exclude_fields
 		]
+
+
+@frappe.whitelist()
+def get_project_docfields(project_template_id):
+	template = get_project_template(project_template_id)
+	return [
+		{
+			"label": field.label,
+			"fieldname": field.fieldname,
+			"reqd": field.reqd,
+			"read_only": field.read_only,
+			"hidden": field.hidden,
+		} for field in template.project_docfields
+	]
+
+
+def get_project_template(name):
+	doctype= "Project Template"
+	return frappe.get_doc(doctype, name)
