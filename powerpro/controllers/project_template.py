@@ -59,8 +59,14 @@ def get_project_fields():
 
 
 @frappe.whitelist()
-def get_project_docfields(project_template_id):
-	template = get_project_template(project_template_id)
+def get_project_docfields(project_template_id=None):
+	if project_template_id:
+		template = get_project_template(project_template_id)
+
+		fields = template.project_docfields
+	else:
+		fields = get_project_fields()
+
 	return [
 		{
 			"label": field.label,
@@ -68,7 +74,7 @@ def get_project_docfields(project_template_id):
 			"reqd": field.reqd,
 			"read_only": field.read_only,
 			"hidden": field.hidden,
-		} for field in template.project_docfields
+		} for field in fields
 	]
 
 
