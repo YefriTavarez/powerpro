@@ -174,6 +174,7 @@ override_doctype_class = {
     "File": "powerpro.controllers.file.File",
     "Project": "powerpro.controllers.project.Project",
     "Project Template": "powerpro.controllers.project_template.ProjectTemplate",
+    "Project Template Task": "powerpro.controllers.project_template_task.ProjectTemplateTask",
     "Task": "powerpro.controllers.task.Task",
     # Custom DocTypes
     "Arte": "powerpro.controllers.arte.Arte",
