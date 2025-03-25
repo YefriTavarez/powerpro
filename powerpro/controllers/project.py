@@ -94,7 +94,7 @@ class Project(project.Project):
             "All Employees in the Department",
             "Based on Role",
             "Single User",
-        ] = project_template_task.assgnation_method
+        ] = project_template_task.assignation_method
 
         if assignation_method == "All Employees in the Department":
             return self._get_users_based_on_department(project_template_task.department)
@@ -105,30 +105,58 @@ class Project(project.Project):
             )
 
         if assignation_method == "Single User":
-            return [project_template_task.user]
+            responsible = frappe.new_doc("Task Responsible")
+            responsible.user = project_template_task.user
+
+            if not responsible.user:
+                return []
+
+            return [responsible]
     
 
     def _get_users_based_on_department(self, department: str):
-        return frappe.get_all(
+        users = frappe.get_all(
             "Employee",
             filters=dict(department=department),
-            fields=["user_id"],
+            pluck="user_id",
         )
+
+        out = list()
+        for user in users:
+            responsible = frappe.new_doc("Task Responsible")
+            responsible.user = user
+
+            if responsible.user:
+                out.append(responsible)
+
+        return out
     
     def _get_users_based_on_role(self, role: str, department: str = None):
         users_with_role = frappe.get_all(
             "Has Role",
             filters=dict(role=role),
-            fields=["parent"],
+            pluck="parent",
         )
 
 
+        out = list()
         if not department:
-            return users_with_role
+            for user in users_with_role:
+                responsible = frappe.new_doc("Task Responsible")
+                responsible.user = user
+
+                if responsible.user:
+                    out.append(responsible)
+            return out
 
         all_users_in_department = self._get_users_based_on_department(department)
-        return [
-            user
-            for user in all_users_in_department
-            if user in users_with_role
-        ]
+
+        for user in all_users_in_department:
+            if user in users_with_role:
+                responsible = frappe.new_doc("Task Responsible")
+                responsible.user = user
+
+                if responsible.user:
+                    out.append(responsible)
+
+        return out
