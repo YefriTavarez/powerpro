@@ -1,15 +1,69 @@
 # Copyright (c) 2025, Yefri Tavarez and Contributors
 # For license information, please see license.txt
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from frappe.model import document
 
 import frappe
-from erpnext.projects.doctype.project import project
+from frappe.utils import today, cint
 
+from erpnext.projects.doctype.project import project
 
 class Project(project.Project):
     # override
-    def create_task_from_template(self, task_details: dict):
-        # super().after_insert()
+    def copy_from_template(self):  # nosemgrep
+        """
+        Copy tasks from template
+        """
+        if self.project_template and not frappe.db.get_all("Task", dict(project=self.name), limit=1):
+            # has a template, and no loaded tasks, so lets create
+            if not self.expected_start_date:
+                # project starts today
+                self.expected_start_date = today()
+
+            project_template = frappe.get_doc("Project Template", self.project_template)
+
+            if not self.project_type:
+                self.project_type = project_template.project_type
+
+            # create tasks from project_template
+            project_tasks = []
+            tmp_task_details = []
+            for project_template_task in project_template.tasks:
+                template_task = frappe.get_doc("Task", project_template_task.task)
+                tmp_task_details.append(template_task)
+                task = self.create_task_from_template(template_task, project_template, project_template_task)
+                project_tasks.append(task)
+
+            self.dependency_mapping(tmp_task_details, project_tasks)
+
+    # override
+    def create_task_from_template(
+        self, task_details: "document.Document",
+        project_template: "document.Document",
+        project_template_task: "document.Document"
+    ) -> "document.Document":
+        gap_in_minutes = cint(project_template.gap_between_tasks) or 30
+        expected_start_date = self.expected_start_date
+
+        if not hasattr(self, "last_task_end_date"):
+            gap_in_minutes = 0 # first task should start at the project's start date
+            self.last_task_end_date = expected_start_date
+        
+        task_expected_start_date = frappe.utils.add_to_date(
+            self.last_task_end_date, minutes=gap_in_minutes
+        )
+
+        task_expected_end_date = frappe.utils.add_to_date(
+            self.last_task_end_date, minutes=project_template_task.get_duration_in_minutes()
+        )
+
+
+        # update last task end date for next task
+        self.last_task_end_date = task_expected_end_date
+
         task = frappe.get_doc(
             dict(
                 doctype="Task",
@@ -17,8 +71,9 @@ class Project(project.Project):
                 project=self.name,
                 responsable=self.get_responsable(),
                 status="Open",
-                exp_start_date=self.calculate_start_date(task_details),
-                exp_end_date=self.calculate_end_date(task_details),
+                exp_start_date=task_expected_start_date,
+                exp_end_date=task_expected_end_date,
+                expected_time=project_template_task.get_duration_in_minutes() / 60,
                 description=task_details.description,
                 task_weight=task_details.task_weight,
                 type=task_details.type,
