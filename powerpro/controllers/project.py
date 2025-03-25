@@ -1,7 +1,7 @@
 # Copyright (c) 2025, Yefri Tavarez and Contributors
 # For license information, please see license.txt
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     from frappe.model import document
@@ -60,7 +60,6 @@ class Project(project.Project):
             self.last_task_end_date, minutes=project_template_task.get_duration_in_minutes()
         )
 
-
         # update last task end date for next task
         self.last_task_end_date = task_expected_end_date
 
@@ -69,7 +68,7 @@ class Project(project.Project):
                 doctype="Task",
                 subject=task_details.subject,
                 project=self.name,
-                responsable=self.get_responsable(),
+                users=self.get_task_users(project_template_task),
                 status="Open",
                 exp_start_date=task_expected_start_date,
                 exp_end_date=task_expected_end_date,
@@ -90,5 +89,46 @@ class Project(project.Project):
 
         return task
 
-    def get_responsable(self):
-        return "Administrator" # ToDo: Implement this method
+    def get_task_users(self, project_template_task: "document.Document"):
+        assignation_method: Literal[
+            "All Employees in the Department",
+            "Based on Role",
+            "Single User",
+        ] = project_template_task.assgnation_method
+
+        if assignation_method == "All Employees in the Department":
+            return self._get_users_based_on_department(project_template_task.department)
+
+        if assignation_method == "Based on Role":
+            return self._get_users_based_on_role(
+                project_template_task.role, project_template_task.department
+            )
+
+        if assignation_method == "Single User":
+            return [project_template_task.user]
+    
+
+    def _get_users_based_on_department(self, department: str):
+        return frappe.get_all(
+            "Employee",
+            filters=dict(department=department),
+            fields=["user_id"],
+        )
+    
+    def _get_users_based_on_role(self, role: str, department: str = None):
+        users_with_role = frappe.get_all(
+            "Has Role",
+            filters=dict(role=role),
+            fields=["parent"],
+        )
+
+
+        if not department:
+            return users_with_role
+
+        all_users_in_department = self._get_users_based_on_department(department)
+        return [
+            user
+            for user in all_users_in_department
+            if user in users_with_role
+        ]
