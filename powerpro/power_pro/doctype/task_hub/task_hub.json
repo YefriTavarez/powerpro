@@ -13,6 +13,9 @@
   "to_date",
   "column_break_tszn",
   "status",
+  "section_break_hypx",
+  "apply_filters",
+  "column_break_asmb",
   "section_break_rjol",
   "hub"
  ],
@@ -20,6 +23,7 @@
   {
    "fieldname": "filters_section",
    "fieldtype": "Section Break",
+   "hide_border": 1,
    "label": "Filters"
   },
   {
@@ -70,6 +74,19 @@
    "fieldtype": "HTML",
    "label": "Hub",
    "options": "<div class=\"jumbotron\">\n<h3 class=\"text-center\">Loading...</h3>\n</div>"
+  },
+  {
+   "fieldname": "section_break_hypx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "apply_filters",
+   "fieldtype": "Button",
+   "label": "Apply Filters"
+  },
+  {
+   "fieldname": "column_break_asmb",
+   "fieldtype": "Column Break"
   }
  ],
  "hide_toolbar": 1,
@@ -77,7 +94,7 @@
  "is_virtual": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-03-27 00:36:24.402146",
+ "modified": "2025-03-27 01:12:52.027596",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Task Hub",

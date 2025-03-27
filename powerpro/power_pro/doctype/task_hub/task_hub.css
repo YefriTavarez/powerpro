@@ -1,0 +1,48 @@
+table {
+	width: 100%;
+	border-collapse: collapse;
+}
+th, td {
+	border: 1px solid #ddd;
+	padding: 8px;
+	text-align: left;
+}
+th {
+	background-color: #f4f4f4;
+}
+.status-indicator {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	margin-right: 5px;
+}
+.status-open {
+	background-color: orange;
+}
+.status-completed {
+	background-color: green;
+}
+.status-overdue {
+	background-color: red;
+}
+
+/* .custom-dropdown-toggle::after {
+	content: '...';
+	display: inline-block;
+	margin-left: 0.5em;
+	vertical-align: middle;
+	border-top: 0.4em solid;
+	border-right: 0.4em solid transparent;
+	border-left: 0.4em solid transparent;
+} */
+
+.custom-dropdown-toggle::after {
+	display: none;
+}
+
+.table-no-border td,
+.table-no-border th,
+.table-no-border {
+  border: none !important;
+}
