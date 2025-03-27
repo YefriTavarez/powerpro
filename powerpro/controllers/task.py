@@ -59,6 +59,10 @@ def re_assign_in_bulk(task_list: Union[list, str], old_user: str, new_user: str)
     Re-assign tasks in bulk and generate an HTML report
     """
 
+    # validate old_user != new_user
+    if old_user == new_user:
+        return frappe.throw("Cannot re-assign tasks to the same user.")
+
     if isinstance(task_list, str):
         if "[" in task_list:
             task_list = eval(task_list)
@@ -81,7 +85,7 @@ def re_assign_in_bulk(task_list: Union[list, str], old_user: str, new_user: str)
 
         if old_user_found:
             # Check if the user already exists in the task's users list
-            user_exists = any(u.user == user for u in task.users)
+            user_exists = any(u.user == new_user for u in task.users)
 
             if user_exists:
                 task_report["status"] = "Failed"
