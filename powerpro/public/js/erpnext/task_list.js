@@ -49,8 +49,8 @@ frappe.listview_settings['Task'] = {
 					method: "powerpro.controllers.task.re_assign_in_bulk",
 					args: {
 						"task_list": task_list.map(d => d.name),
-						"prev_responsible": prev_responsible,
-						"new_responsible": new_responsible,
+						"old_user": prev_responsible,
+						"new_user": new_responsible,
 					},
 					callback({ message }) {
 						frappe.msgprint(message);
