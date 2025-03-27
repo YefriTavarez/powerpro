@@ -47,7 +47,18 @@ def assign_in_bulk(task_list: Union[list, str], user: str) -> str:
     # Generate HTML report
     html_report = "<ul>"
     for entry in report:
-        html_report += f"<li><strong>ID de Tarea:</strong> {entry['task_id']} - <strong>Estado:</strong> {entry['status']} - <strong>Mensaje:</strong> {entry['message']}</li>"
+        html_report += f"""
+            <li>
+                <p>
+                    <strong>ID de Tarea:</strong> {entry['task_id']} 
+                    <br>
+                    <strong>Estado:</strong> {entry['status']}
+                    <br>
+                    <strong>Mensaje:</strong> {entry['message']}
+                </p>
+            </li>
+        """
+
     html_report += "</ul>"
 
     return html_report
@@ -105,7 +116,17 @@ def re_assign_in_bulk(task_list: Union[list, str], old_user: str, new_user: str)
     # Generate HTML report
     html_report = "<ul>"
     for entry in report:
-        html_report += f"<li><strong>ID de Tarea:</strong> {entry['task_id']} - <strong>Estado:</strong> {entry['status']} - <strong>Mensaje:</strong> {entry['message']}</li>"
+        html_report += f"""
+            <li>
+                <p>
+                    <strong>ID de Tarea:</strong> {entry['task_id']}
+                    <br>
+                    <strong>Estado:</strong> {entry['status']}
+                    <br>
+                    <strong>Mensaje:</strong> {entry['message']}
+                </p>
+            </li>
+        """
     html_report += "</ul>"
 
     return html_report
