@@ -59,7 +59,7 @@
    "fieldtype": "Select",
    "label": "Status",
    "no_copy": 1,
-   "options": "Open\nWorking\nOverdue\nPending Review\nCompleted\nCancelled"
+   "options": "\nOpen\nWorking\nOverdue\nPending Review\nCompleted\nCancelled"
   },
   {
    "fieldname": "section_break_rjol",
@@ -68,14 +68,16 @@
   {
    "fieldname": "hub",
    "fieldtype": "HTML",
-   "label": "hub"
+   "label": "Hub",
+   "options": "<div class=\"jumbotron\">\n<h3 class=\"text-center\">Loading...</h3>\n</div>"
   }
  ],
+ "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-03-27 00:26:35.156087",
+ "modified": "2025-03-27 00:36:24.402146",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Task Hub",
@@ -88,6 +90,26 @@
    "print": 1,
    "read": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Projects User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Projects Manager",
    "share": 1,
    "write": 1
   }
