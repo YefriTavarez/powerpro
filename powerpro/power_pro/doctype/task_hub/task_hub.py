@@ -1,7 +1,7 @@
 # Copyright (c) 2025, Yefri Tavarez and contributors
 # For license information, please see license.txt
 
-# import frappe
+import frappe
 from frappe.model.document import Document
 
 
@@ -16,11 +16,14 @@ class TaskHub(Document):
 
 		from_date: DF.Date | None
 		responsible: DF.Link | None
-		status: DF.Literal["Open", "Working", "Overdue", "Pending Review", "Completed", "Cancelled"]
+		status: DF.Literal["", "Open", "Working", "Overdue", "Pending Review", "Completed", "Cancelled"]
 		to_date: DF.Date | None
 	# end: auto-generated types
 	
 	def db_insert(self, *args, **kwargs):
+		frappe.throw("No se puede insertar un documento de tipo Task Hub")
+
+	def delete(self):
 		pass
 
 	def load_from_db(self):
