@@ -33,21 +33,21 @@ def assign_in_bulk(task_list: Union[list, str], user: str) -> str:
         user_exists = any(u.user == user for u in task.users)
 
         if user_exists:
-            task_report["status"] = "Failed"
-            task_report["message"] = f"User {user} is already assigned to the task."
+            task_report["status"] = "Fallido"
+            task_report["message"] = f"El Usuario {user!r} ya está asignado a la Tarea."
         else:
             # Add the user
             task.append("users", {"user": user})
             task.save()
-            task_report["status"] = "Success"
-            task_report["message"] = f"Assigned to {user}."
+            task_report["status"] = "Éxito"
+            task_report["message"] = f"Asignado a {user!r}."
 
         report.append(task_report)
 
     # Generate HTML report
     html_report = "<ul>"
     for entry in report:
-        html_report += f"<li><strong>Task ID:</strong> {entry['task_id']} - <strong>Status:</strong> {entry['status']} - <strong>Message:</strong> {entry['message']}</li>"
+        html_report += f"<li><strong>ID de Tarea:</strong> {entry['task_id']} - <strong>Estado:</strong> {entry['status']} - <strong>Mensaje:</strong> {entry['message']}</li>"
     html_report += "</ul>"
 
     return html_report
@@ -61,7 +61,7 @@ def re_assign_in_bulk(task_list: Union[list, str], old_user: str, new_user: str)
 
     # validate old_user != new_user
     if old_user == new_user:
-        return frappe.throw("Cannot re-assign tasks to the same user.")
+        return frappe.throw("No se pueden re-asignar Tareas al mismo Usuario.")
 
     if isinstance(task_list, str):
         if "[" in task_list:
@@ -88,24 +88,24 @@ def re_assign_in_bulk(task_list: Union[list, str], old_user: str, new_user: str)
             user_exists = any(u.user == new_user for u in task.users)
 
             if user_exists:
-                task_report["status"] = "Failed"
-                task_report["message"] = f"User {new_user} is already assigned to the task."
+                task_report["status"] = "Fallido"
+                task_report["message"] = f"El Usuario {new_user!r} ya está asignado a la Tarea."
             else:
                 # add the new_user
                 task.append("users", {"user": new_user})
                 task.save()
-                task_report["status"] = "Success"
-                task_report["message"] = f"Reassigned from {old_user} to {new_user}."
+                task_report["status"] = "Éxito"
+                task_report["message"] = f"Re-asignado de {old_user!r} a {new_user!r}."
         else:
-            task_report["status"] = "Failed"
-            task_report["message"] = f"Old user {old_user} not found in task."
+            task_report["status"] = "Fallido"
+            task_report["message"] = f"No se encontró al usuario anterior {old_user!r} en la tarea."
 
         report.append(task_report)
 
     # Generate HTML report
     html_report = "<ul>"
     for entry in report:
-        html_report += f"<li><strong>Task ID:</strong> {entry['task_id']} - <strong>Status:</strong> {entry['status']} - <strong>Message:</strong> {entry['message']}</li>"
+        html_report += f"<li><strong>ID de Tarea:</strong> {entry['task_id']} - <strong>Estado:</strong> {entry['status']} - <strong>Mensaje:</strong> {entry['message']}</li>"
     html_report += "</ul>"
 
     return html_report
