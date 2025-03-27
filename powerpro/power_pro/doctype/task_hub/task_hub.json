@@ -1,0 +1,98 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-03-27 00:16:46.309210",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "filters_section",
+  "responsible",
+  "column_break_smox",
+  "from_date",
+  "column_break_sfqq",
+  "to_date",
+  "column_break_tszn",
+  "status",
+  "section_break_rjol",
+  "hub"
+ ],
+ "fields": [
+  {
+   "fieldname": "filters_section",
+   "fieldtype": "Section Break",
+   "label": "Filters"
+  },
+  {
+   "fieldname": "responsible",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "Responsible",
+   "mandatory_depends_on": "eval:(function() {\n    const reqd_roles = [\n        \"Projects Manager\",    \n    ];\n    \n    if (\n        frappe.user.has_role(reqd_roles)\n    ) {\n        return true;\n    }\n    \n    return false;\n})()",
+   "options": "User",
+   "read_only_depends_on": "eval:(function() {\n    const reqd_roles = [\n        \"Projects Manager\",    \n    ];\n    \n    if (\n        frappe.user.has_role(reqd_roles)\n    ) {\n        return false;\n    }\n    \n    return true;\n})()"
+  },
+  {
+   "fieldname": "column_break_smox",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "From Date"
+  },
+  {
+   "fieldname": "column_break_sfqq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To Date"
+  },
+  {
+   "fieldname": "column_break_tszn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Open\nWorking\nOverdue\nPending Review\nCompleted\nCancelled"
+  },
+  {
+   "fieldname": "section_break_rjol",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "hub",
+   "fieldtype": "HTML",
+   "label": "hub"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-03-27 00:26:35.156087",
+ "modified_by": "Administrator",
+ "module": "Power Pro",
+ "name": "Task Hub",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
