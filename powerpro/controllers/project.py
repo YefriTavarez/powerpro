@@ -45,23 +45,8 @@ class Project(project.Project):
         project_template: "document.Document",
         project_template_task: "document.Document"
     ) -> "document.Document":
-        gap_in_minutes = cint(project_template.gap_between_tasks) or 30
-        expected_start_date = self.expected_start_date
-
-        if not hasattr(self, "last_task_end_date"):
-            gap_in_minutes = 0 # first task should start at the project's start date
-            self.last_task_end_date = expected_start_date
-        
-        task_expected_start_date = frappe.utils.add_to_date(
-            self.last_task_end_date, minutes=gap_in_minutes
-        )
-
-        task_expected_end_date = frappe.utils.add_to_date(
-            self.last_task_end_date, minutes=project_template_task.get_duration_in_minutes()
-        )
-
-        # update last task end date for next task
-        self.last_task_end_date = task_expected_end_date
+        task_expected_start_date, task_expected_end_date = \
+            self.get_expected_dates(project_template, project_template_task)
 
         task = frappe.get_doc(
             dict(
@@ -88,6 +73,27 @@ class Project(project.Project):
         task.insert()
 
         return task
+
+    def get_expected_dates(self, project_template, project_template_task):
+        gap_in_minutes = cint(project_template.gap_between_tasks) or 30
+        expected_start_date = self.expected_start_date
+
+        if not hasattr(self, "last_task_end_date"):
+            gap_in_minutes = 0 # first task should start at the project's start date
+            self.last_task_end_date = expected_start_date
+        
+        task_expected_start_date = frappe.utils.add_to_date(
+            self.last_task_end_date, minutes=gap_in_minutes
+        )
+
+        task_expected_end_date = frappe.utils.add_to_date(
+            self.last_task_end_date, minutes=project_template_task.get_duration_in_minutes()
+        )
+
+        # update last task end date for next task
+        self.last_task_end_date = task_expected_end_date
+
+        return task_expected_start_date, task_expected_end_date
 
     def get_task_users(self, project_template_task: "document.Document"):
         assignation_method: Literal[
