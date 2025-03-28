@@ -20,6 +20,42 @@ class TaskHub(Document):
 		responsible: DF.Link | None
 		status: DF.Literal["", "Open", "Working", "Overdue", "Pending Review", "Completed", "Cancelled"]
 	# end: auto-generated types
+
+	@frappe.whitelist()
+	def fetch_tasks(self, filters):
+		out = list()
+		or_filters = dict()
+
+		exp_start_date = filters.get("exp_start_date")
+		if exp_end_date:
+			or_filters["exp_start_date"] = exp_start_date
+
+		exp_end_date = filters.get("exp_end_date")
+		if exp_end_date:
+			or_filters["exp_end_date"] = exp_end_date
+
+		if "exp_start_date" in filters:
+			del filters["exp_start_date"]
+
+		if "exp_end_date" in filters:
+			del filters["exp_end_date"]
+
+		for task_id in frappe.get_list(
+			"Task", filters=filters, or_filters=or_filters, pluck="name"
+		):
+			task = get_task(task_id)
+
+			out.append({
+				"id": task.name,
+				"subject": task.subject,
+				"status": task.status,
+				"exp_start_date": task.exp_start_date,
+				"exp_end_date": task.exp_end_date,
+				"project": task.project,
+				"responsible": ", ".join([d.user for d in task.users]),
+			})
+
+		return out
 	
 	def db_insert(self, *args, **kwargs):
 		frappe.throw("No se puede insertar un documento de tipo Task Hub")
@@ -46,3 +82,8 @@ class TaskHub(Document):
 		pass
 
 	_table_fieldnames: list[str] = []
+
+
+def get_task(name):
+	doctype = "Task"
+	return frappe.get_doc(doctype, name)
