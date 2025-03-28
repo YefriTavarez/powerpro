@@ -53,7 +53,7 @@ class TaskHub(Document):
 
 		filtrs = convert_filters_dict_to_list(filters, "Task")
 		filtrs.append([
-			["Task Responsible", "user", "=", user]
+			["Task Responsible", "user", "=", user],
 		])
 
 		# or_filters=or_filters,
