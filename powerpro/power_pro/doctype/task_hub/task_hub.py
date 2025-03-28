@@ -49,8 +49,8 @@ class TaskHub(Document):
 				"id": task.name,
 				"subject": task.subject,
 				"status": task.status,
-				"exp_start_date": task.exp_start_date,
-				"exp_end_date": task.exp_end_date,
+				"date": task.exp_start_date,
+				"due_date": task.exp_end_date,
 				"project": task.project,
 				"responsible": ", ".join([d.user for d in task.users]),
 			})
