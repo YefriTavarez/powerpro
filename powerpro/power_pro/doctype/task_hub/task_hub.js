@@ -92,6 +92,51 @@
 				)
 			)
 		;
+
+		_setup_listeners(frm);
+	}
+
+	function _setup_listeners(frm) {
+		jQuery("#toggleViewButton").on("click", function () {
+			const tableView = jQuery("#tableView");
+			const postView = jQuery("#postView");
+
+			if (tableView.hasClass("d-block")) {
+				tableView.removeClass("d-block").addClass("d-none");
+				postView.removeClass("d-none").addClass("d-block");
+			} else {
+				tableView.removeClass("d-none").addClass("d-block");
+				postView.removeClass("d-block").addClass("d-none");
+			}
+		});
+
+		// action buttons
+		// data-action="reopen"
+		// data-action="complete"
+		// data-action="change_status"
+		// data-action="request_revision"
+		//
+		jQuery("a[data-action]").on("click", function (event) {
+			event.preventDefault();
+
+			const action = jQuery(this).attr("data-action");
+			const task_id = jQuery(this).attr("data-task-id");
+
+			switch (action) {
+				case "reopen":
+					_reopen_task(frm, task_id);
+					break;
+				case "complete":
+					_complete_task(frm, task_id);
+					break;
+				case "change_status":
+					_change_status(frm, task_id);
+					break;
+				case "request_revision":
+					_request_revision(frm, task_id);
+					break;
+			}
+		});
 	}
 
 	function _disable_save(frm) {

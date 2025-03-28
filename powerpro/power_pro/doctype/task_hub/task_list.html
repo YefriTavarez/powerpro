@@ -1,4 +1,7 @@
 <h3>Lista de Tareas</h3>
+<button id="toggleViewButton" class="btn btn-primary mb-3">Cambiar Vista</button>
+
+<div id="tableView" class="d-block">
 <table class="table table-hover table-no-border">
     <thead>
         <tr>
@@ -39,3 +42,19 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
+
+<div id="postView" class="d-none">
+    {% for task in tasks %}
+    <div class="task-post mb-3 p-3 border rounded position-relative">
+        <h5 style="margin-right: 25px">{{ task.title }}</h5>
+        <p><strong>Proyecto:</strong> {{ task.project }}</p>
+        <p><strong>Vence:</strong> {{ task.due_date }}</p>
+        <p><strong>Estado:</strong> 
+            <span class="status-indicator status-{{ task.status }}"></span> 
+            {{ capitalize(task.status) }}
+        </p>
+        <p><strong>Usuario:</strong> {{ task.user }}</p>
+    </div>
+    {% endfor %}
+</div>
