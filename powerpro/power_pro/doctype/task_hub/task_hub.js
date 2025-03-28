@@ -13,6 +13,35 @@
 		_render_task_list(frm);
 	}
 
+	function apply_filters(frm) {
+		// read filters from the form
+		// request new tasks from backend via frm.call
+		// update frm.doc.tasks
+		// re-render the task list
+
+		const { doc } = frm;
+
+		// filters:
+		// - responsible
+		// - project
+		// - status
+		// - exp_start_date
+		// - exp_end_date
+		
+		const filters = {
+			"responsible": doc.responsible,
+			"project": doc.project,
+			"status": doc.status,
+			"exp_start_date": doc.exp_start_date,
+			"exp_end_date": doc.exp_end_date,
+		};
+
+		frm.call("fetch_tasks", { filters }, function(response) {
+			frm.doc.tasks = response.message;
+			_render_task_list(frm);
+		});
+	}
+
 	function _set_defaults(frm) {
 		const { doc } = frm;
 
@@ -146,5 +175,6 @@
 	frappe.ui.form.on("Task Hub", {
 		setup,
 		refresh,
+		apply_filters,
 	});
 }
