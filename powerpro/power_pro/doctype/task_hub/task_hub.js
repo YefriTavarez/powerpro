@@ -114,6 +114,11 @@
 					"task_list",
 					{
 						"tasks": frm.doc.tasks || [],
+						"format_date": (date) => {
+							return frappe.format(date, {
+								fieldtype: "Date",
+							});
+						},
 						"capitalize": (str) => {
 							return str.charAt(0).toUpperCase() + str.slice(1);
 						},
