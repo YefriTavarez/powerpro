@@ -2,51 +2,63 @@
 <button id="toggleViewButton" class="btn btn-primary mb-3">Cambiar Vista</button>
 
 <div id="tableView" class="d-block">
-<table class="table table-hover table-no-border">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Título</th>
-            <th>Proyecto</th>
-            <th>Vence</th>
-            <th>Estado</th>
-            <th class="d-none d-md-block">Usuario</th>
-            <th title="Acciones"></th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for task in tasks %}
-        <tr>
-            <td style="white-space: nowrap">{{ task.id }}</td>
-            <td>{{ task.title }}</td>
-            <td style="white-space: nowrap">{{ task.project }}</td>
-            <td style="white-space: nowrap">{{ task.due_date }}</td>
-            <td style="white-space: nowrap">
-                <span class="status-indicator status-{{ task.status }}"></span> 
-                {{ capitalize(task.status) }}
-            </td>
-            <td class="d-none d-md-block">{{ task.user }}</td>
-            <td title="Acciones">
-                <div class="dropdown">
-                    <button class="btn btn-secondary dropdown-toggle custom-dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                       ⋮
-                    </button>
-                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                      <a class="dropdown-item" href="#">Action</a>
-                      <a class="dropdown-item" href="#">Another action</a>
-                      <a class="dropdown-item" href="#">Something else here</a>
+    <table class="table table-hover table-no-border">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Título</th>
+                <th>Proyecto</th>
+                <th>Vence</th>
+                <th>Estado</th>
+                <th class="d-none d-md-block">Usuario</th>
+                <th title="Acciones"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+            <tr>
+                <td style="white-space: nowrap">{{ task.id }}</td>
+                <td>{{ task.title }}</td>
+                <td style="white-space: nowrap">{{ task.project }}</td>
+                <td style="white-space: nowrap">{{ task.due_date }}</td>
+                <td style="white-space: nowrap">
+                    <span class="status-indicator status-{{ task.status }}"></span> 
+                    {{ capitalize(task.status) }}
+                </td>
+                <td class="d-none d-md-block">{{ task.user }}</td>
+                <td title="Acciones">
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle custom-dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-flip="false" data-boundary="viewport">
+                           ⋮
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-left" aria-labelledby="dropdownMenuButton">
+                            <a class="dropdown-item" data-action="reopen" href="#">Re-Abrir</a>
+                            <a class="dropdown-item" data-action="complete" href="#">Completar</a>
+                            <a class="dropdown-item" data-action="change_status" href="#">Cambiar el estado</a>
+                            <a class="dropdown-item" data-action="request_revision" href="#">Solicitar Revisión</a>
+                        </div>
                     </div>
-                </div>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
 <div id="postView" class="d-none">
     {% for task in tasks %}
     <div class="task-post mb-3 p-3 border rounded position-relative">
+        <div class="dropdown position-absolute" style="top: 10px; right: 10px;">
+            <button class="btn btn-secondary dropdown-toggle custom-dropdown-toggle" type="button" id="dropdownMenuButton-{{ task.id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-flip="false" data-boundary="viewport">
+               ⋮
+            </button>
+            <div class="dropdown-menu dropdown-menu-left" aria-labelledby="dropdownMenuButton-{{ task.id }}">
+                <a class="dropdown-item" data-task-id="{{ task.id }}" data-action="reopen" href="#">Re-Abrir</a>
+                <a class="dropdown-item" data-task-id="{{ task.id }}" data-action="complete" href="#">Completar</a>
+                <a class="dropdown-item" data-task-id="{{ task.id }}" data-action="change_status" href="#">Cambiar el estado</a>
+                <a class="dropdown-item" data-task-id="{{ task.id }}" data-action="request_revision" href="#">Solicitar Revisión</a>
+            </div>
+        </div>
         <h5 style="margin-right: 25px">{{ task.title }}</h5>
         <p><strong>Proyecto:</strong> {{ task.project }}</p>
         <p><strong>Vence:</strong> {{ task.due_date }}</p>
