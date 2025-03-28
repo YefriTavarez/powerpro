@@ -1,7 +1,7 @@
 # Copyright (c) 2025, Yefri Tavarez and contributors
 # For license information, please see license.txt
 
-from typing import Union, TYPE_CHECKING
+from typing import Union, List, TYPE_CHECKING
 
 if TYPE_CHECKING:
 	import datetime
@@ -31,12 +31,17 @@ class TaskHub(Document):
 		out = list()
 		or_filters = dict()
 
+		user = filters.get("responsible")
+		if user:
+			del filters["responsible"]
+
 		exp_start_date = filters.get("exp_start_date")
-		if exp_end_date:
+		if exp_start_date:
 			or_filters["exp_start_date"] = exp_start_date
 
 		exp_end_date = filters.get("exp_end_date")
 		if exp_end_date:
+			or_filters["exp_end_date"] = exp_end_date
 			or_filters["exp_end_date"] = exp_end_date
 
 		if "exp_start_date" in filters:
@@ -45,6 +50,12 @@ class TaskHub(Document):
 		if "exp_end_date" in filters:
 			del filters["exp_end_date"]
 
+		filtrs = convert_filters_dict_to_list(filters, "Task")
+		filtrs.append([
+			["Task Responsible", "user", "=", user]
+		])
+
+		# or_filters=or_filters,
 		for task_id in frappe.get_list(
 			"Task", filters=filters, or_filters=or_filters, pluck="name"
 		):
@@ -52,12 +63,12 @@ class TaskHub(Document):
 
 			out.append({
 				"id": task.name,
-				"subject": task.subject,
+				"title": task.subject,
 				"status": task.status,
 				"date": task.exp_start_date,
 				"due_date": task.exp_end_date,
 				"project": task.project,
-				"responsible": ", ".join([d.user for d in task.users]),
+				"user": ", ".join([d.user for d in task.users if d.user]),
 			})
 
 		return out
@@ -93,3 +104,12 @@ class TaskHub(Document):
 def get_task(name):
 	doctype = "Task"
 	return frappe.get_doc(doctype, name)
+
+
+def convert_filters_dict_to_list(filters: dict, doctype: str) -> List[list]:
+	out = list()
+
+	for key, value in filters.items():
+		out.append([doctype, key, "=", value])
+
+	return out
