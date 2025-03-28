@@ -15,6 +15,7 @@ class TaskHub(Document):
 		from frappe.types import DF
 
 		from_date: DF.Date | None
+		project: DF.Link | None
 		responsible: DF.Link | None
 		status: DF.Literal["", "Open", "Working", "Overdue", "Pending Review", "Completed", "Cancelled"]
 		to_date: DF.Date | None

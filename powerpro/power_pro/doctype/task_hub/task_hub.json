@@ -12,6 +12,8 @@
   "column_break_sfqq",
   "to_date",
   "column_break_tszn",
+  "project",
+  "column_break_jgwp",
   "status",
   "section_break_hypx",
   "apply_filters",
@@ -87,6 +89,17 @@
   {
    "fieldname": "column_break_asmb",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_jgwp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "no_copy": 1,
+   "options": "Project"
   }
  ],
  "hide_toolbar": 1,
@@ -94,7 +107,7 @@
  "is_virtual": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-03-27 01:12:52.027596",
+ "modified": "2025-03-27 22:07:58.980173",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Task Hub",
