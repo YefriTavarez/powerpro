@@ -1,5 +1,5 @@
 <h3>Lista de Tareas</h3>
-<table class="table table-hover table-no-border" >
+<table class="table table-hover table-no-border">
     <thead>
         <tr>
             <th>ID</th>
@@ -7,20 +7,22 @@
             <th>Proyecto</th>
             <th>Vence</th>
             <th>Estado</th>
-            <th>Usuario</th>
-            <th title="Accciones"></th>
+            <th class="d-none d-md-block">Usuario</th>
+            <th title="Acciones"></th>
         </tr>
     </thead>
     <tbody>
+        {% for task in tasks %}
         <tr>
-            <td>TASK-001</td>
-            <td>Revisar el reporte mensual de actividades y generar un resumen ejecutivo para la junta directiva</td>
-            <td>PROY-0001</td>
-            <td>2025-03-30</td>
-            <td>
-                <span class="status-indicator status-open"></span> Abierto
+            <td style="white-space: nowrap">{{ task.id }}</td>
+            <td>{{ task.title }}</td>
+            <td style="white-space: nowrap">{{ task.project }}</td>
+            <td style="white-space: nowrap">{{ task.due_date }}</td>
+            <td style="white-space: nowrap">
+                <span class="status-indicator status-{{ task.status }}"></span> 
+                {{ capitalize(task.status) }}
             </td>
-            <td>Juan Pérez</td>
+            <td class="d-none d-md-block">{{ task.user }}</td>
             <td title="Acciones">
                 <div class="dropdown">
                     <button class="btn btn-secondary dropdown-toggle custom-dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -34,49 +36,6 @@
                 </div>
             </td>
         </tr>
-        <tr>
-            <td>TASK-002</td>
-            <td>Actualizar toda la documentación técnica del proyecto para cumplir con los estándares de calidad</td>
-            <td>PROY-0002</td>
-            <td>2025-03-25</td>
-            <td>
-                <span class="status-indicator status-overdue"></span> Atrasado
-            </td>
-            <td>María López</td>
-            <td title="Acciones">
-                <div class="dropdown">
-                    <button class="btn btn-secondary dropdown-toggle custom-dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                       ⋮
-                    </button>
-                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                      <a class="dropdown-item" href="#">Action</a>
-                      <a class="dropdown-item" href="#">Another action</a>
-                      <a class="dropdown-item" href="#">Something else here</a>
-                    </div>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td>TASK-003</td>
-            <td>Preparar una presentación detallada para el cliente sobre los avances del proyecto y próximos pasos</td>
-            <td>PROY-0003</td>
-            <td>2025-03-28</td>
-            <td>
-                <span class="status-indicator status-completed"></span> Completado
-            </td>
-            <td>Carlos Gómez</td>
-            <td title="Acciones">
-                <div class="dropdown">
-                    <button class="btn btn-secondary dropdown-toggle custom-dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                       ⋮
-                    </button>
-                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                      <a class="dropdown-item" href="#">Action</a>
-                      <a class="dropdown-item" href="#">Another action</a>
-                      <a class="dropdown-item" href="#">Something else here</a>
-                    </div>
-                </div>
-            </td>
-        </tr>
+        {% endfor %}
     </tbody>
 </table>
