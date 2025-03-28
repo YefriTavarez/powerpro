@@ -98,17 +98,17 @@
 
 	function _setup_listeners(frm) {
 		jQuery("#toggleViewButton").on("click", function () {
-			const tableView = jQuery("#tableView");
-			const postView = jQuery("#postView");
+// 				const tableView = jQuery("#tableView");
+// 				const postView = jQuery("#postView");
 
-			if (tableView.hasClass("d-block")) {
-				tableView.removeClass("d-block").addClass("d-none");
-				postView.removeClass("d-none").addClass("d-block");
-			} else {
-				tableView.removeClass("d-none").addClass("d-block");
-				postView.removeClass("d-block").addClass("d-none");
-			}
-		});
+// 				if (tableView.hasClass("d-block")) {
+// 						tableView.removeClass("d-block").addClass("d-none");
+// 						postView.removeClass("d-none").addClass("d-block");
+// 				} else {
+// 						tableView.removeClass("d-none").addClass("d-block");
+// 						postView.removeClass("d-block").addClass("d-none");
+			// 	}
+		// 		});
 
 		// action buttons
 		// data-action="reopen"
