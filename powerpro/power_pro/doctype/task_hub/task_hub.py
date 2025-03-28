@@ -1,6 +1,11 @@
 # Copyright (c) 2025, Yefri Tavarez and contributors
 # For license information, please see license.txt
 
+from typing import Union, TYPE_CHECKING
+
+if TYPE_CHECKING:
+	import datetime
+
 import frappe
 from frappe.model.document import Document
 
@@ -82,6 +87,7 @@ class TaskHub(Document):
 		pass
 
 	_table_fieldnames: list[str] = []
+	modified: Union[str, "datetime.datetime"] | None = None
 
 
 def get_task(name):
