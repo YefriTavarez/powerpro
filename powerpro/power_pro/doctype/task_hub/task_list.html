@@ -59,9 +59,9 @@
                 <a class="dropdown-item" data-task-id="{{ task.id }}" data-action="request_revision" href="#">Solicitar Revisión</a>
             </div>
         </div>
-        <h5 style="margin-right: 25px">{{ task.title }}</h5>
-        <p><strong>Tarea:</strong> {{ task.id }}</p>
-        <p><strong>Proyecto:</strong> {{ task.project }}</p>
+        <h4 style="margin-right: 25px">{{ task.title }}</h4>
+        <p><strong>Tarea:</strong> <a href="/app/task/{{ task.id }}">{{ task.id }}</a></p>
+        <p><strong>Proyecto:</strong> <a href="/app/project/{{ task.project }}">{{ task.project }}</a></p>
         <p><strong>Vence:</strong> {{ task.due_date }}</p>
         <p><strong>Estado:</strong> 
             <span class="status-indicator status-{{ task.status }}"></span> 
