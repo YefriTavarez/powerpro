@@ -8,6 +8,7 @@
                 <th>ID</th>
                 <th>Título</th>
                 <th>Proyecto</th>
+                <th class="d-none d-lg-block">Fecha</th>
                 <th>Vence</th>
                 <th>Estado</th>
                 <th class="d-none d-md-block">Usuario</th>
@@ -20,6 +21,7 @@
                 <td style="white-space: nowrap">{{ task.id }}</td>
                 <td>{{ task.title }}</td>
                 <td style="white-space: nowrap">{{ task.project }}</td>
+                <td style="white-space: nowrap d-none d-lg-block">{{ task.date }}</td>
                 <td style="white-space: nowrap">{{ task.due_date }}</td>
                 <td style="white-space: nowrap">
                     <span class="status-indicator status-{{ task.status }}"></span> 
@@ -62,6 +64,7 @@
         <h4 style="margin-right: 25px">{{ task.title }}</h4>
         <p><strong>Tarea:</strong> <a href="/app/task/{{ task.id }}">{{ task.id }}</a></p>
         <p><strong>Proyecto:</strong> <a href="/app/project/{{ task.project }}">{{ task.project }}</a></p>
+        <p><strong>Fecha:</strong> {{ task.date }}</p>
         <p><strong>Vence:</strong> {{ task.due_date }}</p>
         <p><strong>Estado:</strong> 
             <span class="status-indicator status-{{ task.status }}"></span> 
