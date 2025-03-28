@@ -18,7 +18,7 @@
   "column_break_jgwp",
   "status",
   "section_break_hypx",
-  "apply_filters",
+  "sub_menu",
   "column_break_asmb",
   "section_break_rjol",
   "hub"
@@ -74,11 +74,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "apply_filters",
-   "fieldtype": "Button",
-   "label": "Apply Filters"
-  },
-  {
    "fieldname": "column_break_asmb",
    "fieldtype": "Column Break"
   },
@@ -108,6 +103,15 @@
    "fieldtype": "Link",
    "label": "Task ID",
    "options": "Task"
+  },
+  {
+   "fieldname": "column_break_kntt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sub_menu",
+   "fieldtype": "HTML",
+   "options": "<div class=\"btn-group mb-3\" role=\"group\">       <div class=\"input-group-text\">       <span class=\"\" id=\"\">Auto-Refresco</span><input type=\"checkbox\" checked class=\"mx-2\"><button type=\"button\" class=\"btn btn-success mx-1\">Aplicar Filtros</button>     <button type=\"button\" class=\"btn btn-danger mx-1\">Resetear</button></div>          </div>"
   }
  ],
  "hide_toolbar": 1,
@@ -115,7 +119,7 @@
  "is_virtual": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-03-27 22:59:59.258163",
+ "modified": "2025-03-28 01:37:56.424357",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Task Hub",
