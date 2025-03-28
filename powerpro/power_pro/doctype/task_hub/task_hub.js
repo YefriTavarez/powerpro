@@ -4,6 +4,7 @@
 {
 	const { datetime: date } = frappe;
 	function setup(frm) {
+		_set_queries(frm);
 		_disable_save(frm);
 	}
 
@@ -29,6 +30,7 @@
 		// - exp_end_date
 		
 		const filters = {
+			"name": doc.task_id,
 			"responsible": doc.responsible,
 			"project": doc.project,
 			"status": doc.status,
@@ -171,6 +173,20 @@
 					break;
 			}
 		});
+	}
+
+	function _set_queries(frm) {
+		frappe.run_serially([
+			() => {
+				frm.set_query("task_id", function() {
+					return {
+						filters: {
+							"is_template": 0,
+						},
+					};
+				});
+			},
+		]);
 	}
 
 	function _disable_save(frm) {

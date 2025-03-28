@@ -6,6 +6,8 @@
  "engine": "InnoDB",
  "field_order": [
   "filters_section",
+  "task_id",
+  "column_break_kntt",
   "responsible",
   "column_break_smox",
   "exp_start_date",
@@ -100,6 +102,12 @@
    "fieldname": "exp_end_date",
    "fieldtype": "Date",
    "label": "Expected End Date"
+  },
+  {
+   "fieldname": "task_id",
+   "fieldtype": "Link",
+   "label": "Task ID",
+   "options": "Task"
   }
  ],
  "hide_toolbar": 1,

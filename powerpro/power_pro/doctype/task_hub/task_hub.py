@@ -24,6 +24,7 @@ class TaskHub(Document):
 		project: DF.Link | None
 		responsible: DF.Link | None
 		status: DF.Literal["", "Open", "Working", "Overdue", "Pending Review", "Completed", "Cancelled"]
+		task_id: DF.Link | None
 	# end: auto-generated types
 
 	@frappe.whitelist()
