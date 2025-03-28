@@ -23,6 +23,7 @@
 		const { doc } = frm;
 
 		// filters:
+		// - task_id
 		// - responsible
 		// - project
 		// - status
