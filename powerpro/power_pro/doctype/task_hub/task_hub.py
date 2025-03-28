@@ -14,11 +14,11 @@ class TaskHub(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
-		from_date: DF.Date | None
+		exp_end_date: DF.Date | None
+		exp_start_date: DF.Date | None
 		project: DF.Link | None
 		responsible: DF.Link | None
 		status: DF.Literal["", "Open", "Working", "Overdue", "Pending Review", "Completed", "Cancelled"]
-		to_date: DF.Date | None
 	# end: auto-generated types
 	
 	def db_insert(self, *args, **kwargs):

@@ -20,12 +20,12 @@
 			frm.set_value("responsible", frappe.session.user);
 		}
 
-		if (!doc.from_date) {
-			frm.set_value("from_date", date.nowdate());
+		if (!doc.exp_start_date) {
+			frm.set_value("exp_start_date", date.nowdate());
 		}
 
-		if (!doc.to_date) {
-			frm.set_value("to_date", date.add_days(doc.from_date, 30));
+		if (!doc.exp_end_date) {
+			frm.set_value("exp_end_date", date.add_days(doc.exp_start_date, 30));
 		}
 	}
 

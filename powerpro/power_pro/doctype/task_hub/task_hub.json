@@ -8,9 +8,9 @@
   "filters_section",
   "responsible",
   "column_break_smox",
-  "from_date",
+  "exp_start_date",
   "column_break_sfqq",
-  "to_date",
+  "exp_end_date",
   "column_break_tszn",
   "project",
   "column_break_jgwp",
@@ -42,18 +42,8 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "from_date",
-   "fieldtype": "Date",
-   "label": "From Date"
-  },
-  {
    "fieldname": "column_break_sfqq",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "to_date",
-   "fieldtype": "Date",
-   "label": "To Date"
   },
   {
    "fieldname": "column_break_tszn",
@@ -100,6 +90,16 @@
    "label": "Project",
    "no_copy": 1,
    "options": "Project"
+  },
+  {
+   "fieldname": "exp_start_date",
+   "fieldtype": "Date",
+   "label": "Expected Start Date"
+  },
+  {
+   "fieldname": "exp_end_date",
+   "fieldtype": "Date",
+   "label": "Expected End Date"
   }
  ],
  "hide_toolbar": 1,
@@ -107,7 +107,7 @@
  "is_virtual": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-03-27 22:07:58.980173",
+ "modified": "2025-03-27 22:59:59.258163",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Task Hub",
