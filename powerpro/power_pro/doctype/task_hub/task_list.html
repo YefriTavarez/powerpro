@@ -2,13 +2,13 @@
 <!-- <button id="toggleViewButton" class="btn btn-primary mb-3">Cambiar Vista</button> -->
 
 {% if tasks.length == 0 %}
-   <div class="jumbotron">
-        <h1 class="display-4">¡No hay tareas!</h1>
-        <p class="lead">No hay tareas en la lista.</p>
-        <hr class="my-4">
-        <p>¡Crea una nueva tarea para empezar!</p>
-        <a class="btn btn-primary btn-lg" href="/app/task/new" role="button">Crear Tarea</a>
-   </div>
+<div class="jumbotron">
+    <h1 class="display-4">¡No hay tareas!</h1>
+    <p class="lead">No hay tareas en la lista.</p>
+    <hr class="my-4">
+    <p>¡Crea una nueva tarea para empezar!</p>
+    <a class="btn btn-primary btn-lg" href="/app/task/new" role="button">Crear Tarea</a>
+</div>
 {% else %}
 <div id="tableView" class="d-none d-lg-block">
     <table class="table table-hover table-no-border">
@@ -33,14 +33,16 @@
                 <td style="white-space: nowrap d-none d-lg-block">{{ format_date(task.date) }}</td>
                 <td style="white-space: nowrap">{{ format_date(task.due_date) }}</td>
                 <td style="white-space: nowrap">
-                    <span class="status-indicator status-{{ task.status }}"></span> 
+                    <span class="status-indicator status-{{ task.status }}"></span>
                     {{ capitalize(task.status) }}
                 </td>
                 <td class="d-none d-md-block">{{ task.user.split(", ").join("<br>") }}</td>
                 <td title="Acciones">
                     <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle custom-dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-flip="false" data-boundary="viewport">
-                           ⋮
+                        <button class="btn btn-secondary dropdown-toggle custom-dropdown-toggle" type="button"
+                            id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                            data-flip="false" data-boundary="viewport">
+                            ⋮
                         </button>
                         <div class="dropdown-menu dropdown-menu-left" aria-labelledby="dropdownMenuButton">
                             <a class="dropdown-item" data-action="reopen" href="#">Re-Abrir</a>
@@ -60,14 +62,18 @@
     {% for task in tasks %}
     <div class="task-post mb-3 p-3 border rounded position-relative">
         <div class="dropdown position-absolute" style="top: 10px; right: 10px;">
-            <button class="btn btn-secondary dropdown-toggle custom-dropdown-toggle" type="button" id="dropdownMenuButton-{{ task.id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-flip="false" data-boundary="viewport">
-               ⋮
+            <button class="btn btn-secondary dropdown-toggle custom-dropdown-toggle" type="button"
+                id="dropdownMenuButton-{{ task.id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                data-flip="false" data-boundary="viewport">
+                ⋮
             </button>
             <div class="dropdown-menu dropdown-menu-left" aria-labelledby="dropdownMenuButton-{{ task.id }}">
                 <a class="dropdown-item" data-task-id="{{ task.id }}" data-action="reopen" href="#">Re-Abrir</a>
                 <a class="dropdown-item" data-task-id="{{ task.id }}" data-action="complete" href="#">Completar</a>
-                <a class="dropdown-item" data-task-id="{{ task.id }}" data-action="change_status" href="#">Cambiar el estado</a>
-                <a class="dropdown-item" data-task-id="{{ task.id }}" data-action="request_revision" href="#">Solicitar Revisión</a>
+                <a class="dropdown-item" data-task-id="{{ task.id }}" data-action="change_status" href="#">Cambiar el
+                    estado</a>
+                <a class="dropdown-item" data-task-id="{{ task.id }}" data-action="request_revision" href="#">Solicitar
+                    Revisión</a>
             </div>
         </div>
         <h4 style="margin-right: 25px">{{ task.title }}</h4>
@@ -75,8 +81,8 @@
         <p><strong>Proyecto:</strong> <a href="/app/project/{{ task.project }}">{{ task.project }}</a></p>
         <p><strong>Fecha:</strong> {{ format_date(task.date) }}</p>
         <p><strong>Vence:</strong> {{ format_date(task.due_date) }}</p>
-        <p><strong>Estado:</strong> 
-            <span class="status-indicator status-{{ task.status }}"></span> 
+        <p><strong>Estado:</strong>
+            <span class="status-indicator status-{{ task.status }}"></span>
             {{ capitalize(task.status) }}
         </p>
         <p><strong>Usuario:</strong> {{ task.user }}</p>
