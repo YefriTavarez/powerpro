@@ -177,6 +177,7 @@ override_doctype_class = {
     "Project Template": "powerpro.controllers.project_template.ProjectTemplate",
     "Project Template Task": "powerpro.controllers.project_template_task.ProjectTemplateTask",
     "Task": "powerpro.controllers.task.Task",
+    "Opening Invoice Creation Tool": "powerpro.controllers.opening_invoice_creation_tool.OpeningInvoiceCreationTool",
     # Custom DocTypes
     "Arte": "powerpro.controllers.arte.Arte",
     "PrintCard": "powerpro.controllers.printcard.PrintCard", # noa

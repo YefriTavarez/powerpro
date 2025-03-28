@@ -26,6 +26,9 @@ def delete_ncf(doc):
     if doc.amended_from:
         return False
 
+    if doc.is_opening == "Yes":
+        return False
+
     if doc.ncf and not doc.is_return:
         doc.ncf = None
 
@@ -44,6 +47,9 @@ def set_ncf(doc):
         return False
 
     if doc.amended_from:
+        return False
+
+    if doc.is_opening == "Yes":
         return False
 
     # if doc.is_pos and doc.ncf:
