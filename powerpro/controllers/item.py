@@ -105,8 +105,8 @@ def get_serie(doc):
 		doc.custom_item_group_4,
 		doc.custom_item_group_5,
 	]:
-		_item_group = re.sub(r"[^a-zA-Z0-9 ]", "", item_group)
-		if _item_group:
+		if item_group:
+			_item_group = re.sub(r"[^a-zA-Z0-9 ]", "", item_group)
 			parts = _item_group.split(" ")
 
 			if len(parts) > 1: # take the first two chars of each word
