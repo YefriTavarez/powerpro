@@ -1,6 +1,8 @@
 # Copyright (c) 2024, Yefri Tavarez and Contributors
 # For license information, please see license.txt
 
+import re
+
 import frappe
 from frappe.utils import cint
 
@@ -103,15 +105,16 @@ def get_serie(doc):
 		doc.custom_item_group_4,
 		doc.custom_item_group_5,
 	]:
-		if item_group:
-			parts = item_group.split(" ")
+		_item_group = re.sub(r"[^a-zA-Z0-9 ]", "", item_group)
+		if _item_group:
+			parts = _item_group.split(" ")
 
 			if len(parts) > 1: # take the first two chars of each word
 				out.append("".join([
 					part[:2] for part in parts
 				]))
 			else:
-				out.append(item_group[:3])
+				out.append(_item_group[:3])
 
 	return "".join(out)
 
