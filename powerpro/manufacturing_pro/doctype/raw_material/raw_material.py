@@ -3,6 +3,8 @@
 
 import frappe
 
+from typing import Dict, Any
+
 from frappe import _
 from frappe.model import naming
 from frappe.model.document import Document
@@ -52,6 +54,15 @@ class RawMaterial(Document):
 		
 		serie = f"{''.join(out)}-.#####"
 		self.name = naming.make_autoname(serie)
+
+	def after_rename(self, olddn, newdn, merge=False):
+		"""Update the description of the item"""
+		skus = load_skus()
+
+		res = do_lookup(olddn, skus)
+
+		if res:
+			do_replacement(olddn, newdn, res, skus)
 
 	def validate(self):
 		# self.round_dimensions()
@@ -220,3 +231,45 @@ def on_doctype_update():
 	})
 	
 	df.db_set("in_list_view", 0)
+
+
+
+def load_skus() -> Dict[str, Dict[str, Any]]:
+	out = {}
+
+	res = frappe.get_all("Item", fields=["name", "product_details"])
+	for row in res:
+		if product_details := row["product_details"]:
+			out[row["name"]] = product_details
+
+	return out
+
+
+def do_lookup(material_id: str, skus: Dict[str, Dict[str, Any]]) -> bool:
+	for key, value in skus.items():
+		if material_id in value:
+			return key
+
+	return None
+
+
+def do_replacement(old_material_id: str, new_material_id: str, sku: str, skus: Dict[str, Dict[str, Any]]) -> bool:
+	"""Replace old material id with new material id in the given sku."""
+	if sku not in skus:
+		return False
+
+	product_details = skus[sku]
+	if old_material_id not in product_details:
+		return False
+
+	d = frappe.parse_json(product_details)
+	if material := d["material"]:
+		if material == old_material_id:
+			d["material"] = new_material_id
+			product_details = frappe.as_json(d)
+			frappe.db.set_value("Item", sku, "product_details", product_details)
+
+			print(f"Doing replacement for {sku} from {old_material_id} to {new_material_id}")
+			return True
+	
+	return False
