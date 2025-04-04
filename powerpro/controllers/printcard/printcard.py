@@ -339,7 +339,7 @@ class PrintCard(Document):
                     #      or second_latest_estado != "Reemplazado":
                     #     arte.estado = second_latest_estado
 
-                if self.estado in { "Aprobado", "Borrador", "Rechazado" }:
+                if self.estado in { "Aprobado", "Borrador", "Listo para Someter", "Rechazado" }:
                     arte.estado = "PrintCard por Crear"
 
         # Desvincular el PrintCard del Arte para que pueda ser eliminado
@@ -640,7 +640,7 @@ class PrintCard(Document):
 
         # PrintCard has been submitted for Approval (from Draft)
         # at this point we should generate the PDF for the PrintCard
-        if db_doc.estado == "Borrador" and self.estado == "Pendiente":
+        if db_doc.estado in {"Borrador", "Listo para Someter"} and self.estado == "Pendiente":
             pdf_path = generate_pdf_for_printcard(printcard=self.name, pdf_path=True)
 
             if pdf_path:
