@@ -88,10 +88,6 @@
 			}, true);
 		}
 
-		apply_filters(frm) {
-			frm.refresh(); // ToDo: refresh the table instead of the whole form
-		}
-
 		reset_filters(frm, callback) {
 			const { doc } = frm;
 			// Reset filters to null
