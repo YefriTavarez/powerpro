@@ -42,6 +42,8 @@ def complete_task(hub, task_id):
 		frappe.throw(f"La tarea {task_id} ya está completada.")
 
 	task.status = "Completed"
+	task.completed_on = frappe.utils.today()
+	task.completed_by = frappe.session.user
 
 	try:
 		task.save()
@@ -80,6 +82,11 @@ def change_status(hub, task_id, status):
 	if task.status == status:
 		frappe.throw(f"La tarea {task_id} ya está en el estado {status!r}.")
 	task.status = status
+
+	if status == "Completed":
+		task.completed_on = frappe.utils.today()
+		task.completed_by = frappe.session.user
+
 	try:
 		task.save()
 	except frappe.exceptions.ValidationError as e:
