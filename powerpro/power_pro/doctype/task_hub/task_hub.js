@@ -42,14 +42,27 @@ frappe.provide("powerpro.task_hub");
 		// - exp_start_date
 		// - exp_end_date
 		
-		const filters = {
-			"name": doc.task_id,
-			"responsible": doc.responsible,
-			"project": doc.project,
-			"status": doc.status,
-			"exp_start_date": doc.exp_start_date,
-			"exp_end_date": doc.exp_end_date,
-		};
+		const filters = {};
+
+		if (doc.task_id) {
+			filters.name = doc.task_id;
+		}
+		if (doc.responsible) {
+			filters.responsible = doc.responsible;
+		}
+		if (doc.project) {
+			filters.project = doc.project;
+		}
+		if (doc.status) {
+			filters.status = doc.status;
+		}
+		if (doc.exp_start_date) {
+			filters.exp_start_date = doc.exp_start_date;
+		}
+		if (doc.exp_end_date) {
+			filters.exp_end_date = doc.exp_end_date;
+		}
+		
 
 		frm.call("fetch_tasks", { filters }, function(response) {
 			doc.tasks = response.message;
