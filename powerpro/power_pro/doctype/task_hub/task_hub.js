@@ -20,6 +20,12 @@ frappe.provide("powerpro.task_hub");
 		_render_task_list(frm);
 	}
 
+	function onload_post_render(frm) {
+        jQuery(document).ready(function() {
+            jQuery('[data-toggle="tooltip"]').tooltip();
+        });
+	}
+
 	function apply_filters(frm) {
 		// read filters from the form
 		// request new tasks from backend via frm.call
