@@ -35,6 +35,7 @@ app_include_js = [
     "/assets/powerpro/js/powerpro.js?v=1.0.1",
     "/assets/powerpro/js/frappe/indicator.js?v=1.0.1",
     "/assets/powerpro/js/frappe/signature.js?v=1.0.1",
+    "/assets/powerpro/js/frappe/form.js?v=1.0.1",
     "app.bundle.js",
 ]
 
@@ -65,6 +66,8 @@ doctype_js = {
     "Project": "public/js/erpnext/project.js",
     "Project Template": "public/js/erpnext/project_template.js",
     "Asset Maintenance": "public/js/asset_maintenance.js",
+    # native doctype
+    "Task Hub": "public/js/task_hub/actions.js",
 }
 
 doctype_list_js = {
