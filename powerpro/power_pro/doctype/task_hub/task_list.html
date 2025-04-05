@@ -40,15 +40,23 @@
                 <td title="Acciones">
                     <div class="dropdown">
                         <button class="btn btn-secondary dropdown-toggle custom-dropdown-toggle" type="button"
-                            id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                            id="dropdownMenuButton-{{ task.id }}-table" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
                             data-flip="false" data-boundary="viewport">
                             ⋮
                         </button>
                         <div class="dropdown-menu dropdown-menu-left" aria-labelledby="dropdownMenuButton">
-                            <a class="dropdown-item" data-action="reopen" href="#">Re-Abrir</a>
-                            <a class="dropdown-item" data-action="complete" href="#">Completar</a>
-                            <a class="dropdown-item" data-action="change_status" href="#">Cambiar el estado</a>
-                            <a class="dropdown-item" data-action="request_revision" href="#">Solicitar Revisión</a>
+                            {% if task.status == "completed" %}
+                            <a class="dropdown-item"  data-task-id="{{ task.id }}" data-action="reopen" href="#">Re-Abrir</a>
+                            {% endif %}
+
+                            {% if ["open", "overdue", "working", "pending review"].includes(task.status) %}
+                            <a class="dropdown-item"  data-task-id="{{ task.id }}" data-action="complete" href="#">Completar</a>
+                            {% endif %}
+                            <a class="dropdown-item"  data-task-id="{{ task.id }}" data-action="change_status" href="#">Cambiar el estado</a>
+                            
+                            {% if ["working"].includes(task.status) %}
+                            <a class="dropdown-item"  data-task-id="{{ task.id }}" data-action="request_revision" href="#">Solicitar Revisión</a>
+                            {% endif %}
                         </div>
                     </div>
                 </td>
@@ -68,12 +76,21 @@
                 ⋮
             </button>
             <div class="dropdown-menu dropdown-menu-left" aria-labelledby="dropdownMenuButton-{{ task.id }}">
+                {% if task.status == "completed" %}
                 <a class="dropdown-item" data-task-id="{{ task.id }}" data-action="reopen" href="#">Re-Abrir</a>
+                {% endif %}
+
+                {% if ["open", "overdue", "working", "pending review"].includes(task.status) %}
                 <a class="dropdown-item" data-task-id="{{ task.id }}" data-action="complete" href="#">Completar</a>
+                {% endif %}
+
                 <a class="dropdown-item" data-task-id="{{ task.id }}" data-action="change_status" href="#">Cambiar el
                     estado</a>
+
+                {% if ["working"].includes(task.status) %}
                 <a class="dropdown-item" data-task-id="{{ task.id }}" data-action="request_revision" href="#">Solicitar
                     Revisión</a>
+                {% endif %}
             </div>
         </div>
         <h4 style="margin-right: 25px">{{ task.title }}</h4>
