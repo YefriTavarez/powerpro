@@ -27,7 +27,17 @@
         <tbody>
             {% for task in tasks %}
             <tr>
-                <td style="white-space: nowrap">{{ task.id }}</td>
+                <td title="Prioridad: {{ translate[task.priority] }}" style="white-space: nowrap">
+                    {{ task.id }}
+
+                    {% if ["High", "Urgent"].includes(task.priority) %}
+                        {{ icon("up-arrow", "sm") }}
+                    {% endif %}
+
+                    {% if task.priority == "Low" %}
+                        {{ icon("down-arrow", "sm") }}
+                    {% endif %}
+                    </td>
                 <td>{{ task.title }}</td>
                 <td style="white-space: nowrap">{{ task.project }}</td>
                 <td style="white-space: nowrap d-none d-lg-block">{{ format_date(task.date) }}</td>

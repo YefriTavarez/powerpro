@@ -125,6 +125,13 @@ frappe.provide("powerpro.task_hub");
 						"capitalize": (str) => {
 							return str.charAt(0).toUpperCase() + str.slice(1);
 						},
+						"icon": frappe.utils.icon,
+						"translate": {
+							"High": "Alto",
+							"Medium": "Medio",
+							"Low": "Bajo",
+							"Urgent": "Urgente",
+						}
 					}
 				)
 			)
