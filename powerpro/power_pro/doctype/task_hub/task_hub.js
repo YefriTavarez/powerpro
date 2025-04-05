@@ -198,5 +198,35 @@
 		setup,
 		refresh,
 		apply_filters,
+		task_id: frm => {
+			if (auto_refresh) {
+				apply_filters(frm);
+			}
+		},
+		responsible: frm => {
+			if (auto_refresh) {
+				apply_filters(frm);
+			}
+		},
+		exp_start_date: frm => {
+			if (auto_refresh) {
+				apply_filters(frm);
+			}
+		},
+		exp_end_date: frm => {
+			if (auto_refresh) {
+				apply_filters(frm);
+			}
+		},
+		project: frm => {
+			if (auto_refresh) {
+				apply_filters(frm);
+			}
+		},
+		status: frm => {
+			if (auto_refresh) {
+				apply_filters(frm);
+			}
+		},
 	});
 }
