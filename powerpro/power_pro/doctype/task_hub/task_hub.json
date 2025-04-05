@@ -111,7 +111,7 @@
   {
    "fieldname": "sub_menu",
    "fieldtype": "HTML",
-   "options": "<div class=\"btn-group mb-3\" role=\"group\">\n    <div class=\"input-group-text\">\n        <span class=\"\" id=\"\">Auto-Refresco</span>\n        <input type=\"checkbox\" checked class=\"mx-2\">\n        <button type=\"button\" class=\"btn btn-success mx-1\" data-action=\"apply-filters\">Aplicar Filtros</button>\n        <button type=\"button\" class=\"btn btn-danger mx-1\" data-action=\"reset-filters\">Resetear Filtros</button>\n    </div>\n</div>"
+   "options": "<div class=\"btn-group mb-3\" role=\"group\">\n    <div class=\"input-group-text\">\n        <span class=\"\" style=\"font-size: 1.2rem;\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"Auto-Refresco\">Auto-Refresco</span>\n        <input type=\"checkbox\" checked class=\"mx-2\" id=\"auto-refresh\">\n        <button type=\"button\" class=\"btn btn-success mx-1\" data-action=\"apply-filters\">Aplicar Filtros</button>\n        <button type=\"button\" class=\"btn btn-danger mx-1\" data-action=\"reset-filters\">Resetear Filtros</button>\n    </div>\n</div>"
   }
  ],
  "hide_toolbar": 1,
@@ -119,7 +119,7 @@
  "is_virtual": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-04-02 20:49:31.561298",
+ "modified": "2025-04-05 18:33:19.512297",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Task Hub",
