@@ -7,7 +7,7 @@ frappe.provide("powerpro.task_hub");
 	const { datetime: date } = frappe;
 	
 	let actions_controller;
-	
+
 	function setup(frm) {
 		_set_queries(frm);
 		_disable_save(frm);
@@ -41,7 +41,7 @@ frappe.provide("powerpro.task_hub");
 		// - status
 		// - exp_start_date
 		// - exp_end_date
-		
+
 		const filters = {};
 
 		if (doc.task_id) {
@@ -122,7 +122,7 @@ frappe.provide("powerpro.task_hub");
 		}, function(response) {
 			doc.tasks = response.message;
 			_render_task_list(frm);
-		});
+		}, true);
 	}
 
 	function _render_task_list(frm) {
@@ -213,10 +213,10 @@ frappe.provide("powerpro.task_hub");
 
 				switch (action) {
 					case "apply-filters":
-						actions_controller.apply_filters(frm);
+						apply_filters(frm);
 						break;
 					case "reset-filters":
-						actions_controller.reset_filters(frm);
+						actions_controller.reset_filters(frm, _ => apply_filters(frm));
 						break;
 				}
 			});
@@ -255,6 +255,7 @@ frappe.provide("powerpro.task_hub");
 	frappe.ui.form.on("Task Hub", {
 		setup,
 		refresh,
+		onload_post_render,
 		apply_filters,
 		task_id: frm => {
 			const auto_refresh = jQuery("#auto-refresh")
