@@ -34,11 +34,6 @@ class TaskHub(Document):
 		out = list()
 		or_filters = dict()
 
-		status = filters.get("status")
-
-		if not status:
-			filters["status"] = ["not in", ["Cancelled", "Completed", "Template"]]
-
 		user = filters.get("responsible")
 		if "responsible" in filters:
 			del filters["responsible"]
@@ -59,6 +54,9 @@ class TaskHub(Document):
 			del filters["exp_end_date"]
 
 		filtrs = convert_filters_dict_to_list(filters, "Task")
+
+		if not filters.get("status"):
+			filtrs.append(["Task", "status", "not in", ["Cancelled", "Completed", "Template"]])
 
 		if user:
 			filtrs.append(["Task Responsible", "user", "=", user])
