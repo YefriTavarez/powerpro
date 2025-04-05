@@ -92,14 +92,15 @@
 			frm.refresh(); // ToDo: refresh the table instead of the whole form
 		}
 
-		reset_filters(frm) {
+		reset_filters(frm, callback) {
 			const { doc } = frm;
 			// Reset filters to null
 			for (const fieldname of ["task_id", "responsible", "project", "status", "exp_start_date", "exp_end_date"]) {
 				doc[fieldname] = null;
+				frm.refresh_field(fieldname);
 			}
 
-			frm.refresh();
+			callback && callback();
 		}
 
 	}
