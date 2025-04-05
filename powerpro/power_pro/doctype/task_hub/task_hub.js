@@ -6,7 +6,7 @@ frappe.provide("powerpro.task_hub");
 {
 	const { datetime: date } = frappe;
 	
-	let actions_controller, auto_refresh;
+	let actions_controller;
 	
 	function setup(frm) {
 		_set_queries(frm);
@@ -222,13 +222,12 @@ frappe.provide("powerpro.task_hub");
 			});
 
 		
-		sub_menu.find("input[type=checkbox]")
-			.attr("checked", false)
-			.change(function() {
-				const isChecked = jQuery(this).is(":checked");
+		// sub_menu.find("input[type=checkbox]")
+		// 	.change(function() {
+		// 		const isChecked = jQuery("this").is(":checked");
 
-				auto_refresh = isChecked;
-			});
+		// 		auto_refresh = isChecked;
+		// 	});
 	}
 
 	function _set_queries(frm) {
@@ -258,31 +257,55 @@ frappe.provide("powerpro.task_hub");
 		refresh,
 		apply_filters,
 		task_id: frm => {
+			const auto_refresh = jQuery("#auto-refresh")
+				.is(":checked")
+				;
+
 			if (auto_refresh) {
 				apply_filters(frm);
 			}
 		},
 		responsible: frm => {
+			const auto_refresh = jQuery("#auto-refresh")
+				.is(":checked")
+				;
+
 			if (auto_refresh) {
 				apply_filters(frm);
 			}
 		},
 		exp_start_date: frm => {
+			const auto_refresh = jQuery("#auto-refresh")
+				.is(":checked")
+				;
+
 			if (auto_refresh) {
 				apply_filters(frm);
 			}
 		},
 		exp_end_date: frm => {
+			const auto_refresh = jQuery("#auto-refresh")
+				.is(":checked")
+				;
+
 			if (auto_refresh) {
 				apply_filters(frm);
 			}
 		},
 		project: frm => {
+			const auto_refresh = jQuery("#auto-refresh")
+				.is(":checked")
+				;
+
 			if (auto_refresh) {
 				apply_filters(frm);
 			}
 		},
 		status: frm => {
+			const auto_refresh = jQuery("#auto-refresh")
+				.is(":checked")
+				;
+
 			if (auto_refresh) {
 				apply_filters(frm);
 			}
