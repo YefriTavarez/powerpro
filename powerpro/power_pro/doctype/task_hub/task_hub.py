@@ -59,13 +59,13 @@ class TaskHub(Document):
 			del filters["exp_end_date"]
 
 		filtrs = convert_filters_dict_to_list(filters, "Task")
-		filtrs.append([
-			["Task Responsible", "user", "=", user],
-		])
+
+		if user:
+			filtrs.append(["Task Responsible", "user", "=", user])
 
 		# or_filters=or_filters,
 		for task_id in frappe.get_list(
-			"Task", filters=filters, or_filters=or_filters, pluck="name"
+			"Task", filters=filtrs, or_filters=or_filters, pluck="name"
 		):
 			task = get_task(task_id)
 
@@ -76,6 +76,7 @@ class TaskHub(Document):
 				"date": task.exp_start_date,
 				"due_date": task.exp_end_date,
 				"project": task.project,
+				"priority": task.priority,
 				"user": ", ".join([d.user for d in task.users if d.user]),
 			})
 
@@ -133,7 +134,7 @@ def get_task(name):
 def convert_filters_dict_to_list(filters: dict, doctype: str) -> List[list]:
 	out = list()
 
-	for key, value in filters.items():
-		out.append([doctype, key, "=", value])
+	for fieldname, value in filters.items():
+		out.append([ doctype, fieldname, "=", value ])
 
 	return out
