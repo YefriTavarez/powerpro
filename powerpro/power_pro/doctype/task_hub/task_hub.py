@@ -10,6 +10,8 @@ import frappe
 from frappe.model.document import Document
 
 
+from . import actions_controller
+
 class TaskHub(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -32,8 +34,13 @@ class TaskHub(Document):
 		out = list()
 		or_filters = dict()
 
+		status = filters.get("status")
+
+		if not status:
+			filters["status"] = ["not in", ["Cancelled", "Completed", "Template"]]
+
 		user = filters.get("responsible")
-		if user:
+		if "responsible" in filters:
 			del filters["responsible"]
 
 		exp_start_date = filters.get("exp_start_date")
@@ -65,7 +72,7 @@ class TaskHub(Document):
 			out.append({
 				"id": task.name,
 				"title": task.subject,
-				"status": task.status,
+				"status": task.status.lower(),
 				"date": task.exp_start_date,
 				"due_date": task.exp_end_date,
 				"project": task.project,
@@ -73,7 +80,23 @@ class TaskHub(Document):
 			})
 
 		return out
-	
+
+	@frappe.whitelist()	
+	def reopen_task(self, task_id):
+		return actions_controller.reopen_task(self, task_id)
+
+	@frappe.whitelist()
+	def complete_task(self, task_id):
+		return actions_controller.complete_task(self, task_id)
+
+	@frappe.whitelist()
+	def change_status(self, task_id, status):
+		return actions_controller.change_status(self, task_id, status)
+
+	@frappe.whitelist()
+	def request_revision(self, task_id):
+		return actions_controller.request_revision(self, task_id)
+
 	def db_insert(self, *args, **kwargs):
 		frappe.throw("No se puede insertar un documento de tipo Task Hub")
 
