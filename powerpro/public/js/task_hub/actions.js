@@ -41,9 +41,29 @@
 				frappe.throw("Por favor, selecciona una tarea para cambiar el estado.");
 			}
 
-			const title = "Cambiar estado de la tarea";
+			const title = `${task_id}: Cambiar estado de la Tarea`;
+			const current_status = {
+				"open": "Abierto",
+				"working": "En progreso",
+				"pending review": "Pendiente de revisión",
+				"overdue": "Vencido",
+				"completed": "Completado",
+				"cancelled": "Cancelado",
+			}[
+				jQuery(`tr[data-task-id="${task_id}"]`)
+					.attr("data-status")
+			];
+			
 			const primary_label = "Cambiar estado";
 			const fields = [
+				{
+					fieldname: "current_status",
+					fieldtype: "Data",
+					label: "Estado actual",
+					read_only: 1,
+					default: current_status,
+					placeholder: current_status,
+				},
 				{
 					fieldname: "status",
 					fieldtype: "Select",
@@ -60,7 +80,7 @@
 				},
 			];
 
-			function callback({ status }) {
+			function on_dialog_close({ status }) {
 				if (status) {
 					frm.call("change_status", { task_id, status }, function(response) {
 						callback && callback(response);
@@ -73,7 +93,7 @@
 				}
 			}
 
-			frappe.prompt(fields, callback, title, primary_label);
+			frappe.prompt(fields, on_dialog_close, title, primary_label);
 		}
 
 		request_revision(task_id, callback) {
