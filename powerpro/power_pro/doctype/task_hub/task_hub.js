@@ -1,15 +1,21 @@
 // Copyright (c) 2025, Yefri Tavarez and contributors
 // For license information, please see license.txt
 
+
+frappe.provide("powerpro.task_hub");
 {
 	const { datetime: date } = frappe;
+	
+	let actions_controller, auto_refresh;
+	
 	function setup(frm) {
 		_set_queries(frm);
 		_disable_save(frm);
+		_setup_actions_controller(frm);
 	}
 
 	function refresh(frm) {
-		_set_defaults(frm);
+		// _set_defaults(frm);
 		_fetch_tasks(frm);
 		_render_task_list(frm);
 	}
@@ -40,7 +46,7 @@
 		};
 
 		frm.call("fetch_tasks", { filters }, function(response) {
-			frm.doc.tasks = response.message;
+			doc.tasks = response.message;
 			_render_task_list(frm);
 		});
 	}
@@ -62,48 +68,42 @@
 	}
 
 	function _fetch_tasks(frm) {
-		frm.doc.tasks = [
-			{
-				id: 'TASK-001',
-				title: 'Revisar el reporte mensual de actividades y generar un resumen ejecutivo para la junta directiva',
-				project: 'PROY-0001',
-				due_date: '2025-03-30',
-				status: 'open',
-				user: 'Juan Pérez',
-			},
-			{
-				id: 'TASK-002',
-				title: 'Actualizar toda la documentación técnica del proyecto para cumplir con los estándares de calidad',
-				project: 'PROY-0002',
-				due_date: '2025-03-25',
-				status: 'overdue',
-				user: 'María López',
-			},
-			{
-				id: 'TASK-003',
-				title: 'Preparar una presentación detallada para el cliente sobre los avances del proyecto y próximos pasos',
-				project: 'PROY-0003',
-				due_date: '2025-03-28',
-				status: 'completed',
-				user: 'Carlos Gómez',
-			},
-			{
-				id: 'TASK-004',
-				title: 'Realizar un análisis de impacto de los cambios en el alcance del proyecto y presentar recomendaciones',
-				project: 'PROY-0004',
-				due_date: '2025-03-30',
-				status: 'open',
-				user: 'Ana Ramírez',
-			},
-			{
-				id: 'TASK-005',
-				title: 'Coordinar una reunión de revisión de entregables con el equipo de trabajo',
-				project: 'PROY-0005',
-				due_date: '2025-03-29',
-				status: 'open',
-				user: 'Pedro Jiménez',
-			},
-		];
+		const { doc } = frm;
+
+		doc.tasks = [];
+
+		const filters = {};
+
+		if (doc.task_id) {
+			filters.name = doc.task_id;
+		}
+
+		if (doc.responsible) {
+			filters.responsible = doc.responsible;
+		}
+
+		if (doc.project) {
+			filters.project = doc.project;
+		}
+
+		if (doc.status) {
+			filters.status = doc.status;
+		}
+
+		if (doc.exp_start_date) {
+			filters.exp_start_date = doc.exp_start_date;
+		}
+
+		if (doc.exp_end_date) {
+			filters.exp_end_date = doc.exp_end_date;
+		}
+
+		frm.call("fetch_tasks", {
+			filters,
+		}, function(response) {
+			doc.tasks = response.message;
+			_render_task_list(frm);
+		});
 	}
 
 	function _render_task_list(frm) {
@@ -134,6 +134,8 @@
 	}
 
 	function _setup_listeners(frm) {
+		const { $wrapper: hub } = frm.get_field("hub");
+		const { $wrapper: sub_menu } = frm.get_field("sub_menu");
 		// jQuery("#toggleViewButton").on("click", function () {
 		// 	const tableView = jQuery("#tableView");
 		// 	const postView = jQuery("#postView");
@@ -153,27 +155,54 @@
 		// data-action="change_status"
 		// data-action="request_revision"
 		//
-		jQuery("a[data-action]").on("click", function (event) {
-			event.preventDefault();
+		hub.find("a[data-action]")
+			.on("click", function (event) {
+				event.preventDefault();
 
-			const action = jQuery(this).attr("data-action");
-			const task_id = jQuery(this).attr("data-task-id");
+				const action = jQuery(this).attr("data-action");
+				const task_id = jQuery(this).attr("data-task-id");
 
-			switch (action) {
-				case "reopen":
-					_reopen_task(frm, task_id);
-					break;
-				case "complete":
-					_complete_task(frm, task_id);
-					break;
-				case "change_status":
-					_change_status(frm, task_id);
-					break;
-				case "request_revision":
-					_request_revision(frm, task_id);
-					break;
-			}
-		});
+				switch (action) {
+					case "reopen":
+						actions_controller.reopen_task(task_id, _ => apply_filters(frm));
+						break;
+					case "complete":
+						actions_controller.complete_task(task_id, _ => apply_filters(frm));
+						break;
+					case "change_status":
+						actions_controller.change_status(task_id, _ => apply_filters(frm));
+						break;
+					case "request_revision":
+						actions_controller.request_revision(task_id, _ => apply_filters(frm));
+						break;
+				}
+			});
+
+		sub_menu
+			.find("button[data-action]")
+			.click(function(event) {
+				event.preventDefault();
+
+				const action = jQuery(this).attr("data-action");
+
+				switch (action) {
+					case "apply-filters":
+						actions_controller.apply_filters(frm);
+						break;
+					case "reset-filters":
+						actions_controller.reset_filters(frm);
+						break;
+				}
+			});
+
+		
+		sub_menu.find("input[type=checkbox]")
+			.attr("checked", false)
+			.change(function() {
+				const isChecked = jQuery(this).is(":checked");
+
+				auto_refresh = isChecked;
+			});
 	}
 
 	function _set_queries(frm) {
@@ -192,6 +221,10 @@
 
 	function _disable_save(frm) {
 		frm.disable_save();
+	}
+
+	function _setup_actions_controller(frm) {
+		actions_controller = new powerpro.task_hub.ActionsController(frm);
 	}
 
 	frappe.ui.form.on("Task Hub", {
