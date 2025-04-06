@@ -45,7 +45,6 @@ class TaskHub(Document):
 		exp_end_date = filters.get("exp_end_date")
 		if exp_end_date:
 			or_filters["exp_end_date"] = exp_end_date
-			or_filters["exp_end_date"] = exp_end_date
 
 		if "exp_start_date" in filters:
 			del filters["exp_start_date"]
