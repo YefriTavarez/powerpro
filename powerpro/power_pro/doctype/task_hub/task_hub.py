@@ -57,6 +57,12 @@ class TaskHub(Document):
 		if not filters.get("status"):
 			filtrs.append(["Task", "status", "not in", ["Cancelled", "Completed", "Template"]])
 
+		# ensure none authorized users can see other users tasks
+		if not user and not has_role(
+			get_project_manager()
+		):
+			user = frappe.session.user
+
 		if user:
 			filtrs.append(["Task Responsible", "user", "=", user])
 
@@ -135,3 +141,15 @@ def convert_filters_dict_to_list(filters: dict, doctype: str) -> List[list]:
 		out.append([ doctype, fieldname, "=", value ])
 
 	return out
+
+
+def get_project_manager() -> str:
+	"""Get the project manager from the settings."""
+	settings = frappe.get_single("Projects Settings")
+
+	return settings.project_manager or "System Manager"
+
+
+def has_role(role: str) -> bool:
+	"""Check if the user has a specific role."""
+	return role in frappe.get_roles()
