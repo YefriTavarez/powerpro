@@ -206,16 +206,48 @@ frappe.provide("powerpro.task_hub");
 
 				switch (action) {
 					case "reopen":
-						actions_controller.reopen_task(task_id, _ => apply_filters(frm));
+						actions_controller.reopen_task(task_id, function({ message: response }) {
+							if (response) {
+								frappe.show_alert({
+									message: response.message,
+									indicator: "green",
+								});
+							}
+							apply_filters(frm);
+						});
 						break;
 					case "complete":
-						actions_controller.complete_task(task_id, _ => apply_filters(frm));
+						actions_controller.complete_task(task_id, function({ message: response }) {
+							if (response) {
+								frappe.show_alert({
+									message: response.message,
+									indicator: "green",
+								});
+							}
+							apply_filters(frm);
+						});
 						break;
 					case "change_status":
-						actions_controller.change_status(task_id, _ => apply_filters(frm));
+						actions_controller.change_status(task_id, function({ message: response }) {
+							if (response) {
+								frappe.show_alert({
+									message: response.message,
+									indicator: "green",
+								});
+							}
+							apply_filters(frm);
+						});
 						break;
 					case "request_revision":
-						actions_controller.request_revision(task_id, _ => apply_filters(frm));
+						actions_controller.request_revision(task_id, function({ message: response }) {
+							if (response) {
+								frappe.show_alert({
+									message: response.message,
+									indicator: "green",
+								});
+							}
+							apply_filters(frm);
+						});
 						break;
 				}
 			});
