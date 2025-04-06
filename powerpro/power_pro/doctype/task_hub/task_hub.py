@@ -70,7 +70,7 @@ class TaskHub(Document):
 			out.append({
 				"id": task.name,
 				"title": task.subject,
-				"status": task.status.lower(),
+				"status": task.status.lower().replace(" ", "-"),
 				"date": task.exp_start_date,
 				"due_date": task.exp_end_date,
 				"project": task.project,
