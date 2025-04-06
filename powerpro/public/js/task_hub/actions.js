@@ -5,6 +5,8 @@
 {
 	frappe.provide("powerpro.task_hub");
 
+	const { project_manager } = frappe.boot.powerpro_settings;
+
 	powerpro.task_hub.ActionsController = class {
 		constructor(frm) {
 			this.frm = frm;
@@ -110,8 +112,23 @@
 
 		reset_filters(frm, callback) {
 			const { doc } = frm;
+			const fieldlist = [
+				"task_id",
+				"project",
+				"status",
+				"exp_start_date",
+				"exp_end_date",
+			];
+
+			// allow the user to clear the responsible filter only if they are a project manager
+			if (
+				frappe.user.has_role([project_manager])
+			) {
+				fieldlist.push("responsible");
+			}
+
 			// Reset filters to null
-			for (const fieldname of ["task_id", "responsible", "project", "status", "exp_start_date", "exp_end_date"]) {
+			for (const fieldname of fieldlist) {
 				doc[fieldname] = null;
 				frm.refresh_field(fieldname);
 			}
