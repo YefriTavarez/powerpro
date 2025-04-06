@@ -10,6 +10,7 @@ frappe.provide("powerpro.masks");
 		_set_qty_mask(frm);
 		_set_queries(frm);
 		_render_docfields(frm);
+		_render_related_tasks(frm);
 	}
 
 	function project_template(frm) {
@@ -20,6 +21,87 @@ frappe.provide("powerpro.masks");
 		frm.set_value("producto", "");
 	}
 
+	function _render_related_tasks(frm) {
+		const { doc } = frm;
+
+		frappe.call({
+			method: "frappe.desk.reportview.get",
+			args: {
+				doctype: "Task",
+				filters: { project: doc.name },
+				fields: ["name", "subject", "status"],
+			},
+			callback({ message: response }) {
+				const $wrapper = frm.get_field("task_display").$wrapper;
+				$wrapper.empty();
+
+				if (!response.values || response.values.length === 0) {
+					$wrapper.html("<p>Nada para mostrar</p>");
+					return;
+				}
+
+				const { values: tasks } = response;
+				const task_count = tasks.length;
+				const task_text = task_count > 1 ? "Tareas" : "Tarea";
+				const task_count_text = `<h3>${task_count} ${task_text} relacionadas</h5>`;
+				$wrapper.empty();
+				$wrapper.append(task_count_text);
+				$wrapper.append("<hr>");
+
+				const translated_status = {
+					"Open": "Abierto",
+					"Working": "En progreso",
+					"Pending Review": "Pendiente de revisión",
+					"Overdue": "Vencido",
+					"Completed": "Completado",
+					"Cancelled": "Cancelado",
+				};
+
+				const indicators = {
+					"Open": "orange",
+					"Working": "blue",
+					"Pending Review": "yellow",
+					"Overdue": "red",
+					"Completed": "green",
+					"Cancelled": "gray",
+				};
+				const status_class = (status) => {
+					return `indicator ${indicators[status] || "secondary"}`;
+				};
+
+				const table = `
+					<table class="table table-bordered">
+						<thead>
+							<tr>
+								<th>ID Tarea</th>
+								<th>Titulo</th>
+								<th>Estado</th>
+							</tr>
+						</thead>
+						<tbody>
+							${tasks
+								.map(
+									([name, subject, status]) => `
+									<tr>
+										<td>${name}</td>
+										<td>${subject}</td>
+										<td>
+											<span class="indicator ${status_class(status)}">
+												${translated_status[status] || status}
+											</span>
+										</td>
+									</tr>
+								`
+								)
+								.join("")}
+						</tbody>
+					</table>
+				`;
+
+				$wrapper.append(table);
+			},
+		});
+	}
 
 	function _render_docfields(frm) {
 		const { doc } = frm;
