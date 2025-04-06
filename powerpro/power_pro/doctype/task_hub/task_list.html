@@ -26,7 +26,7 @@
         </thead>
         <tbody>
             {% for task in tasks %}
-            <tr>
+            <tr data-task-id="{{ task.id }}" class="task-row" data-status="{{ task.status }}">
                 <td title="Prioridad: {{ translate[task.priority] }}" style="white-space: nowrap">
                     {{ task.id }}
 
@@ -44,7 +44,7 @@
                 <td style="white-space: nowrap">{{ format_date(task.due_date) }}</td>
                 <td style="white-space: nowrap">
                     <span class="status-indicator status-{{ task.status }}"></span>
-                    {{ capitalize(task.status) }}
+                    {{ translate[capitalize(task.status)] }}
                 </td>
                 <td class="d-none d-md-block">{{ task.user.split(", ").join("<br>") }}</td>
                 <td title="Acciones">
@@ -108,9 +108,24 @@
         <p><strong>Proyecto:</strong> <a href="/app/project/{{ task.project }}">{{ task.project }}</a></p>
         <p><strong>Fecha:</strong> {{ format_date(task.date) }}</p>
         <p><strong>Vence:</strong> {{ format_date(task.due_date) }}</p>
+        <p><strong>Prioridad:</strong>
+            {% if ["High", "Urgent"].includes(task.priority) %}
+            <span class="badge badge-danger p-2">{{ translate[task.priority] }}</span>
+            {% endif %}
+            {% if task.priority == "Medium" %}
+            <span class="badge badge-success p-2">{{ translate[task.priority] }}</span>
+            {% endif %}
+            {% if task.priority == "Low" %}
+            <span class="badge badge-secondary p-2">{{ translate[task.priority] }}</span>
+            {% endif %}
+        </p>
+        {% if task.description %}
+        <p><strong>Descripción:</strong></p>
+        <p>{{ task.description }}</p>
+        {% endif %}
         <p><strong>Estado:</strong>
             <span class="status-indicator status-{{ task.status }}"></span>
-            {{ capitalize(task.status) }}
+            {{ translate[capitalize(task.status)] }}
         </p>
         <p><strong>Usuario:</strong> {{ task.user }}</p>
     </div>
