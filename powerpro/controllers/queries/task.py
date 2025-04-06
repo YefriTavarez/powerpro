@@ -16,7 +16,7 @@ def get_user_tasks(doctype, txt, searchfield, start, page_len, filters):
     ):
         filters["responsible"] = frappe.session.user
 
-    if user := filters["responsible"]:
+    if user := filters.get("responsible"):
         filtrs.append([ "Task Responsible", "user", "=", user ])
 
         del filters["responsible"]
