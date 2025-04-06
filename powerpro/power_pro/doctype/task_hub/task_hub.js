@@ -153,10 +153,19 @@ frappe.provide("powerpro.task_hub");
 						},
 						"icon": frappe.utils.icon,
 						"translate": {
+							// priorities
 							"High": "Alto",
 							"Medium": "Medio",
 							"Low": "Bajo",
 							"Urgent": "Urgente",
+
+							// statuses
+							"Open": "Abierto",
+							"Working": "Trabajando",
+							"Pending Review": "Pendiente de revisión",
+							"Overdue": "Vencido",
+							"Completed": "Completado",
+							"Cancelled": "Cancelado",
 						}
 					}
 				)
