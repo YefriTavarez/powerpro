@@ -367,6 +367,7 @@ frappe.provide("powerpro.task_hub");
 			() => {
 				frm.set_query("task_id", function () {
 					return {
+						query: "powerpro.controllers.queries.get_user_tasks",
 						filters: {
 							"is_template": 0,
 						},
