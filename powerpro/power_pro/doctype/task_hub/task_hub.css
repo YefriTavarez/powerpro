@@ -17,6 +17,14 @@ th {
 	border-radius: 50%;
 	margin-right: 5px;
 }
+/* 
+- Open
+- Working
+- Pending Review
+- Overdue
+- Completed
+- Cancelled */
+
 .status-open {
 	background-color: orange;
 }
@@ -25,6 +33,18 @@ th {
 }
 .status-overdue {
 	background-color: red;
+}
+
+.status-cancelled {
+	background-color: gray;
+}
+
+.status-working {
+	background-color: blue;
+}
+
+.status-pending-review {
+	background-color: yellow;
 }
 
 /* .custom-dropdown-toggle::after {
