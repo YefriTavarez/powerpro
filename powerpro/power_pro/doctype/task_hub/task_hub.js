@@ -142,7 +142,14 @@ frappe.provide("powerpro.task_hub");
 							});
 						},
 						"capitalize": (str) => {
-							return str.charAt(0).toUpperCase() + str.slice(1);
+							return str.replace("-", " ")
+							.split(" ")
+							.map((word) => {
+								return word.charAt(0).toUpperCase() + word.slice(1);
+							})
+							.join(" ");
+
+							// return str.charAt(0).toUpperCase() + str.slice(1);
 						},
 						"icon": frappe.utils.icon,
 						"translate": {
