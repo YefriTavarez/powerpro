@@ -5,7 +5,7 @@
 frappe.provide("powerpro.task_hub");
 {
 	const { datetime: date } = frappe;
-	
+
 	let actions_controller;
 
 	function setup(frm) {
@@ -21,9 +21,9 @@ frappe.provide("powerpro.task_hub");
 	}
 
 	function onload_post_render(frm) {
-        jQuery(document).ready(function() {
-            jQuery('[data-toggle="tooltip"]').tooltip();
-        });
+		jQuery(document).ready(function () {
+			jQuery('[data-toggle="tooltip"]').tooltip();
+		});
 	}
 
 	function apply_filters(frm) {
@@ -62,9 +62,9 @@ frappe.provide("powerpro.task_hub");
 		if (doc.exp_end_date) {
 			filters.exp_end_date = doc.exp_end_date;
 		}
-		
 
-		frm.call("fetch_tasks", { filters }, function(response) {
+
+		frm.call("fetch_tasks", { filters }, function (response) {
 			doc.tasks = response.message;
 			_render_task_list(frm);
 		});
@@ -119,7 +119,7 @@ frappe.provide("powerpro.task_hub");
 
 		frm.call("fetch_tasks", {
 			filters,
-		}, function(response) {
+		}, function (response) {
 			doc.tasks = response.message;
 			_render_task_list(frm);
 		}, true);
@@ -143,11 +143,11 @@ frappe.provide("powerpro.task_hub");
 						},
 						"capitalize": (str) => {
 							return str.replace("-", " ")
-							.split(" ")
-							.map((word) => {
-								return word.charAt(0).toUpperCase() + word.slice(1);
-							})
-							.join(" ");
+								.split(" ")
+								.map((word) => {
+									return word.charAt(0).toUpperCase() + word.slice(1);
+								})
+								.join(" ");
 
 							// return str.charAt(0).toUpperCase() + str.slice(1);
 						},
@@ -170,7 +170,7 @@ frappe.provide("powerpro.task_hub");
 					}
 				)
 			)
-		;
+			;
 
 		_setup_listeners(frm);
 	}
@@ -206,7 +206,7 @@ frappe.provide("powerpro.task_hub");
 
 				switch (action) {
 					case "reopen":
-						actions_controller.reopen_task(task_id, function({ message: response }) {
+						actions_controller.reopen_task(task_id, function ({ message: response }) {
 							if (response) {
 								frappe.show_alert({
 									message: response.message,
@@ -217,7 +217,7 @@ frappe.provide("powerpro.task_hub");
 						});
 						break;
 					case "complete":
-						actions_controller.complete_task(task_id, function({ message: response }) {
+						actions_controller.complete_task(task_id, function ({ message: response }) {
 							if (response) {
 								frappe.show_alert({
 									message: response.message,
@@ -228,7 +228,7 @@ frappe.provide("powerpro.task_hub");
 						});
 						break;
 					case "change_status":
-						actions_controller.change_status(task_id, function({ message: response }) {
+						actions_controller.change_status(task_id, function ({ message: response }) {
 							if (response) {
 								frappe.show_alert({
 									message: response.message,
@@ -239,7 +239,7 @@ frappe.provide("powerpro.task_hub");
 						});
 						break;
 					case "request_revision":
-						actions_controller.request_revision(task_id, function({ message: response }) {
+						actions_controller.request_revision(task_id, function ({ message: response }) {
 							if (response) {
 								frappe.show_alert({
 									message: response.message,
@@ -254,7 +254,7 @@ frappe.provide("powerpro.task_hub");
 
 		sub_menu
 			.find("button[data-action]")
-			.click(function(event) {
+			.click(function (event) {
 				event.preventDefault();
 
 				const action = jQuery(this).attr("data-action");
@@ -269,7 +269,83 @@ frappe.provide("powerpro.task_hub");
 				}
 			});
 
-		
+		let clickTimer = null;
+		let longPressTimer = null;
+		const longPressDuration = 600;
+		const doubleClickThreshold = 300;
+
+
+		hub.find("tr[data-task-id]")
+			.on('mousedown', function () {
+				const task_id = jQuery(this).attr("data-task-id");
+				longPressTimer = setTimeout(() => {
+					// long press detected
+					// complete task if it is not completed
+					// actions_controller.complete_task(task_id, function ({ message: response }) {
+					// 	if (response) {
+					// 		frappe.show_alert({
+					// 			message: response.message,
+					// 			indicator: "green",
+					// 		});
+					// 	}
+					// 	apply_filters(frm);
+					// });
+					actions_controller.open_task_in_window(task_id, function ({ message: response }) {
+						if (response) {
+							frappe.show_alert({
+								message: response.message,
+								indicator: "green",
+							});
+						}
+						apply_filters(frm);
+					});
+					longPressTimer = null;
+				}, longPressDuration);
+			})
+			.on('mouseup mouseleave', function () {
+				if (longPressTimer) {
+					clearTimeout(longPressTimer);
+				}
+			})
+			.on('click', function () {
+				const task_id = jQuery(this).attr("data-task-id");
+
+				if (!clickTimer) {
+					clickTimer = setTimeout(() => {
+						// single click detected
+						// open task in a new window
+						// actions_controller.open_task_in_window(task_id, function ({ message: response }) {
+						// 	if (response) {
+						// 		frappe.show_alert({
+						// 			message: response.message,
+						// 			indicator: "green",
+						// 		});
+						// 	}
+						// 	apply_filters(frm);
+						// });
+						clickTimer = null;
+					}, doubleClickThreshold);
+				}
+			})
+			.on('dblclick', function () {
+				const project_id = jQuery(this).attr("data-project-id");
+
+				clearTimeout(clickTimer);
+				clickTimer = null;
+				// double click detected
+				// open project in a new window
+				actions_controller.open_project_in_window(project_id, function ({ message: response }) {
+					if (response) {
+						frappe.show_alert({
+							message: response.message,
+							indicator: "green",
+						});
+					}
+					apply_filters(frm);
+				});
+			});
+
+
 		// sub_menu.find("input[type=checkbox]")
 		// 	.change(function() {
 		// 		const isChecked = jQuery("this").is(":checked");
@@ -281,7 +357,7 @@ frappe.provide("powerpro.task_hub");
 	function _set_queries(frm) {
 		frappe.run_serially([
 			() => {
-				frm.set_query("task_id", function() {
+				frm.set_query("task_id", function () {
 					return {
 						filters: {
 							"is_template": 0,

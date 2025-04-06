@@ -47,6 +47,10 @@ th {
 	background-color: yellow;
 }
 
+tr[data-task-id] {
+	cursor: pointer;
+}
+
 /* .custom-dropdown-toggle::after {
 	content: '...';
 	display: inline-block;

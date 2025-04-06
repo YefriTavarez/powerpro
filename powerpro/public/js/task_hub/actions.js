@@ -119,5 +119,57 @@
 			callback && callback();
 		}
 
+		open_task_in_window(task_id, callback) {
+			const { frm } = this;
+
+			if (!task_id) {
+				frappe.throw("Por favor, selecciona una tarea para abrir.");
+			}
+
+			const wd = window.open(
+				`/app/task/${task_id}`,
+				"_blank"
+			);
+
+			if (wd) {
+				// Browser has allowed it to be opened
+				wd.focus();
+			} else {
+				// Browser has blocked it
+				frappe.msgprint(__("Please allow popups for this site"));
+			}
+
+			// on close, execute callback
+			$(wd).on("unload", function() {
+				callback && callback();
+			});
+		}
+
+
+		open_project_in_window(project_id, callback) {
+			const { frm } = this;
+
+			if (!project_id) {
+				frappe.throw("Por favor, selecciona un proyecto para abrir.");
+			}
+
+			const wd = window.open(
+				`/app/project/${project_id}`,
+				"_blank"
+			);
+
+			if (wd) {
+				// Browser has allowed it to be opened
+				wd.focus();
+			} else {
+				// Browser has blocked it
+				frappe.msgprint(__("Please allow popups for this site"));
+			}
+
+			// on close, execute callback
+			$(wd).on("unload", function() {
+				callback && callback();
+			});
+		}
 	}
 }

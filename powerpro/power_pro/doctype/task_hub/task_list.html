@@ -26,7 +26,7 @@
         </thead>
         <tbody>
             {% for task in tasks %}
-            <tr data-task-id="{{ task.id }}" class="task-row" data-status="{{ task.status }}">
+            <tr data-task-id="{{ task.id }}" data-project-id="{{ task.project }}" title="Tarea: {{ task.id }}" class="task-row" data-status="{{ task.status }}">
                 <td title="Prioridad: {{ translate[task.priority] }}" style="white-space: nowrap">
                     {{ task.id }}
 
