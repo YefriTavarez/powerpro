@@ -5,10 +5,12 @@
 frappe.provide("powerpro.task_hub");
 {
 	const { datetime: date } = frappe;
-
+	const { project_manager } = frappe.boot.powerpro_settings;
+	
 	let actions_controller;
 
 	function setup(frm) {
+		_setup_responsible_field(frm);
 		_set_queries(frm);
 		_disable_save(frm);
 		_setup_actions_controller(frm);
@@ -374,6 +376,19 @@ frappe.provide("powerpro.task_hub");
 		]);
 	}
 
+	function _setup_responsible_field(frm) {
+		if (
+			frappe.user.has_role([ project_manager ])
+		) {
+			frm.toggle_enable("responsible", true);
+			frm.toggle_reqd("responsible", true);
+		} else {
+			frm.toggle_enable("responsible", false);
+			frm.toggle_reqd("responsible", false);
+			frm.set_value("responsible", frappe.session.user);
+		}
+	}
+
 	function _disable_save(frm) {
 		frm.disable_save();
 	}
@@ -442,4 +457,4 @@ frappe.provide("powerpro.task_hub");
 			}
 		},
 	});
-}
+}	
