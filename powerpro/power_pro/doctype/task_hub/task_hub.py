@@ -58,7 +58,7 @@ class TaskHub(Document):
 			filtrs.append(["Task", "status", "not in", ["Cancelled", "Completed", "Template"]])
 
 		# ensure none authorized users can see other users tasks
-		if not user and not has_role(
+		if not has_role(
 			get_project_manager()
 		):
 			user = frappe.session.user
