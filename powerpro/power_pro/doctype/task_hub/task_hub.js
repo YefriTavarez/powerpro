@@ -275,9 +275,12 @@ frappe.provide("powerpro.task_hub");
 		const doubleClickThreshold = 300;
 
 
-		hub.find("tr[data-task-id]")
+		hub.find("tr[data-task-id], div.task-post")
 			.on('mousedown', function () {
-				const task_id = jQuery(this).attr("data-task-id");
+				const task_id = jQuery(this)
+					.closest("tr[data-task-id], div.task-post")
+					.attr("data-task-id")
+				;
 				longPressTimer = setTimeout(() => {
 					// long press detected
 					// complete task if it is not completed
@@ -290,7 +293,7 @@ frappe.provide("powerpro.task_hub");
 					// 	}
 					// 	apply_filters(frm);
 					// });
-					actions_controller.open_task_in_window(task_id, function ({ message: response }) {
+					actions_controller.open_task_in_window(task_id, function ({ message: response } = { message: null }) {
 						if (response) {
 							frappe.show_alert({
 								message: response.message,
@@ -308,7 +311,7 @@ frappe.provide("powerpro.task_hub");
 				}
 			})
 			.on('click', function () {
-				const task_id = jQuery(this).attr("data-task-id");
+				// const task_id = jQuery(this).attr("data-task-id");
 
 				if (!clickTimer) {
 					clickTimer = setTimeout(() => {
@@ -328,13 +331,16 @@ frappe.provide("powerpro.task_hub");
 				}
 			})
 			.on('dblclick', function () {
-				const project_id = jQuery(this).attr("data-project-id");
+				const project_id = jQuery(this)
+					.closest("tr[data-task-id], div.task-post")
+					.attr("data-project-id")
+				;
 
 				clearTimeout(clickTimer);
 				clickTimer = null;
 				// double click detected
 				// open project in a new window
-				actions_controller.open_project_in_window(project_id, function ({ message: response }) {
+				actions_controller.open_project_in_window(project_id, function ({ message: response } = { message: null }) {
 					if (response) {
 						frappe.show_alert({
 							message: response.message,
