@@ -45,7 +45,7 @@
 			const current_status = {
 				"open": "Abierto",
 				"working": "En progreso",
-				"pending review": "Pendiente de revisión",
+				"pending-review": "Pendiente de revisión",
 				"overdue": "Vencido",
 				"completed": "Completado",
 				"cancelled": "Cancelado",
@@ -103,7 +103,7 @@
 				frappe.throw("Por favor, selecciona una tarea para solicitar revisión.");
 			}
 
-			frm.call("request_revision", { task_id }, function() {
+			frm.call("request_revision", { task_id }, function(response) {
 				callback && callback(response);
 			}, true);
 		}
