@@ -16,7 +16,6 @@
 	Form
 		.prototype
 		.call = function (opts, args, callback, dont_refresh) {
-			console.log({ dont_refresh})
 			var me = this;
 			if (typeof opts === "string") {
 				// called as frm.call('do_this', {with_arg: 'arg'});
