@@ -78,7 +78,7 @@
 
 <div id="postView" class="d-lg-none d-block">
     {% for task in tasks %}
-    <div class="task-post mb-3 p-3 border rounded position-relative">
+    <div data-task-id="{{ task.id }}" data-project-id="{{ task.project }}" title="Tarea: {{ task.id }}" data-status="{{ task.status }}" class="task-post mb-3 p-3 border rounded position-relative">
         <div class="dropdown position-absolute" style="top: 10px; right: 10px;">
             <button class="btn btn-secondary dropdown-toggle custom-dropdown-toggle" type="button"
                 id="dropdownMenuButton-{{ task.id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
