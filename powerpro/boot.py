@@ -13,4 +13,12 @@ def get_powerpro_settings():
 
 	return {
 		"root_item_group_for_raw_materials": settings.root_item_group_for_raw_materials,
+		"project_manager": get_project_manager(),
 	}
+
+
+def get_project_manager():
+	"""Get the project manager from the settings"""
+	settings = frappe.get_single("Projects Settings")
+
+	return settings.project_manager or "System Manager"
