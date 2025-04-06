@@ -82,13 +82,14 @@ def change_status(hub, task_id, status):
         "Cancelled",
     }
     if status not in valid_statuses:
-        frappe.throw(f"El estado {status!r} no es válido.")
+        frappe.throw(f"El estado {_(status)!r} no es válido.")
 
     task = get_task(task_id)
 
     # validate the task is not already in the requested status
     if task.status == status:
-        frappe.throw(f"La tarea {task_id} ya está en el estado {status!r}.")
+        frappe.throw(f"La tarea {task_id} ya está en el estado {_(status)!r}.")
+
     task.status = status
 
     if status == "Completed":
@@ -105,7 +106,7 @@ def change_status(hub, task_id, status):
     else:
         return {
             "status": "success",
-            "message": f"La tarea {task_id} ha sido actualizada a {status!r}.",
+            "message": f"La tarea {task_id} ha sido actualizada a {_(status)!r}.",
         }
 
 
@@ -116,7 +117,7 @@ def request_revision(hub, task_id):
 
     # validate the task is not already in the requested status
     if task.status == "Pending Review":
-        frappe.throw(f"La tarea {task_id} ya está en el estado 'Pending Review'.")
+        frappe.throw(f"La tarea {task_id} ya está en el estado {_(task.status)!r}.")
 
     task.status = "Pending Review"
 
@@ -130,10 +131,35 @@ def request_revision(hub, task_id):
     else:
         return {
             "status": "success",
-            "message": f"La tarea {task_id} ha sido actualizada a 'Pending Review'.",
+            "message": f"La tarea {task_id} ha sido actualizada a {_(task.status)!r}.",
         }
 
 
 def get_task(name):
     doctype = "Task"
     return frappe.get_doc(doctype, name)
+
+
+def _(text):
+	"""Translate text to the current language."""
+	if not text:
+		return text
+
+	if not isinstance(text, str):
+		return text
+
+	if frappe.local.lang in {"es", "es-DO"}:
+		# Spanish translations
+		try:
+			return {
+				"Open": "Abierto",
+				"Working": "Trabajando",
+				"Pending Review": "Pendiente de Revisión",
+				"Overdue": "Vencido",
+				"Completed": "Completado",
+				"Cancelled": "Cancelado",
+			}[text]
+		except KeyError:
+			...
+
+	return frappe._(text)
