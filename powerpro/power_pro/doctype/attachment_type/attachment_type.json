@@ -1,0 +1,82 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:attachment_name",
+ "creation": "2025-04-06 16:56:49.293473",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "attachment_name",
+  "attachment_doctypes",
+  "column_break_cywk",
+  "prefix",
+  "allow_more_than_one",
+  "max_allowed"
+ ],
+ "fields": [
+  {
+   "fieldname": "attachment_name",
+   "fieldtype": "Data",
+   "label": "Attachment Name",
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_cywk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "prefix",
+   "fieldtype": "Data",
+   "label": "Prefix"
+  },
+  {
+   "default": "1",
+   "fieldname": "allow_more_than_one",
+   "fieldtype": "Check",
+   "label": "Allow More than one"
+  },
+  {
+   "default": "1",
+   "depends_on": "allow_more_than_one",
+   "fieldname": "max_allowed",
+   "fieldtype": "Int",
+   "label": "Max Allowed",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "attachment_doctypes",
+   "fieldtype": "Table MultiSelect",
+   "label": "Attachment DocTypes",
+   "options": "Attachment DocTypes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-04-06 17:59:09.138648",
+ "modified_by": "Administrator",
+ "module": "Power Pro",
+ "name": "Attachment Type",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "prefix",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "attachment_name"
+}
