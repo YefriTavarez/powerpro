@@ -34,8 +34,6 @@ class AttachmentType(Document):
 		if not doc:
 			raise ValueError("Document not found.")
 
-
-
 		if not self.naming_template:
 			import random, string
 			return ''.join(random.choices(string.ascii_letters + string.digits, k=10))
