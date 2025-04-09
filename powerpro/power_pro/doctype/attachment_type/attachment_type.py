@@ -48,6 +48,10 @@ class AttachmentType(Document):
 		template = Template(self.naming_template)
 		base_prefix = template.render(context)
 
+		# If allow_more_than_one is False, return the base prefix without sequence numbers
+		if not self.allow_more_than_one:
+			return base_prefix
+
 		last_file = frappe.db.sql(
 			"""
 			SELECT file_name
