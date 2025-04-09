@@ -67,4 +67,62 @@
 			}
 			return frappe.call(opts);
 		};
+
+	Form
+		.prototype
+		.setup_file_drop = function() {
+			var me = this;
+			this.$wrapper.on("dragenter dragover", false).on("drop", function (e) {
+				var dataTransfer = e.originalEvent.dataTransfer;
+				if (!(dataTransfer && dataTransfer.files && dataTransfer.files.length > 0)) {
+					return;
+				}
+	
+				e.stopPropagation();
+				e.preventDefault();
+	
+				if (me.doc.__islocal) {
+					frappe.msgprint(__("Please save before attaching."));
+					throw "attach error";
+				}
+
+				const files = dataTransfer.files;
+				if (files.length > 1) {
+					frappe.msgprint(__("You can only attach one file at a time."));
+					throw "attach error";
+				}
+				if (files.length === 0) {
+					frappe.msgprint(__("Please select a file to attach."));
+					throw "attach error";
+				}
+				if (files[0].size > 104857600) {
+					frappe.msgprint(__("File size exceeds 100 MB."));
+					throw "attach error";
+				}
+				if (files[0].size === 0) {
+					frappe.msgprint(__("File size cannot be zero."));
+					throw "attach error";
+				}
+				if (files[0].type === "") {
+					frappe.msgprint(__("File type cannot be empty."));
+					throw "attach error";
+				}
+	
+				powerpro.utils.select_attachment_type(
+					me.doctype, me.docname, function (attachment_type) {
+						return new frappe.ui.powerFileUploader({
+							doctype: me.doctype,
+							docname: me.docname,
+							attachment_type: attachment_type,
+							frm: me,
+							files: files,
+							folder: "Home/Attachments",
+							on_success(file_doc) {
+								me.attachments.attachment_uploaded(file_doc);
+							},
+						});
+					}
+				)
+			});
+		}
 }

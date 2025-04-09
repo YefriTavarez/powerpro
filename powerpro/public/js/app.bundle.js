@@ -4,3 +4,8 @@
 
 import * as functions from "./controllers/functions";
 import * as create_material_sku from "./vue/create_material_sku/index";
+
+
+import * as file_uploader from "./frappe/file_uploader";
+
+console.log("app.bundle.js loaded");

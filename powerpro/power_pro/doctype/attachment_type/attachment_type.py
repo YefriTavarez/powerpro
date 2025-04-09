@@ -9,6 +9,7 @@ from jinja2 import Template
 class AttachmentType(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
+
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
@@ -19,8 +20,8 @@ class AttachmentType(Document):
 		attachment_doctypes: DF.TableMultiSelect[AttachmentDocTypes]
 		attachment_name: DF.Data | None
 		max_allowed: DF.Int
-		prefix: DF.Data | None
 		naming_template: DF.Data | None
+		prefix: DF.Data | None
 		sequence_padding: DF.Int
 	# end: auto-generated types
 	
@@ -41,10 +42,10 @@ class AttachmentType(Document):
 		context = doc.as_dict() if hasattr(doc, "as_dict") else doc
 		context.update({
 			"frappe": frappe,
+			"prefix": self.prefix,
 		})
 
-		template_text = self.naming_template.rsplit(".", 1)[0]
-		template = Template(template_text)
+		template = Template(self.naming_template)
 		base_prefix = template.render(context)
 
 		last_file = frappe.db.sql(

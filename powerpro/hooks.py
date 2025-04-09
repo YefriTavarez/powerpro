@@ -33,9 +33,11 @@ fixtures = []
 # app_include_css = "/assets/powerpro/css/powerpro.css"
 app_include_js = [
     "/assets/powerpro/js/powerpro.js?v=1.0.1",
+    "/assets/powerpro/js/attachment_type_selector.js?v=1.0.1",
     "/assets/powerpro/js/frappe/indicator.js?v=1.0.1",
     "/assets/powerpro/js/frappe/signature.js?v=1.0.1",
     "/assets/powerpro/js/frappe/form.js?v=1.0.1",
+    "/assets/powerpro/js/frappe/attachments.js?v=1.0.1",
     "app.bundle.js",
 ]
 
@@ -260,6 +262,7 @@ doc_events = {
 # ------------------------------
 #
 override_whitelisted_methods = {
+    "upload_file": "powerpro.controllers.uploads.upload_file",
     "hrms.payroll.doctype.salary_slip.salary_lip.make_salary_slip_from_timesheet": "powerpro.controllers.salary_slip.make_salary_slip_from_timesheet",
     "igcaribe.client.generate_pdf_for_printcard": "powerpro.controllers.printcard.generate_pdf_for_printcard",
 }
