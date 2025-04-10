@@ -75,6 +75,33 @@ class Project(project.Project):
 
         return task
 
+    @frappe.whitelist()
+    def get_related_tasks(self):
+        """
+        Get tasks related to this project
+        """
+        return frappe.db.sql(
+            f"""
+            Select
+                task.name,
+                task.subject,
+                task.status,
+                Group_Concat(responsible.user SEPARATOR "<br>") As users
+            From
+                `tabTask` As task
+            Left Join
+                `tabTask Responsible` As responsible
+                On responsible.parent = task.name
+                    And responsible.parenttype = "Task"
+                    And responsible.parentfield = "users"
+                    And IfNull(responsible.user, "") != ""
+            Where
+                task.project = {self.name!r}
+            Group By
+                task.name
+            """, as_dict=True
+        )
+
     def get_expected_dates(self, project_template, project_template_task):
         gap_in_minutes = cint(project_template.gap_between_tasks) or 30
         expected_start_date = self.expected_start_date

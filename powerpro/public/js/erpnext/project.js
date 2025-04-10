@@ -6,6 +6,12 @@ frappe.provide("powerpro.masks");
 
 {
 
+	function setup(frm) {
+		frappe.require([
+			"/assets/powerpro/css/erpnext/project.css",
+		]);
+	}
+
 	function refresh(frm) {
 		_set_qty_mask(frm);
 		_set_queries(frm);
@@ -22,25 +28,18 @@ frappe.provide("powerpro.masks");
 	}
 
 	function _render_related_tasks(frm) {
-		const { doc } = frm;
+		// const { doc } = frm;
 
-		frappe.call({
-			method: "frappe.desk.reportview.get",
-			args: {
-				doctype: "Task",
-				filters: { project: doc.name },
-				fields: ["name", "subject", "status"],
-			},
-			callback({ message: response }) {
+		frm.call("get_related_tasks", { /* no args */ }, function({ message: tasks }) {
+				console.log({ tasks})
 				const $wrapper = frm.get_field("task_display").$wrapper;
 				$wrapper.empty();
 
-				if (!response.values || response.values.length === 0) {
+				if (!tasks || tasks.length === 0) {
 					$wrapper.html("<p>Nada para mostrar</p>");
 					return;
 				}
 
-				const { values: tasks } = response;
 				const task_count = tasks.length;
 				const task_text = task_count > 1 ? "Tareas" : "Tarea";
 				const task_count_text = `<h3>${task_count} ${task_text} relacionadas</h5>`;
@@ -70,37 +69,49 @@ frappe.provide("powerpro.masks");
 				};
 
 				const table = `
-					<table class="table table-bordered">
+					<table class="table table-zebra">
 						<thead>
-							<tr>
-								<th>ID Tarea</th>
-								<th>Titulo</th>
-								<th>Estado</th>
+							<tr style="background-color: var(--control-bg); border-radius: 4px;">
+								<th>
+								<span style="font-size: 1.2em">Tarea</span>
+								</th>
+								<th>
+								<span style="font-size: 1.2em">Estado</span>
+								</th>
+								<th>
+								<span style="font-size: 1.2em">Usuarios</span>
+								</th>
 							</tr>
 						</thead>
 						<tbody>
-							${tasks
-								.map(
-									([name, subject, status]) => `
+							${tasks.map(
+								({ name, subject, status, users }) => `
 									<tr>
-										<td>${name}</td>
-										<td>${subject}</td>
+										<td>
+											<a title="${name}" href="/app/task/${name}" target="_blank">
+												${name.split("-").pop()}: ${subject}
+											</a>
+										</td>
 										<td>
 											<span class="indicator ${status_class(status)}">
 												${translated_status[status] || status}
 											</span>
 										</td>
+										<td>
+											${users.split("<br>")
+												.map((user) => {
+													return `<span class="badge badge-info p-2 my-1">${user}</span>`;
+												})
+												.join("<br> ")}
+										</td>
 									</tr>
-								`
-								)
-								.join("")}
+								`).join("")}
 						</tbody>
 					</table>
 				`;
 
 				$wrapper.append(table);
-			},
-		});
+			});
 	}
 
 	function _render_docfields(frm) {
@@ -215,6 +226,7 @@ frappe.provide("powerpro.masks");
 	}
 
 	frappe.ui.form.on("Project", {
+		setup,
 		refresh,
 		sales_order,
 		project_template,

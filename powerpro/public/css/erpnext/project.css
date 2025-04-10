@@ -1,0 +1,3 @@
+.table-striped tbody tr:nth-child(n+3):nth-child(odd) {
+	background-color: transparent;
+}
