@@ -97,7 +97,7 @@ def upload_file():
 	if "." not in filename \
 		and "." in original_filename:
 		# add extension to filename
-		filename += original_filename.split(".")[-1]
+		filename += f".{original_filename.split('.')[-1]}"
 
 	frappe.local.uploaded_file_url = file_url
 	frappe.local.uploaded_file = content
