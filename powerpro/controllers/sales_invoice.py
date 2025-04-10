@@ -16,6 +16,9 @@ def on_submit(doc, method):
 
 
 def on_cancel(doc, method):
+    if doc.flags.for_reload:
+        return
+
     validate_cancellation_type(doc)
 
 
