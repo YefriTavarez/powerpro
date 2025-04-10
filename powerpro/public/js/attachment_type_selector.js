@@ -6,12 +6,12 @@ frappe.provide("powerpro.utils");
 powerpro.utils.select_attachment_type = function(doctype, docname, callback) {
 	// Create a dialog to select the attachment type
 	const dialog = new frappe.ui.Dialog({
-		title: "Select Attachment Type",
+		title: "Seleccionar Tipo de Adjunto",
 		fields: [
 			{
 				fieldtype: "Link",
 				fieldname: "attachment_type",
-				label: "Attachment Type",
+				label: "Tipo de Adjunto",
 				options: "Attachment Type",
 				get_query() {
 					const filters = [
