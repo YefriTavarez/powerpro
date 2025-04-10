@@ -84,7 +84,7 @@ frappe.provide("powerpro.masks");
 							</tr>
 						</thead>
 						<tbody>
-							${tasks.map(
+							${(tasks || []).map(
 								({ name, subject, status, users }) => `
 									<tr>
 										<td>
@@ -98,7 +98,7 @@ frappe.provide("powerpro.masks");
 											</span>
 										</td>
 										<td>
-											${users.split("<br>")
+											${cstr(users || "N/A").split("<br>")
 												.map((user) => {
 													return `<span class="badge badge-info p-2 my-1">${user}</span>`;
 												})
