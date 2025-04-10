@@ -108,12 +108,13 @@ def upload_file():
 		if filetype not in ALLOWED_MIMETYPES:
 			frappe.throw(_("You can only upload JPG, PNG, PDF, TXT, CSV or Microsoft documents."))
 
+	out = None
 	if method:
 		method = frappe.get_attr(method)
 		is_whitelisted(method)
-		return method()
+		out = method()
 	else:
-		return frappe.get_doc(
+		out = frappe.get_doc(
 			{
 				"doctype": "File",
 				"attached_to_doctype": doctype,
@@ -127,6 +128,16 @@ def upload_file():
 				"content": content,
 			}
 		).save(ignore_permissions=ignore_permissions)
+
+	frappe.msgprint(
+		f"Archivo subido exitosamente: {filename}",
+		title="Archivo subido",
+		indicator="green",
+		alert=True,
+		realtime=True,
+	)
+
+	return out
 
 
 def get_next_name(
