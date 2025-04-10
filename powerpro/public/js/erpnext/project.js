@@ -105,7 +105,7 @@ frappe.provide("powerpro.masks");
 												.join("<br> ")}
 										</td>
 									</tr>
-								`).join("")}
+								`).join("") || "<tr><td colspan='3'>No hay tareas relacionadas</td></tr>"}
 						</tbody>
 					</table>
 				`;
