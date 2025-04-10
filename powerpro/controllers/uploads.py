@@ -94,6 +94,11 @@ def upload_file():
 	if not filename:
 		frappe.throw(_("Please provide a file name."))
 
+	if "." not in filename \
+		and "." in original_filename:
+		# add extension to filename
+		filename += original_filename.split(".")[-1]
+
 	frappe.local.uploaded_file_url = file_url
 	frappe.local.uploaded_file = content
 	frappe.local.uploaded_filename = filename
