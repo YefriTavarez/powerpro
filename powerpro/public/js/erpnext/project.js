@@ -10,6 +10,8 @@ frappe.provide("powerpro.masks");
 		frappe.require([
 			"/assets/powerpro/css/erpnext/project.css",
 		]);
+
+		_listen_on_all_fields(frm);
 	}
 
 	function refresh(frm) {
@@ -25,6 +27,19 @@ frappe.provide("powerpro.masks");
 
 	function sales_order(frm) {
 		frm.set_value("producto", "");
+	}
+
+	function _listen_on_all_fields(frm) {
+		const { fields } = frm;
+
+		fields
+			.map(({ df }) => df)
+			.filter(df => !frappe.model.no_value_type.includes(df.fieldtype))
+			.map(function({ fieldname }) {
+				frappe.ui.form.on(frm.doctype, fieldname, function(frm) {
+					_update_project_name({ frm, fieldname });
+				});
+			});
 	}
 
 	function _render_related_tasks(frm) {
@@ -141,6 +156,24 @@ frappe.provide("powerpro.masks");
 					}
 				}
 			},
+		});
+	}
+
+	function _update_project_name({
+		frm,
+		fieldname = null,
+		for_validate = false,
+	} = {}) {
+		const { doc }  = frm;
+
+		if (!doc[fieldname]) {
+			// ToDo: Remove this
+		}
+
+		frm.call("render_project_name", { for_validate }, function() {
+			if (!for_validate) {
+				frm.dirty();
+			}
 		});
 	}
 

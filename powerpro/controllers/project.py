@@ -2,7 +2,6 @@
 # For license information, please see license.txt
 
 from typing import TYPE_CHECKING, Literal, Union
-
 if TYPE_CHECKING:
     from frappe.model import document
     import datetime
@@ -13,6 +12,13 @@ from frappe.utils import today, cint
 from erpnext.projects.doctype.project import project
 
 class Project(project.Project):
+    # override
+    def validate(self):  # nosemgrep
+        super(Project, self).validate()
+
+        if not frappe.flags.ignore_validate:
+            self.render_project_name(for_validate=True)
+
     # override
     def copy_from_template(self):  # nosemgrep
         """
@@ -74,6 +80,31 @@ class Project(project.Project):
         task.insert()
 
         return task
+
+    @frappe.whitelist()
+    def render_project_name(self, for_validate=False):
+        """
+        Render the project name based on the template
+        """
+        if self.project_template:
+            template = get_project_template(self.project_template)
+            project_name = frappe.render_template(
+                template.project_name_template, get_context(self)
+            )
+
+            if self.project_name != project_name:
+                self.project_name = project_name
+
+                if not for_validate:
+                    frappe.msgprint(
+                        "Nombre del Proyecto ha sido actualizado",
+                        alert=True, realtime=True
+                    )
+        else:
+            if for_validate:
+                frappe.throw("La Plantilla de Proyecto es obligatoria")
+            return
+
 
     @frappe.whitelist()
     def get_related_tasks(self):
@@ -237,3 +268,18 @@ def is_working_date(date: Union["datetime.date", "datetime.datetime"], holiday_l
         filters["parent"] = holiday_list
 
     return frappe.db.exists(doctype, filters) is None
+
+
+def get_project_template(name):
+    doctype = "Project Template"
+    return frappe.get_doc(doctype, name)
+
+def get_context(doc):
+    return frappe._dict(
+        frappe=frappe._dict(
+            utils=frappe.utils,
+            db=frappe.db,
+        ),
+        doc=doc,
+        nowdate=today,
+    )
