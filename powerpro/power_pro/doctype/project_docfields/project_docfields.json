@@ -10,7 +10,8 @@
   "fieldname",
   "reqd",
   "read_only",
-  "hidden"
+  "hidden",
+  "set_only_once"
  ],
  "fields": [
   {
@@ -42,6 +43,13 @@
    "label": "Hidden"
   },
   {
+   "default": "0",
+   "fieldname": "set_only_once",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Set Only Once"
+  },
+  {
    "fieldname": "label",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -52,7 +60,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-03-23 19:59:12.576879",
+ "modified": "2025-04-11 22:47:12.576879",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Project DocFields",

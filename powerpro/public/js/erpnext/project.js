@@ -139,17 +139,18 @@ frappe.provide("powerpro.masks");
 		frappe.call({
 			method: "powerpro.controllers.project_template.get_project_docfields",
 			args: {
-				"project_template_id": cur_frm.doc.project_template,
+				"project_template_id": frm.doc.project_template,
 			},
 			callback({ message: docfields }) {
 				for (const docfield of docfields) {
-					const { fieldname, read_only, reqd, hidden } = docfield;
+					const { fieldname, read_only, reqd, hidden, set_only_once } = docfield;
 
 					for (
 						const { property, value } of [
 							{ property: "read_only", value: read_only },
 							{ property: "reqd", value: reqd },
 							{ property: "hidden", value: hidden },
+							{ property: "set_only_once", value: set_only_once },
 						]
 					) {
 						frm.set_df_property(fieldname, property, value);

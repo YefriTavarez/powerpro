@@ -151,6 +151,7 @@ def get_project_docfields(project_template_id=None):
 			"reqd": field.reqd,
 			"read_only": field.read_only,
 			"hidden": field.hidden,
+			"set_only_once": field.set_only_once,
 		} for field in fields
 	]
 
