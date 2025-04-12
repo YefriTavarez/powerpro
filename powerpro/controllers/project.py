@@ -114,6 +114,17 @@ class Project(project.Project):
                 frappe.throw("La Plantilla de Proyecto es obligatoria")
             return
 
+    # override
+    def on_trash(self):
+        """
+        Delete tasks related to this project
+        """
+        # call on_trash of parent class
+        super(Project, self).on_trash()
+
+        # delete tasks related to this project
+        frappe.db.delete("Task", dict(project=self.name))
+
 
     @frappe.whitelist()
     def get_related_tasks(self):
