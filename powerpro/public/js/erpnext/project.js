@@ -5,6 +5,9 @@
 frappe.provide("powerpro.masks");
 
 {
+	const last_value = {
+
+	};
 
 	function setup(frm) {
 		frappe.require([
@@ -37,6 +40,10 @@ frappe.provide("powerpro.masks");
 			.filter(df => !frappe.model.no_value_type.includes(df.fieldtype))
 			.map(function({ fieldname }) {
 				frappe.ui.form.on(frm.doctype, fieldname, function(frm) {
+					if (last_value[fieldname] === frm.doc[fieldname]) {
+						return;
+					}
+					last_value[fieldname] = frm.doc[fieldname];
 					_update_project_name({ frm, fieldname });
 				});
 			});
