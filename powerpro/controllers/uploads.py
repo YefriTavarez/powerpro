@@ -5,7 +5,7 @@ from mimetypes import guess_type
 from typing import TYPE_CHECKING
 
 import frappe
-from frappe import _, is_whitelisted
+from frappe import _, is_whitelisted, realtime
 from frappe.handler import check_write_permission
 from frappe.utils import cint
 from frappe.utils.image import optimize_image
@@ -135,6 +135,15 @@ def upload_file():
 		indicator="green",
 		alert=True,
 		realtime=True,
+	)
+
+	realtime.publish_realtime(
+		event="attachment_upload_completed",
+		message=f"{filename} subido exitosamente",
+		doctype=doctype,
+		docname=docname,
+		after_commit=True,
+		# user=frappe.session.user,
 	)
 
 	return out

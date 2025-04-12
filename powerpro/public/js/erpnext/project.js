@@ -5,11 +5,13 @@
 frappe.provide("powerpro.masks");
 
 {
+	let form;
 	const last_value = {
 
 	};
 
 	function setup(frm) {
+		form = frm; 
 		frappe.require([
 			"/assets/powerpro/css/erpnext/project.css",
 		]);
@@ -269,6 +271,22 @@ frappe.provide("powerpro.masks");
 			},
 		]);
 	}
+
+	frappe.realtime.on("attachment_upload_completed", function(data) {
+		// const { doc } = form;
+		if (form.doc.__unsaved) {
+			form.dashboard.clear_headline();
+			form.dashboard.set_headline_alert(
+				__("This form has been modified after you have loaded it") +
+					'<button class="btn btn-xs btn-primary pull-right" onclick="cur_frm.reload_doc()">' +
+					__("Refresh") +
+					"</button>",
+				"alert-warning"
+			);
+		} else {
+			form.debounced_reload_doc();
+		}
+	});
 
 	frappe.ui.form.on("Project", {
 		setup,
