@@ -32,6 +32,16 @@ frappe.provide("powerpro.masks");
 		frm.set_value("producto", "");
 	}
 
+	const listen_on_field = frappe.utils.debounce(function(frm, fieldname) {
+		frappe.ui.form.on(frm.doctype, fieldname, function(frm) {
+			if (last_value[fieldname] === frm.doc[fieldname]) {
+				return;
+			}
+			last_value[fieldname] = frm.doc[fieldname];
+			_update_project_name({ frm, fieldname });
+		});
+	}, 1000);
+
 	function _listen_on_all_fields(frm) {
 		const { fields } = frm;
 
@@ -39,13 +49,7 @@ frappe.provide("powerpro.masks");
 			.map(({ df }) => df)
 			.filter(df => !frappe.model.no_value_type.includes(df.fieldtype))
 			.map(function({ fieldname }) {
-				frappe.ui.form.on(frm.doctype, fieldname, function(frm) {
-					if (last_value[fieldname] === frm.doc[fieldname]) {
-						return;
-					}
-					last_value[fieldname] = frm.doc[fieldname];
-					_update_project_name({ frm, fieldname });
-				});
+				return listen_on_field(frm, fieldname);
 			});
 	}
 
