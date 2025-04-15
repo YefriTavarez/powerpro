@@ -206,6 +206,9 @@ doc_events = {
         "autoname": "powerpro.controllers.item.autoname",
         "before_save": "powerpro.controllers.item.before_save",
     },
+    "Item Group": {
+        "after_insert": "powerpro.controllers.item_group.after_insert",
+    },
     "Sales Invoice": {
         "before_insert": "powerpro.controllers.sales_invoice.before_insert",
         "on_submit": "powerpro.controllers.sales_invoice.on_submit",

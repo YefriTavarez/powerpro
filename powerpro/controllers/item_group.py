@@ -2,11 +2,57 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.utils import nestedset
+
+CATEGORY_RANGES = {
+    "Artículos": (1000, 3999),
+    "Productos": (4000, 7999),
+    "Servicios": (9000, 9999),
+    "Todos los grupos de artículos": (8000, 8999),  # Default range for uncategorized groups
+}
+
+def after_insert(doc, method=None):
+	_set_item_group_number(doc)
+
 
 def on_update(doc, method=None):
 	queue_update_of_items(doc)
 
+
+def _set_item_group_number(doc):
+	"""Set the item_group_number field to the next number in the sequence"""
+	doc.db_set("item_group_number", generate_item_group_number(doc))
+
+def generate_item_group_number(doc):
+    """Generate a unique 4-digit item group number based on root category."""
+    root_category = get_root_category(doc)
+    if root_category not in CATEGORY_RANGES:
+        frappe.throw(f"No range defined for root category: {root_category}")
+
+    start, end = CATEGORY_RANGES[root_category]
+    used_numbers = frappe.db.get_all(
+        "Item Group",
+        filters={"item_group_number": ["between", [start, end]]},
+        pluck="item_group_number",
+    )
+
+    used_numbers = set(int(num) for num in used_numbers if num.isdigit())
+
+    for number in range(start, end + 1):
+        if number not in used_numbers:
+            return f"{number:04d}"
+
+    frappe.throw(f"No available numbers in range for root category: {root_category}")
+
+def get_root_category(doc):
+    """Traverse up the tree to find the root category."""
+    while doc.parent_item_group and (
+		doc.parent_item_group != "All Item Groups"
+		or doc.parent_item_group != _("All Item Groups")
+	):
+        doc = frappe.get_doc("Item Group", doc.parent_item_group)
+    return doc.name
 
 def queue_update_of_items(doc):
 	"""Will update the Item Tax in all Items related to this Item Group"""
