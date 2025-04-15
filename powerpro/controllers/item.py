@@ -26,7 +26,7 @@ def autoname(doc, method=None):
 			if group_name:
 				group_number = frappe.db.get_value("Item Group", group_name, "item_group_number")
 				if not group_number:
-					frappe.throw(f"Item Group '{group_name}' does not have an Item Group Number assigned.")
+					frappe.throw(f"El grupo de artículos '{group_name}' no tiene un número de grupo de artículos asignado.")
 
 				# Find next available NNN in ####-NNN format
 				existing = frappe.db.sql_list("""
@@ -39,7 +39,7 @@ def autoname(doc, method=None):
 
 				doc.item_code = f"{group_number}-{str(next_number).zfill(3)}"
 				return
-		frappe.throw("No item group (1 to 5) is defined for this Item.")
+		frappe.throw("No se ha definido ningún grupo de artículos (1 a 5) para este artículo.")
 
 
 def before_save(doc, method=None):
