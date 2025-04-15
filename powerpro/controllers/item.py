@@ -10,36 +10,40 @@ from frappe.utils import cint
 def autoname(doc, method=None):
 	if doc.get("__newname"):
 		doc.name = doc.get("__newname")
+		frappe.msgprint(
+			f"El nombre del artículo se ha pre-establecido como -> {doc.name}",
+		)
 		return
 
-	doc.name = get_next_value(doc)
+	# doc.name = get_next_value(doc)
 
-	if not doc.item_code:
-		for field in reversed([
-			"custom_item_group_1",
-			"custom_item_group_2",
-			"custom_item_group_3",
-			"custom_item_group_4",
-			"custom_item_group_5",
-		]):
-			group_name = doc.get(field)
-			if group_name:
-				group_number = frappe.db.get_value("Item Group", group_name, "item_group_number")
-				if not group_number:
-					frappe.throw(f"El grupo de artículos '{group_name}' no tiene un número de grupo de artículos asignado.")
+	for field in reversed([
+		"custom_item_group_1",
+		"custom_item_group_2",
+		"custom_item_group_3",
+		"custom_item_group_4",
+		"custom_item_group_5",
+	]):
+		group_name = doc.get(field)
+		if group_name:
+			group_number = frappe.db.get_value("Item Group", group_name, "item_group_number")
+			if not group_number:
+				frappe.throw(f"El grupo de artículos '{group_name}' no tiene un número de grupo de artículos asignado.")
 
-				# Find next available NNN in ####-NNN format
-				existing = frappe.db.sql_list("""
-					SELECT item_code FROM `tabItem`
-					WHERE item_code LIKE %s
-				""", (f"{group_number}-%",))
+			# Find next available NNN in ####-NNN format
+			existing = frappe.db.sql_list("""
+				SELECT item_code FROM `tabItem`
+				WHERE item_code LIKE %s
+			""", (f"{group_number}-%",))
 
-				used = [int(code.split("-")[1]) for code in existing if "-" in code and code.split("-")[1].isdigit()]
-				next_number = max(used or [0]) + 1
+			used = [int(code.split("-")[1]) for code in existing if "-" in code and code.split("-")[1].isdigit()]
+			next_number = max(used or [0]) + 1
 
-				doc.item_code = f"{group_number}-{str(next_number).zfill(3)}"
-				return
-		frappe.throw("No se ha definido ningún grupo de artículos (1 a 5) para este artículo.")
+			doc.name = f"{group_number}-{str(next_number).zfill(3)}"
+
+			doc.item_code = doc.name
+			return
+	frappe.throw("No se ha definido ningún grupo de artículos (1 a 5) para este artículo.")
 
 
 def before_save(doc, method=None):
