@@ -25,3 +25,4 @@ powerpro.patches.v1.sync_existing_records_of_producto_del_cliente_with_arte
 powerpro.patches.v1.set_project_docfields_on_existing_project_templates
 powerpro.patches.v1.rename_material_sku_product_details
 powerpro.patches.v1.make_item_generator_as_custom_doctype
+powerpro.patches.v1.assign_item_group_numbers
