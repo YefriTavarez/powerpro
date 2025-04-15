@@ -32,11 +32,15 @@ def generate_item_group_number(doc):
     start, end = CATEGORY_RANGES[root_category]
     used_numbers = frappe.db.get_all(
         "Item Group",
-        filters={"item_group_number": ["between", [start, end]]},
-        pluck="item_group_number",
+        filters=[
+			["Item Group", "item_group_number", ">=", start],
+			["Item Group", "item_group_number", "<=", end],
+		],
+        fields=["item_group_number"],
+        order_by="item_group_number ASC",
     )
 
-    used_numbers = set(int(num) for num in used_numbers if num.isdigit())
+    used_numbers = set(int(num["item_group_number"]) for num in used_numbers if num["item_group_number"].isdigit())
 
     for number in range(start, end + 1):
         if number not in used_numbers:
