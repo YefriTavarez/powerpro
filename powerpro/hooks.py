@@ -188,6 +188,7 @@ override_doctype_class = {
     "PrintCard": "powerpro.controllers.printcard.PrintCard", # noa
     "Arte Original": "powerpro.controllers.arte_original.ArteOriginal",
     "Producto del Cliente": "powerpro.controllers.producto_del_cliente.ProductoDelCliente",
+    "Item Generator": "powerpro.itempro.doctype.item_generator.ItemGenerator",
 }
 
 # Document Events
