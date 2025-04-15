@@ -15,7 +15,31 @@ def autoname(doc, method=None):
 	doc.name = get_next_value(doc)
 
 	if not doc.item_code:
-		doc.item_code = doc.name
+		for field in reversed([
+			"custom_item_group_1",
+			"custom_item_group_2",
+			"custom_item_group_3",
+			"custom_item_group_4",
+			"custom_item_group_5",
+		]):
+			group_name = doc.get(field)
+			if group_name:
+				group_number = frappe.db.get_value("Item Group", group_name, "item_group_number")
+				if not group_number:
+					frappe.throw(f"Item Group '{group_name}' does not have an Item Group Number assigned.")
+
+				# Find next available NNN in ####-NNN format
+				existing = frappe.db.sql_list("""
+					SELECT item_code FROM `tabItem`
+					WHERE item_code LIKE %s
+				""", (f"{group_number}-%",))
+
+				used = [int(code.split("-")[1]) for code in existing if "-" in code and code.split("-")[1].isdigit()]
+				next_number = max(used or [0]) + 1
+
+				doc.item_code = f"{group_number}-{str(next_number).zfill(3)}"
+				return
+		frappe.throw("No item group (1 to 5) is defined for this Item.")
 
 
 def before_save(doc, method=None):
