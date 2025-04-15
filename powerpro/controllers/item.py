@@ -10,9 +10,6 @@ from frappe.utils import cint
 def autoname(doc, method=None):
 	if doc.get("__newname"):
 		doc.name = doc.get("__newname")
-		frappe.msgprint(
-			f"El nombre del artículo se ha pre-establecido como -> {doc.name}",
-		)
 		return
 
 	# doc.name = get_next_value(doc)
