@@ -37,9 +37,6 @@ def retroactively_assign_item_group_numbers():
 
 def get_root_category(doc):
     """Traverse up the tree to find the root category."""
-    while doc.parent_item_group and (
-		doc.parent_item_group != "All Item Groups"
-		or doc.parent_item_group != _("All Item Groups")
-	):
+    while doc.parent_item_group and doc.parent_item_group != "Todos los grupos de artículos":
         doc = frappe.get_doc("Item Group", doc.parent_item_group)
     return doc.name

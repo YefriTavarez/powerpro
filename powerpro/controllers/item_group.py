@@ -9,7 +9,6 @@ CATEGORY_RANGES = {
     "Artículos": (1000, 3999),
     "Productos": (4000, 7999),
     "Servicios": (9000, 9999),
-    "Todos los grupos de artículos": (8000, 8999),  # Default range for uncategorized groups
 }
 
 def after_insert(doc, method=None):
@@ -47,10 +46,7 @@ def generate_item_group_number(doc):
 
 def get_root_category(doc):
     """Traverse up the tree to find the root category."""
-    while doc.parent_item_group and (
-		doc.parent_item_group != "All Item Groups"
-		or doc.parent_item_group != _("All Item Groups")
-	):
+    while doc.parent_item_group and doc.parent_item_group != "Todos los grupos de artículos":
         doc = frappe.get_doc("Item Group", doc.parent_item_group)
     return doc.name
 
