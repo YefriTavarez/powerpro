@@ -335,6 +335,30 @@
                 return { filters, query };
             });
 
+            frm.set_query("rosca", function() {
+                const query = "powerpro.controllers.queries.get_item_rosca";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
+            frm.set_query("series", function() {
+                const query = "powerpro.controllers.queries.get_item_series";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
+            frm.set_query("specs_3", function() {
+                const query = "powerpro.controllers.queries.get_item_specs_3";
+                const filters = {
+                    item_name: frm.doc.item,
+                };
+                return { filters, query };
+            });
+
             // frm.set_query("garantía_udm", function() {
             //     const query = "powerpro.controllers.queries.get_uom";
             //     const filters = {
