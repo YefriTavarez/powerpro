@@ -32,7 +32,7 @@ def get_item_rosca(doctype, txt, searchfield="name", start=0, page_len=20, filte
         INNER JOIN
             `tabItem Name Link` AS child
             ON child.parenttype = "Item Rosca"
-            AND child.parentfield = "item_names"
+            AND child.parentfield = "item_name"
             AND child.parent = parent.name
         WHERE
             child.item_name = {filters['item_name']!r}
