@@ -23,6 +23,8 @@
   "min_margin",
   "column_break_flpz",
   "max_margin",
+  "cost_estimation_manager_section",
+  "cost_estimation_manager",
   "colors_tab",
   "cyan_color",
   "column_break_dbfa",
@@ -110,7 +112,7 @@
   {
    "fieldname": "margins_section",
    "fieldtype": "Section Break",
-   "label": "Margins"
+   "label": "Gross Margins"
   },
   {
    "fieldname": "min_margin",
@@ -187,12 +189,24 @@
    "fieldname": "item_name_template_for_product",
    "fieldtype": "Small Text",
    "label": "Item Name Template for Product"
+  },
+  {
+   "fieldname": "cost_estimation_manager_section",
+   "fieldtype": "Section Break",
+   "label": "Cost Estimation Manager"
+  },
+  {
+   "fieldname": "cost_estimation_manager",
+   "fieldtype": "Link",
+   "label": "Cost Estimation Manager",
+   "options": "Role"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-11-25 23:07:57.468888",
+ "modified": "2025-04-23 23:25:36.238039",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Power-Pro Settings",
@@ -209,6 +223,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

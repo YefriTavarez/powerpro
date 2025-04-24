@@ -34,6 +34,20 @@ class CostEstimation(Document):
 		product_type: DF.Link
 		raw_material: DF.Link
 	# end: auto-generated types
+
+	@property
+	def edit_mode(self) -> bool:
+		if self.docstatus == 0:
+			return True # for everyone who can edit the document
+
+		# however, if the document is submitted, we need to check if the user has the role
+		# allowed to do edits.
+		settings = frappe.get_single("Power-Pro Settings")
+
+		reqd_role = settings.cost_estimation_manager or "System Manager"
+
+		return reqd_role in frappe.get_roles()
+
 	def onload(self):
 		smart_hash = self.generate_smart_hash()
 		if item_id := self.does_smart_hash_exist(smart_hash, as_name=True):

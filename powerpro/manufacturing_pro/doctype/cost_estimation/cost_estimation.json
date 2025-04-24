@@ -8,6 +8,7 @@
   "customer",
   "raw_material",
   "product_type",
+  "edit_mode",
   "column_break_4hbk",
   "naming_series",
   "created_on",
@@ -49,6 +50,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "allow_on_submit": 1,
    "default": "{}",
    "depends_on": "eval:doc.__onload?.debug",
    "fieldname": "data",
@@ -102,12 +104,21 @@
    "label": "Product Type",
    "options": "Product Type",
    "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "edit_mode",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "is_virtual": 1,
+   "label": "Edit Mode"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-23 02:11:56.978625",
+ "modified": "2025-04-23 23:28:27.537124",
  "modified_by": "Administrator",
  "module": "Manufacturing Pro",
  "name": "Cost Estimation",
@@ -128,6 +139,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
