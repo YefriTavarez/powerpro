@@ -33,6 +33,7 @@ def get_producto_del_cliente(texto_busqueda=None, item_group=None):
     query = """
         SELECT
             item.name,
+            item.item_name,
             item.item_group,
             item.description
         FROM
@@ -40,7 +41,7 @@ def get_producto_del_cliente(texto_busqueda=None, item_group=None):
         LEFT JOIN
             `tabMultiple Items` AS possible_items
             ON item.name = possible_items.item
-        LEFT JOIN
+        LEFT JOINs
             `tabProducto del Cliente` AS product
             ON
                 possible_items.parent = product.name
