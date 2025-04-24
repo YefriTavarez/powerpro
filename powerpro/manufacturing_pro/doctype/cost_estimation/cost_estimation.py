@@ -12,8 +12,8 @@ from frappe.model.document import Document
 from powerpro.manufacturing_pro.doctype.raw_material.utils import hash_key
 
 if TYPE_CHECKING:
-	from powerpro.powerpro.manufacturing_pro.doctype.raw_material.raw_material import RawMaterial
-	from powerpro.powerpro.manufacturing_pro.doctype.product_type.product_type import ProductType
+	from powerpro.manufacturing_pro.doctype.raw_material.raw_material import RawMaterial
+	from powerpro.manufacturing_pro.doctype.product_type.product_type import ProductType
 
 
 class CostEstimation(Document):
