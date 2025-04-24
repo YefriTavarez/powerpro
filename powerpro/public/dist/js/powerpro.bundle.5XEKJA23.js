@@ -9827,7 +9827,8 @@ Expected function or array of functions, received type ${typeof value}.`
     },
     computed: {
       readonly() {
-        return this.frm.doc.docstatus === 1;
+        const { doc: doc2 } = this.frm;
+        return !Boolean(doc2.edit_mode);
       }
     },
     update_data(doc2) {
@@ -9906,4 +9907,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=powerpro.bundle.JFOTYJBK.js.map
+//# sourceMappingURL=powerpro.bundle.5XEKJA23.js.map

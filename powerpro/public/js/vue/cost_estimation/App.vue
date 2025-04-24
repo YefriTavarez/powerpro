@@ -33,7 +33,11 @@ export default {
 	},
 	computed: {
 		readonly() {
-			return this.frm.doc.docstatus === 1;
+			const { doc } = this.frm;
+			// readonly if docstatus is not draft
+			// or if edit_mode is not set and edition_requested is set
+			// return doc.docstatus !== 0 || !Boolean(doc.edit_mode) && Boolean(doc.edition_requested);
+			return !Boolean(doc.edit_mode);
 		},
 	},
 	update_data(doc) {

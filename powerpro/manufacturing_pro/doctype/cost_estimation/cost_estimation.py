@@ -12,6 +12,8 @@ from frappe.model.document import Document
 from powerpro.manufacturing_pro.doctype.raw_material.utils import hash_key
 
 if TYPE_CHECKING:
+	from erpnext.stock.doctype.item import item
+
 	from powerpro.manufacturing_pro.doctype.raw_material.raw_material import RawMaterial
 	from powerpro.manufacturing_pro.doctype.product_type.product_type import ProductType
 
@@ -30,6 +32,7 @@ class CostEstimation(Document):
 		customer: DF.Link
 		data: DF.JSON | None
 		expires_on: DF.Date
+		edit_mode: DF.Check
 		naming_series: DF.Literal["COST-EST-"]
 		product_type: DF.Link
 		raw_material: DF.Link
@@ -83,6 +86,26 @@ class CostEstimation(Document):
 	def get_form_data(self):
 		return frappe.parse_json(self.data)
 
+	def on_update_after_submit(self):
+		before_save = self.get_doc_before_save()
+
+		if not before_save:
+			frappe.throw(
+				_("No data was provided")
+			)
+
+		prev_smart_hash = before_save.generate_smart_hash()
+
+		if item_id := self.does_smart_hash_exist(prev_smart_hash, as_name=True):
+			smart_hash = self.generate_smart_hash()
+
+			doc: "item.Item" = get_item(item_id)
+			self.update_item_specs(doc, smart_hash)
+
+			doc.flags.ignore_permissions = True
+			doc.flags.ignore_mandatory = True
+			doc.save()
+
 	def on_update(self):
 		form_data = self.get_form_data()
 		self.clean_up_data(form_data)
@@ -91,7 +114,28 @@ class CostEstimation(Document):
 		self.db_set("data", frappe.as_json(form_data))
 
 	@frappe.whitelist()
-	def create_sku(self):
+	def create_sku(self):		
+		# let's create the item based on the data
+		item : "item.Item" = frappe.new_doc("Item")
+
+		smart_hash = self.generate_smart_hash()
+
+		if name := self.does_smart_hash_exist(smart_hash, as_name=True):
+			frappe.throw(
+				_("The SKU already exists with the name {name!r}")
+				.format(name=name)
+			)
+		
+		self.update_item_specs(item, smart_hash)
+
+		item.flags.ignore_permissions = True
+		item.flags.ignore_mandatory = True
+
+		item.insert()
+
+		return item.name
+
+	def update_item_specs(self, item: "item.Item", smart_hash: str):
 		if not self.data:
 			frappe.throw(
 				_("No data was provided")
@@ -107,17 +151,6 @@ class CostEstimation(Document):
 		product_type_id = vue_data.get("tipo_de_producto")
 
 		product_type = self.load_product_type(product_type_id)
-		
-		# let's create the item based on the data
-		item = frappe.new_doc("Item")
-
-		smart_hash = self.generate_smart_hash()
-
-		if name := self.does_smart_hash_exist(smart_hash, as_name=True):
-			frappe.throw(
-				_("The SKU already exists with the name {name!r}")
-				.format(name=name)
-			)
 
 		item.update({
 			# "item_code": primary_key,
@@ -144,14 +177,6 @@ class CostEstimation(Document):
 			"product_details": self.data,
 			"smart_hash": smart_hash,
 		})
-
-
-		item.flags.ignore_permissions = True
-		item.flags.ignore_mandatory = True
-
-		item.insert()
-
-		return item.name
 
 	def get_product_item_name(self, data):
 		settings = frappe.get_single("Power-Pro Settings")
@@ -506,3 +531,21 @@ class CostEstimation(Document):
 			or product_type.item_group_3 \
 			or product_type.item_group_2 \
 			or product_type.item_group_1
+
+
+def get_item(name: str) -> "item.Item":
+	"""Get the item based on the given name"""
+	doctype = "Item"
+
+	if not name:
+		frappe.throw(
+			_("Item ID is required")
+		)
+
+	if not frappe.db.exists(doctype, name):
+		frappe.throw(
+			_("Item '{name}' not found")
+			.format(name=name)
+		)
+
+	return frappe.get_doc(doctype, name)

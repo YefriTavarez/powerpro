@@ -354,6 +354,7 @@
 			} else if (frm.doc.docstatus === 1) {
 				// buttons for submitted documents
 				_add_create_sku_button(frm);
+				_add_request_edit_button(frm);
 			} else {
 				// buttons for cancelled documents
 			}
@@ -416,6 +417,33 @@
 		const primary_label = __("Load");
 		
 		frappe.prompt(fields, callback, title, primary_label);
+	}
+
+	function _add_request_edit_button(frm) {
+		const label = __("Request Edit");
+		function action(event) {
+			frappe.confirm(
+				__("Are you sure you want to request an edit?"),
+				() => {
+					frm.doc.edition_requested = true;
+					_refresh_vue(frm);
+
+					frappe.show_alert({
+						message: __("Edit requested!"),
+						indicator: "green",
+					});
+				},
+				() => {
+					frappe.show_alert({
+						message: __("Edit request cancelled!"),
+						indicator: "red",
+					});
+				}
+			);
+		}
+		const parent = __("Actions");
+		frm.add_custom_button(label, action, parent);
+		frm.page.set_inner_btn_group_as_primary(parent);
 	}
 
 	function _add_create_sku_button(frm) {
