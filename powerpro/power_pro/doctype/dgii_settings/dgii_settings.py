@@ -26,6 +26,7 @@ class DGIISettings(Document):
 		multi_company: DF.Table[DGIISettingsMultiCompany]
 		multi_other_tax_detail: DF.Table[MultiOtherTaxDetail]
 		ncf_manager: DF.Link | None
+		ncf_manager_minor_expenses: DF.Link | None
 		non_formal_supplier_classification: DF.Link | None
 		other_tax_detail: DF.Table[OtherTaxDetail]
 	# end: auto-generated types
