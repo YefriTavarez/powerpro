@@ -20,7 +20,26 @@ def validate(doc, event):
 
 def before_submit(doc, event):
     validate_duplicate_ncf(doc)
-    assign_informal_supplier_ncf(doc)
+    assign_ncf(doc)
+
+
+def assign_ncf(doc):
+    # si ya tiene un NCF asignado, no hacer nada
+    if doc.ncf and doc.amended_from:
+        # si es una factura rectificativa, no hacer nada
+        return # salir de la función
+
+    # traer la Categoría de Impuestos del proveedor
+    supplier_classification = frappe.db.get_value("Supplier", doc.supplier, "supplier_classification")
+
+    # si no tiene categoría de impuestos asignada, mostrar un mensaje de advertencia
+    # y salir de la función
+    if not supplier_classification:
+        educate_user_about_missing_supplier_classification()
+        return # salir de la función
+
+    assign_informal_supplier_ncf(doc, supplier_classification)
+    assign_minor_expenses_ncf(doc, supplier_classification)
 
 
 def calculate_totals(doc):
@@ -37,21 +56,7 @@ def calculate_totals(doc):
     doc.monto_facturado_servicios = total_servicios
 
 
-def assign_informal_supplier_ncf(doc):
-    # si ya tiene un NCF asignado, no hacer nada
-    if doc.ncf and doc.amended_from:
-        # si es una factura rectificativa, no hacer nada
-        return # salir de la función
-
-    # traer la Categoría de Impuestos del proveedor
-    supplier_classification = frappe.db.get_value("Supplier", doc.supplier, "supplier_classification")
-
-    # si no tiene categoría de impuestos asignada, mostrar un mensaje de advertencia
-    # y salir de la función
-    if not supplier_classification:
-        educate_user_about_missing_supplier_classification()
-        return # salir de la función
-
+def assign_informal_supplier_ncf(doc, supplier_classification):
     # traer la Categoría de Impuestos no formales para comparar
     # si el proveedor es informal y generar su respectivo NCF
     informal_supplier_classification = frappe.db.get_single_value(
@@ -76,6 +81,59 @@ def assign_informal_supplier_ncf(doc):
 
         if name := frappe.db.get_single_value(
             "DGII Settings", "ncf_manager"
+        ):
+            ncf_serie = frappe.get_doc("NCF Manager", name)
+        else:
+            frappe.throw(
+                "Favor de especificar una serie de Comprobantes para la Categoría de Impuestos de Gastos Menores en el módulo 'Configuración de la DGII'"
+            )
+    else:
+        # solo se generan NCF para proveedores informales (creo que tambien para gastos menores, pero eso es en otro episodio)
+        return # salir de la función
+
+    current = cint(ncf_serie.current)
+
+    if cint(ncf_serie.top) and current >= cint(ncf_serie.top):
+        frappe.throw(
+            f"Ha llegado al máximo establecido para la serie de comprobantes {ncf_serie.name!r}!"
+        )
+
+    current += 1
+
+    ncf_serie.current = current
+    ncf_serie.db_update()
+
+    doc.ncf = "{0}{1:08d}" \
+        .format(ncf_serie.serie.split(".")[0], current)
+    doc.vencimiento_ncf = ncf_serie.expiration
+    # doc.db_update() # no es necesario, ya que el documento se actualiza automaticamente al finalizar la funcion
+
+
+def assign_minor_expenses_ncf(doc, supplier_classification):
+    # traer la Categoría de Impuestos no formales para comparar
+    # si el proveedor es informal y generar su respectivo NCF
+    minor_expenses_classification = frappe.db.get_single_value(
+        "DGII Settings", "minor_expenses_supplier_classification"
+    )
+
+    ncf_serie = None
+
+    # si el proveedor es informal, leer la configuracion en el modulo NCF Manager
+    # para obtener la serie de comprobantes a utilizar
+    if supplier_classification == minor_expenses_classification:
+        if doc.ncf and doc.amended_from:
+            # si no es una factura rectificativa, mostrar un mensaje de advertencia
+            frappe.msgprint(
+                """
+                <p>
+                Esta factura ya tiene un NCF asignado. Y no se ha detectado que sea una factura rectificativa.
+                Se procederá a sobre-escribir el NCF actual. 
+                </p>
+                """, alert=True
+            )
+
+        if name := frappe.db.get_single_value(
+            "DGII Settings", "ncf_manager_minor_expenses"
         ):
             ncf_serie = frappe.get_doc("NCF Manager", name)
         else:
