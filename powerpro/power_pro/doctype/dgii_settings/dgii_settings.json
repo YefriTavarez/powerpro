@@ -13,6 +13,7 @@
   "column_break_lovq",
   "excise_tax",
   "non_formal_supplier_classification",
+  "minor_expenses_supplier_classification",
   "ncf_manager",
   "other_taxes_section",
   "other_tax_detail",
@@ -103,12 +104,19 @@
    "fieldname": "auto_tax",
    "fieldtype": "Check",
    "label": "Auto Tax"
+  },
+  {
+   "fieldname": "minor_expenses_supplier_classification",
+   "fieldtype": "Link",
+   "label": "Minor Expenses Supplier Classification",
+   "options": "Supplier Classification"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-02-18 12:56:55.792302",
+ "modified": "2025-04-25 00:33:17.516669",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "DGII Settings",
@@ -126,6 +134,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
