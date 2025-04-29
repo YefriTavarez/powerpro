@@ -1,5 +1,7 @@
 {
 	function _prompt_company(frm) {
+		const { doc } = frm;
+		
 		const fields = [
 			{
 				fieldname: "company",
@@ -14,6 +16,11 @@
 		const primary_label = __("Continue");
 		function callback({ company }) {
 			frappe.run_serially([
+				async function() {
+					if (doc.supplier) {
+						await frm.set_value("supplier", "");
+					}
+				},
 				async function() {
 					const exists = await frappe.db.exists("Supplier", `${company}`);
 					
@@ -32,6 +39,205 @@
 		}
 		
 		frappe.prompt(fields, callback, title, primary_label);
+	}
+
+	function _prompt_for_minor_expesenses_details(frm) {
+		const { doc } = frm;
+
+		frappe.prompt([
+			{
+				label: 'Compañía',
+				fieldname: 'company',
+				fieldtype: 'Link',
+				options: 'Company',
+				read_only: 1,
+				default: doc.company,
+			},
+			{
+				fieldtype: "Section Break",
+			},
+			{
+				label: 'Fecha de Referencia',
+				fieldname: 'reference_date',
+				fieldtype: 'Date',
+				reqd: 1
+			},
+			{
+				label: 'No. de Referencia',
+				fieldname: 'reference_number',
+				fieldtype: 'Data',
+				reqd: 0
+			},
+			{
+				fieldtype: "Column Break",
+			},
+			{
+				label: 'Descripción del Gasto',
+				fieldname: 'description',
+				fieldtype: 'Small Text',
+				reqd: 1,
+				placeholder: "Compra de Combustible"
+			},
+			{
+				fieldtype: "Section Break",
+			},
+			{
+				label: 'Tipo Bienes y Servicios Comprados',
+				fieldname: 'tipo_bienes_y_servicios_comprados',
+				fieldtype: 'Select',
+				reqd: 1,
+				options: `
+01-GASTOS DE PERSONAL
+02-GASTOS POR TRABAJOS, SUMINISTROS Y SERVICIOS
+03-ARRENDAMIENTOS
+04-GASTOS DE ACTIVOS FIJO
+05 -GASTOS DE REPRESENTACIÓN
+06 -OTRAS DEDUCCIONES ADMITIDAS
+07 -GASTOS FINANCIEROS
+08 -GASTOS EXTRAORDINARIOS
+09 -COMPRAS Y GASTOS QUE FORMARAN PARTE DEL COSTO DE VENTA
+10 -ADQUISICIONES DE ACTIVOS
+11- GASTOS DE SEGUROS`,
+				default: `02-GASTOS POR TRABAJOS, SUMINISTROS Y SERVICIOS`
+			},
+			{
+				fieldtype: "Section Break",
+			},
+			{
+				label: 'Cuenta de Gastos',
+				fieldname: 'expense_account',
+				fieldtype: 'Link',
+				options: 'Account',
+				reqd: 1,
+				get_query: () => {
+					return {
+						filters: {
+							root_type: 'Expense',
+							company: doc.company,
+							is_group: 0,
+						}
+					}
+				}
+			},
+			{
+				fieldtype: "Column Break",
+			},
+			{
+				label: 'Centro de Costos',
+				fieldname: 'cost_center',
+				fieldtype: 'Link',
+				options: 'Cost Center',
+				reqd: 0,
+				get_query: () => {
+					return {
+						filters: {
+							company: doc.company,
+							is_group: 0,
+						}
+					}
+				}
+			},
+			{
+				label: 'Project',
+				fieldname: 'project',
+				fieldtype: 'Link',
+				options: 'Project',
+				reqd: 0,
+			},
+			{
+				fieldtype: "Section Break",
+			},
+			{
+				label: 'Monto Total (incluyendo impuestos)',
+				fieldname: 'total_amount',
+				fieldtype: 'Currency',
+				reqd: 1
+			},
+			{
+				label: 'Método de Pago',
+				fieldname: 'payment_mode',
+				fieldtype: 'Link',
+				options: "Mode of Payment",
+				reqd: 1
+			}
+		], ({
+			reference_date,
+			reference_number,
+			description,
+			expense_account,
+			cost_center,
+			project,
+			total_amount,
+			payment_mode
+		}) => {
+			_update_pinv_with_minor_expenses_details(frm, {
+				reference_date,
+				reference_number,
+				description,
+				expense_account,
+				cost_center,
+				project,
+				total_amount,
+				payment_mode
+			});
+		}, "Detalles de Gastos Menores", "Guardar");
+	}
+
+	function _update_pinv_with_minor_expenses_details(frm, {
+		reference_date,
+		reference_number,
+		description,
+		expense_account,
+		cost_center,
+		project,
+		total_amount,
+		payment_mode
+	}) {
+		frappe.run_serially([
+			async function() {
+				await frm.set_value("is_paid", 1);
+			},
+			async function() {
+				await frm.set_value("currency", "DOP");
+			},
+			async function() {
+				await frm.set_value("bill_date", reference_date);
+			},
+			async function() {
+				await frm.set_value("bill_no", reference_number);
+			},
+			async function() {
+				await frm.set_value("cost_center", cost_center);
+			},
+			async function() {
+				await frm.set_value("project", project);
+			},
+			async function() {
+				frm.add_child("items", {
+					item_code: "",
+					item_name: description,
+					description: description,
+					uom: "ud(s)",
+					conversion_factor: 1,
+					qty: 1,
+					rate: total_amount,
+					amount: total_amount,
+					cost_center: cost_center,
+					project: project,
+					expense_account: expense_account,
+					
+				});
+			},
+			async function() {
+				await frm.set_value("paid_amount", total_amount);
+			},
+			async function() {
+				await frm.set_value("mode_of_payment", payment_mode);
+			},
+			async function() {
+				await frm.save();
+			},
+		]);
 	}
 
 	function _validate_rnc(frm) {
@@ -152,6 +358,18 @@
 
 			if (ncf) {
 				frm.set_value("ncf", ncf.trim().toUpperCase())
+			}
+		},
+
+		supplier(frm) {
+			const { doc } = frm;
+
+			if (!doc.supplier) {
+				return ; // die young if no supplier
+			}
+
+			if (doc.supplier === doc.company) {
+				_prompt_for_minor_expesenses_details(frm);
 			}
 		},
 
