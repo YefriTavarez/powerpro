@@ -1,5 +1,5 @@
 frappe.ui.form.on("Purchase Invoice", {
-	refresh(frm){
+	refresh(frm) {
 		frappe.run_serially([
 			_ => frm.trigger("set_queries"),
 		]);
@@ -11,7 +11,7 @@ frappe.ui.form.on("Purchase Invoice", {
 				}
 			}
 		});
-		
+
 		frm.set_query("isr_type", () => {
 			return {
 				"filters": {
@@ -20,34 +20,34 @@ frappe.ui.form.on("Purchase Invoice", {
 			}
 		});
 	},
-	validate(frm){
+	validate(frm) {
 		frm.trigger("ncf");
 		frm.trigger("validate_cost_center");
 		// frm.trigger("validate_ncf")
-		
+
 	},
 	before_save(frm) {
 		frm.trigger("validate_ncf");
 		frm.trigger("update_taxes_amount")
 		if (frappe.validated === false) {
-            // Asegúrate de que no continúe si no ha sido validado correctamente
-            frappe.validated = false;
-            return false;  // Este return previene la ejecución de guardado
-        }
+			// Asegúrate de que no continúe si no ha sido validado correctamente
+			frappe.validated = false;
+			return false;  // Este return previene la ejecución de guardado
+		}
 	},
 
-	ncf(frm){
-		let {ncf} = frm.doc;
+	ncf(frm) {
+		let { ncf } = frm.doc;
 
 		frm.set_df_property("vencimiento_ncf", "reqd", !!ncf);
-		
+
 		if (!ncf)
 			return
-		
+
 		frm.set_value("ncf", ncf.trim().toUpperCase())
 	},
 
-	validate_rnc(frm){
+	validate_rnc(frm) {
 		let len = frm.doc.tax_id.length;
 
 		if (![9, 11].includes(len)) {
@@ -56,8 +56,8 @@ frappe.ui.form.on("Purchase Invoice", {
 			return
 		}
 	},
-	validate_cost_center(frm){
-		if(!frm.doc.cost_center)
+	validate_cost_center(frm) {
+		if (!frm.doc.cost_center)
 			return
 		$.map(frm.doc.taxes, tax => {
 			if (!tax.cost_center)
@@ -69,7 +69,7 @@ frappe.ui.form.on("Purchase Invoice", {
 		})
 
 	},
-	tax_id(frm){
+	tax_id(frm) {
 		if (!frm.doc.tax_id)
 			return
 		frm.set_value("tax_id", replace_all(frm.doc.tax_id.trim(), "-", ""));
@@ -162,5 +162,4 @@ frappe.ui.form.on("Purchase Invoice", {
 			frm.set_value("isr_amount", amount);
 		});
 	},
-	
 });
