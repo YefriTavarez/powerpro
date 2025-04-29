@@ -10,7 +10,7 @@ frappe.ui.form.on("Purchase Invoice", {
 					"isr": 0
 				}
 			}
-		})
+		});
 		
 		frm.set_query("isr_type", () => {
 			return {
@@ -18,7 +18,7 @@ frappe.ui.form.on("Purchase Invoice", {
 					"isr": 1
 				}
 			}
-		})
+		});
 	},
 	validate(frm){
 		frm.trigger("ncf");
@@ -164,4 +164,3 @@ frappe.ui.form.on("Purchase Invoice", {
 	},
 	
 });
-
