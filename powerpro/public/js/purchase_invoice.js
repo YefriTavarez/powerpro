@@ -1,4 +1,39 @@
 {
+	function _prompt_company(frm) {
+		const fields = [
+			{
+				fieldname: "company",
+				fieldtype: "Link",
+				options: "Company",
+				label: __("Company"),
+				reqd: true,
+			},
+		];
+	
+		const title = __("Seleccione la compañía para continuar");
+		const primary_label = __("Continue");
+		function callback({ company }) {
+			frappe.run_serially([
+				async function() {
+					const exists = await frappe.db.exists("Supplier", `${company}`);
+					
+					if (!exists) {
+						frappe.throw(`El proveedor <b>${company}</b> no existe en el sistema, favor verificar.`);
+					}
+				},
+				async function() {
+					await frm.set_value("company", company);
+				},
+				async function() {
+					await frm.set_value("supplier", company);
+				},
+			]);
+			// frm.set_value("tax_id", frm.doc.company_tax_id);
+		}
+		
+		frappe.prompt(fields, callback, title, primary_label);
+	}
+
 	function _validate_rnc(frm) {
 		let len = frm.doc.tax_id.length;
 
@@ -89,7 +124,16 @@
 
 	frappe.ui.form.on("Purchase Invoice", {
 		refresh(frm) {
+			const { doc } = frm;
 			_set_queries(frm);
+
+			if (
+				doc.docstatus === 0
+			) {
+				frm.add_custom_button(__("Gastos Menores"), () => {
+					_prompt_company(frm);
+				}, "Acciones");
+			}
 		},
 
 		validate(frm) {
