@@ -38,8 +38,12 @@ def assign_ncf(doc):
         educate_user_about_missing_supplier_classification()
         return # salir de la función
 
+    if doc.supplier == doc.company:
+        # si el proveedor es la misma empresa, estamos lidiando con gastos menores
+        assign_minor_expenses_ncf(doc, supplier_classification)
+        return
+
     assign_informal_supplier_ncf(doc, supplier_classification)
-    assign_minor_expenses_ncf(doc, supplier_classification)
 
 
 def calculate_totals(doc):
@@ -120,7 +124,8 @@ def assign_minor_expenses_ncf(doc, supplier_classification):
 
     # si el proveedor es informal, leer la configuracion en el modulo NCF Manager
     # para obtener la serie de comprobantes a utilizar
-    if supplier_classification == minor_expenses_classification:
+    # if supplier_classification == minor_expenses_classification:
+    if True:
         if doc.ncf and doc.amended_from:
             # si no es una factura rectificativa, mostrar un mensaje de advertencia
             frappe.msgprint(
