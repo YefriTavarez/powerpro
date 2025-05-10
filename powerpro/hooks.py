@@ -38,6 +38,7 @@ app_include_js = [
     "/assets/powerpro/js/frappe/signature.js?v=1.0.1",
     "/assets/powerpro/js/frappe/form.js?v=1.0.1",
     "/assets/powerpro/js/frappe/attachments.js?v=1.0.1",
+    "/assets/powerpro/js/erpnext/transaction.js?v=1.0.1",
     "app.bundle.js",
 ]
 
