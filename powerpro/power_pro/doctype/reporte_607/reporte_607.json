@@ -8,7 +8,10 @@
   "from_date",
   "to_date",
   "company",
-  "run_report"
+  "descargar_txt",
+  "run_report",
+  "column_break_kzjn",
+  "summary_display"
  ],
  "fields": [
   {
@@ -35,12 +38,28 @@
    "fieldname": "run_report",
    "fieldtype": "Button",
    "label": "Descargar Reporte"
+  },
+  {
+   "fieldname": "descargar_txt",
+   "fieldtype": "Button",
+   "label": "Descargar TXT"
+  },
+  {
+   "fieldname": "column_break_kzjn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "summary_display",
+   "fieldtype": "HTML",
+   "label": "Summary Display",
+   "options": "Loading..."
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-10-03 23:43:50.119456",
+ "modified": "2025-05-10 02:09:51.871848",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Reporte 607",
@@ -57,6 +76,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

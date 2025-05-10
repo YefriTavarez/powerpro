@@ -6,6 +6,16 @@ frappe.ui.form.on("Reporte 607", {
 	refresh: function(frm) {
 		frm.disable_save();
 	},
+	descargar_txt: function(frm) {
+		var file_url = __("/api/method/powerpro.power_pro.doctype.reporte_607.reporte_607.get_file_address?from_date={0}&to_date={1}&company={2}&txt=1",
+			[
+				frm.doc.from_date,
+				frm.doc.to_date,
+				frm.doc.company || frappe.defaults.get_global_default("company"),
+			]);
+	
+		window.open(file_url);
+	},
 	run_report: function(frm){
 		var file_url = __("/api/method/powerpro.power_pro.doctype.reporte_607.reporte_607.get_file_address?from_date={0}&to_date={1}&company={2}",
 			[

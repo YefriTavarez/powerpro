@@ -2,9 +2,8 @@
 # Copyright (c) 2015, Soldeva, SRL and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
 import frappe
-from frappe.utils import cstr, cint, flt, formatdate, format_datetime
+from frappe.utils import cstr, getdate
 from frappe.model.document import Document
 from frappe.utils.csvutils import UnicodeWriter
 import time
@@ -19,11 +18,23 @@ class ReferenceNotFound(Exception):
 
 
 class Reporte607(Document):
+    # begin: auto-generated types
+    # This code is auto-generated. Do not modify anything in this block.
+
+    from typing import TYPE_CHECKING
+
+    if TYPE_CHECKING:
+        from frappe.types import DF
+
+        company: DF.Link | None
+        from_date: DF.Date
+        to_date: DF.Date
+    # end: auto-generated types
     pass
 
 
 @frappe.whitelist()
-def get_file_address(from_date, to_date, company):
+def get_file_address(from_date, to_date, company, txt=0):
     # AND sinv.posting_date BETWEEN '%s' AND '%s' """ % ("SINV-%", from_date, to_date), as_dict=True)
     result = frappe.db.sql(f"""
 		SELECT 
@@ -110,10 +121,19 @@ def get_file_address(from_date, to_date, company):
         'Otras Formas de Venta'														# 22
     ])
 
+    seller_tax_id = frappe.get_value("Company", company, "tax_id")
+    month_date = getdate(from_date).strftime("%Y%m")
+    records_cound = len(result)
+
+    txt_content = f"607|{seller_tax_id.replace('-', '')}|{month_date}|{records_cound}\n"
+
     for row in result:
-        w.writerow([
+        d = []
+
+        if not txt:
+            d.append(row.company)
             # 0
-            row.company,
+        d.extend([
             cstr(row.tax_id).replace("-", ""),
             tax_id_type_map[row.tipo_rnc],															# 1
             row.ncf,																# 2
@@ -131,21 +151,28 @@ def get_file_address(from_date, to_date, company):
             get_retention_amount(row, typeof="ISR", from_date=from_date),
             row.isr_percibido or "",												# 12
             row.isr_category,
-            row.isr_amount or 0,
+            row.isr_amount or 0.00,
             row.impuesto_selectivo_al_consumo,										# 13
             row.otros_impuestos_y_tasas,											# 14
             row.monto_propina_legal,												# 15
-            row.cash_payment or .00,												# 16
-            row.bank_payment or .00,												# 17
-            row.cc_payment or .00,													# 18
+            row.cash_payment or 0.00,												# 16
+            row.bank_payment or 0.00,												# 17
+            row.cc_payment or 0.00,													# 18
             row.credit or row.base_grand_total,										# 19
-            row.bonos_regalo or .00,												# 20
-            row.permuta_de_pago or .00,												# 21
-            row.otros or .00														# 22
+            row.bonos_regalo or 0.00,												# 20
+            row.permuta_de_pago or 0.00,												# 21
+            row.otros or 0.00														# 22
         ])
 
-    frappe.response['result'] = cstr(w.getvalue())
-    frappe.response['type'] = 'csv'
+        if txt:
+            txt_content += "|".join([str(column) for column in d]) + "\n"
+        else:
+            w.writerow(d)
+
+
+    frappe.response['result'] = cstr(w.getvalue()) if not txt else txt_content
+
+    frappe.response['type'] = 'csv' if not txt else 'txt'
     frappe.response['doctype'] = "Reporte_607_" + str(int(time.time()))
 
 
@@ -157,12 +184,12 @@ def get_retention_date(row):
     else:
         posting_date = frappe.get_value(
             "Payment Entry", reference_row.parent, "posting_date")
-        return frappe.utils.getdate(posting_date).strftime(DGII_DATE_FORMAT)
+        return getdate(posting_date).strftime(DGII_DATE_FORMAT)
 
 
 def get_retention_amount(row, typeof, from_date):
     retention_date = get_retention_date(row)
-    bill_date = frappe.utils.getdate(from_date).strftime(DGII_DATE_FORMAT)
+    bill_date = getdate(from_date).strftime(DGII_DATE_FORMAT)
 
     if retention_date == 0 or bill_date != retention_date:
         return 0
