@@ -150,7 +150,7 @@ def get_file_address(from_date, to_date, company, txt=0):
             # 11  row.retention_renta_terceros,
             get_retention_amount(row, typeof="ISR", from_date=from_date),
             row.isr_percibido or "",												# 12
-            row.isr_category,
+            row.isr_category or "",
             row.isr_amount or 0.00,
             row.impuesto_selectivo_al_consumo,										# 13
             row.otros_impuestos_y_tasas,											# 14
