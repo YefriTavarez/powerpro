@@ -2,6 +2,8 @@ frappe.ui.form.on("Reporte 607", {
 	onload: function(frm) {
 		frm.set_value("from_date", frappe.datetime.month_start());
 		frm.set_value("to_date", frappe.datetime.month_end());
+	},
+	refresh: function(frm) {
 		frm.disable_save();
 	},
 	run_report: function(frm){
@@ -14,6 +16,4 @@ frappe.ui.form.on("Reporte 607", {
 	
 		window.open(file_url);
 	},
-
 });
-
