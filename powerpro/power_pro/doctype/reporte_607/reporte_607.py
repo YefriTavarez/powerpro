@@ -137,7 +137,7 @@ def get_file_address(from_date, to_date, company, txt=0):
             cstr(row.tax_id).replace("-", ""),
             tax_id_type_map[row.tipo_rnc],															# 1
             row.ncf,																# 2
-            row.return_against_ncf,													# 3
+            row.return_against_ncf or "",													# 3
             income_type_map[row.tipo_de_ingreso],													# 4
             row.posting_date.strftime(DGII_DATE_FORMAT),									# 5
             # 6   row.payment_date.strftime("%Y%m%d") if row.payment_date  else "",
@@ -192,17 +192,17 @@ def get_retention_amount(row, typeof, from_date):
     bill_date = getdate(from_date).strftime(DGII_DATE_FORMAT)
 
     if retention_date == 0 or bill_date != retention_date:
-        return 0
+        return 0.00
 
     if typeof not in ["ITBIS", "ISR"]:
-        return 0
+        return 0.00
 
     try:
         reference_row = get_reference_row(row, typeof)
     except ReferenceNotFound:
-        return 0
+        return 0.00
     else:
-        return reference_row.retention_amount
+        return reference_row.retention_amount or 0.00
 
 
 def get_retention_type(row):
