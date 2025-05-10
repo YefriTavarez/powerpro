@@ -10,6 +10,10 @@ from frappe.utils.csvutils import UnicodeWriter
 import time
 
 
+from .utils import tax_id_type_map, income_type_map
+
+DGII_DATE_FORMAT = "%Y%m%d"  # AAAAMMDD
+
 class ReferenceNotFound(Exception):
     pass
 
@@ -111,15 +115,15 @@ def get_file_address(from_date, to_date, company):
             # 0
             row.company,
             cstr(row.tax_id).replace("-", ""),
-            row.tipo_rnc,															# 1
+            tax_id_type_map[row.tipo_rnc],															# 1
             row.ncf,																# 2
             row.return_against_ncf,													# 3
-            row.tipo_de_ingreso,													# 4
-            row.posting_date.strftime("%Y%m%d"),									# 5
+            income_type_map[row.tipo_de_ingreso],													# 4
+            row.posting_date.strftime(DGII_DATE_FORMAT),									# 5
             # 6   row.payment_date.strftime("%Y%m%d") if row.payment_date  else "",
             get_retention_date(row),
             row.base_net_total,														# 7
-            row.base_total_taxes_and_charges,										# 8
+            row.base_total_taxes_and_charges,										# 8 ojo con esta... deberia ser el total de los campos que son 
             # 9   row.retention_amount,
             get_retention_amount(row, typeof="ITBIS", from_date=from_date),
             row.itbis_percibido or "",												# 10
@@ -149,16 +153,16 @@ def get_retention_date(row):
     try:
         reference_row = get_reference_row(row)
     except ReferenceNotFound:
-        return 0
+        return ""
     else:
         posting_date = frappe.get_value(
             "Payment Entry", reference_row.parent, "posting_date")
-        return frappe.utils.getdate(posting_date).strftime("%Y%m")
+        return frappe.utils.getdate(posting_date).strftime(DGII_DATE_FORMAT)
 
 
 def get_retention_amount(row, typeof, from_date):
     retention_date = get_retention_date(row)
-    bill_date = frappe.utils.getdate(from_date).strftime("%Y%m")
+    bill_date = frappe.utils.getdate(from_date).strftime(DGII_DATE_FORMAT)
 
     if retention_date == 0 or bill_date != retention_date:
         return 0
