@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe.utils import get_link_to_form
+from frappe.utils import get_link_to_form, now
 
 from frappe.model.document import Document
 
@@ -111,6 +111,23 @@ class ItemGenerator(Document):
 		else:
 			frappe.throw("No se especificó el valor para el campo 'Plantilla para la Descripción' en el doctype Nombre de Producto")
 
+	def on_update_after_submit(self):
+		self.self_validate_for_uniqueness()
+
+		self.render_description()
+
+		# description and smart_hash are calculated after the db_update
+		# so, we need to update the db again to save the changes
+		self.db_update()
+
+		frappe.enqueue_doc(
+			method="update_existing_items",
+			doctype=self.doctype,
+			name=self.name,
+			enqueue_after_commit=True,
+			queue="default",
+		)
+
 	def on_update(self):
 		frappe.enqueue_doc(
 			method="update_existing_items",
@@ -182,4 +199,13 @@ class ItemGenerator(Document):
 		for item in frappe.get_all(doctype, filters):
 			doc = frappe.get_doc(doctype, item.name)
 			doc.description = self.description
-			doc.save()
+
+			doc.smart_hash = self.smart_hash
+			doc.item_name = self.item
+
+			doc.modified = now()
+			doc.modified_by = frappe.session.user
+
+			doc.db_update()
+
+			doc.notify_update()
