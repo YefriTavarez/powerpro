@@ -51,41 +51,63 @@
         });
     }
 
+    function add_create_sku_button(frm) {
+        if (frm.doc.docstatus !== 1) {
+            return ; // only aplicable for submitted documents
+        }
+
+        const { doc } = frm;
+
+        const { __onload: onload } = doc;
+        if (onload && !onload.item_exists) {
+            frm.add_custom_button("Crear SKU", function() {
+                if (frm.doc.__unsaved) {
+                    frappe.throw("Favor de guardar el documento antes de intentar crear el SKU");
+                }
+
+                const method = "igcaribe.client.create_sku_based_on_item_generator";
+                const args = {
+                    item_generator_id: frm.doc.name,
+                };
+                
+                function callback({ message }) {
+                    frappe.prompt([
+                        {fieldtype: "HTML", options: 
+                                            `El SKU ${message} ha sido creado satisfactoriamente.<br>
+                                            <button class="btn btn-info" onclick="frappe.utils.copy_to_clipboard('${message}')">Copiar al Porta Papeles</button>
+                                            `}], function() {
+                        frappe.set_route(`/app/item/${message}`);
+                        }, "SKU Creado", "Ver SKU");
+                
+                }
+
+                frappe.call({ method, args, callback });
+            });
+        }
+    }
+
+    function add_edit_button(frm) {
+        const { doc } = frm;
+
+        if (doc.docstatus !== 1) {
+            return ; // only aplicable for submitted documents
+        }
+
+        if (doc.__editable) {
+            return ; // already editable
+        }
+
+        frm.add_custom_button("Editar", function() {
+            doc.__editable = true;
+            frm.refresh();
+        });
+    }
+
+
     frappe.ui.form.on('Item Generator', {
         refresh: function(frm) {
-            if (frm.doc.docstatus !== 1) {
-                return ; // only aplicable for submitted documents
-            }
-
-
-            const { doc } = frm;
-
-            const { __onload: onload } = doc;
-            if (onload && !onload.item_exists) {
-                frm.add_custom_button("Crear SKU", function() {
-                    if (frm.doc.__unsaved) {
-                        frappe.throw("Favor de guardar el documento antes de intentar crear el SKU");
-                    }
-
-                    const method = "igcaribe.client.create_sku_based_on_item_generator";
-                    const args = {
-                        item_generator_id: frm.doc.name,
-                    };
-                    
-                    function callback({ message }) {
-                        frappe.prompt([
-                            {fieldtype: "HTML", options: 
-                                                `El SKU ${message} ha sido creado satisfactoriamente.<br>
-                                                <button class="btn btn-info" onclick="frappe.utils.copy_to_clipboard('${message}')">Copiar al Porta Papeles</button>
-                                                `}], function() {
-                            frappe.set_route(`/app/item/${message}`);
-                            }, "SKU Creado", "Ver SKU");
-                    
-                    }
-
-                    frappe.call({ method, args, callback });
-                });
-            }
+            add_create_sku_button(frm);
+            add_edit_button(frm);
         },
         before_load: function(frm) {
             frm.trigger("setup_fields");
