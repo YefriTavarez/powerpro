@@ -83,6 +83,11 @@
 
                 frappe.call({ method, args, callback });
             });
+        } else if (onload && onload.item_exists) {
+            const item_id = onload.item_exists;
+            frm.add_custom_button("Ver SKU", function() {
+                frappe.set_route(`/app/item/${item_id}`);
+            });
         }
     }
 
