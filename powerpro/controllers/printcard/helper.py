@@ -255,7 +255,7 @@ def _sign_pdf_with_base64(printcard_id) -> bool:
 	# Generate a unique filename for the signed PDF
 	signed_pdf_path = f"/files/{signed_pdf_filename}"
 	if frappe.session.user == "Administrator":
-		signed_pdf_path = f"/files/{canvas.name}{uuid.uuid4()}.pdf"
+		signed_pdf_path = f"/files/{canvas.name}-{uuid.uuid4()}.pdf"
 	
 	# Sign the PDF
 	signed = signature_helper.sign_pdf_with_base64(
