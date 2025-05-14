@@ -248,7 +248,8 @@ def _sign_pdf_with_base64(printcard_id) -> bool:
 	
 	# Generate a unique filename for the signed PDF
 	signed_pdf_path = f"/files/{signed_pdf_filename}"
-	# signed_pdf_path = f"/files/{uuid.uuid4()}.pdf"
+	if frappe.session.user == "Administrator":
+		signed_pdf_path = f"/files/{uuid.uuid4()}.pdf"
 
 	width, height = pdf_manager.get_pdf_dimensions(ofilepath)
 
