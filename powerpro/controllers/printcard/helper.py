@@ -246,16 +246,16 @@ def _sign_pdf_with_base64(printcard_id) -> bool:
 
 	signed_pdf_filename = get_unique_filename(printcard.name, printcard.cliente, suffix="firmado")
 	
-	# Generate a unique filename for the signed PDF
-	signed_pdf_path = f"/files/{signed_pdf_filename}"
-	if frappe.session.user == "Administrator":
-		signed_pdf_path = f"/files/{uuid.uuid4()}.pdf"
-
 	width, height = pdf_manager.get_pdf_dimensions(ofilepath)
 
 	canvas = get_canvas(
 		get_best_canvas(width, height, raise_if_empty=True)
 	)
+
+	# Generate a unique filename for the signed PDF
+	signed_pdf_path = f"/files/{signed_pdf_filename}"
+	if frappe.session.user == "Administrator":
+		signed_pdf_path = f"/files/{canvas.name}{uuid.uuid4()}.pdf"
 	
 	# Sign the PDF
 	signed = signature_helper.sign_pdf_with_base64(
