@@ -674,3 +674,27 @@ def get_tipo_bienes_y_servicios_comprados(
         "10 -ADQUISICIONES DE ACTIVOS": "10",
         "11- GASTOS DE SEGUROS": "11",
     }.get(row.tipo_bienes_y_servicios_comprados, "02")
+
+
+def get_tipo_rnc(
+    row: dict,
+) -> str:
+    """Tipo de RNC
+
+    En “Tipo de RNC” registre el tipo de RNC del proveedor. Este campo no estará
+    habilitado hasta tanto no existan normativas que establezcan un régimen de
+    retención u obliguen a los contribuyentes a realizar la misma.
+    """
+
+    # only two types of RNC are allowed
+    # 1. RNC
+    # 2. CEDULA
+
+    if len(row.tax_id) == 9: # RNC
+        return "1"
+    elif len(row.tax_id) == 11: # CEDULA
+        return "2"
+
+    frappe.throw(
+        f"Invalid RNC length for invoice {row.name}: {len(row.tax_id)}"
+    )
