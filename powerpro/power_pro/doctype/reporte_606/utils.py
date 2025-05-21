@@ -1,0 +1,23 @@
+# Copyright (c) 2025, Yefri Tavarez and Contributors
+# For license information, please see license.txt
+
+tax_id_type_map = {
+	"RNC": 1,
+	"CEDULA": 2,
+	"PASAPORTE": 3,
+}
+
+
+good_service_type_map = {
+	"01-GASTOS DE PERSONAL": "01",
+	"02-GASTOS POR TRABAJOS, SUMINISTROS Y SERVICIOS": "02",
+	"03-ARRENDAMIENTOS": "03",
+	"04-GASTOS DE ACTIVOS FIJO": "04",
+	"05 -GASTOS DE REPRESENTACIÓN": "05",
+	"06 -OTRAS DEDUCCIONES ADMITIDAS": "06",
+	"07 -GASTOS FINANCIEROS": "07",
+	"08 -GASTOS EXTRAORDINARIOS": "08",
+	"09 -COMPRAS Y GASTOS QUE FORMARAN PARTE DEL COSTO DE VENTA": "09",
+	"10 -ADQUISICIONES DE ACTIVOS": "10",
+	"11- GASTOS DE SEGUROS": "11",
+}

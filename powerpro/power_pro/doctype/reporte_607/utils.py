@@ -9,10 +9,10 @@ tax_id_type_map = {
 
 
 income_type_map = {
-	"01 - Ingresos por Operaciones (No Financieros)": 1,
-	"02 - Ingresos Financieros": 2,
-	"03 - Ingresos Extraordinarios": 3,
-	"04 - Ingresos por Arrendamientos": 4,
-	"05 - Ingresos por Venta de Activo Depreciable": 5,
-	"06 - Otros Ingresos": 6,
+	"01 - Ingresos por Operaciones (No Financieros)": "01",
+	"02 - Ingresos Financieros": "02",
+	"03 - Ingresos Extraordinarios": "03",
+	"04 - Ingresos por Arrendamientos": "04",
+	"05 - Ingresos por Venta de Activo Depreciable": "05",
+	"06 - Otros Ingresos": "06",
 }
