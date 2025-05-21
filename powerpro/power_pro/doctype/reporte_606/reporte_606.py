@@ -27,6 +27,7 @@ def get_file_address(from_date, to_date, txt=0):
     result = frappe.db.sql(f"""
         Select
             pinv.name As name,
+            pinv.supplier As supplier,
             pinv.tax_id As tax_id,
             NULL As tipo_rnc,
             pinv.tipo_bienes_y_servicios_comprados As tipo_bienes_y_servicios_comprados,
@@ -126,9 +127,17 @@ def get_file_address(from_date, to_date, txt=0):
                 _payment_date = date.strftime("%Y%m")
                 _payment_day = date.strftime("%d")
 
+            if not row.tax_id:
+                row.tax_id = frappe.get_value("Supplier", row.supplier, "tax_id")
+            
+            if not row.tax_id:
+                frappe.throw(_("Tax ID not found for supplier {0}").format(row.supplier))
+
+            row.tax_id = row.tax_id.replace("-", "")
+
             w.writerow([
-                row.tax_id.replace("-", "") if row.tax_id else "", 	# RNC                                                #01
-                row.tipo_rnc,                                                                                            #02        
+                row.tax_id if row.tax_id else "", 	# RNC                                                #01
+                helper.get_tipo_rnc(row),                                                                                            #02        
                 helper.get_tipo_bienes_y_servicios_comprados(row),        # Tipo de RNC                                              #03 row.ncf,		# NCF                                                                                    #04
                 row.ncf,                                                                                               #04
                 helper.get_ncf_modificado(from_date=from_date, to_date=to_date, invoice_id=row.name),		              #05
@@ -189,9 +198,17 @@ def generate_txt(result, from_date, to_date):
                 pass
 
 
+        if not row.tax_id:
+            row.tax_id = frappe.get_value("Supplier", row.supplier, "tax_id")
+        
+        if not row.tax_id:
+            frappe.throw(_("Tax ID not found for supplier {0}").format(row.supplier))
+
+        row.tax_id = row.tax_id.replace("-", "")
+
         line = (
-            f"{row.tax_id.replace('-', '') if row.tax_id else ''}|"  # 1
-            f"{row.tipo_rnc or ''}|"  # 2
+            f"{row.tax_id if row.tax_id else ''}|"  # 1
+            f"{helper.get_tipo_rnc(row) or ''}|"  # 2
             f"{helper.get_tipo_bienes_y_servicios_comprados(row) or ''}|"  # 3
             f"{row.ncf or ''}|"  # 4
             f"{helper.get_ncf_modificado(from_date=from_date, to_date=to_date, invoice_id=row.name)}|"  # 5
