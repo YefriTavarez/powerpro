@@ -5,6 +5,51 @@ from typing import Union
 
 import frappe
 
+
+ncf_modificados = None
+
+
+def get_ncf_modificado(
+    invoice_id=None, from_date=None, to_date=None, company=None
+) -> str:
+    """NCF Modificado
+
+    En “NCF Modificado” registre el NCF del comprobante que fue modificado por la
+    factura. Este campo no estará habilitado hasta tanto no existan normativas que
+    establezcan un régimen de retención u obliguen a los contribuyentes a realizar la
+    misma.
+    """
+
+    def generator():
+        return dict(
+            frappe.db.sql(
+                f"""
+                    Select
+                        credit.name As invoice_id,
+                        original.ncf As ncf_modificado
+                    From
+                        `tabPurchase Invoice` As credit
+                    Inner Join
+                        `tabPurchase Invoice` As original
+                        On original.name = credit.return_against
+                        And original.docstatus = credit.docstatus
+                    Where
+                        credit.docstatus = 1
+                        And (
+                            original.posting_date Between {from_date!r} And {to_date!r}
+                            Or credit.posting_date Between {from_date!r} And {to_date!r}
+                        )
+                """
+            )
+        )
+
+    global ncf_modificados
+    if ncf_modificados is None:
+        ncf_modificados = generator()
+
+    return ncf_modificados.get(invoice_id, "") if invoice_id else ncf_modificados
+
+
 # globals
 itbis_facturado = None
 
