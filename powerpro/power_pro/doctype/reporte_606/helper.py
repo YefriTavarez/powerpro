@@ -655,3 +655,22 @@ def get_forma_de_pago(
             f"Invalid payment mode for invoice {invoice_id}: {mode_of_payment.get(invoice_id, 4)}"
         )
     return 4
+
+
+def get_tipo_bienes_y_servicios_comprados(
+    row: dict,
+) -> str:
+    
+    return {
+        "01-GASTOS DE PERSONAL": "01",
+        "02-GASTOS POR TRABAJOS, SUMINISTROS Y SERVICIOS": "02",
+        "03-ARRENDAMIENTOS": "03",
+        "04-GASTOS DE ACTIVOS FIJO": "04",
+        "05 -GASTOS DE REPRESENTACIÓN": "05",
+        "06 -OTRAS DEDUCCIONES ADMITIDAS": "06",
+        "07 -GASTOS FINANCIEROS": "07",
+        "08 -GASTOS EXTRAORDINARIOS": "08",
+        "09 -COMPRAS Y GASTOS QUE FORMARAN PARTE DEL COSTO DE VENTA": "09",
+        "10 -ADQUISICIONES DE ACTIVOS": "10",
+        "11- GASTOS DE SEGUROS": "11",
+    }.get(row.tipo_bienes_y_servicios_comprados, "02")
