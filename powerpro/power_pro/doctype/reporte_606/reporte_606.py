@@ -33,7 +33,6 @@ def get_file_address(from_date, to_date, txt=0):
             pinv.ncf As ncf,
             NULL As ncf_modificado,
             pinv.posting_date As posting_date,
-            NULL As ncf_modificado,
             NULL As fecha_pago,
             Sum(
                 If (
