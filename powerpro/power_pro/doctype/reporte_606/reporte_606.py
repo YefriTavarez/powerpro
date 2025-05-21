@@ -41,7 +41,7 @@ def get_file_address(from_date, to_date, txt=0):
                     0
                 )
             ) As monto_facturado_servicios,
-            Sum (
+            Sum(
                 If (
                     pinvitm.item_type = "Bienes",
                     pinvitm.base_amount,
