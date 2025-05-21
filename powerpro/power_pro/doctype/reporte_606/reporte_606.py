@@ -73,6 +73,8 @@ def get_file_address(from_date, to_date, txt=0):
         Where
             pinv.posting_date Between {from_date!r} And {to_date!r}
             And pinv.docstatus = 1
+        Group By
+            pinv.name
 	""", as_dict=True)
     
     if cint(txt) == 1:
