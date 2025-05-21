@@ -173,30 +173,45 @@ def generate_txt(result, from_date, to_date):
         f"606|{buyer_tax_id.replace('-', '')}|{month_date}|{str(len(result))}",  # 1
     ]
     for row in result:
-        ncf = row.ncf.split("-")[1] if row.ncf and len(row.ncf.split("-")) > 1 else row.ncf
-        date = row.posting_date.strftime(DGII_DATE_FORMAT) if row.posting_date else ''
+        # Prepare date fields as in CSV generation
+        _posting_date_aaaammdd = ""
+        if row.posting_date:
+            _posting_date_aaaammdd = row.posting_date.strftime("%Y%m%d")
+
+        _payment_date_obj = get_retention_date_if_in_range(row, from_date, to_date)
+        _payment_date_aaaammdd = ""
+        if _payment_date_obj:  # If it's a date object and not an empty string
+            # Assuming _payment_date_obj is a date object if not empty string
+            try:
+                _payment_date_aaaammdd = _payment_date_obj.strftime("%Y%m%d")
+            except AttributeError: # Handles case where _payment_date_obj might be "" or other non-date
+                pass
+
 
         line = (
-            f"{row.tax_id.replace('-', '') if row.tax_id else ''}|"
-            f"{tax_id_type_map[row.tipo_rnc]}|"
-            f"{good_service_type_map[row.tipo_bienes_y_servicios_comprados]}|"
-            f"{ncf}|"
-            f"{date}|"
-            f"{get_retention_date(row)}|"
-            f"{row.monto_facturado_servicios}|"
-            f"{row.monto_facturado_bienes}|"
-            f"{flt(row.monto_facturado_servicios) + flt(row.monto_facturado_bienes)}|"
-            f"{get_itbis(row) or 0}|"
-            f"{row.retention_amount or 0}|"
-            f"{get_retention_date_if_in_range(row, from_date, to_date)}|"
-            f"{get_itbis(row) or 0}|"
-            f"{row.retention_type or ''}|"
-            f"{row.isr_amount or 0}|"
-            f"{get_isr_date_if_in_range(row, from_date, to_date)}|"
-            f"{row.excise_tax or 0}|"
-            f"{row.other_taxes or 0}|"
-            f"{row.legal_tip}|"
-            f"{verify_payment(row)}\n"
+            f"{row.tax_id.replace('-', '') if row.tax_id else ''}|"  # 1
+            f"{row.tipo_rnc or ''}|"  # 2
+            f"{helper.get_tipo_bienes_y_servicios_comprados(row) or ''}|"  # 3
+            f"{row.ncf or ''}|"  # 4
+            f"{helper.get_ncf_modificado(from_date=from_date, to_date=to_date, invoice_id=row.name)}|"  # 5
+            f"{_posting_date_aaaammdd}|"  # 6
+            f"{_payment_date_aaaammdd}|"  # 8
+            f"{flt(row.monto_facturado_servicios, 2)}|"  # 10
+            f"{flt(row.monto_facturado_bienes, 2)}|"  # 11
+            f"{flt(row.monto_facturado_servicios, 2) + flt(row.monto_facturado_bienes)}|"  # 12
+            f"{helper.get_itbis_facturado(from_date=from_date, to_date=to_date, invoice_id=row.name) or 0}|"  # 13
+            f"{helper.get_itbis_retenido(from_date=from_date, to_date=to_date, invoice_id=row.name) or 0}|"  # 14
+            f"{helper.get_itbis_sujeto_proporcionalidad(from_date=from_date, to_date=to_date, invoice_id=row.name) or 0}|"  # 15
+            f"{helper.get_itbis_llevado_costo(from_date=from_date, to_date=to_date, invoice_id=row.name) or 0}|"  # 16
+            f"{helper.get_itbis_adelantado(from_date=from_date, to_date=to_date, invoice_id=row.name) or 0}|"  # 17
+            f"{helper.get_itbis_percibido(from_date=from_date, to_date=to_date, invoice_id=row.name) or 0}|"  # 18
+            f"{helper.get_tipo_retencion_isr(from_date=from_date, to_date=to_date, invoice_id=row.name) or ''}|"  # 19
+            f"{helper.get_isr_retenido(from_date=from_date, to_date=to_date, invoice_id=row.name) or 0}|"  # 20
+            f"{helper.get_isr_percibido(from_date=from_date, to_date=to_date, invoice_id=row.name) or 0}|"  # 21
+            f"{helper.get_selectivo_facturado(from_date=from_date, to_date=to_date, invoice_id=row.name) or 0}|"  # 22
+            f"{helper.get_otros_imp_facturado(from_date=from_date, to_date=to_date, invoice_id=row.name) or 0}|"  # 23
+            f"{helper.get_propina_facturada(from_date=from_date, to_date=to_date, invoice_id=row.name) or 0}|"  # 24
+            f"{helper.get_forma_de_pago(from_date=from_date, to_date=to_date, invoice_id=row.name) or ''}"  # 25
         )
         
         lines.append(line)
