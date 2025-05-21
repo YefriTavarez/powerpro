@@ -216,7 +216,7 @@ def generate_txt(result, from_date, to_date):
         
         lines.append(line)
     
-    return "".join(lines)
+    return "\n".join(lines)
 
 def get_retention_date(row):
     try:
