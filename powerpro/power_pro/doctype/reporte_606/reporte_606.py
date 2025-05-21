@@ -3,7 +3,7 @@
 
 from __future__ import unicode_literals
 import frappe
-from frappe.utils import cstr, flt, cint
+from frappe.utils import cstr, flt, cint, getdate
 from frappe.model.document import Document
 from frappe.utils.csvutils import UnicodeWriter
 import time
@@ -157,8 +157,21 @@ def get_file_address(from_date, to_date, txt=0):
         frappe.response['type'] = 'csv'
     frappe.response['doctype'] = "Reporte_606_" + str(int(time.time()))
 
-def generate_txt(result, from_date, to_date,):
-    lines = []
+def generate_txt(result, from_date, to_date):
+    # load company details
+    company_id = frappe.defaults.get_global_default("company")
+    company = frappe.get_doc("Company", company_id)
+    buyer_tax_id = company.tax_id
+
+
+    # date of the report
+    month_date = getdate(from_date).strftime("%Y%m")
+
+
+    # header of text file
+    lines = [
+        f"606|{buyer_tax_id.replace('-', '')}|{month_date}|{str(len(result))}",  # 1
+    ]
     for row in result:
         ncf = row.ncf.split("-")[1] if row.ncf and len(row.ncf.split("-")) > 1 else row.ncf
         date = row.posting_date.strftime(DGII_DATE_FORMAT) if row.posting_date else ''
