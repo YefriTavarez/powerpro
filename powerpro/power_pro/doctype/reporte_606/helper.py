@@ -463,7 +463,6 @@ def get_otros_imp_facturado(
     return otros_impuestos.get(invoice_id, 0.0) if invoice_id else sum(otros_impuestos.values())
 
 
-
 propina_legal = None
 
 
