@@ -129,9 +129,9 @@ def get_file_address(from_date, to_date, txt=0):
             w.writerow([
                 row.tax_id.replace("-", "") if row.tax_id else "", 	# RNC                                                #01
                 row.tipo_rnc,                                                                                            #02        
-                row.tipo_bienes_y_servicios_comprados,        # Tipo de RNC                                              #03
-                row.ncf,		# NCF                                                                                    #04
-                row.ncf_modificado,		# NCF                                                                             #05
+                helper.get_tipo_bienes_y_servicios_comprados(row),        # Tipo de RNC                                              #03 row.ncf,		# NCF                                                                                    #04
+                row.ncf,                                                                                               #04
+                helper.get_ncf_modificado(from_date=from_date, to_date=to_date, invoice_id=row.name),		              #05
                 _posting_date,  # FC AAAAMM                                                                              #06
                 _posting_day,  # FC AAAAMM                                                                               #06
                 _payment_date,  # FC AAAAMM                                                                              #07
