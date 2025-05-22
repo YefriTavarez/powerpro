@@ -81,13 +81,24 @@ def get_itbis_facturado(
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
+                        (
+                            Select
+                                Distinct(account_head) As account_head,
+                                dominican_tax_type
+                            From
+                                `tabPurchase Taxes and Charges`
+                            Where
+                                parenttype = "Purchase Taxes and Charges Template"
+                        ) As template
+                        On template.account_head = child.account_head
+                    Inner Join
                         `tabPurchase Invoice` As  parent
                         On
                             child.parenttype = "Purchase Invoice"
                             And child.parentfield = "taxes"
                             And child.parent = parent.name
                             And child.docstatus = parent.docstatus
-                            And child.dominican_tax_type = "ITBIS"
+                            And template.dominican_tax_type = "ITBIS"
                             And child.add_deduct_tax = "Add"
                     Where
                         parent.docstatus = 1
@@ -137,13 +148,24 @@ def get_itbis_retenido(
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
+                        (
+                            Select
+                                Distinct(account_head) As account_head,
+                                dominican_tax_type
+                            From
+                                `tabPurchase Taxes and Charges`
+                            Where
+                                parenttype = "Purchase Taxes and Charges Template"
+                        ) As template
+                        On template.account_head = child.account_head
+                    Inner Join
                         `tabPurchase Invoice` As  parent
                         On
                             child.parenttype = "Purchase Invoice"
                             And child.parentfield = "taxes"
                             And child.parent = parent.name
                             And child.docstatus = parent.docstatus
-                            And child.dominican_tax_type = "ITBIS"
+                            And template.dominican_tax_type = "ITBIS"
                             And child.add_deduct_tax = "Deduct"
                     Where
                         parent.docstatus = 1
@@ -306,13 +328,24 @@ def get_isr_retenido(
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
+                        (
+                            Select
+                                Distinct(account_head) As account_head,
+                                dominican_tax_type
+                            From
+                                `tabPurchase Taxes and Charges`
+                            Where
+                                parenttype = "Purchase Taxes and Charges Template"
+                        ) As template
+                        On template.account_head = child.account_head
+                    Inner Join
                         `tabPurchase Invoice` As  parent
                         On
                             child.parenttype = "Purchase Invoice"
                             And child.parentfield = "taxes"
                             And child.parent = parent.name
                             And child.docstatus = parent.docstatus
-                            And child.dominican_tax_type = "ISR"
+                            And template.dominican_tax_type = "ISR"
                             And child.add_deduct_tax = "Deduct"
                     Where
                         parent.docstatus = 1
@@ -378,13 +411,24 @@ def get_selectivo_facturado(
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
+                        (
+                            Select
+                                Distinct(account_head) As account_head,
+                                dominican_tax_type
+                            From
+                                `tabPurchase Taxes and Charges`
+                            Where
+                                parenttype = "Purchase Taxes and Charges Template"
+                        ) As template
+                        On template.account_head = child.account_head
+                    Inner Join
                         `tabPurchase Invoice` As  parent
                         On
                             child.parenttype = "Purchase Invoice"
                             And child.parentfield = "taxes"
                             And child.parent = parent.name
                             And child.docstatus = parent.docstatus
-                            And child.dominican_tax_type = "ISC"
+                            And template.dominican_tax_type = "ISC"
                             And child.add_deduct_tax = "Add"
                     Where
                         parent.docstatus = 1
@@ -437,13 +481,24 @@ def get_otros_imp_facturado(
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
+                        (
+                            Select
+                                Distinct(account_head) As account_head,
+                                dominican_tax_type
+                            From
+                                `tabPurchase Taxes and Charges`
+                            Where
+                                parenttype = "Purchase Taxes and Charges Template"
+                        ) As template
+                        On template.account_head = child.account_head
+                    Inner Join
                         `tabPurchase Invoice` As  parent
                         On
                             child.parenttype = "Purchase Invoice"
                             And child.parentfield = "taxes"
                             And child.parent = parent.name
                             And child.docstatus = parent.docstatus
-                            And child.dominican_tax_type Not In ("ISC", "ITBIS", "ISR", "LEGAL TIP")
+                            And template.dominican_tax_type Not In ("ISC", "ITBIS", "ISR", "LEGAL TIP")
                             And child.add_deduct_tax = "Add"
                     Where
                         parent.docstatus = 1
@@ -495,13 +550,24 @@ def get_propina_facturada(
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
+                        (
+                            Select
+                                Distinct(account_head) As account_head,
+                                dominican_tax_type
+                            From
+                                `tabPurchase Taxes and Charges`
+                            Where
+                                parenttype = "Purchase Taxes and Charges Template"
+                        ) As template
+                        On template.account_head = child.account_head
+                    Inner Join
                         `tabPurchase Invoice` As  parent
                         On
                             child.parenttype = "Purchase Invoice"
                             And child.parentfield = "taxes"
                             And child.parent = parent.name
                             And child.docstatus = parent.docstatus
-                            And child.dominican_tax_type = "LEGAL TIP"
+                            And template.dominican_tax_type = "LEGAL TIP"
                             And child.add_deduct_tax = "Add"
                     Where
                         parent.docstatus = 1
