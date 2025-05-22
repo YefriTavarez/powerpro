@@ -38,14 +38,14 @@ def get_file_address(from_date, to_date, txt=0):
             Sum(
                 If (
                     pinvitm.item_type != "Bienes",
-                    pinvitm.base_amount,
+                    Abs(pinvitm.base_amount),
                     0
                 )
             ) As monto_facturado_servicios,
             Sum(
                 If (
                     pinvitm.item_type = "Bienes",
-                    pinvitm.base_amount,
+                    Abs(pinvitm.base_amount),
                     0
                 )
             ) As monto_facturado_bienes,

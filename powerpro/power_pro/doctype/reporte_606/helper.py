@@ -77,7 +77,9 @@ def get_itbis_facturado(
                 f"""
                     Select
                         parent.name As invoice_id,
-                        Sum(child.base_tax_amount) As amount
+                        Sum(
+                            Abs(child.base_tax_amount)
+                        ) As amount
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
@@ -144,7 +146,9 @@ def get_itbis_retenido(
                 f"""
                     Select
                         parent.name As invoice_id,
-                        Sum(-child.base_tax_amount) As amount
+                        Sum(
+                            Abs(child.base_tax_amount)
+                        ) As amount
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
@@ -324,7 +328,9 @@ def get_isr_retenido(
                 f"""
                     Select
                         parent.name As invoice_id,
-                        Sum(-child.base_tax_amount) As amount
+                        Sum(
+                            Abs(child.base_tax_amount)
+                        ) As amount
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
@@ -407,7 +413,9 @@ def get_selectivo_facturado(
                 f"""
                     Select
                         parent.name As invoice_id,
-                        Sum(child.base_tax_amount) As amount
+                        Sum(
+                            Abs(child.base_tax_amount)
+                        ) As amount
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
@@ -477,7 +485,9 @@ def get_otros_imp_facturado(
                 f"""
                     Select
                         parent.name As invoice_id,
-                        Sum(child.base_tax_amount) As amount
+                        Sum(
+                            Abs(child.base_tax_amount)
+                        ) As amount
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
@@ -546,7 +556,9 @@ def get_propina_facturada(
                 f"""
                     Select
                         parent.name As invoice_id,
-                        Sum(child.base_tax_amount) As amount
+                        Sum(
+                            Abs(child.base_tax_amount)
+                        ) As amount
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
