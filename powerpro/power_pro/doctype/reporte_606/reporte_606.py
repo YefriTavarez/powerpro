@@ -76,6 +76,22 @@ def get_file_address(from_date, to_date, txt=0):
             And pinv.docstatus = 1
             And pinv.ncf Is Not Null
             And pinv.ncf != ''
+            Or (
+                pinv.taxes_and_charges_deducted != 0
+                And pinv.name In (
+                    Select
+                        ref.reference_name
+                    From
+                        `tabPayment Entry Reference` As ref
+                    Inner Join
+                        `tabPayment Entry` As pe
+                        On pe.name = ref.parent
+                    Where
+                        ref.reference_doctype = 'Purchase Invoice'
+                        And pe.docstatus = 1
+                        And pe.posting_date Between {from_date!r} And {to_date!r}
+                )
+            )
         Group By
             pinv.name
 	""", as_dict=True)

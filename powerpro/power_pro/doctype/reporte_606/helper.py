@@ -106,6 +106,15 @@ def get_itbis_facturado(
                         parent.docstatus = 1
                         {company_filter}
                         And parent.posting_date Between {from_date!r} And {to_date!r}
+                        Or parent.name In (
+                            Select ref.reference_name
+                            From `tabPayment Entry Reference` As ref
+                            Inner Join `tabPayment Entry` As pe
+                            On pe.name = ref.parent
+                            Where ref.reference_doctype = "Purchase Invoice"
+                            And ref.docstatus = 1
+                            And pe.posting_date Between {from_date!r} And {to_date!r}
+                        )
                         And parent.is_opening = "No"
                     Group by
                         parent.name
@@ -175,6 +184,15 @@ def get_itbis_retenido(
                         parent.docstatus = 1
                         {company_filter}
                         And parent.posting_date Between {from_date!r} And {to_date!r}
+                        Or parent.name In (
+                            Select ref.reference_name
+                            From `tabPayment Entry Reference` As ref
+                            Inner Join `tabPayment Entry` As pe
+                            On pe.name = ref.parent
+                            Where ref.reference_doctype = "Purchase Invoice"
+                            And ref.docstatus = 1
+                            And pe.posting_date Between {from_date!r} And {to_date!r}
+                        )
                         And parent.is_opening = "No"
                     Group by
                         parent.name
@@ -357,6 +375,15 @@ def get_isr_retenido(
                         parent.docstatus = 1
                         {company_filter}
                         And parent.posting_date Between {from_date!r} And {to_date!r}
+                        Or parent.name In (
+                            Select ref.reference_name
+                            From `tabPayment Entry Reference` As ref
+                            Inner Join `tabPayment Entry` As pe
+                            On pe.name = ref.parent
+                            Where ref.reference_doctype = "Purchase Invoice"
+                            And ref.docstatus = 1
+                            And pe.posting_date Between {from_date!r} And {to_date!r}
+                        )
                         And parent.is_opening = "No"
                     Group by
                         parent.name
@@ -442,6 +469,15 @@ def get_selectivo_facturado(
                         parent.docstatus = 1
                         {company_filter}
                         And parent.posting_date Between {from_date!r} And {to_date!r}
+                        Or parent.name In (
+                            Select ref.reference_name
+                            From `tabPayment Entry Reference` As ref
+                            Inner Join `tabPayment Entry` As pe
+                            On pe.name = ref.parent
+                            Where ref.reference_doctype = "Purchase Invoice"
+                            And ref.docstatus = 1
+                            And pe.posting_date Between {from_date!r} And {to_date!r}
+                        )
                         And parent.is_opening = "No"
                     Group by
                         parent.name
@@ -514,6 +550,15 @@ def get_otros_imp_facturado(
                         parent.docstatus = 1
                         {company_filter}
                         And parent.posting_date Between {from_date!r} And {to_date!r}
+                        Or parent.name In (
+                            Select ref.reference_name
+                            From `tabPayment Entry Reference` As ref
+                            Inner Join `tabPayment Entry` As pe
+                            On pe.name = ref.parent
+                            Where ref.reference_doctype = "Purchase Invoice"
+                            And ref.docstatus = 1
+                            And pe.posting_date Between {from_date!r} And {to_date!r}
+                        )
                         And parent.is_opening = "No"
                     Group by
                         parent.name
@@ -585,6 +630,15 @@ def get_propina_facturada(
                         parent.docstatus = 1
                         {company_filter}
                         And parent.posting_date Between {from_date!r} And {to_date!r}
+                        Or parent.name In (
+                            Select ref.reference_name
+                            From `tabPayment Entry Reference` As ref
+                            Inner Join `tabPayment Entry` As pe
+                            On pe.name = ref.parent
+                            Where ref.reference_doctype = "Purchase Invoice"
+                            And ref.docstatus = 1
+                            And pe.posting_date Between {from_date!r} And {to_date!r}
+                        )
                         And parent.is_opening = "No"
                     Group by
                         parent.name
