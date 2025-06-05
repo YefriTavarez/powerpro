@@ -246,7 +246,9 @@ class Project(project.Project):
                     out.append(responsible)
             return out
 
-        all_users_in_department = self._get_users_based_on_department(department)
+        all_users_in_department = [
+            d.user for d in self._get_users_based_on_department(department)
+        ]
 
         for user in all_users_in_department:
             if user in users_with_role:
