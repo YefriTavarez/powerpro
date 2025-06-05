@@ -141,25 +141,25 @@ def get_task(name):
 
 
 def _(text):
-	"""Translate text to the current language."""
-	if not text:
-		return text
+    """Translate text to the current language."""
+    if not text:
+        return text
 
-	if not isinstance(text, str):
-		return text
+    if not isinstance(text, str):
+        return text
 
-	if frappe.local.lang in {"es", "es-DO"}:
-		# Spanish translations
-		try:
-			return {
-				"Open": "Abierto",
-				"Working": "Trabajando",
-				"Pending Review": "Pendiente de Revisión",
-				"Overdue": "Vencido",
-				"Completed": "Completado",
-				"Cancelled": "Cancelado",
-			}[text]
-		except KeyError:
-			...
+    if frappe.local.lang in {"es", "es-DO"}:
+        # Spanish translations
+        try:
+            return {
+                "Open": "Abierto",
+                "Working": "Trabajando",
+                "Pending Review": "Pendiente de Revisión",
+                "Overdue": "Vencido",
+                "Completed": "Completado",
+                "Cancelled": "Cancelado",
+            }[text]
+        except KeyError:
+            ...
 
-	return frappe._(text)
+    return frappe._(text)
