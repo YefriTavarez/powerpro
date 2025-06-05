@@ -11,9 +11,17 @@
 </div>
 {% else %}
 <div id="tableView" class="d-none d-lg-block">
-    <table class="table table-hover table-no-border">
+    <style>
+        .table-zebra tbody tr:nth-of-type(odd) {
+            background-color: #ffffff;
+        }
+        .table-zebra tbody tr:nth-of-type(even) {
+            background-color: #fafafa;
+        }
+    </style>
+    <table class="table table-zebra">
         <thead>
-            <tr>
+            <tr style="background-color: #021e42; color: white">
                 <th>ID</th>
                 <th>Título</th>
                 <th>Proyecto</th>
@@ -26,7 +34,13 @@
         </thead>
         <tbody>
             {% for task in tasks %}
-            <tr data-task-id="{{ task.id }}" data-project-id="{{ task.project }}" title="Tarea: {{ task.id }}" class="task-row" data-status="{{ task.status }}">
+            <tr
+                data-task-id="{{ task.id }}"
+                data-project-id="{{ task.project }}"
+                title="Tarea: {{ task.id }}"
+                class="task-row"
+                data-status="{{ task.status }}"
+            >
                 <td title="Prioridad: {{ translate[task.priority] }}" style="white-space: nowrap">
                     {{ task.id }}
 
@@ -43,8 +57,18 @@
                 <td style="white-space: nowrap d-none d-lg-block">{{ format_date(task.date) }}</td>
                 <td style="white-space: nowrap">{{ format_date(task.due_date) }}</td>
                 <td style="white-space: nowrap">
-                    <span class="status-indicator status-{{ task.status }}"></span>
-                    {{ translate[capitalize(task.status)] }}
+                    {% const indicators = {
+                        "Open": "orange",
+                        "Working": "blue",
+                        "Pending Review": "yellow",
+                        "Overdue": "red",
+                        "Completed": "green",
+                        "Cancelled": "gray",
+				    } %}
+                    <!-- <span class="status-indicator status-{{ task.status }}"></span> -->
+                    <span class="indicator-pill {{ indicators[capitalize(task.status)] }}">
+                        {{ translate[capitalize(task.status)] }}
+                    </span>
                 </td>
                 <td class="d-none d-md-block">{{ task.user.split(", ").join("<br>") }}</td>
                 <td title="Acciones">
