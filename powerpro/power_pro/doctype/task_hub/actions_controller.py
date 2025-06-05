@@ -23,6 +23,9 @@ def reopen_task(hub, task_id):
 
     task.status = "Open"
 
+    task.flags.ignore_permissions = True  # Ignore permissions to allow completion
+    task.flags.ignore_mandatory = True  # Ignore mandatory fields to allow completion
+
     try:
         task.save()
     except frappe.exceptions.ValidationError as e:
@@ -48,6 +51,9 @@ def complete_task(hub, task_id):
     task.status = "Completed"
     task.completed_on = frappe.utils.today()
     task.completed_by = frappe.session.user
+
+    task.flags.ignore_permissions = True  # Ignore permissions to allow completion
+    task.flags.ignore_mandatory = True  # Ignore mandatory fields to allow completion
 
     try:
         task.save()
@@ -96,6 +102,9 @@ def change_status(hub, task_id, status):
         task.completed_on = frappe.utils.today()
         task.completed_by = frappe.session.user
 
+    task.flags.ignore_permissions = True  # Ignore permissions to allow completion
+    task.flags.ignore_mandatory = True  # Ignore mandatory fields to allow completion
+
     try:
         task.save()
     except frappe.exceptions.ValidationError as e:
@@ -120,6 +129,9 @@ def request_revision(hub, task_id):
         frappe.throw(f"La tarea {task_id} ya está en el estado {_(task.status)!r}.")
 
     task.status = "Pending Review"
+
+    task.flags.ignore_permissions = True  # Ignore permissions to allow completion
+    task.flags.ignore_mandatory = True  # Ignore mandatory fields to allow completion
 
     try:
         task.save()
