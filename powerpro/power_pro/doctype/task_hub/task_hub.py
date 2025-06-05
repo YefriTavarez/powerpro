@@ -7,6 +7,7 @@ if TYPE_CHECKING:
 	import datetime
 
 import frappe
+from frappe.utils import get_fullname
 from frappe.model.document import Document
 
 
@@ -66,7 +67,7 @@ class TaskHub(Document):
 		if user:
 			filtrs.append(["Task Responsible", "user", "=", user])
 
-		task_ids = frappe.get_list(
+		task_ids = frappe.get_all(
 			"Task", filters=filtrs, or_filters=or_filters, pluck="name", order_by="name asc",
 		)
 
@@ -99,7 +100,7 @@ class TaskHub(Document):
 				"due_date": task.exp_end_date,
 				"project": task.project,
 				"priority": task.priority,
-				"user": ", ".join([d.user for d in task.users if d.user]),
+				"user": ", ".join([get_fullname(d.user) for d in task.users if d.user]),
 			})
 
 		return out
