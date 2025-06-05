@@ -137,7 +137,7 @@ class Project(project.Project):
                 task.name,
                 task.subject,
                 task.status,
-                Group_Concat(responsible.user SEPARATOR "<br>") As users
+                Group_Concat(user.full_name SEPARATOR "<br>") As users
             From
                 `tabTask` As task
             Left Join
@@ -146,12 +146,16 @@ class Project(project.Project):
                     And responsible.parenttype = "Task"
                     And responsible.parentfield = "users"
                     And IfNull(responsible.user, "") != ""
+            Left Join
+                `tabUser` As user
+                On user.name = responsible.user
             Where
                 task.project = {self.name!r}
             Group By
                 task.name
             """, as_dict=True
         )
+
 
     def get_expected_dates(self, project_template, project_template_task):
         gap_in_minutes = cint(project_template.gap_between_tasks) or 30

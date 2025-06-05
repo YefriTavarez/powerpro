@@ -93,13 +93,21 @@ frappe.provide("powerpro.masks");
 					"Cancelled": "gray",
 				};
 				const status_class = (status) => {
-					return `indicator ${indicators[status] || "secondary"}`;
+					return `indicator-pill ${indicators[status] || "secondary"}`;
 				};
 
 				const table = `
+					<style>
+						.table-zebra tbody tr:nth-of-type(odd) {
+							background-color: #ffffff;
+						}
+						.table-zebra tbody tr:nth-of-type(even) {
+							background-color: #fafafa;
+						}
+					</style>
 					<table class="table table-zebra">
 						<thead>
-							<tr style="background-color: var(--control-bg); border-radius: 4px;">
+							<tr style="background-color: #021e42; color: white; border-radius: 4px;">
 								<th>
 								<span style="font-size: 1.2em">Tarea</span>
 								</th>
@@ -128,7 +136,7 @@ frappe.provide("powerpro.masks");
 										<td>
 											${cstr(users || "N/A").split("<br>")
 												.map((user) => {
-													return `<span class="badge badge-info p-2 my-1">${user}</span>`;
+													return `<span class="badge badge-light p-2 my-1">${user}</span>`;
 												})
 												.join("<br> ")}
 										</td>
