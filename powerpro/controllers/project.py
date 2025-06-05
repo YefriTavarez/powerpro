@@ -42,8 +42,16 @@ class Project(project.Project):
             for project_template_task in project_template.tasks:
                 template_task = frappe.get_doc("Task", project_template_task.task)
                 tmp_task_details.append(template_task)
+
+                # load parent_tasks into tmp_task_details
                 task = self.create_task_from_template(template_task, project_template, project_template_task)
                 project_tasks.append(task)
+
+                if template_task.is_group: # type: ignore
+                    for _template_task in self.load_parent_tasks(template_task):
+                        tmp_task_details.append(_template_task)
+                        task = self.create_task_from_template(_template_task, project_template, project_template_task)
+                        project_tasks.append(task)
 
             self.dependency_mapping(tmp_task_details, project_tasks)
 
@@ -61,7 +69,7 @@ class Project(project.Project):
                 doctype="Task",
                 subject=task_details.subject,
                 project=self.name,
-                users=self.get_task_users(project_template_task),
+                users=self.get_task_users(project_template_task, task_details),
                 status="Open",
                 exp_start_date=task_expected_start_date,
                 exp_end_date=task_expected_end_date,
@@ -82,6 +90,27 @@ class Project(project.Project):
 
         return task
 
+    def load_parent_tasks(self, template_task: "document.Document") -> list["document.Document"]:
+        """
+        Load parent tasks into tmp_task_details
+        """
+        if not template_task.is_group:
+            return []
+
+        # if the task is a group, we need to load its child tasks
+        child_tasks = frappe.get_all("Task", {
+            "parent_task": template_task.name,
+            "status": "Template",
+        }, pluck="name")
+
+        out = list()
+        if child_tasks:
+            for child_task in child_tasks:
+                child_task_doc = frappe.get_doc("Task", child_task)
+                out.append(child_task_doc)
+
+        return out
+                
     @frappe.whitelist()
     def render_project_name(self, for_validate=False):
         """
@@ -198,7 +227,11 @@ class Project(project.Project):
 
         return task_expected_start_date, task_expected_end_date
 
-    def get_task_users(self, project_template_task: "document.Document"):
+    def get_task_users(self, project_template_task: "document.Document", template_task: "document.Document") -> list["document.Document"]:
+        if template_task.users:
+            # if the template task has users, we return them
+            return [frappe.copy_doc(d) for d in template_task.users]
+
         assignation_method: Literal[
             "All Employees in the Department",
             "Based on Role",
