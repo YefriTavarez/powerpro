@@ -10,7 +10,6 @@
   "column_break_woaz",
   "column_break_hnxx",
   "column_break_bpyz",
-  "column_break_wesv",
   "section_break_swas",
   "task_id",
   "column_break_smox",
@@ -118,10 +117,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "column_break_wesv",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "section_break_swas",
    "fieldtype": "Section Break",
    "hide_border": 1
@@ -140,7 +135,7 @@
  "is_virtual": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-04 21:29:29.488363",
+ "modified": "2025-06-04 23:16:59.065190",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Task Hub",
