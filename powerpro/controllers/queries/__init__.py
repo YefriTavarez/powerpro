@@ -31,6 +31,7 @@ __all__ = (
 
 	"get_producto_del_cliente",
 	"get_user_tasks",
+	"get_active_users_in_department",
 )
 
 from powerpro.controllers.queries.raw_material import raw_material_query
@@ -65,3 +66,4 @@ from powerpro.controllers.queries.item_connectivity import get_item_connectivity
 from powerpro.controllers.queries.workstation import get_workstation
 from powerpro.controllers.queries.producto_del_cliente import get_producto_del_cliente
 from powerpro.controllers.queries.task import get_user_tasks
+from powerpro.controllers.queries.user import get_active_users_in_department

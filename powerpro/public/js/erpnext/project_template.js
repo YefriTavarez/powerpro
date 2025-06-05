@@ -4,12 +4,27 @@
 
 {
 	function refresh(frm) {
+		_set_queries(frm);
 		_add_custom_buttons(frm);
 		_setup_docfields_table_as_readonly(frm);
 	}
 
 	function onload(frm) {
 		_dirty_form_if_new_docfields(frm);
+	}
+
+	function _set_queries(frm) {
+		// Set query for the "user" under the tasks table
+		frm.set_query("user", "tasks", function(_, doctype, name) {
+			const doc = frappe.get_doc(doctype, name);
+
+			const query = "powerpro.controllers.queries.get_active_users_in_department";
+			const filters = {
+				department: doc.department,
+			};
+
+			return { query, filters };
+		});
 	}
 
 	function _add_custom_buttons(frm) {

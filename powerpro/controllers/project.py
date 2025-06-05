@@ -217,17 +217,10 @@ class Project(project.Project):
                 return []
 
             return [responsible]
-    
 
     def _get_users_based_on_department(self, department: str):
-        users = frappe.get_all(
-            "Employee",
-            filters=dict(department=department),
-            pluck="user_id",
-        )
-
         out = list()
-        for user in users:
+        for user in get_users_in_department(department):
             responsible = frappe.new_doc("Task Responsible")
             responsible.user = user
 
@@ -242,7 +235,6 @@ class Project(project.Project):
             filters=dict(role=role),
             pluck="parent",
         )
-
 
         out = list()
         if not department:
@@ -294,6 +286,7 @@ def get_project_template(name):
     doctype = "Project Template"
     return frappe.get_doc(doctype, name)
 
+
 def get_context(doc):
     return frappe._dict(
         frappe=frappe._dict(
@@ -303,3 +296,27 @@ def get_context(doc):
         doc=doc,
         nowdate=today,
     )
+
+
+@frappe.whitelist()
+def get_users_in_department(department: str) -> list[str]:
+    """
+    Get all users in a department
+    """
+
+    if not department:
+        frappe.throw("Department is required")
+
+    if not frappe.db.exists("Department", department):
+        frappe.throw(f"Department {department!r} does not exist")
+
+    return [
+        d for d in frappe.get_all(
+            "Employee",
+            filters=dict(
+                department=department,
+                status="Active"
+            ),
+            pluck="user_id"
+        ) if d
+    ]
