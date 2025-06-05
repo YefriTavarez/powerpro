@@ -67,7 +67,7 @@ class TaskHub(Document):
 			filtrs.append(["Task Responsible", "user", "=", user])
 
 		task_ids = frappe.get_list(
-			"Task", filters=filtrs, or_filters=or_filters, pluck="name"
+			"Task", filters=filtrs, or_filters=or_filters, pluck="name", order_by="name asc",
 		)
 
 		# Filter out tasks that are blocked by other tasks
