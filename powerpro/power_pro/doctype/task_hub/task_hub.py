@@ -153,7 +153,6 @@ def get_blocking_tasks(task_name: str) -> List[str]:
 	blocking_tasks = frappe.get_all(
 		"Task Depends On",
 		filters={"parent": task_name, "parenttype": "Task"},
-		fields=["task"],
 		pluck="task",
 	)
 	return blocking_tasks
