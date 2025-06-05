@@ -66,10 +66,29 @@ class TaskHub(Document):
 		if user:
 			filtrs.append(["Task Responsible", "user", "=", user])
 
-		# or_filters=or_filters,
-		for task_id in frappe.get_list(
+		task_ids = frappe.get_list(
 			"Task", filters=filtrs, or_filters=or_filters, pluck="name"
-		):
+		)
+
+		# Filter out tasks that are blocked by other tasks
+		unblocked_task_ids = []
+		for task_id_item in task_ids:
+			blocking_tasks = get_blocking_tasks(task_id_item)
+			if not blocking_tasks:
+				unblocked_task_ids.append(task_id_item)
+				continue
+
+			is_blocked = False
+			for blocking_task_name in blocking_tasks:
+				blocking_task_doc = get_task(blocking_task_name)
+				if blocking_task_doc.status not in ["Completed", "Cancelled"]:
+					is_blocked = True
+					break
+			if not is_blocked:
+				unblocked_task_ids.append(task_id_item)
+
+		# or_filters=or_filters,
+		for task_id in unblocked_task_ids:
 			task = get_task(task_id)
 
 			out.append({
@@ -129,7 +148,31 @@ class TaskHub(Document):
 	modified: Union[str, "datetime.datetime"] | None = None
 
 
-def get_task(name):
+def get_blocking_tasks(task_name: str) -> List[str]:
+	"""Get tasks that are blocking the given task."""
+	blocking_tasks = frappe.get_all(
+		"Task Depends On",
+		filters={"parent": task_name, "parenttype": "Task"},
+		fields=["task"],
+		pluck="task",
+	)
+	return blocking_tasks
+
+
+# Define a type alias for the Task document for better type hinting
+if TYPE_CHECKING:
+	class Task(Document):
+		name: str
+		subject: str
+		status: str
+		exp_start_date: Union[str, "datetime.date"] | None
+		exp_end_date: Union[str, "datetime.date"] | None
+		project: str | None
+		priority: str | None
+		users: List[Document] # Assuming users is a list of child documents with a 'user' field
+
+
+def get_task(name) -> "Task": # type: ignore
 	doctype = "Task"
 	return frappe.get_doc(doctype, name)
 
