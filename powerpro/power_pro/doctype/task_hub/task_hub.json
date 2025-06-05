@@ -6,9 +6,13 @@
  "engine": "InnoDB",
  "field_order": [
   "filters_section",
-  "task_id",
-  "column_break_kntt",
   "responsible",
+  "column_break_woaz",
+  "column_break_hnxx",
+  "column_break_bpyz",
+  "column_break_wesv",
+  "section_break_swas",
+  "task_id",
   "column_break_smox",
   "exp_start_date",
   "column_break_sfqq",
@@ -17,9 +21,9 @@
   "project",
   "column_break_jgwp",
   "status",
-  "section_break_hypx",
+  "section_break_flmv",
   "sub_menu",
-  "column_break_asmb",
+  "column_break_lhky",
   "section_break_rjol",
   "hub"
  ],
@@ -70,14 +74,6 @@
    "options": "<div class=\"jumbotron\">\n<h3 class=\"text-center\">Loading...</h3>\n</div>"
   },
   {
-   "fieldname": "section_break_hypx",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_asmb",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "column_break_jgwp",
    "fieldtype": "Column Break"
   },
@@ -105,13 +101,38 @@
    "options": "Task"
   },
   {
-   "fieldname": "column_break_kntt",
+   "fieldname": "sub_menu",
+   "fieldtype": "HTML",
+   "options": "<div class=\"btn-group btn-xs mb-3\" role=\"group\">\n    <div class=\"input-group-text\">\n        <span class=\"\" style=\"font-size: 1rem;\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"Auto-Refresco\">Auto-Refresco</span>\n        <input type=\"checkbox\" checked class=\"mx-2\" id=\"auto-refresh\">\n        <button type=\"button\" class=\"btn btn-dark btn-xs mx-1\" data-action=\"apply-filters\">Aplicar Filtros</button>\n        <button type=\"button\" class=\"btn btn-dark  btn-xs mx-1\" data-action=\"reset-filters\">Resetear Filtros</button>\n    </div>\n</div>"
+  },
+  {
+   "fieldname": "column_break_woaz",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "sub_menu",
-   "fieldtype": "HTML",
-   "options": "<div class=\"btn-group mb-3\" role=\"group\">\n    <div class=\"input-group-text\">\n        <span class=\"\" style=\"font-size: 1.2rem;\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"Auto-Refresco\">Auto-Refresco</span>\n        <input type=\"checkbox\" checked class=\"mx-2\" id=\"auto-refresh\">\n        <button type=\"button\" class=\"btn btn-success mx-1\" data-action=\"apply-filters\">Aplicar Filtros</button>\n        <button type=\"button\" class=\"btn btn-danger mx-1\" data-action=\"reset-filters\">Resetear Filtros</button>\n    </div>\n</div>"
+   "fieldname": "column_break_hnxx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_bpyz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_wesv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_swas",
+   "fieldtype": "Section Break",
+   "hide_border": 1
+  },
+  {
+   "fieldname": "section_break_flmv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_lhky",
+   "fieldtype": "Column Break"
   }
  ],
  "hide_toolbar": 1,
@@ -119,7 +140,7 @@
  "is_virtual": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-04-05 18:33:19.512297",
+ "modified": "2025-06-04 21:29:29.488363",
  "modified_by": "Administrator",
  "module": "Power Pro",
  "name": "Task Hub",
