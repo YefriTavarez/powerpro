@@ -8,7 +8,11 @@ from erpnext.projects.doctype.task import task
 
 
 class Task(task.Task):
-    ...
+    def autoname(self):
+        from frappe.model import naming
+
+        naming_serie = f"{self.project}-.####"
+        self.name = naming.make_autoname(naming_serie, doc=self)
 
 
 @frappe.whitelist()
