@@ -176,7 +176,10 @@ class ItemGenerator(Document):
 
 			self.set(field.item_field_name, None)
 
-		values = list()
+		values = [
+			f"item = {self.item!r}",
+		]
+
 		# Now we can iterate over the fields that are being displayed
 		for field in item_name.fields:
 			if not field.item_show_field:
