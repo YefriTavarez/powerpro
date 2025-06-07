@@ -68,7 +68,10 @@ class Task(task.Task):
             # Priority 1: All children completed -> Parent Completed
             if all(status == "Completed" for status in statuses):
                 determined_new_status = "Completed"
-            # Priority 2: If any child is Cancelled, and not all are Completed.
+            # Priority 2: All children open -> Parent Open
+            elif all(status == "Open" for status in statuses):
+                determined_new_status = "Open"  # If all are Open, set parent to Open
+            # Priority 3: If any child is Cancelled, and not all are Completed.
             elif any(status == "Cancelled" for status in statuses):
                 # "if more are cancelled than completed, then cancelled"
                 if num_cancelled > num_completed:
