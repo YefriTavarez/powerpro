@@ -27,3 +27,4 @@ powerpro.patches.v1.rename_material_sku_product_details
 powerpro.patches.v1.make_item_generator_as_custom_doctype
 powerpro.patches.v1.assign_item_group_numbers
 powerpro.patches.v1.rename_items_with_new_naming
+powerpro.patches.v1.update_item_generator_smart_hashes
