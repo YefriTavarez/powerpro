@@ -45,12 +45,14 @@ class Project(project.Project):
 
                 # load parent_tasks into tmp_task_details
                 task = self.create_task_from_template(template_task, project_template, project_template_task)
+                task.flags.ignore_recursion_check = True  # avoid recursion check
                 project_tasks.append(task)
 
                 if template_task.is_group: # type: ignore
-                    for _template_task in self.load_parent_tasks(template_task):
+                    for _template_task in self.load_child_tasks(template_task):
                         tmp_task_details.append(_template_task)
                         task = self.create_task_from_template(_template_task, project_template, project_template_task)
+                        task.flags.ignore_recursion_check = True  # avoid recursion check
                         project_tasks.append(task)
 
             self.dependency_mapping(tmp_task_details, project_tasks)
@@ -90,7 +92,7 @@ class Project(project.Project):
 
         return task
 
-    def load_parent_tasks(self, template_task: "document.Document") -> list["document.Document"]:
+    def load_child_tasks(self, template_task: "document.Document") -> list["document.Document"]:
         """
         Load parent tasks into tmp_task_details
         """
