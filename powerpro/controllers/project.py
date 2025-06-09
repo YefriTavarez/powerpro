@@ -46,6 +46,7 @@ class Project(project.Project):
                 # load parent_tasks into tmp_task_details
                 task = self.create_task_from_template(template_task, project_template, project_template_task)
                 task.flags.ignore_recursion_check = True  # avoid recursion check
+                db_create_task(task)
                 project_tasks.append(task)
 
                 if template_task.is_group: # type: ignore
@@ -53,6 +54,7 @@ class Project(project.Project):
                         tmp_task_details.append(_template_task)
                         task = self.create_task_from_template(_template_task, project_template, project_template_task)
                         task.flags.ignore_recursion_check = True  # avoid recursion check
+                        db_create_task(task)
                         project_tasks.append(task)
 
             self.dependency_mapping(tmp_task_details, project_tasks)
@@ -361,3 +363,14 @@ def get_users_in_department(department: str) -> list[str]:
             pluck="user_id"
         ) if d
     ]
+
+
+def db_create_task(task: "document.Document"):
+    """
+    Create a task in the database
+    """
+    task.db_insert()
+
+    for child in task.get_all_children():
+        child.parent = task.name
+        child.db_insert()
