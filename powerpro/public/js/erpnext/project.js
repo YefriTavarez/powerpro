@@ -30,9 +30,9 @@ frappe.provide("powerpro.masks");
 		_render_docfields(frm);
 	}
 
-	function sales_order(frm) {
-		frm.set_value("producto", "");
-	}
+	// function sales_order(frm) {
+	// 	frm.set_value("producto", "");
+	// }
 
 	const listen_on_field = function(frm, fieldname) {
 		frappe.ui.form.on(frm.doctype, fieldname, frappe.utils.debounce(function(frm) {
@@ -260,23 +260,6 @@ frappe.provide("powerpro.masks");
 
 				frm.set_query(fieldname, get_query);
 			},
-			() => {
-				const fieldname = "producto";
-				const get_query = function () {
-					const query = "powerpro.controllers.queries.get_sales_order_items";
-					const filters = {
-						"sales_order": frm.doc.sales_order || "",
-					};
-
-					if (!frm.doc.sales_order) {
-						return { filters };
-					}
-
-					return { query, filters };
-				};
-
-				frm.set_query(fieldname, get_query);
-			},
 		]);
 	}
 
@@ -299,7 +282,7 @@ frappe.provide("powerpro.masks");
 	frappe.ui.form.on("Project", {
 		setup,
 		refresh,
-		sales_order,
+		// sales_order,
 		project_template,
 	});
 }
