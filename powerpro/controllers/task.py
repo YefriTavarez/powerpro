@@ -21,6 +21,10 @@ class Task(task.Task):
         if self.parent_task:
             self.update_parent_task()
 
+    # override
+    def check_recursion(self):
+        ...
+
     def update_parent_task(self):
         """Update the parent task's status based on the current task's status and the other children."""
         parent_task = frappe.get_doc("Task", self.parent_task)

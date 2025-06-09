@@ -21,6 +21,15 @@ class Project(project.Project):
             self.render_project_name(for_validate=True)
 
     # override
+    def check_for_parent_tasks(self, template_task, project_task, project_tasks):
+        if template_task.get("parent_task") and not project_task.get("parent_task"):
+            for pt in project_tasks:
+                if pt.template_task == template_task.parent_task:
+                    project_task.parent_task = pt.name
+                    project_task.flags.ignore_links = True
+                    project_task.save()
+                    break
+    # override
     def copy_from_template(self):  # nosemgrep
         """
         Copy tasks from template
@@ -45,7 +54,6 @@ class Project(project.Project):
 
                 # load parent_tasks into tmp_task_details
                 task = self.create_task_from_template(template_task, project_template, project_template_task)
-                task.flags.ignore_recursion_check = True  # avoid recursion check
                 db_create_task(task)
                 project_tasks.append(task)
 
@@ -53,7 +61,6 @@ class Project(project.Project):
                     for _template_task in self.load_child_tasks(template_task):
                         tmp_task_details.append(_template_task)
                         task = self.create_task_from_template(_template_task, project_template, project_template_task)
-                        task.flags.ignore_recursion_check = True  # avoid recursion check
                         db_create_task(task)
                         project_tasks.append(task)
 
@@ -90,7 +97,7 @@ class Project(project.Project):
         )
 
         task.flags.ignore_mandatory = True
-        task.insert()
+        task.save()
 
         return task
 
@@ -369,8 +376,12 @@ def db_create_task(task: "document.Document"):
     """
     Create a task in the database
     """
-    task.db_insert()
+    if task.is_new():
+        task.db_insert(ignore_if_duplicate=True)
+    else: task.db_update()
 
     for child in task.get_all_children():
         child.parent = task.name
-        child.db_insert()
+        if child.is_new():
+            child.db_insert(ignore_if_duplicate=True)
+        else: child.db_update()
