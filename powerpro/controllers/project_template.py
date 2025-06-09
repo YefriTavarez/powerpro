@@ -60,7 +60,10 @@ class ProjectTemplate(project_template.ProjectTemplate):
 				# will find the previous value for hidden, reqd and read_only fields
 				# and set it back
 				fieldname = field.fieldname
-				[_field] = self.get("project_docfields", {"fieldname": fieldname})
+				found_fields = self.get("project_docfields", {"fieldname": fieldname})
+				if found_fields:
+					_field = found_fields[0]
+
 				if _field:
 					_field.hidden = field.hidden
 					_field.reqd = field.reqd
