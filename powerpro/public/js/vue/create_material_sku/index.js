@@ -63,6 +63,37 @@ power.ui.CreateMaterialSKU = function(docname) {
 				dialog.set_df_property("sheet_width", "hidden", event.target.value === "Roll");
 				dialog.set_df_property("sheet_height", "reqd", event.target.value === "Sheet");
 				dialog.set_df_property("sheet_height", "hidden", event.target.value === "Roll");
+
+				// new field
+				dialog.set_df_property("standard_sheet_size", "hidden", event.target.value === "Roll");
+			}
+		},
+		{
+			fieldname: "standard_sheet_size",
+			fieldtype: "Select",
+			label: __("Standard Sheet Size"),
+			// hidden: 1,
+			reqd: 1,
+			default: "",
+			options: [
+				"",
+				"Standard",
+				"Derivado",
+			],
+			change(event) {
+				const gsm = dialog.get_value("gsm");
+
+				console.log("GSM", gsm);
+				const material_format = dialog.get_value("material_format");
+				const standard_sheet_size = dialog.get_value("standard_sheet_size");
+
+				const hidden = material_format !== "Sheet"
+					|| standard_sheet_size !== "Derivado"
+					|| !gsm
+					;
+
+				dialog.set_df_property("standard_sheets_section", "hidden", hidden);
+				dialog.set_df_property("standard_sheets", "hidden", hidden);
 			}
 		},
 		{ fieldtype: "Column Break" },
@@ -142,7 +173,93 @@ power.ui.CreateMaterialSKU = function(docname) {
 						indicator: "red",
 					});
 				}
+
+				// refresh dependent fields
+				const gsm = dialog.get_value("gsm");
+
+				console.log("GSM", gsm);
+				const material_format = dialog.get_value("material_format");
+				const standard_sheet_size = dialog.get_value("standard_sheet_size");
+
+				const hidden = material_format !== "Sheet"
+					|| standard_sheet_size !== "Derivado"
+					|| !gsm
+					;
+
+				dialog.set_df_property("standard_sheets_section", "hidden", hidden);
+				dialog.set_df_property("standard_sheets", "hidden", hidden);
 			},
+		},
+		{ fieldtype: "Section Break", fieldname:  "standard_sheets_section" },
+		{
+			fieldname: "standard_sheets",
+			fieldtype: "Table",
+			label: __("Standard Sheets"),
+			reqd: 1,
+			cannot_add_rows: 0,
+            in_place_edit: true,
+            data: [{
+                item: "", "description": "",
+            }], // Optional initial data
+            get_data: () => {
+                return [];
+            },
+            fields: [
+                {
+                    fieldname: 'item',
+                    fieldtype: 'Link',
+                    options: 'Item',
+                    label: __('Item'),
+                    in_list_view: 1,
+                    reqd: 1,
+					get_query(doc) {
+						const gsm = dialog.get_value("gsm");
+						return {
+							filters: {
+								"reference_name": docname,
+								"is_standard_sheet_size": 1,
+								"raw_material_type": "Sheet",
+								"gsm": gsm,
+								"name": [
+									"not in", 
+									dialog.get_value("standard_sheets")
+										.filter(row => row.name !== doc.name)
+										.map(row => row.item)
+
+								],
+							}
+						}
+					},
+					async onchange() {
+						await frappe.timeout(1); // wait for the value to be set
+						const { grid_row } = this;
+
+						const { description } = grid_row.on_grid_fields_dict;
+
+						const { value } = this;
+
+						if (value) {
+							frappe.db.get_value("Item", value, ["description"])
+								.then(({ message }) => {
+									if (message.description) {
+										description.set_value(message.description);
+									}
+								});
+						}
+					},
+                },
+				{
+					fieldname: 'description',
+					fieldtype: 'Small Text',
+					label: __('Description'),
+					in_list_view: 1,
+					reqd: 1,
+					fetch_from: 'item.description',
+				}
+            ],
+			item() {
+				console.log("Item changed", this);
+			}
 		},
 		{
 			fieldtype: "Section Break",
@@ -324,4 +441,8 @@ power.ui.CreateMaterialSKU = function(docname) {
 			);
 		});
 	}, __("Create a new SKU"), __("Please, do!"));
+
+	dialog.set_df_property("standard_sheet_size", "hidden", 1); // select field [Standard, Derivado]
+	dialog.set_df_property("standard_sheets_section", "hidden", 1); // section break before the table
+	dialog.set_df_property("standard_sheets", "hidden", 1); // table
 }
