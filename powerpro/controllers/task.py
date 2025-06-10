@@ -24,6 +24,16 @@ class Task(task.Task):
     # override
     def check_recursion(self):
         ...
+    # override
+    def populate_depends_on(self):
+        if self.parent_task:
+            parent = frappe.get_doc("Task", self.parent_task)
+            if self.name not in [row.task for row in parent.depends_on]:
+                parent.append(
+                    "depends_on", {"doctype": "Task Depends On", "task": self.name, "subject": self.subject}
+                )
+                parent.flags.ignore_links = True
+                parent.save()
 
     def update_parent_task(self):
         """Update the parent task's status based on the current task's status and the other children."""
