@@ -13,6 +13,13 @@
   "option_1",
   "option_2",
   "option_3",
+  "item_groups_section",
+  "item_group_1",
+  "item_group_2",
+  "item_group_3",
+  "column_break_mpce",
+  "item_group_4",
+  "item_group_5",
   "section_break_cwwg",
   "smart_hash"
  ],
@@ -52,7 +59,8 @@
   },
   {
    "fieldname": "section_break_vlhr",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Options"
   },
   {
    "default": "1",
@@ -80,9 +88,52 @@
    "hidden": 1,
    "label": "Option 3",
    "options": "[Select]"
+  },
+  {
+   "fieldname": "item_groups_section",
+   "fieldtype": "Section Break",
+   "label": "Item Groups"
+  },
+  {
+   "fieldname": "item_group_1",
+   "fieldtype": "Link",
+   "label": "Item Group 1",
+   "options": "Item Group"
+  },
+  {
+   "depends_on": "item_group_1",
+   "fieldname": "item_group_2",
+   "fieldtype": "Link",
+   "label": "Item Group 2",
+   "options": "Item Group"
+  },
+  {
+   "depends_on": "item_group_2",
+   "fieldname": "item_group_3",
+   "fieldtype": "Link",
+   "label": "Item Group 3",
+   "options": "Item Group"
+  },
+  {
+   "fieldname": "column_break_mpce",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "item_group_3",
+   "fieldname": "item_group_4",
+   "fieldtype": "Link",
+   "label": "Item Group 4",
+   "options": "Item Group"
+  },
+  {
+   "depends_on": "item_group_4",
+   "fieldname": "item_group_5",
+   "fieldtype": "Link",
+   "label": "Item Group 5",
+   "options": "Item Group"
   }
  ],
- "hide_toolbar": 1,
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [
   {
@@ -91,7 +142,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2024-11-26 14:11:48.751587",
+ "modified": "2025-06-10 01:38:28.404857",
  "modified_by": "Administrator",
  "module": "Manufacturing Pro",
  "name": "Raw Material",
@@ -111,6 +162,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",

@@ -28,6 +28,11 @@ class RawMaterial(Document):
 		base_material: DF.Link
 		description: DF.SmallText | None
 		enabled: DF.Check
+		item_group_1: DF.Link | None
+		item_group_2: DF.Link | None
+		item_group_3: DF.Link | None
+		item_group_4: DF.Link | None
+		item_group_5: DF.Link | None
 		option_1: DF.Literal["[Select]"]
 		option_2: DF.Literal["[Select]"]
 		option_3: DF.Literal["[Select]"]

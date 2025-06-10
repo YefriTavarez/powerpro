@@ -6,12 +6,80 @@ frappe.provide("power.ui.base_material_opts");
 {
 
 	function refresh_handler(frm) {
+		_set_queries(frm);
 		_add_custom_buttons(frm);
 		_resfresh_base_material_options(frm);
 	}
 	
 	function base_material_handler(frm) {
 		_resfresh_base_material_options(frm);
+	}
+
+	function _set_queries(frm) {
+		frappe.run_serially([
+			() => { // item_group_1
+
+				if (
+					frm.is_new()
+					&& !frm.doc.item_group_1
+					&& frappe.boot?.powerpro_settings?.root_item_group_for_raw_materials
+				) {
+					// if the form is new, set the default item group
+					frm.set_value("item_group_1", frappe.boot?.powerpro_settings?.root_item_group_for_raw_materials);
+				}
+				// default: frappe.boot?.powerpro_settings?.root_item_group_for_raw_materials,
+				if (
+					frappe.boot?.powerpro_settings?.root_item_group_for_raw_materials
+					&& frm.doc.item_group_1
+				) {
+					frm.toggle_enable("item_group_1", false);
+				}
+
+				frm.set_query("item_group_1", () => {
+					return {
+						filters: {
+							name: ["in", [frappe.boot?.powerpro_settings?.root_item_group_for_raw_materials]]
+						}
+					};
+				});
+			},
+			() => {
+				frm.set_query("item_group_2", () => {
+					return {
+						filters: {
+							parent_item_group: frm.doc.item_group_1,
+						}
+					};
+				});
+			},
+			() => {
+				frm.set_query("item_group_3", () => {
+					return {
+						filters: {
+							parent_item_group: frm.doc.item_group_2,
+						}
+					};
+				});
+			},
+			() => {
+				frm.set_query("item_group_4", () => {
+					return {
+						filters: {
+							parent_item_group: frm.doc.item_group_3,
+						}
+					};
+				});
+			},
+			() => {
+				frm.set_query("item_group_5", () => {
+					return {
+						filters: {
+							parent_item_group: frm.doc.item_group_4,
+						}
+					};
+				});
+			}
+		]);
 	}
 
 	function _add_custom_buttons(frm) {
