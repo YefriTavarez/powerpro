@@ -267,6 +267,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 				{
 					fieldtype: "Section Break",
 					label: __("Item Group"),
+					fieldname: "item_groups_section",
 				},
 				{
 					fieldname: "item_group_1",
@@ -456,6 +457,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 		dialog.set_df_property("standard_sheet_size", "hidden", 1); // select field [Standard, Derivado]
 		dialog.set_df_property("standard_sheets_section", "hidden", 1); // section break before the table
 		dialog.set_df_property("standard_sheets", "hidden", 1); // table
+		dialog.set_df_property("item_groups_section", "hidden", 1); // table
 		
 		// Show the dialog
 		dialog.show();

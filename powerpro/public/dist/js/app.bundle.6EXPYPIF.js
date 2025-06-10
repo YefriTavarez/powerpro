@@ -273,7 +273,8 @@ frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/frappe/frappe/p
               },
               {
                 fieldtype: "Section Break",
-                label: __("Item Group")
+                label: __("Item Group"),
+                fieldname: "item_groups_section"
               },
               {
                 fieldname: "item_group_1",
@@ -438,6 +439,7 @@ frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/frappe/frappe/p
           dialog.set_df_property("standard_sheet_size", "hidden", 1);
           dialog.set_df_property("standard_sheets_section", "hidden", 1);
           dialog.set_df_property("standard_sheets", "hidden", 1);
+          dialog.set_df_property("item_groups_section", "hidden", 1);
           dialog.show();
         }
       };
@@ -17779,4 +17781,4 @@ Component that was made reactive: `,
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.KUTJNSHE.js.map
+//# sourceMappingURL=app.bundle.6EXPYPIF.js.map
