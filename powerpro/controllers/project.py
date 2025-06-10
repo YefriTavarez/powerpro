@@ -15,20 +15,31 @@ from erpnext.projects.doctype.project import project
 class Project(project.Project):
     # override
     def validate(self):  # nosemgrep
-        super(Project, self).validate()
+        # super(Project, self).validate()
+
+        # if not self.is_new():
+        # 	self.copy_from_template()  # nosemgrep
+        # self.send_welcome_email()
+
+        self.update_costing()
+        self.update_percent_complete()
+        self.validate_from_to_dates("expected_start_date", "expected_end_date")
+        self.validate_from_to_dates("actual_start_date", "actual_end_date")
 
         if not frappe.flags.ignore_validate:
             self.render_project_name(for_validate=True)
 
     # override
     def check_for_parent_tasks(self, template_task, project_task, project_tasks):
-        if template_task.get("parent_task") and not project_task.get("parent_task"):
+        if template_task.get("parent_task") \
+            and not project_task.get("parent_task"):
             for pt in project_tasks:
                 if pt.template_task == template_task.parent_task:
                     project_task.parent_task = pt.name
                     project_task.flags.ignore_links = True
                     project_task.save()
                     break
+
     # override
     def copy_from_template(self):  # nosemgrep
         """
@@ -42,8 +53,8 @@ class Project(project.Project):
 
             project_template = frappe.get_doc("Project Template", self.project_template)
 
-            if not self.project_type:
-                self.project_type = project_template.project_type
+            # if not self.project_type: # always override
+            self.project_type = project_template.project_type
 
             # create tasks from project_template
             project_tasks = []
@@ -80,7 +91,6 @@ class Project(project.Project):
                 doctype="Task",
                 subject=task_details.subject,
                 project=self.name,
-                users=self.get_task_users(project_template_task, task_details),
                 status="Open",
                 exp_start_date=task_expected_start_date,
                 exp_end_date=task_expected_end_date,
@@ -95,6 +105,16 @@ class Project(project.Project):
                 priority=self.priority,
             )
         )
+
+        existing_users = { d.user for d in task.users }
+
+        for user in self.get_task_users(project_template_task, task_details):
+            if user.user not in existing_users:
+                task.append("users", {
+                    "user": user.user,
+                })
+
+                existing_users.add(user.user)
 
         task.flags.ignore_mandatory = True
         task.save()
