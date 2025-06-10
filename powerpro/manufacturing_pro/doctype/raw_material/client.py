@@ -1,7 +1,7 @@
 # Copyright (c) 2024, Yefri Tavarez and Contributors
 # For license information, please see license.txt
 
-from typing import Literal, TYPE_CHECKING
+from typing import List, Literal, TYPE_CHECKING
 
 import frappe
 from frappe import _
@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 def create_material_sku(
 	material_id: str,
 	material_format: Literal["Roll", "Sheet"],
+	standard_sheet_size: Literal["Standard", "Derivado"],
 	item_group_1: str,
 	item_group_2: str,
 	item_group_3: str = None,
@@ -31,6 +32,7 @@ def create_material_sku(
 	sheet_width: float = 0.0,
 	sheet_height: float = 0.0,
 	gsm: int = 0,
+	standard_sheets: List[dict] = None,
 ):
 	"""Create a new SKU based on the given parameters"""
 	# validate material format
@@ -41,6 +43,17 @@ def create_material_sku(
 		frappe.throw(
 			f"Invalid material format: {material_format}"
 			"Should be either 'Roll' or 'Sheet'"
+		)
+
+	if standard_sheet_size not in ("Standard", "Derivado"):
+		frappe.throw(
+			f"Invalid standard sheet size: {standard_sheet_size}"
+			"Should be either 'Standard' or 'Derivado'"
+		)
+
+	if standard_sheet_size == "Derivado" and not standard_sheets:
+		frappe.throw(
+			"Standard sheets are required when the standard sheet size is 'Derivado'"
 		)
 
 	# update material with new dimensions to get a more accurate description
@@ -83,6 +96,7 @@ def create_material_sku(
 		"description": description,
 		"is_purchase_item": 1,
 		"is_raw_material": 1,
+		"is_standard_sheet_size": standard_sheet_size == "Standard",
 		"raw_material_type": material.get("material_format", None),
 		"roll_width": material.get("roll_width", None),
 		"sheet_width": material.get("sheet_width", None),
@@ -105,6 +119,20 @@ def create_material_sku(
 		"stock_uom": get_uom(material_format),
 		"valuation_method": "FIFO",
 	})
+
+	if standard_sheet_size == "Derivado":
+		for row in standard_sheets:
+			if not row.get("item"):
+				continue
+
+			item.append("related_standard_sheets", {
+				"item": row.get("item"),
+			})
+
+		if not item.get("related_standard_sheets"):
+			frappe.throw(
+				"At least one standard sheet is required when the standard sheet size is 'Derivado'"
+			)
 
 	item.flags.ignore_permissions = True
 	item.flags.ignore_mandatory = True
