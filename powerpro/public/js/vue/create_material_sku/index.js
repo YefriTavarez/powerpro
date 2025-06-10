@@ -25,12 +25,12 @@ power.ui.CreateMaterialSKU = function(docname) {
 		.then(({ data }) => {
 			doc = data;
 
-			const description_field = dialog.get_field("material_description")
+			// const description_field = dialog.get_field("material_description")
 
-			description_field.$wrapper.html(`
-				<p class="text-muted">Material</p>
-				<h3>${doc.description}</h3>
-			`);
+			// description_field.$wrapper.html(`
+			// 	<p class="text-muted">Material</p>
+			// 	<h3>${doc.description}</h3>
+			// `);
 
 			// if (doc.base_material === "Paper") {
 				
@@ -49,7 +49,8 @@ power.ui.CreateMaterialSKU = function(docname) {
 				{
 					fieldtype: "HTML",
 					fieldname: "material_description",
-					options: `Loading...`,
+					options: `<p class="text-muted">Material</p>
+				<h3>${form.description}</h3>`,
 				},
 				{
 					fieldtype: "Section Break",
@@ -317,7 +318,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 					label: __("Item Group 3"),
 					options: "Item Group",
 					default: form.item_group_3,
-					hidden: 1,
+					hidden: !Boolean(form.item_group_3),
 					get_query() {
 						return {
 							filters: {
@@ -349,9 +350,9 @@ power.ui.CreateMaterialSKU = function(docname) {
 					fieldname: "item_group_4",
 					fieldtype: "Link",
 					label: __("Item Group 4"),
-					default: form.item_group_4,
 					options: "Item Group",
-					hidden: 1,
+					default: form.item_group_4,
+					hidden: !Boolean(form.item_group_4),
 					get_query() {
 						return {
 							filters: {
@@ -385,7 +386,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 					label: __("Item Group 5"),
 					options: "Item Group",
 					default: form.item_group_5,
-					hidden: 1,
+					hidden: !Boolean(form.item_group_5),
 					get_query() {
 						return {
 							filters: {

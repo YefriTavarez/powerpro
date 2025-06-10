@@ -75,11 +75,6 @@ frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/frappe/frappe/p
         });
         fetch(`/api/resource/Raw Material/${docname}`).then((response) => response.json()).then(({ data }) => {
           doc2 = data;
-          const description_field = dialog.get_field("material_description");
-          description_field.$wrapper.html(`
-				<p class="text-muted">Material</p>
-				<h3>${doc2.description}</h3>
-			`);
           _render_dialog(doc2);
         }).finally(() => {
           frappe.dom.unfreeze();
@@ -93,7 +88,8 @@ frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/frappe/frappe/p
               {
                 fieldtype: "HTML",
                 fieldname: "material_description",
-                options: `Loading...`
+                options: `<p class="text-muted">Material</p>
+				<h3>${form.description}</h3>`
               },
               {
                 fieldtype: "Section Break",
@@ -323,7 +319,7 @@ frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/frappe/frappe/p
                 label: __("Item Group 3"),
                 options: "Item Group",
                 default: form.item_group_3,
-                hidden: 1,
+                hidden: !Boolean(form.item_group_3),
                 get_query() {
                   return {
                     filters: {
@@ -348,9 +344,9 @@ frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/frappe/frappe/p
                 fieldname: "item_group_4",
                 fieldtype: "Link",
                 label: __("Item Group 4"),
-                default: form.item_group_4,
                 options: "Item Group",
-                hidden: 1,
+                default: form.item_group_4,
+                hidden: !Boolean(form.item_group_4),
                 get_query() {
                   return {
                     filters: {
@@ -377,7 +373,7 @@ frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/frappe/frappe/p
                 label: __("Item Group 5"),
                 options: "Item Group",
                 default: form.item_group_5,
-                hidden: 1,
+                hidden: !Boolean(form.item_group_5),
                 get_query() {
                   return {
                     filters: {
@@ -17783,4 +17779,4 @@ Component that was made reactive: `,
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.TIWMEWZZ.js.map
+//# sourceMappingURL=app.bundle.KUTJNSHE.js.map
