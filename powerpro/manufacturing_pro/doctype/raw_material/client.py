@@ -1,7 +1,7 @@
 # Copyright (c) 2024, Yefri Tavarez and Contributors
 # For license information, please see license.txt
 
-from typing import List, Literal, TYPE_CHECKING
+from typing import List, Union, Literal, TYPE_CHECKING
 
 import frappe
 from frappe import _
@@ -32,10 +32,16 @@ def create_material_sku(
 	sheet_width: float = 0.0,
 	sheet_height: float = 0.0,
 	gsm: int = 0,
-	standard_sheets: List[dict] = None,
+	standard_sheets: Union[List[dict], str, None] = None,
 ):
 	"""Create a new SKU based on the given parameters"""
 	# validate material format
+	if standard_sheets and isinstance(standard_sheets, str):
+		try:
+			standard_sheets = frappe.parse_json(standard_sheets)
+		except ValueError:
+			frappe.throw("Invalid standard sheets format, must be a list of dictionaries")
+
 	if not material_format:
 		frappe.throw("Material format is required")
 	
