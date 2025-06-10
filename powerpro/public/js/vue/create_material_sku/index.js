@@ -254,8 +254,6 @@ power.ui.CreateMaterialSKU = function(docname) {
 						fieldtype: 'Small Text',
 						label: __('Description'),
 						in_list_view: 1,
-						reqd: 1,
-						fetch_from: 'item.description',
 					}
 	            ],
 			},

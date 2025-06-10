@@ -266,9 +266,7 @@ frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/frappe/frappe/p
                   fieldname: "description",
                   fieldtype: "Small Text",
                   label: __("Description"),
-                  in_list_view: 1,
-                  reqd: 1,
-                  fetch_from: "item.description"
+                  in_list_view: 1
                 }
               ]
             },
@@ -17775,4 +17773,4 @@ Component that was made reactive: `,
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.XDISXN7F.js.map
+//# sourceMappingURL=app.bundle.K7I56KCT.js.map
