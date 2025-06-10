@@ -232,8 +232,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 								}
 							}
 						},
-						async onchange() {
-							await frappe.timeout(1); // wait for the value to be set
+						onchange() {
 							const { grid_row } = this;
 
 							const { description } = grid_row.on_grid_fields_dict;

@@ -249,8 +249,7 @@ frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/frappe/frappe/p
                       }
                     };
                   },
-                  async onchange() {
-                    await frappe.timeout(1);
+                  onchange() {
                     const { grid_row } = this;
                     const { description } = grid_row.on_grid_fields_dict;
                     const { value } = this;
@@ -17776,4 +17775,4 @@ Component that was made reactive: `,
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.UY7U7CQF.js.map
+//# sourceMappingURL=app.bundle.XDISXN7F.js.map
