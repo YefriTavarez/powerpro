@@ -65,11 +65,11 @@ frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/frappe/frappe/p
       frappe.provide("power.utils");
       var { round_to_nearest_eighth } = power.utils;
       power.ui.CreateMaterialSKU = function(docname) {
-        var _a, _b, _c, _d;
         let dialog;
         let item_group_details;
         let doc2;
         const url = "/api/method/powerpro.controllers.assets.item_group.get_all_item_groups";
+        frappe.dom.freeze(__("Loading..."));
         fetch(url).then((response) => response.json()).then(({ message }) => {
           item_group_details = message;
         });
@@ -80,333 +80,353 @@ frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/frappe/frappe/p
 				<p class="text-muted">Material</p>
 				<h3>${doc2.description}</h3>
 			`);
+          _render_dialog(doc2);
+        }).finally(() => {
+          frappe.dom.unfreeze();
         });
-        dialog = new frappe.ui.Dialog({
-          title: __("Create a new SKU"),
-          size: "extra-large",
-          fields: [
-            {
-              fieldtype: "HTML",
-              fieldname: "material_description",
-              options: `Loading...`
-            },
-            {
-              fieldtype: "Section Break",
-              label: __("Material Specification")
-            },
-            {
-              fieldname: "material_format",
-              fieldtype: "Select",
-              label: __("Material Format"),
-              reqd: 1,
-              default: "Roll",
-              options: [
-                "Roll",
-                "Sheet"
-              ],
-              change(event) {
-                dialog.set_df_property("roll_width", "reqd", event.target.value === "Roll");
-                dialog.set_df_property("roll_width", "hidden", event.target.value === "Sheet");
-                dialog.set_df_property("sheet_width", "reqd", event.target.value === "Sheet");
-                dialog.set_df_property("sheet_width", "hidden", event.target.value === "Roll");
-                dialog.set_df_property("sheet_height", "reqd", event.target.value === "Sheet");
-                dialog.set_df_property("sheet_height", "hidden", event.target.value === "Roll");
-                dialog.set_df_property("standard_sheet_size", "hidden", event.target.value === "Roll");
-              }
-            },
-            {
-              fieldname: "standard_sheet_size",
-              fieldtype: "Select",
-              label: __("Standard Sheet Size"),
-              reqd: 1,
-              default: "",
-              options: [
-                "",
-                "Standard",
-                "Derivado"
-              ],
-              change(event) {
-                const gsm = dialog.get_value("gsm");
-                const material_format = dialog.get_value("material_format");
-                const standard_sheet_size = dialog.get_value("standard_sheet_size");
-                const hidden = material_format !== "Sheet" || standard_sheet_size !== "Derivado" || !gsm;
-                dialog.set_df_property("standard_sheets_section", "hidden", hidden);
-                dialog.set_df_property("standard_sheets", "hidden", hidden);
-              }
-            },
-            { fieldtype: "Column Break" },
-            {
-              fieldname: "roll_width",
-              fieldtype: "Float",
-              label: `${__("Roll Width")} (in)`,
-              reqd: 1,
-              precision: 3,
-              async change(event) {
-                const { target } = event;
-                await frappe.timeout(0.1);
-                const value = round_to_nearest_eighth(target.value);
-                if (target.value !== value) {
-                  target.value = value;
-                }
-              }
-            },
-            {
-              fieldname: "sheet_width",
-              fieldtype: "Float",
-              label: `${__("Sheet Width")} (in)`,
-              hidden: 1,
-              precision: 3,
-              async change(event) {
-                const { target } = event;
-                await frappe.timeout(0.1);
-                const value = round_to_nearest_eighth(target.value);
-                if (target.value !== value) {
-                  target.value = value;
-                }
-              }
-            },
-            {
-              fieldname: "sheet_height",
-              fieldtype: "Float",
-              label: `${__("Sheet Height")} (in)`,
-              hidden: 1,
-              precision: 3,
-              async change(event) {
-                const { target } = event;
-                await frappe.timeout(0.1);
-                const value = round_to_nearest_eighth(target.value);
-                if (target.value !== value) {
-                  target.value = value;
-                }
-              }
-            },
-            {
-              fieldtype: "Section Break",
-              label: __("Weight")
-            },
-            {
-              fieldname: "gsm",
-              fieldtype: "Int",
-              non_negative: 1,
-              reqd: 1,
-              label: __("GSM"),
-              async change(event) {
-                const { target } = event;
-                await frappe.timeout(0.1);
-                if (!target.value) {
-                  target.value = 0;
-                }
-                if (target.value < 0) {
-                  target.value = 0;
-                  frappe.show_alert({
-                    message: __("GSM cannot be negative!"),
-                    indicator: "red"
-                  });
-                }
-                const gsm = dialog.get_value("gsm");
-                const material_format = dialog.get_value("material_format");
-                const standard_sheet_size = dialog.get_value("standard_sheet_size");
-                const hidden = material_format !== "Sheet" || standard_sheet_size !== "Derivado" || !gsm;
-                dialog.set_df_property("standard_sheets_section", "hidden", hidden);
-                dialog.set_df_property("standard_sheets", "hidden", hidden);
-              }
-            },
-            { fieldtype: "Section Break", fieldname: "standard_sheets_section" },
-            {
-              fieldname: "standard_sheets",
-              fieldtype: "Table",
-              label: __("Standard Sheets"),
-              reqd: 1,
-              cannot_add_rows: 0,
-              in_place_edit: true,
-              data: [{
-                item: "",
-                "description": ""
-              }],
-              get_data: () => {
-                return [];
+        function _render_dialog(form) {
+          var _a, _b, _c, _d;
+          dialog = new frappe.ui.Dialog({
+            title: __("Create a new SKU"),
+            size: "extra-large",
+            fields: [
+              {
+                fieldtype: "HTML",
+                fieldname: "material_description",
+                options: `Loading...`
               },
-              fields: [
-                {
-                  fieldname: "item",
-                  fieldtype: "Link",
-                  options: "Item",
-                  label: __("Item"),
-                  in_list_view: 1,
-                  reqd: 1,
-                  get_query(doc3) {
-                    const gsm = dialog.get_value("gsm");
-                    return {
-                      filters: {
-                        "reference_name": docname,
-                        "is_standard_sheet_size": 1,
-                        "raw_material_type": "Sheet",
-                        "gsm": gsm,
-                        "name": [
-                          "not in",
-                          dialog.get_value("standard_sheets").filter((row) => row.name !== doc3.name).map((row) => row.item)
-                        ]
-                      }
-                    };
-                  },
-                  onchange() {
-                    const { grid_row } = this;
-                    const { description } = grid_row.on_grid_fields_dict;
-                    const { value } = this;
-                    if (value) {
-                      frappe.db.get_value("Item", value, ["description"]).then(({ message }) => {
-                        if (message.description) {
-                          description.set_value(message.description);
-                        }
-                      });
-                    }
+              {
+                fieldtype: "Section Break",
+                label: __("Material Specification")
+              },
+              {
+                fieldname: "material_format",
+                fieldtype: "Select",
+                label: __("Material Format"),
+                reqd: 1,
+                default: "Roll",
+                options: [
+                  "Roll",
+                  "Sheet"
+                ],
+                change(event) {
+                  dialog.set_df_property("roll_width", "reqd", event.target.value === "Roll");
+                  dialog.set_df_property("roll_width", "hidden", event.target.value === "Sheet");
+                  dialog.set_df_property("sheet_width", "reqd", event.target.value === "Sheet");
+                  dialog.set_df_property("sheet_width", "hidden", event.target.value === "Roll");
+                  dialog.set_df_property("sheet_height", "reqd", event.target.value === "Sheet");
+                  dialog.set_df_property("sheet_height", "hidden", event.target.value === "Roll");
+                  dialog.set_df_property("standard_sheet_size", "hidden", event.target.value === "Roll");
+                }
+              },
+              {
+                fieldname: "standard_sheet_size",
+                fieldtype: "Select",
+                label: __("Standard Sheet Size"),
+                reqd: 1,
+                default: "",
+                options: [
+                  "",
+                  "Standard",
+                  "Derivado"
+                ],
+                change(event) {
+                  const gsm = dialog.get_value("gsm");
+                  const material_format = dialog.get_value("material_format");
+                  const standard_sheet_size = dialog.get_value("standard_sheet_size");
+                  const hidden = material_format !== "Sheet" || standard_sheet_size !== "Derivado" || !gsm;
+                  dialog.set_df_property("standard_sheets_section", "hidden", hidden);
+                  dialog.set_df_property("standard_sheets", "hidden", hidden);
+                }
+              },
+              { fieldtype: "Column Break" },
+              {
+                fieldname: "roll_width",
+                fieldtype: "Float",
+                label: `${__("Roll Width")} (in)`,
+                reqd: 1,
+                precision: 3,
+                async change(event) {
+                  const { target } = event;
+                  await frappe.timeout(0.1);
+                  const value = round_to_nearest_eighth(target.value);
+                  if (target.value !== value) {
+                    target.value = value;
                   }
+                }
+              },
+              {
+                fieldname: "sheet_width",
+                fieldtype: "Float",
+                label: `${__("Sheet Width")} (in)`,
+                hidden: 1,
+                precision: 3,
+                async change(event) {
+                  const { target } = event;
+                  await frappe.timeout(0.1);
+                  const value = round_to_nearest_eighth(target.value);
+                  if (target.value !== value) {
+                    target.value = value;
+                  }
+                }
+              },
+              {
+                fieldname: "sheet_height",
+                fieldtype: "Float",
+                label: `${__("Sheet Height")} (in)`,
+                hidden: 1,
+                precision: 3,
+                async change(event) {
+                  const { target } = event;
+                  await frappe.timeout(0.1);
+                  const value = round_to_nearest_eighth(target.value);
+                  if (target.value !== value) {
+                    target.value = value;
+                  }
+                }
+              },
+              {
+                fieldtype: "Section Break",
+                label: __("Weight")
+              },
+              {
+                fieldname: "gsm",
+                fieldtype: "Int",
+                non_negative: 1,
+                reqd: 1,
+                label: __("GSM"),
+                async change(event) {
+                  const { target } = event;
+                  await frappe.timeout(0.1);
+                  if (!target.value) {
+                    target.value = 0;
+                  }
+                  if (target.value < 0) {
+                    target.value = 0;
+                    frappe.show_alert({
+                      message: __("GSM cannot be negative!"),
+                      indicator: "red"
+                    });
+                  }
+                  const gsm = dialog.get_value("gsm");
+                  const material_format = dialog.get_value("material_format");
+                  const standard_sheet_size = dialog.get_value("standard_sheet_size");
+                  const hidden = material_format !== "Sheet" || standard_sheet_size !== "Derivado" || !gsm;
+                  dialog.set_df_property("standard_sheets_section", "hidden", hidden);
+                  dialog.set_df_property("standard_sheets", "hidden", hidden);
+                }
+              },
+              { fieldtype: "Section Break", fieldname: "standard_sheets_section" },
+              {
+                fieldname: "standard_sheets",
+                fieldtype: "Table",
+                label: __("Standard Sheets"),
+                reqd: 1,
+                cannot_add_rows: 0,
+                in_place_edit: true,
+                data: [{
+                  item: "",
+                  "description": ""
+                }],
+                get_data: () => {
+                  return [];
                 },
-                {
-                  fieldname: "description",
-                  fieldtype: "Small Text",
-                  label: __("Description"),
-                  in_list_view: 1
-                }
-              ]
-            },
-            {
-              fieldtype: "Section Break",
-              label: __("Item Group")
-            },
-            {
-              fieldname: "item_group_1",
-              fieldtype: "Link",
-              label: __("Item Group 1"),
-              options: "Item Group",
-              default: (_b = (_a = frappe.boot) == null ? void 0 : _a.powerpro_settings) == null ? void 0 : _b.root_item_group_for_raw_materials,
-              read_only: Boolean((_d = (_c = frappe.boot) == null ? void 0 : _c.powerpro_settings) == null ? void 0 : _d.root_item_group_for_raw_materials),
-              reqd: 1,
-              change(event) {
-              }
-            },
-            {
-              fieldname: "item_group_2",
-              fieldtype: "Link",
-              label: __("Item Group 2"),
-              options: "Item Group",
-              reqd: 1,
-              get_query() {
-                return {
-                  filters: {
-                    parent_item_group: dialog.get_value("item_group_1")
+                fields: [
+                  {
+                    fieldname: "item",
+                    fieldtype: "Link",
+                    options: "Item",
+                    label: __("Item"),
+                    in_list_view: 1,
+                    reqd: 1,
+                    get_query(doc3) {
+                      const gsm = dialog.get_value("gsm");
+                      return {
+                        filters: {
+                          "reference_name": docname,
+                          "is_standard_sheet_size": 1,
+                          "raw_material_type": "Sheet",
+                          "gsm": gsm,
+                          "name": [
+                            "not in",
+                            dialog.get_value("standard_sheets").filter((row) => row.name !== doc3.name).map((row) => row.item)
+                          ]
+                        }
+                      };
+                    },
+                    onchange() {
+                      const { grid_row } = this;
+                      const { description } = grid_row.on_grid_fields_dict;
+                      const { value } = this;
+                      if (value) {
+                        frappe.db.get_value("Item", value, ["description"]).then(({ message }) => {
+                          if (message.description) {
+                            description.set_value(message.description);
+                          }
+                        });
+                      }
+                    }
+                  },
+                  {
+                    fieldname: "description",
+                    fieldtype: "Small Text",
+                    label: __("Description"),
+                    in_list_view: 1
                   }
-                };
+                ]
               },
-              change(event) {
-                const { value } = this;
-                if (value) {
-                  const has_children = item_group_details.find((item_group) => item_group.parent_item_group === value);
-                  dialog.set_df_property("item_group_3", "hidden", !has_children);
-                  dialog.set_df_property("item_group_3", "reqd", has_children);
-                } else {
-                  dialog.set_df_property("item_group_5", "hidden", 1);
-                  dialog.set_df_property("item_group_3", "reqd", 0);
+              {
+                fieldtype: "Section Break",
+                label: __("Item Group")
+              },
+              {
+                fieldname: "item_group_1",
+                fieldtype: "Link",
+                label: __("Item Group 1"),
+                options: "Item Group",
+                default: form.item_group_1 || ((_b = (_a = frappe.boot) == null ? void 0 : _a.powerpro_settings) == null ? void 0 : _b.root_item_group_for_raw_materials),
+                read_only: Boolean((_d = (_c = frappe.boot) == null ? void 0 : _c.powerpro_settings) == null ? void 0 : _d.root_item_group_for_raw_materials),
+                reqd: 1,
+                change(event) {
                 }
-                dialog.set_value("item_group_3", null);
-              }
-            },
-            {
-              fieldname: "item_group_3",
-              fieldtype: "Link",
-              label: __("Item Group 3"),
-              options: "Item Group",
-              hidden: 1,
-              get_query() {
-                return {
-                  filters: {
-                    parent_item_group: dialog.get_value("item_group_2")
-                  }
-                };
               },
-              change(event) {
-                const { value } = this;
-                if (value) {
-                  const has_children = item_group_details.find((item_group) => item_group.parent_item_group === value);
-                  dialog.set_df_property("item_group_4", "hidden", !has_children);
-                  dialog.set_df_property("item_group_4", "reqd", has_children);
-                } else {
-                  dialog.set_df_property("item_group_4", "hidden", 1);
-                  dialog.set_df_property("item_group_4", "reqd", 0);
+              {
+                fieldname: "item_group_2",
+                fieldtype: "Link",
+                label: __("Item Group 2"),
+                options: "Item Group",
+                default: form.item_group_2,
+                reqd: 1,
+                get_query() {
+                  return {
+                    filters: {
+                      parent_item_group: dialog.get_value("item_group_1")
+                    }
+                  };
+                },
+                change(event) {
+                  const { value } = this;
+                  if (value) {
+                    const has_children = item_group_details.find((item_group) => item_group.parent_item_group === value);
+                    dialog.set_df_property("item_group_3", "hidden", !has_children);
+                    dialog.set_df_property("item_group_3", "reqd", has_children);
+                  } else {
+                    dialog.set_df_property("item_group_5", "hidden", 1);
+                    dialog.set_df_property("item_group_3", "reqd", 0);
+                  }
+                  dialog.set_value("item_group_3", null);
                 }
-                dialog.set_value("item_group_4", null);
-              }
-            },
-            {
-              fieldname: "item_group_4",
-              fieldtype: "Link",
-              label: __("Item Group 4"),
-              options: "Item Group",
-              hidden: 1,
-              get_query() {
-                return {
-                  filters: {
-                    parent_item_group: dialog.get_value("item_group_3")
-                  }
-                };
               },
-              change(event) {
-                const { value } = this;
-                if (value) {
-                  const has_children = item_group_details.find((item_group) => item_group.parent_item_group === value);
-                  dialog.set_df_property("item_group_5", "hidden", !has_children);
-                  dialog.set_df_property("item_group_5", "reqd", has_children);
-                } else {
-                  dialog.set_df_property("item_group_5", "hidden", 1);
-                  dialog.set_df_property("item_group_5", "reqd", 0);
+              {
+                fieldname: "item_group_3",
+                fieldtype: "Link",
+                label: __("Item Group 3"),
+                options: "Item Group",
+                default: form.item_group_3,
+                hidden: 1,
+                get_query() {
+                  return {
+                    filters: {
+                      parent_item_group: dialog.get_value("item_group_2")
+                    }
+                  };
+                },
+                change(event) {
+                  const { value } = this;
+                  if (value) {
+                    const has_children = item_group_details.find((item_group) => item_group.parent_item_group === value);
+                    dialog.set_df_property("item_group_4", "hidden", !has_children);
+                    dialog.set_df_property("item_group_4", "reqd", has_children);
+                  } else {
+                    dialog.set_df_property("item_group_4", "hidden", 1);
+                    dialog.set_df_property("item_group_4", "reqd", 0);
+                  }
+                  dialog.set_value("item_group_4", null);
                 }
-                dialog.set_value("item_group_5", null);
-              }
-            },
-            {
-              fieldname: "item_group_5",
-              fieldtype: "Link",
-              label: __("Item Group 5"),
-              options: "Item Group",
-              hidden: 1,
-              get_query() {
-                return {
-                  filters: {
-                    parent_item_group: dialog.get_value("item_group_4")
-                  }
-                };
               },
-              change(event) {
+              {
+                fieldname: "item_group_4",
+                fieldtype: "Link",
+                label: __("Item Group 4"),
+                default: form.item_group_4,
+                options: "Item Group",
+                hidden: 1,
+                get_query() {
+                  return {
+                    filters: {
+                      parent_item_group: dialog.get_value("item_group_3")
+                    }
+                  };
+                },
+                change(event) {
+                  const { value } = this;
+                  if (value) {
+                    const has_children = item_group_details.find((item_group) => item_group.parent_item_group === value);
+                    dialog.set_df_property("item_group_5", "hidden", !has_children);
+                    dialog.set_df_property("item_group_5", "reqd", has_children);
+                  } else {
+                    dialog.set_df_property("item_group_5", "hidden", 1);
+                    dialog.set_df_property("item_group_5", "reqd", 0);
+                  }
+                  dialog.set_value("item_group_5", null);
+                }
+              },
+              {
+                fieldname: "item_group_5",
+                fieldtype: "Link",
+                label: __("Item Group 5"),
+                options: "Item Group",
+                default: form.item_group_5,
+                hidden: 1,
+                get_query() {
+                  return {
+                    filters: {
+                      parent_item_group: dialog.get_value("item_group_4")
+                    }
+                  };
+                },
+                change(event) {
+                }
               }
-            }
-          ],
-          primary_action_label: __("Please, do!"),
-          primary_action(values) {
-            frappe.call("powerpro.manufacturing_pro.doctype.raw_material.client.create_material_sku", __spreadValues({
-              material_id: docname
-            }, values)).then(function(response) {
-              const { message } = response;
-              if (message) {
-                dialog.hide();
-                frappe.confirm(`
-						${__("Here is the SKU")} <strong>${message}</strong>
-						<button class="btn btn-info" onclick="frappe.utils.copy_to_clipboard('${message}')">
-							${__("Copy to Clipboard")}
-						</button>
-						<br>${__("Do you want me to take you there?")}
-					`, () => {
-                  frappe.set_route("Form", "Item", message);
-                }, () => {
+            ],
+            primary_action_label: __("Please, do!"),
+            primary_action(values) {
+              frappe.call("powerpro.manufacturing_pro.doctype.raw_material.client.create_material_sku", __spreadValues({
+                material_id: docname
+              }, values)).then(function(response) {
+                const { message } = response;
+                if (message) {
+                  dialog.hide();
+                  frappe.confirm(`
+							${__("Here is the SKU")} <strong>${message}</strong>
+							<button class="btn btn-info" onclick="frappe.utils.copy_to_clipboard('${message}')">
+								${__("Copy to Clipboard")}
+							</button>
+							<br>${__("Do you want me to take you there?")}
+						`, () => {
+                    frappe.set_route("Form", "Item", message);
+                  }, () => {
+                    frappe.show_alert({
+                      message: __("Alright... let's be productive, then!"),
+                      indicator: "green"
+                    });
+                  });
                   frappe.show_alert({
-                    message: __("Alright... let's be productive, then!"),
+                    message,
                     indicator: "green"
                   });
-                });
-                frappe.show_alert({
-                  message,
-                  indicator: "green"
-                });
-              } else {
+                } else {
+                  frappe.show_alert({
+                    message: __("SKU not created!"),
+                    indicator: "red"
+                  });
+                  frappe.confirm(
+                    __("Would you like to try again?"),
+                    () => dialog.show(),
+                    () => frappe.show_alert(__("Okay!"))
+                  );
+                }
+              }, function(exec) {
                 frappe.show_alert({
                   message: __("SKU not created!"),
                   indicator: "red"
@@ -416,24 +436,14 @@ frappe.dom.set_style("/* sfc-style:/home/frappe/yefri-bench/apps/frappe/frappe/p
                   () => dialog.show(),
                   () => frappe.show_alert(__("Okay!"))
                 );
-              }
-            }, function(exec) {
-              frappe.show_alert({
-                message: __("SKU not created!"),
-                indicator: "red"
               });
-              frappe.confirm(
-                __("Would you like to try again?"),
-                () => dialog.show(),
-                () => frappe.show_alert(__("Okay!"))
-              );
-            });
-          }
-        });
-        dialog.set_df_property("standard_sheet_size", "hidden", 1);
-        dialog.set_df_property("standard_sheets_section", "hidden", 1);
-        dialog.set_df_property("standard_sheets", "hidden", 1);
-        dialog.show();
+            }
+          });
+          dialog.set_df_property("standard_sheet_size", "hidden", 1);
+          dialog.set_df_property("standard_sheets_section", "hidden", 1);
+          dialog.set_df_property("standard_sheets", "hidden", 1);
+          dialog.show();
+        }
       };
     }
   });
@@ -17773,4 +17783,4 @@ Component that was made reactive: `,
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.K7I56KCT.js.map
+//# sourceMappingURL=app.bundle.TIWMEWZZ.js.map
