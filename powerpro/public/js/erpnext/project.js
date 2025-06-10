@@ -23,7 +23,6 @@ frappe.provide("powerpro.masks");
 		// _set_qty_mask(frm);
 		_set_queries(frm);
 		_render_docfields(frm);
-		_render_related_tasks(frm);
 	}
 
 	function project_template(frm) {
@@ -48,101 +47,6 @@ frappe.provide("powerpro.masks");
 			.filter(df => !frappe.model.no_value_type.includes(df.fieldtype))
 			.map(function({ fieldname }) {
 				return listen_on_field(frm, fieldname);
-			});
-	}
-
-	function _render_related_tasks(frm) {
-		// const { doc } = frm;
-
-		frm.call("get_related_tasks", { /* no args */ }, function({ message: tasks }) {
-				console.log({ tasks})
-				const $wrapper = frm.get_field("task_display").$wrapper;
-				$wrapper.empty();
-
-				if (!tasks || tasks.length === 0) {
-					$wrapper.html("<p>Nada para mostrar</p>");
-					return;
-				}
-
-				const task_count = tasks.length;
-				const task_text = task_count > 1 ? "Tareas" : "Tarea";
-				const task_count_text = `<h3>${task_count} ${task_text} relacionadas</h5>`;
-				$wrapper.empty();
-				$wrapper.append(task_count_text);
-				$wrapper.append("<hr>");
-
-				const translated_status = {
-					"Open": "Abierto",
-					"Working": "En progreso",
-					"Pending Review": "Pendiente de revisión",
-					"Overdue": "Vencido",
-					"Completed": "Completado",
-					"Cancelled": "Cancelado",
-				};
-
-				const indicators = {
-					"Open": "orange",
-					"Working": "blue",
-					"Pending Review": "yellow",
-					"Overdue": "red",
-					"Completed": "green",
-					"Cancelled": "gray",
-				};
-				const status_class = (status) => {
-					return `indicator-pill ${indicators[status] || "secondary"}`;
-				};
-
-				const table = `
-					<style>
-						.table-zebra tbody tr:nth-of-type(odd) {
-							background-color: #ffffff;
-						}
-						.table-zebra tbody tr:nth-of-type(even) {
-							background-color: #fafafa;
-						}
-					</style>
-					<table class="table table-zebra">
-						<thead>
-							<tr style="background-color: #021e42; color: white; border-radius: 4px;">
-								<th>
-								<span style="font-size: 1.2em">Tarea</span>
-								</th>
-								<th>
-								<span style="font-size: 1.2em">Estado</span>
-								</th>
-								<th>
-								<span style="font-size: 1.2em">Usuarios</span>
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							${(tasks || []).map(
-								({ name, subject, status, users }) => `
-									<tr>
-										<td>
-											<a title="${name}" href="/app/task/${name}" target="_blank">
-												${name.split("-").pop()}: ${subject}
-											</a>
-										</td>
-										<td>
-											<span class="indicator ${status_class(status)}">
-												${translated_status[status] || status}
-											</span>
-										</td>
-										<td>
-											${cstr(users || "N/A").split("<br>")
-												.map((user) => {
-													return `<span class="badge badge-light p-2 my-1">${user}</span>`;
-												})
-												.join("<br> ")}
-										</td>
-									</tr>
-								`).join("") || "<tr><td colspan='3'>No hay tareas relacionadas</td></tr>"}
-						</tbody>
-					</table>
-				`;
-
-				$wrapper.append(table);
 			});
 	}
 
