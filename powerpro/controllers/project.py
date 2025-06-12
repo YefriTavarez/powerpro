@@ -29,6 +29,13 @@ class Project(project.Project):
         if not frappe.flags.ignore_validate:
             self.render_project_name(for_validate=True)
 
+    def after_insert(self):
+        self.copy_from_template()  # nosemgrep
+
+        if self.sales_order:
+            frappe.db.set_value("Sales Order", self.sales_order, "project", self.name)
+
+
     # override
     def check_for_parent_tasks(self, template_task, project_task, project_tasks):
         if template_task.get("parent_task") \
@@ -45,70 +52,74 @@ class Project(project.Project):
         """
         Copy tasks from template
         """
-        if self.project_template and not frappe.db.get_all("Task", dict(project=self.name), limit=1):
-            # has a template, and no loaded tasks, so lets create
-            if not self.expected_start_date:
-                # project starts today
-                self.expected_start_date = today()
+        # if self.project_template and not frappe.db.get_all("Task", dict(project=self.name), limit=1):
+        if not self.project_template:
+            frappe.throw("La Plantilla de Proyecto es obligatoria")
+        
+    
+        # has a template, and no loaded tasks, so lets create
+        if not self.expected_start_date:
+            # project starts today
+            self.expected_start_date = today()
 
-            project_template = frappe.get_doc("Project Template", self.project_template)
+        project_template = frappe.get_doc("Project Template", self.project_template)
 
-            # if not self.project_type: # always override
-            self.project_type = project_template.project_type
+        # if not self.project_type: # always override
+        self.project_type = project_template.project_type
 
-            # create tasks from project_template
-            project_tasks = []
-            tmp_task_details = []
-            for project_template_task in project_template.tasks:
-                template_task = frappe.get_doc("Task", project_template_task.task)
-                tmp_task_details.append(template_task)
+        # create tasks from project_template
+        individual_tasks = []
+        task_templates = []
+        for task_row in project_template.tasks:
+            template_task = frappe.get_doc("Task", task_row.task)
+            task_templates.append(template_task)
 
-                # load parent_tasks into tmp_task_details
-                task = self.create_task_from_template(template_task, project_template, project_template_task)
-                db_create_task(task)
-                project_tasks.append(task)
+            # load parent_tasks into task_templates
+            task = self.create_task_from_template(template_task, project_template, task_row)
+            # db_create_task(task)
+            individual_tasks.append(task)
 
-                if template_task.is_group: # type: ignore
-                    for _template_task in self.load_child_tasks(template_task):
-                        tmp_task_details.append(_template_task)
-                        task = self.create_task_from_template(_template_task, project_template, project_template_task)
-                        db_create_task(task)
-                        project_tasks.append(task)
+            if template_task.is_group: # type: ignore
+                for _template_task in self.load_child_tasks(template_task):
+                    task_templates.append(_template_task)
+                    task = self.create_task_from_template(_template_task, project_template, task_row)
+                    # db_create_task(task)
+                    individual_tasks.append(task)
 
-            self.dependency_mapping(tmp_task_details, project_tasks)
+        # self.dependency_mapping(task_templates, individual_tasks)
 
     # override
     def create_task_from_template(
-        self, task_details: "document.Document",
+        self, template_task: "document.Document",
         project_template: "document.Document",
-        project_template_task: "document.Document"
+        task_row: "document.Document"
     ) -> "document.Document":
         task_expected_start_date, task_expected_end_date = \
-            self.get_expected_dates(project_template, project_template_task)
+            self.get_expected_dates(project_template, task_row)
 
         task = frappe.get_doc(
             dict(
                 doctype="Task",
-                subject=task_details.subject,
+                subject=template_task.subject,
                 project=self.name,
                 status="Open",
                 exp_start_date=task_expected_start_date,
                 exp_end_date=task_expected_end_date,
-                expected_time=project_template_task.get_duration_in_minutes() / 60,
-                description=task_details.description,
-                task_weight=task_details.task_weight,
-                type=task_details.type,
-                issue=task_details.issue,
-                is_group=task_details.is_group,
-                color=task_details.color,
-                template_task=task_details.name,
+                expected_time=task_row.get_duration_in_minutes() / 60,
+                description=template_task.description,
+                task_weight=template_task.task_weight,
+                type=template_task.type,
+                issue=template_task.issue,
+                is_group=template_task.is_group,
+                color=template_task.color,
+                template_task=template_task.name,
                 priority=self.priority,
             )
         )
 
         existing_users = { d.user for d in task.users }
 
-        for user in self.get_task_users(project_template_task, task_details):
+        for user in self.get_task_users(task_row, template_task):
             if user.user not in existing_users:
                 task.append("users", {
                     "user": user.user,
@@ -117,7 +128,7 @@ class Project(project.Project):
                 existing_users.add(user.user)
 
         task.flags.ignore_mandatory = True
-        task.save()
+        task.insert()
 
         return task
 
@@ -258,7 +269,7 @@ class Project(project.Project):
 
         return task_expected_start_date, task_expected_end_date
 
-    def get_task_users(self, project_template_task: "document.Document", template_task: "document.Document") -> list["document.Document"]:
+    def get_task_users(self, task_row: "document.Document", template_task: "document.Document") -> list["document.Document"]:
         if template_task.users:
             # if the template task has users, we return them
             return [frappe.copy_doc(d) for d in template_task.users]
@@ -267,19 +278,19 @@ class Project(project.Project):
             "All Employees in the Department",
             "Based on Role",
             "Single User",
-        ] = project_template_task.assignation_method
+        ] = task_row.assignation_method
 
         if assignation_method == "All Employees in the Department":
-            return self._get_users_based_on_department(project_template_task.department)
+            return self._get_users_based_on_department(task_row.department)
 
         if assignation_method == "Based on Role":
             return self._get_users_based_on_role(
-                project_template_task.role, project_template_task.department
+                task_row.role, task_row.department
             )
 
         if assignation_method == "Single User":
             responsible = frappe.new_doc("Task Responsible")
-            responsible.user = project_template_task.user
+            responsible.user = task_row.user
 
             if not responsible.user:
                 return []
