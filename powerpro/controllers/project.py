@@ -86,7 +86,37 @@ class Project(project.Project):
                     # db_create_task(task)
                     individual_tasks.append(task)
 
-        # self.dependency_mapping(task_templates, individual_tasks)
+        self.dependency_mapping(task_templates, individual_tasks)
+    
+    # override
+    def dependency_mapping(self, task_templates, individual_tasks):
+        for project_task in individual_tasks:
+            template_task = frappe.get_doc("Task", project_task.template_task)
+
+            self.check_depends_on_value(template_task, project_task, individual_tasks)
+            self.check_for_parent_tasks(template_task, project_task, individual_tasks)
+
+    def check_depends_on_value(self, template_task, project_task, individual_tasks):
+        if template_task.get("depends_on") and not project_task.get("depends_on"):
+            project_template_map = {pt.template_task: pt for pt in individual_tasks}
+
+            for child_task in template_task.get("depends_on"):
+                if project_template_map and project_template_map.get(child_task.task):
+                    project_task.reload()  # reload, as it might have been updated in the previous iteration
+                    project_task.append(
+                        "depends_on", {"task": project_template_map.get(child_task.task).name}
+                    ).db_insert()
+                    # project_task.save()
+
+    def check_for_parent_tasks(self, template_task, project_task, individual_tasks):
+        if template_task.get("parent_task"):
+            # if and not project_task.get("parent_task"):
+            for pt in individual_tasks:
+                if pt.template_task == template_task.parent_task:
+                    project_task.parent_task = pt.name
+                    project_task.db_update()
+                    break
+
 
     # override
     def create_task_from_template(
@@ -412,7 +442,7 @@ def db_create_task(task: "document.Document"):
     else: task.db_update()
 
     for child in task.get_all_children():
-        child.parent = task.name
+        child.parent = task.name # type: ignore
         if child.is_new():
             child.db_insert(ignore_if_duplicate=True)
         else: child.db_update()
