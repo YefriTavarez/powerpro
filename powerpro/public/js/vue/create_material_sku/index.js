@@ -76,6 +76,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 
 						// new field
 						dialog.set_df_property("standard_sheet_size", "hidden", event.target.value === "Roll");
+						dialog.set_df_property("standard_sheet_size", "reqd", event.target.value !== "Roll");
 					}
 				},
 				{
@@ -83,7 +84,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 					fieldtype: "Select",
 					label: __("Standard Sheet Size"),
 					// hidden: 1,
-					reqd: 1,
+					reqd: 0,
 					default: "",
 					options: [
 						"",
@@ -104,6 +105,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 
 						dialog.set_df_property("standard_sheets_section", "hidden", hidden);
 						dialog.set_df_property("standard_sheets", "hidden", hidden);
+						dialog.set_df_property("standard_sheets", "reqd", !hidden); // make the table required if the standard sheet size is Derivado and GSM is set
 					}
 				},
 				{ fieldtype: "Column Break" },
@@ -204,7 +206,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 					fieldname: "standard_sheets",
 					fieldtype: "Table",
 					label: __("Standard Sheets"),
-					reqd: 1,
+					reqd: 0,
 					cannot_add_rows: 0,
 					in_place_edit: true,
 					data: [{
@@ -276,7 +278,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 					options: "Item Group",
 					default: form.item_group_1 || frappe.boot?.powerpro_settings?.root_item_group_for_raw_materials,
 					read_only: Boolean(frappe.boot?.powerpro_settings?.root_item_group_for_raw_materials),
-					reqd: 1,
+					reqd: 0,
 					change(event) {},
 				},
 				{
@@ -285,7 +287,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 					label: __("Item Group 2"),
 					options: "Item Group",
 					default: form.item_group_2,
-					reqd: 1,
+					reqd: 0,
 					get_query() {
 						return {
 							filters: {
