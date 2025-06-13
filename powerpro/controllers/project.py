@@ -29,15 +29,16 @@ class Project(project.Project):
         if not frappe.flags.ignore_validate:
             self.render_project_name(for_validate=True)
 
+    # override
     def after_insert(self):
         self.copy_from_template()  # nosemgrep
 
-        if self.sales_order:
-            frappe.db.set_value("Sales Order", self.sales_order, "project", self.name)
+        # if self.sales_order:
+        #     frappe.db.set_value("Sales Order", self.sales_order, "project", self.name)
 
 
     # override
-    def check_for_parent_tasks(self, template_task, project_task, project_tasks):
+    def _check_for_parent_tasks(self, template_task, project_task, project_tasks):
         if template_task.get("parent_task") \
             and not project_task.get("parent_task"):
             for pt in project_tasks:
@@ -90,31 +91,39 @@ class Project(project.Project):
     
     # override
     def dependency_mapping(self, task_templates, individual_tasks):
-        for project_task in individual_tasks:
-            template_task = frappe.get_doc("Task", project_task.template_task)
+        for individual_task in individual_tasks:
+            # template_task = frappe.get_doc("Task", individual_task.template_task)
+            individual_task._template_task = frappe.get_doc(
+                "Task", individual_task.template_task
+            )
 
-            self.check_depends_on_value(template_task, project_task, individual_tasks)
-            self.check_for_parent_tasks(template_task, project_task, individual_tasks)
+            self.check_depends_on_value(individual_task, individual_tasks)
+            self.check_for_parent_tasks(individual_task, individual_tasks)
 
-    def check_depends_on_value(self, template_task, project_task, individual_tasks):
-        if template_task.get("depends_on") and not project_task.get("depends_on"):
+    def check_depends_on_value(self, individual_task, individual_tasks):
+        template_task = individual_task._template_task
+        if template_task.get("depends_on") and not individual_task.get("depends_on"):
             project_template_map = {pt.template_task: pt for pt in individual_tasks}
 
             for child_task in template_task.get("depends_on"):
                 if project_template_map and project_template_map.get(child_task.task):
-                    project_task.reload()  # reload, as it might have been updated in the previous iteration
-                    project_task.append(
+                    individual_task.reload()  # reload, as it might have been updated in the previous iteration
+                    individual_task.append(
                         "depends_on", {"task": project_template_map.get(child_task.task).name}
                     ).db_insert()
-                    # project_task.save()
+                    # individual_task.save()
 
-    def check_for_parent_tasks(self, template_task, project_task, individual_tasks):
+    def check_for_parent_tasks(self, current_task, individual_tasks):
+        template_task = current_task._template_task
         if template_task.get("parent_task"):
-            # if and not project_task.get("parent_task"):
-            for pt in individual_tasks:
-                if pt.template_task == template_task.parent_task:
-                    project_task.parent_task = pt.name
-                    project_task.db_update()
+            # if and not individual_task.get("parent_task"):
+            for other_task in individual_tasks:
+                if other_task.name == current_task.name:
+                    continue
+
+                if other_task.template_task == template_task.parent_task:
+                    current_task.parent_task = other_task.name
+                    current_task.db_update()
                     break
 
 
@@ -138,6 +147,7 @@ class Project(project.Project):
                 expected_time=task_row.get_duration_in_minutes() / 60,
                 description=template_task.description,
                 task_weight=template_task.task_weight,
+                parent_task=template_task.parent_task,
                 type=template_task.type,
                 issue=template_task.issue,
                 is_group=template_task.is_group,
