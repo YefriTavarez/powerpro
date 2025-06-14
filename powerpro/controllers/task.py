@@ -18,7 +18,7 @@ class Task(task.Task):
     def on_update(self):
         super().on_update()
 
-        if self.parent_task:
+        if self.parent_task and not self.flags.from_project:
             self.update_parent_task()
 
     # override
@@ -26,14 +26,25 @@ class Task(task.Task):
         ...
     # override
     def populate_depends_on(self):
-        if self.parent_task:
+        if self.parent_task: # if it's child from a group task
+            # load the parent task
             parent = frappe.get_doc("Task", self.parent_task)
             if self.name not in [row.task for row in parent.depends_on]:
                 parent.append(
                     "depends_on", {"doctype": "Task Depends On", "task": self.name, "subject": self.subject}
-                )
-                parent.flags.ignore_links = True
-                parent.save()
+                ).db_insert()
+                # parent.flags.ignore_links = True
+                # parent.flags.from_project = True  # to avoid recursion
+                # parent.save()
+
+    # override
+    def validate_depends_on_tasks(self):
+        if self.depends_on and not self.is_group:
+            for task in self.depends_on:
+                if not frappe.db.get_value("Task", task.task, "is_template"):
+                    dependent_task_format = f"""<a href="/app/task/{task.task}">{task.task}</a>"""
+                    frappe.throw(_("Dependent Task {0} is not a Template Task").format(dependent_task_format))
+
 
     def update_parent_task(self):
         """Update the parent task's status based on the current task's status and the other children."""
@@ -151,6 +162,8 @@ class Task(task.Task):
         # Update and save only if the status has changed
         if parent_task.status != determined_new_status:
             parent_task.status = determined_new_status
+
+
             parent_task.save()
 
 

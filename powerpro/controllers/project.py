@@ -36,18 +36,6 @@ class Project(project.Project):
         # if self.sales_order:
         #     frappe.db.set_value("Sales Order", self.sales_order, "project", self.name)
 
-
-    # override
-    def _check_for_parent_tasks(self, template_task, project_task, project_tasks):
-        if template_task.get("parent_task") \
-            and not project_task.get("parent_task"):
-            for pt in project_tasks:
-                if pt.template_task == template_task.parent_task:
-                    project_task.parent_task = pt.name
-                    project_task.flags.ignore_links = True
-                    project_task.save()
-                    break
-
     # override
     def copy_from_template(self):  # nosemgrep
         """
@@ -77,14 +65,12 @@ class Project(project.Project):
 
             # load parent_tasks into task_templates
             task = self.create_task_from_template(template_task, project_template, task_row)
-            # db_create_task(task)
             individual_tasks.append(task)
 
             if template_task.is_group: # type: ignore
                 for _template_task in self.load_child_tasks(template_task):
                     task_templates.append(_template_task)
                     task = self.create_task_from_template(_template_task, project_template, task_row)
-                    # db_create_task(task)
                     individual_tasks.append(task)
 
         self.dependency_mapping(task_templates, individual_tasks)
@@ -108,9 +94,12 @@ class Project(project.Project):
             for child_task in template_task.get("depends_on"):
                 if project_template_map and project_template_map.get(child_task.task):
                     individual_task.reload()  # reload, as it might have been updated in the previous iteration
-                    individual_task.append(
-                        "depends_on", {"task": project_template_map.get(child_task.task).name}
-                    ).db_insert()
+                    dependent_task = project_template_map.get(child_task.task)
+                    
+                    individual_task.append("depends_on", {
+                        "task": dependent_task.name,
+                        "subject": dependent_task.subject,
+                    }).db_insert()
                     # individual_task.save()
 
     def check_for_parent_tasks(self, current_task, individual_tasks):
@@ -168,6 +157,7 @@ class Project(project.Project):
                 existing_users.add(user.user)
 
         task.flags.ignore_mandatory = True
+        task.flags.from_project = True
         task.insert()
 
         return task
