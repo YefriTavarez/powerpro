@@ -23,6 +23,26 @@ class Task(task.Task):
             self.update_parent_task()
 
     # override
+    def after_insert(self):
+        frappe.enqueue_doc(
+            doctype=self.doctype,
+            name=self.name,
+            method="refresh_users",
+            queue="long",
+            timeout=300,
+            enqueue_after_commit=True,
+        )
+
+
+    def refresh_users(self):
+        self.users = []
+        template_task = frappe.get_doc("Task", self.template_task)
+        if template_task.users:
+            for user in template_task.users:
+                self.append("users", {"user": user.user})
+            self.save()
+
+    # override
     def check_recursion(self):
         ...
     # override
