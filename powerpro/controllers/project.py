@@ -1,7 +1,7 @@
 # Copyright (c) 2025, Yefri Tavarez and Contributors
 # For license information, please see license.txt
 
-from typing import TYPE_CHECKING, Literal, Union
+from typing import TYPE_CHECKING, Literal, Union, List
 if TYPE_CHECKING:
     from frappe.model import document
     import datetime
@@ -204,11 +204,12 @@ class Project(project.Project):
 
         return task
 
-    def load_child_tasks(self, template_task: "document.Document") -> list["document.Document"]:
+
+    def load_child_tasks(self, template_task: "document.Document") -> List["document.Document"]:
         """
-        Load parent tasks into tmp_task_details
+        Load child tasks of a group template task.
         """
-        if not template_task.is_group:
+        if not getattr(template_task, "is_group", False):
             return []
 
         # if the task is a group, we need to load its child tasks
@@ -217,11 +218,10 @@ class Project(project.Project):
             "status": "Template",
         }, pluck="name")
 
-        out = list()
-        if child_tasks:
-            for child_task in child_tasks:
-                child_task_doc = frappe.get_doc("Task", child_task)
-                out.append(child_task_doc)
+        out = []
+        for child_task in child_tasks or []:
+            child_task_doc = frappe.get_doc("Task", child_task)
+            out.append(child_task_doc)
 
         return out
                 
