@@ -57,8 +57,8 @@ class Project(project.Project):
         self.project_type = project_template.project_type
 
         # create tasks from project_template
-        individual_tasks = []
-        task_templates = []
+        individual_tasks = [] # individual tasks of type Document
+        task_templates = [] # individual tasks of type Template
         for task_row in project_template.tasks:
             template_task = frappe.get_doc("Task", task_row.task)
             task_templates.append(template_task)
@@ -88,20 +88,23 @@ class Project(project.Project):
 
     def check_depends_on_value(self, individual_task, individual_tasks):
         template_task = individual_task._template_task
-        if template_task.get("depends_on") and not individual_task.get("depends_on"):
-            project_template_map = {pt.template_task: pt for pt in individual_tasks}
 
-            for child_task in template_task.get("depends_on"):
-                if project_template_map and project_template_map.get(child_task.task):
-                    individual_task.reload()  # reload, as it might have been updated in the previous iteration
-                    dependent_task = project_template_map.get(child_task.task)
-                    
+        if not template_task.get("depends_on") or individual_task.get("depends_on"):
+            return
+
+        # Mapeo de nombre de plantilla ➜ instancia del proyecto
+        template_to_project_task = {t.template_task: t for t in individual_tasks if t.template_task}
+
+        for dep in template_task.depends_on:
+            dependent = template_to_project_task.get(dep.task)
+            if dependent:
+                # Asegúrate de no duplicar
+                if not any(d.task == dependent.name for d in individual_task.depends_on):
                     individual_task.append("depends_on", {
-                        "task": dependent_task.name,
-                        "subject": dependent_task.subject,
+                        "task": dependent.name,
+                        "subject": dependent.subject,
                     }).db_insert()
-                    # individual_task.save()
-
+        
     def check_for_parent_tasks(self, current_task, individual_tasks):
         template_task = current_task._template_task
         if template_task.get("parent_task"):

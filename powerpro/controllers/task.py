@@ -3,6 +3,7 @@
 
 from typing import Union
 import frappe
+from frappe import _
 
 from erpnext.projects.doctype.task import task
 
@@ -26,6 +27,7 @@ class Task(task.Task):
         ...
     # override
     def populate_depends_on(self):
+        return # No need to populate depends_on for this custom Task
         if self.parent_task: # if it's child from a group task
             # load the parent task
             parent = frappe.get_doc("Task", self.parent_task)
