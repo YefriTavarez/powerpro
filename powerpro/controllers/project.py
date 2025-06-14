@@ -32,9 +32,48 @@ class Project(project.Project):
     # override
     def after_insert(self):
         self.copy_from_template()  # nosemgrep
+        self.clean_up_template_tasks()
 
         # if self.sales_order:
         #     frappe.db.set_value("Sales Order", self.sales_order, "project", self.name)
+
+    def clean_up_template_tasks(self):
+        frappe.enqueue_doc(
+            doctype=self.doctype,
+            name=self.name,
+            method="refresh_depends_on_templates",
+            queue="long",
+            timeout=300,
+            enqueue_after_commit=True,
+            job_name="Refresh Template Tasks Dependencies",
+        )
+
+    def refresh_depends_on_templates(self):
+        """Remove all non-template tasks from the depends_on list on all Template Tasks."""
+
+        # load template tasks
+        template_tasks = set(
+            frappe.get_all(
+                "Task",
+                filters={"status": "Template"},
+                pluck="name",
+            )
+        )
+
+        for task_name in template_tasks:
+            task_doc = frappe.get_doc("Task", task_name)
+
+            # filter out non-template tasks from depends_on
+            for child in task_doc.depends_on:
+                if child.task not in template_tasks:
+                    task_doc.depends_on.remove(child)
+                    child.delete()
+
+            # refresh idx to ensure the order is maintained
+            for idx, d in enumerate(task_doc.depends_on):
+                d.idx = idx + 1
+                d.db_update()
+
 
     # override
     def copy_from_template(self):  # nosemgrep
