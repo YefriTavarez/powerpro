@@ -57,8 +57,7 @@ def get_serial_no_for_item_query(doctype, txt, searchfield="name", start=0, page
 		f"""
 			SELECT
 				name,
-				item_code,
-				status
+				item_code
 			FROM
 				`tabSerial No`
 			WHERE
