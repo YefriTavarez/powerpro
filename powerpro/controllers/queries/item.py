@@ -122,7 +122,16 @@ def get_items_with_active_serial_no(doctype, txt, searchfield, start, page_len, 
 	if not filters:
 		filters = {}
 
-	conditions = ["sn.status = 'Active'"]
+	if not filters.get("reference_name"):
+		frappe.msgprint("Por favor, proporcione un nombre de referencia para buscar los artículos.", alert=True)
+		return []
+
+	if not filters.get("raw_material_type"):
+		frappe.msgprint("Por favor, proporcione un tipo de materia prima para buscar los artículos.", alert=True)
+		return []
+	
+	conditions = ["i.disabled = 0"]
+
 	values = {}
 
 	# Filter by reference_name
@@ -158,15 +167,16 @@ def get_items_with_active_serial_no(doctype, txt, searchfield, start, page_len, 
 	query = f"""
 		SELECT
 			i.name,
-			i.item_name,
-			i.description,
-			sn.name as serial_no
+			i.description
 		FROM
 			`tabItem` i
-		INNER JOIN
-			`tabSerial No` sn ON sn.item_code = i.name
 		WHERE
 			{where_clause}
+			And i.name in (
+				Select sn.item_code 
+				From `tabSerial No`  as sn
+				Where sn.status = 'Active'
+			)
 		ORDER BY
 			i.name ASC
 		LIMIT {start}, {page_len}
