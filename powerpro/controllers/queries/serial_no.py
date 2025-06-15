@@ -67,7 +67,7 @@ def get_serial_no_for_item_query(doctype, txt, searchfield="name", start=0, page
 					SELECT
 						serial_no
 					FROM
-						`tabConversion Roll Used`
+						`tabConversion Rolls Used`
 					WHERE
 						row_id != {row_id!r}
 				)
