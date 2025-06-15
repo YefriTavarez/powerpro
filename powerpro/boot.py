@@ -27,7 +27,7 @@ def get_project_manager():
 
 def get_roll_conversion_order_settings():
 	"""Get the roll conversion order settings from the settings"""
-	if not frappe.db.exists("DocType", "Roll Conversion Order Settings"):
+	if frappe.db.exists("DocType", "Roll Conversion Order Settings"):
 		settings = frappe.get_single("Roll Conversion Order Settings")
 
 		return {
