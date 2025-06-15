@@ -108,3 +108,68 @@ def get_sales_order_items(doctype, txt, searchfield, start, page_len, filters):
 		""", as_list=True
 	)
 	return out
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_items_with_active_serial_no(doctype, txt, searchfield, start, page_len, filters):
+	# example filters: filters = {
+	# 	reference_name: doc.raw_material || "N/A",
+	# 	raw_material_type: "Roll",
+	# 	roll_width: [">=", Math.min(doc.sheet_width, doc.sheet_height) ],
+	# }
+
+	if not filters:
+		filters = {}
+
+	conditions = ["sn.status = 'Active'"]
+	values = {}
+
+	# Filter by reference_name
+	if filters.get("reference_name"):
+		conditions.append("i.reference_name = %(reference_name)s")
+		values["reference_name"] = filters["reference_name"]
+
+	# Filter by raw_material_type
+	if filters.get("raw_material_type"):
+		conditions.append("i.raw_material_type = %(raw_material_type)s")
+		values["raw_material_type"] = filters["raw_material_type"]
+
+	# Filter by roll_width (can be a value or a list like [operator, value])
+	if filters.get("roll_width"):
+		roll_width = filters["roll_width"]
+		if isinstance(roll_width, list) and len(roll_width) == 2:
+			op, val = roll_width
+			if op in [">", ">=", "<", "<=", "=", "!="]:
+				conditions.append(f"i.roll_width {op} %(roll_width)s")
+				values["roll_width"] = val
+		else:
+			conditions.append("i.roll_width = %(roll_width)s")
+			values["roll_width"] = roll_width
+
+	# Search text
+	if txt:
+		search_pattern = f"%{txt}%"
+		conditions.append("(i.name LIKE %(txt)s OR i.item_name LIKE %(txt)s OR i.description LIKE %(txt)s)")
+		values["txt"] = search_pattern
+
+	where_clause = " AND ".join(conditions)
+
+	query = f"""
+		SELECT
+			i.name,
+			i.item_name,
+			i.description,
+			sn.name as serial_no
+		FROM
+			`tabItem` i
+		INNER JOIN
+			`tabSerial No` sn ON sn.item_code = i.name
+		WHERE
+			{where_clause}
+		ORDER BY
+			i.name ASC
+		LIMIT {start}, {page_len}
+	"""
+
+	return frappe.db.sql(query, values, as_list=True)

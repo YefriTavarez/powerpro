@@ -6,6 +6,7 @@ __all__ = (
 
 	"get_item_by_product_type_query",
 	"get_sales_order_items",
+	"get_items_with_active_serial_no",
 	"get_items_based_on_original_art",
 	"get_item_specs_1",
 	"get_item_specs_2",
@@ -37,7 +38,9 @@ __all__ = (
 from powerpro.controllers.queries.raw_material import raw_material_query
 
 from powerpro.controllers.queries.item import (
-	get_item_by_product_type_query, get_sales_order_items
+	get_item_by_product_type_query,
+	get_sales_order_items,
+	get_items_with_active_serial_no,
 )
 from powerpro.controllers.queries.art_multiple_item import get_items_based_on_original_art
 # from Item Generator
