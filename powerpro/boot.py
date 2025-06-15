@@ -33,6 +33,7 @@ def get_roll_conversion_order_settings():
 		return {
 			"default_conversion_source_warehouse": settings.default_conversion_source_warehouse,
 			"default_conversion_target_warehouse": settings.default_conversion_target_warehouse,
+			"scrap_percentage": settings.scrap_percentage,
 		}
 
 	return None
