@@ -6,6 +6,7 @@ import frappe
 
 def boot_session(bootinfo):
 	bootinfo.powerpro_settings = get_powerpro_settings()
+	bootinfo.roll_conversion_order_settings = get_roll_conversion_order_settings()
 
 
 def get_powerpro_settings():
@@ -14,7 +15,6 @@ def get_powerpro_settings():
 	return {
 		"root_item_group_for_raw_materials": settings.root_item_group_for_raw_materials,
 		"project_manager": get_project_manager(),
-		"roll_conversion_order_settings": get_roll_conversion_order_settings(),
 	}
 
 
