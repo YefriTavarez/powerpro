@@ -110,8 +110,8 @@ class Project(Document):
 
         # Primera pasada: crear tareas sin dependencias
         for template_task in template_tasks:
-            if template_task.is_group and frappe.get_all("Task Depends On", filters={"parent": template_task.name}):
-                frappe.throw(f"La tarea '{template_task.subject}' es un grupo y no puede tener dependencias.")
+            # if template_task.is_group and frappe.get_all("Task Depends On", filters={"parent": template_task.name}):
+            #     frappe.throw(f"La tarea '{template_task.subject}' es un grupo y no puede tener dependencias.")
 
             # task_expected_start_date, task_expected_end_date = \
             #     self.get_expected_dates(project_template, task_row)
