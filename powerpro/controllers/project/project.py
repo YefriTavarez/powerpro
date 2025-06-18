@@ -94,8 +94,6 @@ class Project(Document):
             as_dict=True
         )
 
-        task_map = {}  # template_task_name -> new_task_name
-
         # Primera pasada: crear tareas sin dependencias
         for template_task in template_tasks:
             if template_task.is_group and frappe.get_all("Task Depends On", filters={"parent": template_task.name}):
@@ -108,7 +106,6 @@ class Project(Document):
             
             update_task(new_task, template_task)
             new_task.insert(ignore_permissions=True)
-            task_map[template_task.name] = new_task.name
 
             if template_task.is_group:
                 # this is the best moment to create the children tasks,
@@ -136,24 +133,6 @@ class Project(Document):
 
                     child_task.parent_task = new_task.name
                     child_task.insert(ignore_permissions=True)
-                    task_map[child_template_task.name] = child_task.name
-
-        # # Segunda pasada: dependencias y jerarquía
-        # for template_task in template_tasks:
-        #     current_task = frappe.get_doc("Task", task_map[template_task.name])
-
-        #     for dep in frappe.get_all("Task Depends On", filters={"parent": template_task.name}, fields=["depends_on"]):
-        #         current_task.append("depends_on", {
-        #             "depends_on": task_map[dep.depends_on]
-        #         })
-
-        #     if template_task.parent_task:
-        #         parent_task_name = task_map.get(template_task.parent_task)
-        #         if not parent_task_name:
-        #             frappe.throw(f"Tarea padre no encontrada para '{template_task.name}'")
-        #         current_task.parent_task = parent_task_name
-
-        #     current_task.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def get_related_tasks(self):
