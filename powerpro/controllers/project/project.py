@@ -26,6 +26,20 @@ class Project(Document):
         )
 
         for task in tasks:
+            frappe.db.sql(
+                f"""
+                Delete
+                From
+                    `tabTask Depends On`
+                Where
+                    task Like "PROY-%"
+                    And parent in (
+                        Select name From `tabTask`
+                        Where project = {self.name!r}
+                    )
+                """
+            )
+
             frappe.delete_doc("Task", task.name, ignore_permissions=True)
 
     def validate_required_fields(self):
