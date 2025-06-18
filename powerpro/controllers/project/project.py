@@ -73,6 +73,7 @@ class Project(Document):
                 "exp_end_date": None,
                 "status": "Open",
                 "parent_task": None,
+                "department": template_task.department,
                 "template_task": template_task.name,
                 "users": helper.get_users_from_template(template_task.name),
                 "depends_on": helper.get_depends_on_tasks_from_template(project=self.name, name=template_task.name),
@@ -89,7 +90,9 @@ class Project(Document):
                     task.priority,
                     task.subject,
                     task.task_weight,
-                    task.type
+                    Coalesce(task.department, template_task.department) As department,
+                    task.type,
+                    template_task.name As template_task_id
                 From
                     `tabTask` As task
                 Inner Join
@@ -113,12 +116,22 @@ class Project(Document):
             # if template_task.is_group and frappe.get_all("Task Depends On", filters={"parent": template_task.name}):
             #     frappe.throw(f"La tarea '{template_task.subject}' es un grupo y no puede tener dependencias.")
 
-            # task_expected_start_date, task_expected_end_date = \
-            #     self.get_expected_dates(project_template, task_row)
+            project_template = helper.get_project_template(self.project_template)
+            [task_row] = project_template.get("tasks", {
+                "name": template_task.template_task_id,
+            })
+            task_expected_start_date, task_expected_end_date = \
+                helper.get_expected_dates(self, project_template, task_row)
 
             new_task = frappe.new_doc("Task")
             
             update_task(new_task, template_task)
+            new_task.exp_start_date = task_expected_start_date
+            new_task.exp_end_date = task_expected_end_date
+            new_task.expected_time = get_duration_in_minutes(
+                duration=template_task.task_weight or 0,
+                measurement=template_task.type or "in Minutes"
+            ) / 60
             new_task.insert(ignore_permissions=True)
 
             if template_task.is_group:
@@ -145,6 +158,12 @@ class Project(Document):
                     child_task = frappe.new_doc("Task")
                     update_task(child_task, child_template_task)
 
+                    # Set expected dates and tima same as parent task
+                    child_task.exp_start_date = new_task.exp_start_date
+                    child_task.exp_end_date = new_task.exp_end_date
+                    child_task.expected_time = new_task.expected_time
+
+                    child_task.department = new_task.department
                     child_task.parent_task = new_task.name
                     child_task.insert(ignore_permissions=True)
 
