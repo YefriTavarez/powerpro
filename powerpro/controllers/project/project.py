@@ -43,6 +43,27 @@ class Project(Document):
         #     order_by="idx asc"
         # )
 
+        def update_task(new_task, template_task):
+            new_task.update({
+                "project": self.name,
+                "subject": template_task.subject,
+                "description": template_task.description,
+                "is_group": template_task.is_group,
+                "task_weight": template_task.task_weight,
+                "priority": template_task.priority,
+                "issue": template_task.issue,
+                "color": template_task.color,
+                "type": template_task.type,
+                "exp_start_date": None,
+                "expected_time": get_duration_in_minutes(duration=.5, measurement="in Days") / 60,
+                "exp_end_date": None,
+                "status": "Open",
+                "parent_task": None,
+                "template_task": template_task.name,
+                "users": helper.get_users_from_template(template_task.name),
+                "depends_on": helper.get_depends_on_tasks_from_template(project=self.name, name=template_task.name),
+            })
+
         template_tasks = frappe.db.sql(
             """
                 Select
@@ -84,27 +105,38 @@ class Project(Document):
             #     self.get_expected_dates(project_template, task_row)
 
             new_task = frappe.new_doc("Task")
-            new_task.update({
-                "project": self.name,
-                "subject": template_task.subject,
-                "description": template_task.description,
-                "is_group": template_task.is_group,
-                "task_weight": template_task.task_weight,
-                "priority": template_task.priority,
-                "issue": template_task.issue,
-                "color": template_task.color,
-                "type": template_task.type,
-                "exp_start_date": None,
-                "expected_time": get_duration_in_minutes(duration=.5, measurement="in Days") / 60,
-                "exp_end_date": None,
-                "status": "Open",
-                "parent_task": None,
-                "template_task": template_task.name,
-                "users": helper.get_users_from_template(template_task.name),
-                "depends_on": helper.get_depends_on_tasks_from_template(project=self.name, name=template_task.name),
-            })
+            
+            update_task(new_task, template_task)
             new_task.insert(ignore_permissions=True)
             task_map[template_task.name] = new_task.name
+
+            if template_task.is_group:
+                # this is the best moment to create the children tasks,
+                # this way they use the correct sequence.
+                for child_template_task in frappe.get_all(
+                    "Task",
+                    filters={
+                        "parent_task": template_task.name,
+                        "status": "Template"
+                    },
+                    fields=[
+                        "color",
+                        "description",
+                        "is_group",
+                        "issue",
+                        "name",
+                        "priority",
+                        "subject",
+                        "task_weight",
+                        "type",
+                    ]
+                ):
+                    child_task = frappe.new_doc("Task")
+                    update_task(child_task, child_template_task)
+
+                    child_task.parent_task = new_task.name
+                    child_task.insert(ignore_permissions=True)
+                    task_map[child_template_task.name] = child_task.name
 
         # # Segunda pasada: dependencias y jerarquía
         # for template_task in template_tasks:
