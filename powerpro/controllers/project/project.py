@@ -177,3 +177,35 @@ class Project(Document):
                 task.name
             """, as_dict=True
         )
+
+    @frappe.whitelist()
+    def render_project_name(self, for_validate=False):
+        """
+        Render the project name based on the template
+        """
+
+        # cache = frappe.cache()
+        if self.project_template:
+            template = helper.get_project_template(self.project_template)
+            project_name = frappe.render_template(
+                template.project_name_template, helper.get_context(self)
+            )
+
+            if self.project_name != project_name:
+                self.project_name = project_name
+
+                # if not for_validate:
+                #     cache_key = f"project_name_update_{self.name}"
+                #     last_msg_time = cache.get(cache_key)
+                #     current_time = time.time()
+
+                #     if not last_msg_time or current_time - float(last_msg_time) > 5:  # Throttle to 5 seconds
+                #         frappe.msgprint(
+                #             "Nombre del Proyecto ha sido actualizado",
+                #             alert=True, realtime=True
+                #         )
+                #         cache.set(cache_key, current_time)
+        else:
+            if for_validate:
+                frappe.throw("La Plantilla de Proyecto es obligatoria")
+            return

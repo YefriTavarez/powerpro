@@ -84,3 +84,19 @@ def get_depends_on_tasks_from_template(project, name, only_names=False):
             )
 
     return out
+
+
+def get_project_template(name):
+    doctype = "Project Template"
+    return frappe.get_doc(doctype, name)
+
+
+def get_context(doc):
+    return frappe._dict(
+        frappe=frappe._dict(
+            utils=frappe.utils,
+            db=frappe.db,
+        ),
+        doc=doc,
+        nowdate=frappe.utils.today,
+    )
