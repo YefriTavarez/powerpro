@@ -20,7 +20,15 @@ class Task(Document):
     def validate_group_rules(self):
         if self.is_group:
             if self.depends_on:
-                frappe.throw("Las tareas grupo no pueden tener dependencias.")
+                for dep in self.depends_on:
+                    if dep.task == self.name:
+                        frappe.throw("Una tarea grupo no puede depender de sí misma.")
+
+                    if frappe.db.get_value("Task", dep.task, "is_group"):
+                        frappe.throw(f"No se puede depender de una tarea grupo: {dep.task}")
+                    
+                    if frappe.db.get_value("Task", dep.task, "parent_task") != self.name:
+                        frappe.throw(f"Una tarea grupo no puede depender de una tarea que no sea su sub-tarea: {dep.task}")
 
             if self.users:
                 frappe.throw("Las tareas grupo no deben tener responsables.")
