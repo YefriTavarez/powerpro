@@ -14,7 +14,7 @@ def get_ncf_modificado(
 ) -> str:
     """NCF Modificado
 
-    En “NCF Modificado” registre el NCF del comprobante que fue modificado por la
+    En "NCF Modificado" registre el NCF del comprobante que fue modificado por la
     factura. Este campo no estará habilitado hasta tanto no existan normativas que
     establezcan un régimen de retención u obliguen a los contribuyentes a realizar la
     misma.
@@ -83,16 +83,9 @@ def get_itbis_facturado(
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
-                        (
-                            Select
-                                Distinct(account_head) As account_head,
-                                dominican_tax_type
-                            From
-                                `tabPurchase Taxes and Charges`
-                            Where
-                                parenttype = "Purchase Taxes and Charges Template"
-                        ) As template
-                        On template.account_head = child.account_head
+                        `tabAccount` As account
+                        On account.name = child.account_head
+                        And account.dominican_tax_type = "ITBIS"
                     Inner Join
                         `tabPurchase Invoice` As  parent
                         On
@@ -100,7 +93,6 @@ def get_itbis_facturado(
                             And child.parentfield = "taxes"
                             And child.parent = parent.name
                             And child.docstatus = parent.docstatus
-                            And template.dominican_tax_type = "ITBIS"
                             And child.add_deduct_tax = "Add"
                     Where
                         parent.docstatus = 1
@@ -161,16 +153,9 @@ def get_itbis_retenido(
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
-                        (
-                            Select
-                                Distinct(account_head) As account_head,
-                                dominican_tax_type
-                            From
-                                `tabPurchase Taxes and Charges`
-                            Where
-                                parenttype = "Purchase Taxes and Charges Template"
-                        ) As template
-                        On template.account_head = child.account_head
+                        `tabAccount` As account
+                        On account.name = child.account_head
+                        And account.dominican_tax_type = "ITBIS"
                     Inner Join
                         `tabPurchase Invoice` As  parent
                         On
@@ -178,7 +163,6 @@ def get_itbis_retenido(
                             And child.parentfield = "taxes"
                             And child.parent = parent.name
                             And child.docstatus = parent.docstatus
-                            And template.dominican_tax_type = "ITBIS"
                             And child.add_deduct_tax = "Deduct"
                     Where
                         parent.docstatus = 1
@@ -212,7 +196,7 @@ def get_itbis_sujeto_proporcionalidad(
 ) -> Union[float, str]:
     """ITBIS sujeto a Proporcionalidad (Art. 349)
 
-    En “ITBIS sujeto a Proporcionalidad (Art. 349)” registre el valor del ITBIS que
+    En "ITBIS sujeto a Proporcionalidad (Art. 349)" registre el valor del ITBIS que
     estará sujeto al cálculo de la proporcionalidad, según el Art. 349 de la Ley No.
     11-92. La sumatoria de esta columna será el valor que deberá distribuir en el Anexo
     A del Formulario de ITBIS como el ITBIS SUJETO A PROPORCIONALIDAD.
@@ -226,7 +210,7 @@ def get_itbis_llevado_costo(
 ) -> float:
     """ITBIS llevado al Costo
 
-    En “ITBIS llevado al Costo” coloque el valor del ITBIS que es llevado
+    En "ITBIS llevado al Costo" coloque el valor del ITBIS que es llevado
     directamente al Costo, es decir, que no se va a deducir como adelanto en la
     Declaración Jurada de ITBIS y que se utilizará como costo en la Declaración Jurada de
     Impuesto Sobre la Renta. En esta columna no debe colocar el ITBIS no admitido por
@@ -241,9 +225,9 @@ def get_itbis_adelantado(
 ) -> float:
     """ITBIS por Adelantar
 
-    El campo “ITBIS por Adelantar” se completará automáticamente al momento de
-    validar el archivo. Resulta al restar el valor del campo “ITBIS Facturado” menos el
-    valor del campo “ITBIS llevado al Costo” del mismo registro
+    El campo "ITBIS por Adelantar" se completará automáticamente al momento de
+    validar el archivo. Resulta al restar el valor del campo "ITBIS Facturado" menos el
+    valor del campo "ITBIS llevado al Costo" del mismo registro
     """
 
     return get_itbis_facturado(
@@ -258,7 +242,7 @@ def get_itbis_percibido(
 ) -> Union[float, str]:
     """ITBIS percibido en compras
 
-    En “ITBIS percibido en compras”* coloque el monto del ITBIS percibido por
+    En "ITBIS percibido en compras"* coloque el monto del ITBIS percibido por
     terceros al momento de la facturación de las operaciones.
     *Este campo no estará habilitado hasta tanto no existan normativas que establezcan un
     régimen de percepción u obliguen a los contribuyentes a realizar la misma.
@@ -272,7 +256,7 @@ def _has_retencion_isr(
 ) -> bool:
     """Retención ISR
 
-    En “Retención ISR” registre el monto de la retención del Impuesto Sobre la Renta
+    En "Retención ISR" registre el monto de la retención del Impuesto Sobre la Renta
     (ISR) que le fue aplicada a la factura. Este campo no estará habilitado hasta tanto
     no existan normativas que establezcan un régimen de retención u obliguen a los
     contribuyentes a realizar la misma.
@@ -290,7 +274,7 @@ def get_tipo_retencion_isr(
 ) -> Union[float, str]:
     """Tipo de Retención ISR
 
-    En “Tipo de Retención ISR” registre el tipo de retención que le fue aplicado a la
+    En "Tipo de Retención ISR" registre el tipo de retención que le fue aplicado a la
     factura. Este campo no estará habilitado hasta tanto no existan normativas que
     establezcan un régimen de retención u obliguen a los contribuyentes a realizar la
     misma.
@@ -322,9 +306,9 @@ def get_isr_retenido(
 ) -> Union[float, str]:
     """Monto Retención Renta
 
-    En “Monto Retención Renta” digite el monto del Impuesto Sobre la Renta
+    En "Monto Retención Renta" digite el monto del Impuesto Sobre la Renta
     retenido producto de la prestación o locación de servicios. Es el resultado de
-    multiplicar el monto del campo “Servicios” por el porcentaje de la retención según
+    multiplicar el monto del campo "Servicios" por el porcentaje de la retención según
     corresponda. Siempre que se llene este campo, debe haber completado la casilla 7
     (fecha pago).
     """
@@ -352,16 +336,9 @@ def get_isr_retenido(
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
-                        (
-                            Select
-                                Distinct(account_head) As account_head,
-                                dominican_tax_type
-                            From
-                                `tabPurchase Taxes and Charges`
-                            Where
-                                parenttype = "Purchase Taxes and Charges Template"
-                        ) As template
-                        On template.account_head = child.account_head
+                        `tabAccount` As account
+                        On account.name = child.account_head
+                        And account.dominican_tax_type = "ISR"
                     Inner Join
                         `tabPurchase Invoice` As  parent
                         On
@@ -369,7 +346,6 @@ def get_isr_retenido(
                             And child.parentfield = "taxes"
                             And child.parent = parent.name
                             And child.docstatus = parent.docstatus
-                            And template.dominican_tax_type = "ISR"
                             And child.add_deduct_tax = "Deduct"
                     Where
                         parent.docstatus = 1
@@ -402,7 +378,7 @@ def get_isr_percibido(
 ) -> Union[float, str]:
     """ISR Percibido en compras
 
-    En “ISR percibido en compras”* coloque el monto del ISR percibido por terceros al
+    En "ISR percibido en compras"* coloque el monto del ISR percibido por terceros al
     momento de la facturación de las operaciones.
     *Este campo no estará habilitado hasta tanto no existan normativas que establezcan un
     régimen de percepción u obliguen a los contribuyentes a realizar la misma.
@@ -419,7 +395,7 @@ def get_selectivo_facturado(
 ) -> float:
     """Impuesto Selectivo al Consumo
     
-    En “Impuesto Selectivo al Consumo” indique el monto correspondiente al
+    En "Impuesto Selectivo al Consumo" indique el monto correspondiente al
     Impuesto Selectivo al Consumo producto de una compra gravada con este impuesto
     (si aplica).
     """
@@ -446,16 +422,9 @@ def get_selectivo_facturado(
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
-                        (
-                            Select
-                                Distinct(account_head) As account_head,
-                                dominican_tax_type
-                            From
-                                `tabPurchase Taxes and Charges`
-                            Where
-                                parenttype = "Purchase Taxes and Charges Template"
-                        ) As template
-                        On template.account_head = child.account_head
+                        `tabAccount` As account
+                        On account.name = child.account_head
+                        And account.dominican_tax_type = "ISC"
                     Inner Join
                         `tabPurchase Invoice` As  parent
                         On
@@ -463,7 +432,6 @@ def get_selectivo_facturado(
                             And child.parentfield = "taxes"
                             And child.parent = parent.name
                             And child.docstatus = parent.docstatus
-                            And template.dominican_tax_type = "ISC"
                             And child.add_deduct_tax = "Add"
                     Where
                         parent.docstatus = 1
@@ -500,7 +468,7 @@ def get_otros_imp_facturado(
 ) -> float:
     """Otros Impuestos/Tasas
 
-    En “Otros Impuestos/Tasas” digite cualquier otro impuesto o tasa no
+    En "Otros Impuestos/Tasas" digite cualquier otro impuesto o tasa no
     especificado en el Formato de Envío y que formen parte del valor del comprobante
     fiscal.
     """
@@ -527,16 +495,9 @@ def get_otros_imp_facturado(
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
-                        (
-                            Select
-                                Distinct(account_head) As account_head,
-                                dominican_tax_type
-                            From
-                                `tabPurchase Taxes and Charges`
-                            Where
-                                parenttype = "Purchase Taxes and Charges Template"
-                        ) As template
-                        On template.account_head = child.account_head
+                        `tabAccount` As account
+                        On account.name = child.account_head
+                        And account.dominican_tax_type Not In ("ISC", "ITBIS", "ISR", "LEGAL TIP")
                     Inner Join
                         `tabPurchase Invoice` As  parent
                         On
@@ -544,7 +505,6 @@ def get_otros_imp_facturado(
                             And child.parentfield = "taxes"
                             And child.parent = parent.name
                             And child.docstatus = parent.docstatus
-                            And template.dominican_tax_type Not In ("ISC", "ITBIS", "ISR", "LEGAL TIP")
                             And child.add_deduct_tax = "Add"
                     Where
                         parent.docstatus = 1
@@ -581,7 +541,7 @@ def get_propina_facturada(
 ) -> float:
     """Monto Propina Legal
     
-    En “Monto Propina Legal” coloque el monto de la propina establecida por la
+    En "Monto Propina Legal" coloque el monto de la propina establecida por la
     Ley No. 54-32 (10%).
     """
 
@@ -607,16 +567,9 @@ def get_propina_facturada(
                     From
                         `tabPurchase Taxes and Charges` As  child
                     Inner Join
-                        (
-                            Select
-                                Distinct(account_head) As account_head,
-                                dominican_tax_type
-                            From
-                                `tabPurchase Taxes and Charges`
-                            Where
-                                parenttype = "Purchase Taxes and Charges Template"
-                        ) As template
-                        On template.account_head = child.account_head
+                        `tabAccount` As account
+                        On account.name = child.account_head
+                        And account.dominican_tax_type = "LEGAL TIP"
                     Inner Join
                         `tabPurchase Invoice` As  parent
                         On
@@ -624,7 +577,6 @@ def get_propina_facturada(
                             And child.parentfield = "taxes"
                             And child.parent = parent.name
                             And child.docstatus = parent.docstatus
-                            And template.dominican_tax_type = "LEGAL TIP"
                             And child.add_deduct_tax = "Add"
                     Where
                         parent.docstatus = 1
@@ -661,7 +613,7 @@ def get_forma_de_pago(
 ) -> str:
     """Forma de Pago
 
-    En “Forma de Pago” registre la forma de pago utilizada para la transacción.
+    En "Forma de Pago" registre la forma de pago utilizada para la transacción.
     """
 
     payment_mode_map = {
@@ -813,7 +765,7 @@ def get_tipo_rnc(
 ) -> str:
     """Tipo de RNC
 
-    En “Tipo de RNC” registre el tipo de RNC del proveedor. Este campo no estará
+    En "Tipo de RNC" registre el tipo de RNC del proveedor. Este campo no estará
     habilitado hasta tanto no existan normativas que establezcan un régimen de
     retención u obliguen a los contribuyentes a realizar la misma.
     """
