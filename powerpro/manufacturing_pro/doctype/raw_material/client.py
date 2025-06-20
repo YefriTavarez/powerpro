@@ -22,7 +22,6 @@ if TYPE_CHECKING:
 def create_material_sku(
 	material_id: str,
 	material_format: Literal["Roll", "Sheet"],
-	standard_sheet_size: Literal["Standard", "Derivado"],
 	item_group_1: str,
 	item_group_2: str,
 	item_group_3: str = None,
@@ -32,6 +31,7 @@ def create_material_sku(
 	sheet_width: float = 0.0,
 	sheet_height: float = 0.0,
 	gsm: int = 0,
+	standard_sheet_size: Literal["Standard", "Derivado"]=None,
 	standard_sheets: Union[List[dict], str, None] = None,
 ):
 	"""Create a new SKU based on the given parameters"""
@@ -51,16 +51,17 @@ def create_material_sku(
 			"Should be either 'Roll' or 'Sheet'"
 		)
 
-	if standard_sheet_size not in ("Standard", "Derivado"):
-		frappe.throw(
-			f"Invalid standard sheet size: {standard_sheet_size}"
-			"Should be either 'Standard' or 'Derivado'"
-		)
+	if standard_sheet_size:
+		if standard_sheet_size not in ("Standard", "Derivado"):
+			frappe.throw(
+				f"Invalid standard sheet size: {standard_sheet_size}"
+				"Should be either 'Standard' or 'Derivado'"
+			)
 
-	if standard_sheet_size == "Derivado" and not standard_sheets:
-		frappe.throw(
-			"Standard sheets are required when the standard sheet size is 'Derivado'"
-		)
+		if standard_sheet_size == "Derivado" and not standard_sheets:
+			frappe.throw(
+				"Standard sheets are required when the standard sheet size is 'Derivado'"
+			)
 
 	# update material with new dimensions to get a more accurate description
 	material = get_material(material_id)
