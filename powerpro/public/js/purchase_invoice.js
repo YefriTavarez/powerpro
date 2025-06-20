@@ -241,12 +241,16 @@
 	}
 
 	function _validate_rnc(frm) {
-		let len = frm.doc.tax_id.length;
+		const { doc } = frm;
 
-		if (![9, 11].includes(len)) {
-			frappe.msgprint(`El RNC/Cedula ingresados tiene <b>${len}</b> caracteres favor verificar, deben ser 9 u 11.`);
-			frappe.validated = false;
-			return false; 
+		if (doc.tax_id) {
+			let len = doc.tax_id.length;
+			
+			if (![9, 11].includes(len)) {
+				frappe.msgprint(`El RNC/Cedula ingresados tiene <b>${len}</b> caracteres favor verificar, deben ser 9 u 11.`);
+				frappe.validated = false;
+				return false; 
+			}
 		}
 	}
 
