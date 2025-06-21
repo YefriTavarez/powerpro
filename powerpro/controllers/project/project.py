@@ -38,11 +38,6 @@ class Project(Document):
         """
         When a project is deleted, also delete all tasks associated with it.
         """
-        tasks = frappe.get_all(
-            "Task",
-            filters={"project": self.name},
-            fields=["name"]
-        )
 
         frappe.db.sql(
             f"""
@@ -50,17 +45,35 @@ class Project(Document):
             From
                 `tabTask Depends On`
             Where
-                task Like "PROY-%"
-                And parent in (
+                parent in (
                     Select name From `tabTask`
                     Where project = {self.name!r}
                 )
             """
         )
 
-        for task in tasks:
-            frappe.delete_doc("Task", task.name, ignore_permissions=True)
+        frappe.db.sql(
+            f"""
+            Delete
+            From
+                `tabTask Responsible`
+            Where
+                parent in (
+                    Select name From `tabTask`
+                    Where project = {self.name!r}
+                )
+            """
+        )
 
+        frappe.db.sql(
+            f"""
+            Delete
+            From
+                `tabTask`
+            Where
+                project = {self.name!r}
+            """
+        )
 
     def update_project(self):
         """Called externally by Task"""
