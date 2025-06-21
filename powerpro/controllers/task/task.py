@@ -16,6 +16,10 @@ class Task(Document):
 
         self.erpnext_validate()
 
+        if self.is_group and self.parent_task:
+            # mutilevel group tasks are not allowed
+            frappe.throw("Una tarea grupo no puede tener una tarea padre.")
+
     def erpnext_validate(self):
         # task.Task.validate_dates(self)
         task.Task.validate_from_to_dates(self, "exp_start_date", "exp_end_date")
