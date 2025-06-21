@@ -49,6 +49,10 @@ class Task(Document):
 
     def watch_status_change(self):
         previous = self.get_doc_before_save()
+
+        if not previous:
+            # If this is a new document, we don't have a previous state to compare against
+            return
         
         # Handle status change events
         if previous.status != self.status:
