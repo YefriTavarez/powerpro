@@ -1,9 +1,34 @@
 # Copyright (c) 2025, Yefri Tavarez and Contributors
 # For license information, please see license.txt
 
+import time
+
+from functools import wraps
 from typing import Union
 
 import frappe
+
+
+def timed_cache(ttl_seconds: int):
+    def decorator(func):
+        cache = {}
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            key = (args, frozenset(kwargs.items()))
+            now = time.time()
+
+            if key in cache:
+                result, timestamp = cache[key]
+                if now - timestamp < ttl_seconds:
+                    return result
+
+            result = func(*args, **kwargs)
+            cache[key] = (result, now)
+            return result
+
+        return wrapper
+    return decorator
 
 
 ncf_modificados = None
