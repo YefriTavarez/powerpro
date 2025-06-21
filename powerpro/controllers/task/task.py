@@ -90,6 +90,20 @@ class Task(Document):
         # self.update_nsm_model()
         self.reschedule_dependent_tasks()
         self.update_project()
+        self.watch_status_change()
+
+    def on_status_change(self, previous_status, new_status):
+        """Generic method to handle status changes.
+        Can be overridden for custom behavior."""
+
+        if self.parent_task:
+            update_parent_status(self.name)
+
+    def on_close(self):
+        """method to be executed when the task is closed"""
+
+    def on_reopen(self):
+        """method to be executed when the task is closed or reopened"""
 
     def reschedule_dependent_tasks(self):
         end_date = self.exp_end_date or self.act_end_date
@@ -103,7 +117,7 @@ class Task(Document):
                         where child.task = %(task)s and child.project = %(project)s)
             """,
                 {"project": self.project, "task": self.name},
-                as_dict=1,
+                as_dict=True,
             ):
                 task = frappe.get_doc("Task", task_name.name)
                 if (
@@ -165,4 +179,51 @@ class Task(Document):
             sub_tasks = frappe.get_all("Task", filters={"parent_task": self.name, "status": ["in", ["Open", "Working", "Pending Review", "Overdue"]]}, fields=["name"])
             if sub_tasks:
                 frappe.throw(f"No se puede cerrar o completar la tarea grupo '{self.name}' porque tiene sub-tareas pendientes: {', '.join([task.name for task in sub_tasks])}.")
-            
+
+
+def update_parent_status(task: str):
+    if isinstance(task, str):
+        task = frappe.get_doc("Task", task)
+
+    parent_name = task.parent_task
+    if not parent_name:
+        return  # No parent to update
+
+    # Get all children of this parent
+    children = frappe.get_all(
+        "Task",
+        filters={"parent_task": parent_name},
+        fields=["name", "status"]
+    )
+
+    if not children:
+        return  # No children found — shouldn't happen, but safe guard
+
+    status_list = [d.status for d in children if d.status != "Template"]
+
+    if not status_list:
+        return  # All children are Templates, no action needed
+
+    # Priority-based resolution
+    resolved_status = None
+
+    if all(d == "Completed" for d in status_list):
+        resolved_status = "Completed"
+    elif any(d == "Overdue" for d in status_list):
+        resolved_status = "Overdue"
+    elif any(d == "Working" for d in status_list):
+        resolved_status = "Working"
+    elif any(d == "Pending Review" for d in status_list):
+        resolved_status = "Pending Review"
+    elif all(d == "Cancelled" for d in status_list):
+        resolved_status = "Cancelled"
+    elif all(d == "Open" for d in status_list):
+        resolved_status = "Open"
+    else:
+        # Mixed state — fallback to "Open" if not actively working
+        resolved_status = "Open"
+
+    # Update parent if changed
+    parent_task = frappe.get_doc("Task", parent_name)
+    if parent_task.status != resolved_status:
+        parent_task.db_set("status", resolved_status)
