@@ -9,6 +9,22 @@ from powerpro.controllers.project.utils import get_duration_in_minutes
 
 
 class Project(Document):
+    def onload(self):
+        self.set_onload(
+            "activity_summary",
+            frappe.db.sql(
+                """select activity_type,
+            sum(hours) as total_hours
+            from `tabTimesheet Detail` where project=%s and docstatus < 2 group by activity_type
+            order by total_hours desc""",
+                self.name,
+                as_dict=True,
+            ),
+        )
+
+    def before_print(self, settings=None):
+        self.onload()
+
     def after_insert(self):
         self.create_tasks_from_template()
 
