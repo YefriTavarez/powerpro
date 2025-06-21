@@ -211,10 +211,8 @@ def update_parent_status(task: str):
         resolved_status = "Completed"
     elif any(d == "Overdue" for d in status_list):
         resolved_status = "Overdue"
-    elif any(d == "Working" for d in status_list):
+    elif any(d in ["Working", "Pending Review", "Completed"] for d in status_list):
         resolved_status = "Working"
-    elif any(d == "Pending Review" for d in status_list):
-        resolved_status = "Pending Review"
     elif all(d == "Cancelled" for d in status_list):
         resolved_status = "Cancelled"
     elif all(d == "Open" for d in status_list):
