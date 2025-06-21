@@ -12,6 +12,7 @@ class Task(Document):
     def validate(self):
         self.validate_dependency_rules()
         self.validate_group_rules()
+        self.validate_group_tasks()
 
         self.erpnext_validate()
 
@@ -93,3 +94,23 @@ class Task(Document):
 
             if self.users:
                 frappe.throw("Las tareas grupo no deben tener responsables.")
+
+    def validate_group_tasks(self):
+        """Group Tasks cannot be manually closed or completed.
+        All sub-tasks must be closed or completed before closing the group task.
+        """
+
+        # Task status list:
+        #     - Open
+        #     - Working
+        #     - Pending Review
+        #     - Overdue
+        #     - Template
+        #     - Completed
+        #     - Cancelled
+
+        if self.is_group and self.status in ["Completed", "Cancelled"]:
+            sub_tasks = frappe.get_all("Task", filters={"parent_task": self.name, "status": ["in", ["Open", "Working", "Pending Review", "Overdue"]]}, fields=["name"])
+            if sub_tasks:
+                frappe.throw(f"No se puede cerrar o completar la tarea grupo '{self.name}' porque tiene sub-tareas pendientes: {', '.join([task.name for task in sub_tasks])}.")
+            
