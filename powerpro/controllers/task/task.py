@@ -5,10 +5,15 @@ import frappe
 from frappe.model.document import Document
 
 from frappe.utils import add_days, date_diff, getdate
+from frappe.model import naming
 
 from erpnext.projects.doctype.task import task
 
 class Task(Document):
+    def autoname(self):
+        naming_series = f"{self.project}-.####" if self.project else "TAREA-"
+        self.name = naming.make_autoname(naming_series)
+
     def validate(self):
         self.validate_dependency_rules()
         self.validate_group_rules()
