@@ -232,6 +232,15 @@ def generate_txt(result, from_date, to_date):
 
         row.tax_id = row.tax_id.replace("-", "")
 
+
+
+        selectivo_facturado = helper.get_selectivo_facturado(from_date=from_date, to_date=to_date, invoice_id=row.name)
+        otros_imp_facturado = helper.get_otros_imp_facturado(from_date=from_date, to_date=to_date, invoice_id=row.name)
+        propina_facturada = helper.get_propina_facturada(from_date=from_date, to_date=to_date, invoice_id=row.name)
+
+        impuestos_combinados = flt(selectivo_facturado) + flt(otros_imp_facturado) + flt(propina_facturada)
+
+
         line = (
             f"{row.tax_id if row.tax_id else ''}|"  # 1
             f"{helper.get_tipo_rnc(row) or ''}|"  # 2
@@ -240,9 +249,9 @@ def generate_txt(result, from_date, to_date):
             f"{helper.get_ncf_modificado(from_date=from_date, to_date=to_date, invoice_id=row.name)}|"  # 5
             f"{_posting_date_aaaammdd}|"  # 6
             f"{_payment_date_aaaammdd}|"  # 8
-            f"{flt(row.monto_facturado_servicios, 2)}|"  # 10
+            f"{flt(row.monto_facturado_servicios) + flt(impuestos_combinados, 2)}|"  # 10
             f"{flt(row.monto_facturado_bienes, 2)}|"  # 11
-            f"{flt(row.monto_facturado_servicios, 2) + flt(row.monto_facturado_bienes)}|"  # 12
+            f"{flt(row.monto_facturado_servicios, 2) + flt(row.monto_facturado_bienes, 2) + flt(impuestos_combinados, 2)}|"  # 12
             f"{helper.get_itbis_facturado(from_date=from_date, to_date=to_date, invoice_id=row.name) or 0}|"  # 13
             f"{helper.get_itbis_retenido(from_date=from_date, to_date=to_date, invoice_id=row.name) or 0}|"  # 14
             f"{helper.get_itbis_sujeto_proporcionalidad(from_date=from_date, to_date=to_date, invoice_id=row.name) or 0}|"  # 15
