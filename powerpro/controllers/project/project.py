@@ -4,6 +4,8 @@
 import frappe
 from frappe.model.document import Document
 
+from erpnext.projects.doctype.project import project
+
 from powerpro.controllers.project import helper
 from powerpro.controllers.project.utils import get_duration_in_minutes
 
@@ -29,6 +31,7 @@ class Project(Document):
         self.create_tasks_from_template()
 
     def validate(self):
+        self.update_percent_complete()
         self.validate_required_fields()
 
     def on_trash(self):
@@ -57,6 +60,15 @@ class Project(Document):
 
         for task in tasks:
             frappe.delete_doc("Task", task.name, ignore_permissions=True)
+
+
+    def update_project(self):
+        """Called externally by Task"""
+
+        # erpnext_project = Project(doctype=self.doctype)
+        project.Project.update_percent_complete(self)
+        project.Project.update_costing(self)
+        self.db_update()
 
     def validate_required_fields(self):
         if not self.project_template:

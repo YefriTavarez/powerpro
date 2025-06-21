@@ -6,10 +6,23 @@ from frappe.model.document import Document
 
 from frappe.utils import add_days, date_diff, getdate
 
+from erpnext.projects.doctype.task import task
+
 class Task(Document):
     def validate(self):
         self.validate_dependency_rules()
         self.validate_group_rules()
+
+        self.erpnext_validate()
+
+    def erpnext_validate(self):
+        task.Task.validate_dates(self)
+        task.Task.validate_progress(self)
+        task.Task.validate_status(self)
+
+        task.Task.update_depends_on(self)
+        task.Task.validate_dependencies_for_template_task(self)
+        task.Task.validate_completed_on(self)
 
     def on_update(self):
         # self.update_nsm_model()
