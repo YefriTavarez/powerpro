@@ -16,12 +16,21 @@ class Task(Document):
         self.erpnext_validate()
 
     def erpnext_validate(self):
-        task.Task.validate_dates(self)
+        # task.Task.validate_dates(self)
+        task.Task.validate_from_to_dates(self, "exp_start_date", "exp_end_date")
+        task.Task.validate_from_to_dates(self, "act_start_date", "act_end_date")
+        task.Task.validate_parent_expected_end_date(self)
+        task.Task.validate_parent_project_dates(self)
+
         task.Task.validate_progress(self)
         task.Task.validate_status(self)
 
         task.Task.update_depends_on(self)
-        task.Task.validate_dependencies_for_template_task(self)
+        # task.Task.validate_dependencies_for_template_task(self)
+        if self.is_template:
+            task.Task.validate_parent_template_task(self)
+            task.Task.validate_depends_on_tasks(self)
+
         task.Task.validate_completed_on(self)
 
     def on_update(self):

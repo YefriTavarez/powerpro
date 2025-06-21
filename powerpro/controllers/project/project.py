@@ -70,6 +70,14 @@ class Project(Document):
         project.Project.update_costing(self)
         self.db_update()
 
+    # overrides of update_costing
+    update_purchase_costing = project.Project.update_purchase_costing
+    update_sales_amount = project.Project.update_sales_amount
+    update_billed_amount = project.Project.update_billed_amount
+    calculate_gross_margin = project.Project.calculate_gross_margin
+    get_billed_amount_from_parent = project.Project.get_billed_amount_from_parent
+    get_billed_amount_from_child = project.Project.get_billed_amount_from_child
+
     def validate_required_fields(self):
         if not self.project_template:
             frappe.throw("Debes seleccionar una plantilla de proyecto.")
