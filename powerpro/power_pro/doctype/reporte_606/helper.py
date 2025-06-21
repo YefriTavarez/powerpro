@@ -10,6 +10,18 @@ import frappe
 
 
 def timed_cache(ttl_seconds: int):
+    """
+    A decorator that caches the result of a function for a specified time-to-live (TTL) in seconds.
+
+    Args:
+        ttl_seconds (int): The number of seconds to cache the result before recomputing.
+
+    Returns:
+        Callable: A decorator that wraps the target function with caching logic.
+
+    The cache is keyed by the function's arguments. If the cached result is older than `ttl_seconds`,
+    the function is called again and the cache is updated.
+    """
     def decorator(func):
         cache = {}
 
