@@ -68,7 +68,13 @@ class Project(Document):
         # erpnext_project = Project(doctype=self.doctype)
         project.Project.update_percent_complete(self)
         project.Project.update_costing(self)
+
+
+        self.modified = frappe.utils.now()
+        self.modified_by = frappe.session.user
         self.db_update()
+
+        self.notify_update()
 
     # overrides of update_costing
     update_purchase_costing = project.Project.update_purchase_costing
