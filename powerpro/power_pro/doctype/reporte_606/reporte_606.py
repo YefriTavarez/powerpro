@@ -72,7 +72,7 @@ def get_file_address(from_date, to_date, txt=0):
             And pinvitm.parentfield = 'items'
             And pinvitm.docstatus = pinv.docstatus
         Where
-            pinv.posting_date Between "2025-03-01" And "2025-03-31"
+            pinv.posting_date Between {from_date!r} And {to_date!r}
             And pinv.docstatus = 1
             And pinv.ncf Is Not Null
             And pinv.ncf != ''
@@ -89,7 +89,7 @@ def get_file_address(from_date, to_date, txt=0):
                     Where
                         ref.reference_doctype = 'Purchase Invoice'
                         And pe.docstatus = 1
-                        And pe.posting_date Between "2025-03-01" And "2025-03-31"
+                        And pe.posting_date Between {from_date!r} And {to_date!r}
                 )
             )
         Group By
