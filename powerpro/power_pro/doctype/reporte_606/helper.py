@@ -43,7 +43,30 @@ def timed_cache(ttl_seconds: int):
     return decorator
 
 
-ncf_modificados = None
+@timed_cache(10)
+def _get_ncf_modificado_data(from_date=None, to_date=None, company=None):
+    """Helper function to get NCF modificado data"""
+    return dict(
+        frappe.db.sql(
+            f"""
+                Select
+                    credit.name As invoice_id,
+                    original.ncf As ncf_modificado
+                From
+                    `tabPurchase Invoice` As credit
+                Inner Join
+                    `tabPurchase Invoice` As original
+                    On original.name = credit.return_against
+                    And original.docstatus = credit.docstatus
+                Where
+                    credit.docstatus = 1
+                    And (
+                        original.posting_date Between {from_date!r} And {to_date!r}
+                        Or credit.posting_date Between {from_date!r} And {to_date!r}
+                    )
+            """
+        )
+    )
 
 
 def get_ncf_modificado(
@@ -56,39 +79,62 @@ def get_ncf_modificado(
     establezcan un régimen de retención u obliguen a los contribuyentes a realizar la
     misma.
     """
-
-    def generator():
-        return dict(
-            frappe.db.sql(
-                f"""
-                    Select
-                        credit.name As invoice_id,
-                        original.ncf As ncf_modificado
-                    From
-                        `tabPurchase Invoice` As credit
-                    Inner Join
-                        `tabPurchase Invoice` As original
-                        On original.name = credit.return_against
-                        And original.docstatus = credit.docstatus
-                    Where
-                        credit.docstatus = 1
-                        And (
-                            original.posting_date Between {from_date!r} And {to_date!r}
-                            Or credit.posting_date Between {from_date!r} And {to_date!r}
-                        )
-                """
-            )
-        )
-
-    global ncf_modificados
-    if ncf_modificados is None:
-        ncf_modificados = generator()
-
+    ncf_modificados = _get_ncf_modificado_data(from_date, to_date, company)
     return ncf_modificados.get(invoice_id, "") if invoice_id else ncf_modificados
 
 
-# globals
-itbis_facturado = None
+@timed_cache(10)
+def _get_itbis_facturado_data(from_date=None, to_date=None, company=None):
+    """Helper function to get ITBIS facturado data"""
+    company_filter = str()
+    if company:
+        company_filter = f"And parent.company = {company!r}"
+
+    return dict(
+        frappe.db.sql(
+            f"""
+                Select
+                    parent.name As invoice_id,
+                    Sum(
+                        Abs(child.base_tax_amount)
+                    ) As amount
+                From
+                    `tabPurchase Taxes and Charges` As  child
+                Inner Join
+                    `tabAccount` As account
+                    On account.name = child.account_head
+                    And account.dominican_tax_type = "ITBIS"
+                Inner Join
+                    `tabPurchase Invoice` As  parent
+                    On
+                        child.parenttype = "Purchase Invoice"
+                        And child.parentfield = "taxes"
+                        And child.parent = parent.name
+                        And child.docstatus = parent.docstatus
+                        And child.add_deduct_tax = "Add"
+                Where
+                    parent.docstatus = 1
+                    {company_filter}
+                    And parent.posting_date Between {from_date!r} And {to_date!r}
+                    Or parent.name In (
+                        Select
+                            ref.reference_name
+                        From
+                            `tabPayment Entry Reference` As ref
+                        Inner Join
+                            `tabPayment Entry` As pe
+                            On pe.name = ref.parent
+                        Where
+                            ref.reference_doctype = "Purchase Invoice"
+                            And ref.docstatus = 1
+                            And pe.posting_date Between {from_date!r} And {to_date!r}
+                    )
+                    And parent.is_opening = "No"
+                Group by
+                    parent.name
+            """
+        )
+    )
 
 
 def get_itbis_facturado(
@@ -104,65 +150,58 @@ def get_itbis_facturado(
             "Either invoice_id or (from_date and to_date and company) must be provided"
         )
 
-    def generator():
-        company_filter = str()
-        if company:
-            company_filter = f"And parent.company = {company!r}"
-
-        return dict(
-            frappe.db.sql(
-                f"""
-                    Select
-                        parent.name As invoice_id,
-                        Sum(
-                            Abs(child.base_tax_amount)
-                        ) As amount
-                    From
-                        `tabPurchase Taxes and Charges` As  child
-                    Inner Join
-                        `tabAccount` As account
-                        On account.name = child.account_head
-                        And account.dominican_tax_type = "ITBIS"
-                    Inner Join
-                        `tabPurchase Invoice` As  parent
-                        On
-                            child.parenttype = "Purchase Invoice"
-                            And child.parentfield = "taxes"
-                            And child.parent = parent.name
-                            And child.docstatus = parent.docstatus
-                            And child.add_deduct_tax = "Add"
-                    Where
-                        parent.docstatus = 1
-                        {company_filter}
-                        And parent.posting_date Between {from_date!r} And {to_date!r}
-                        Or parent.name In (
-                            Select
-                                ref.reference_name
-                            From
-                                `tabPayment Entry Reference` As ref
-                            Inner Join
-                                `tabPayment Entry` As pe
-                                On pe.name = ref.parent
-                            Where
-                                ref.reference_doctype = "Purchase Invoice"
-                                And ref.docstatus = 1
-                                And pe.posting_date Between {from_date!r} And {to_date!r}
-                        )
-                        And parent.is_opening = "No"
-                    Group by
-                        parent.name
-                """
-            )
-        )
-
-    global itbis_facturado
-    if itbis_facturado is None:
-        itbis_facturado = generator()
-    
+    itbis_facturado = _get_itbis_facturado_data(from_date, to_date, company)
     return itbis_facturado.get(invoice_id, 0.0) if invoice_id else sum(itbis_facturado.values())
 
 
-itbis_retenido = None
+@timed_cache(10)
+def _get_itbis_retenido_data(from_date=None, to_date=None, company=None):
+    """Helper function to get ITBIS retenido data"""
+    company_filter = str()
+    if company:
+        company_filter = f"And parent.company = {company!r}"
+
+    return dict(
+        frappe.db.sql(
+            f"""
+                Select
+                    parent.name As invoice_id,
+                    Sum(
+                        Abs(child.base_tax_amount)
+                    ) As amount
+                From
+                    `tabPurchase Taxes and Charges` As  child
+                Inner Join
+                    `tabAccount` As account
+                    On account.name = child.account_head
+                    And account.dominican_tax_type = "ITBIS"
+                Inner Join
+                    `tabPurchase Invoice` As  parent
+                    On
+                        child.parenttype = "Purchase Invoice"
+                        And child.parentfield = "taxes"
+                        And child.parent = parent.name
+                        And child.docstatus = parent.docstatus
+                        And child.add_deduct_tax = "Deduct"
+                Where
+                    parent.docstatus = 1
+                    {company_filter}
+                    And parent.posting_date Between {from_date!r} And {to_date!r}
+                    Or parent.name In (
+                        Select ref.reference_name
+                        From `tabPayment Entry Reference` As ref
+                        Inner Join `tabPayment Entry` As pe
+                        On pe.name = ref.parent
+                        Where ref.reference_doctype = "Purchase Invoice"
+                        And ref.docstatus = 1
+                        And pe.posting_date Between {from_date!r} And {to_date!r}
+                    )
+                    And parent.is_opening = "No"
+                Group by
+                    parent.name
+            """
+        )
+    )
 
 
 def get_itbis_retenido(
@@ -178,57 +217,7 @@ def get_itbis_retenido(
             "Either invoice_id or (from_date and to_date and company) must be provided"
         )
 
-    def generator():
-        company_filter = str()
-        if company:
-            company_filter = f"And parent.company = {company!r}"
-
-        return dict(
-            frappe.db.sql(
-                f"""
-                    Select
-                        parent.name As invoice_id,
-                        Sum(
-                            Abs(child.base_tax_amount)
-                        ) As amount
-                    From
-                        `tabPurchase Taxes and Charges` As  child
-                    Inner Join
-                        `tabAccount` As account
-                        On account.name = child.account_head
-                        And account.dominican_tax_type = "ITBIS"
-                    Inner Join
-                        `tabPurchase Invoice` As  parent
-                        On
-                            child.parenttype = "Purchase Invoice"
-                            And child.parentfield = "taxes"
-                            And child.parent = parent.name
-                            And child.docstatus = parent.docstatus
-                            And child.add_deduct_tax = "Deduct"
-                    Where
-                        parent.docstatus = 1
-                        {company_filter}
-                        And parent.posting_date Between {from_date!r} And {to_date!r}
-                        Or parent.name In (
-                            Select ref.reference_name
-                            From `tabPayment Entry Reference` As ref
-                            Inner Join `tabPayment Entry` As pe
-                            On pe.name = ref.parent
-                            Where ref.reference_doctype = "Purchase Invoice"
-                            And ref.docstatus = 1
-                            And pe.posting_date Between {from_date!r} And {to_date!r}
-                        )
-                        And parent.is_opening = "No"
-                    Group by
-                        parent.name
-                """
-            )
-        )
-
-    global itbis_retenido
-    if itbis_retenido is None:
-        itbis_retenido = generator()
-    
+    itbis_retenido = _get_itbis_retenido_data(from_date, to_date, company)
     return itbis_retenido.get(invoice_id, 0.0) if invoice_id else sum(itbis_retenido.values())
 
 
@@ -339,7 +328,54 @@ def get_tipo_retencion_isr(
     return ""
 
 
-isr_retenido = None
+@timed_cache(10)
+def _get_isr_retenido_data(from_date=None, to_date=None, company=None):
+    """Helper function to get ISR retenido data"""
+    company_filter = str()
+    if company:
+        company_filter = f"And parent.company = {company!r}"
+
+    return dict(
+        frappe.db.sql(
+            f"""
+                Select
+                    parent.name As invoice_id,
+                    Sum(
+                        Abs(child.base_tax_amount)
+                    ) As amount
+                From
+                    `tabPurchase Taxes and Charges` As  child
+                Inner Join
+                    `tabAccount` As account
+                    On account.name = child.account_head
+                    And account.dominican_tax_type = "ISR"
+                Inner Join
+                    `tabPurchase Invoice` As  parent
+                    On
+                        child.parenttype = "Purchase Invoice"
+                        And child.parentfield = "taxes"
+                        And child.parent = parent.name
+                        And child.docstatus = parent.docstatus
+                        And child.add_deduct_tax = "Deduct"
+                Where
+                    parent.docstatus = 1
+                    {company_filter}
+                    And parent.posting_date Between {from_date!r} And {to_date!r}
+                    Or parent.name In (
+                        Select ref.reference_name
+                        From `tabPayment Entry Reference` As ref
+                        Inner Join `tabPayment Entry` As pe
+                        On pe.name = ref.parent
+                        Where ref.reference_doctype = "Purchase Invoice"
+                        And ref.docstatus = 1
+                        And pe.posting_date Between {from_date!r} And {to_date!r}
+                    )
+                    And parent.is_opening = "No"
+                Group by
+                    parent.name
+            """
+        )
+    )
 
 
 def get_isr_retenido(
@@ -354,65 +390,15 @@ def get_isr_retenido(
     (fecha pago).
     """
 
-
     # either invoice_id or (from_date and to_date) must be provided
     if not invoice_id and (not from_date or not to_date):
         frappe.throw(
             "Either invoice_id or (from_date and to_date and company) must be provided"
         )
 
-    def generator():
-        company_filter = str()
-        if company:
-            company_filter = f"And parent.company = {company!r}"
-
-        return dict(
-            frappe.db.sql(
-                f"""
-                    Select
-                        parent.name As invoice_id,
-                        Sum(
-                            Abs(child.base_tax_amount)
-                        ) As amount
-                    From
-                        `tabPurchase Taxes and Charges` As  child
-                    Inner Join
-                        `tabAccount` As account
-                        On account.name = child.account_head
-                        And account.dominican_tax_type = "ISR"
-                    Inner Join
-                        `tabPurchase Invoice` As  parent
-                        On
-                            child.parenttype = "Purchase Invoice"
-                            And child.parentfield = "taxes"
-                            And child.parent = parent.name
-                            And child.docstatus = parent.docstatus
-                            And child.add_deduct_tax = "Deduct"
-                    Where
-                        parent.docstatus = 1
-                        {company_filter}
-                        And parent.posting_date Between {from_date!r} And {to_date!r}
-                        Or parent.name In (
-                            Select ref.reference_name
-                            From `tabPayment Entry Reference` As ref
-                            Inner Join `tabPayment Entry` As pe
-                            On pe.name = ref.parent
-                            Where ref.reference_doctype = "Purchase Invoice"
-                            And ref.docstatus = 1
-                            And pe.posting_date Between {from_date!r} And {to_date!r}
-                        )
-                        And parent.is_opening = "No"
-                    Group by
-                        parent.name
-                """
-            )
-        )
-
-    global isr_retenido
-    if isr_retenido is None:
-        isr_retenido = generator()
-    
+    isr_retenido = _get_isr_retenido_data(from_date, to_date, company)
     return isr_retenido.get(invoice_id, 0.0) if invoice_id else sum(isr_retenido.values())
+
 
 def get_isr_percibido(
     invoice_id=None, from_date=None, to_date=None, company=None
@@ -428,7 +414,54 @@ def get_isr_percibido(
     return ""
 
 
-selectivo_facturado = None
+@timed_cache(10)
+def _get_selectivo_facturado_data(from_date=None, to_date=None, company=None):
+    """Helper function to get selectivo facturado data"""
+    company_filter = str()
+    if company:
+        company_filter = f"And parent.company = {company!r}"
+
+    return dict(
+        frappe.db.sql(
+            f"""
+                Select
+                    parent.name As invoice_id,
+                    Sum(
+                        Abs(child.base_tax_amount)
+                    ) As amount
+                From
+                    `tabPurchase Taxes and Charges` As  child
+                Inner Join
+                    `tabAccount` As account
+                    On account.name = child.account_head
+                    And account.dominican_tax_type = "ISC"
+                Inner Join
+                    `tabPurchase Invoice` As  parent
+                    On
+                        child.parenttype = "Purchase Invoice"
+                        And child.parentfield = "taxes"
+                        And child.parent = parent.name
+                        And child.docstatus = parent.docstatus
+                        And child.add_deduct_tax = "Add"
+                Where
+                    parent.docstatus = 1
+                    {company_filter}
+                    And parent.posting_date Between {from_date!r} And {to_date!r}
+                    Or parent.name In (
+                        Select ref.reference_name
+                        From `tabPayment Entry Reference` As ref
+                        Inner Join `tabPayment Entry` As pe
+                        On pe.name = ref.parent
+                        Where ref.reference_doctype = "Purchase Invoice"
+                        And ref.docstatus = 1
+                        And pe.posting_date Between {from_date!r} And {to_date!r}
+                    )
+                    And parent.is_opening = "No"
+                Group by
+                    parent.name
+            """
+        )
+    )
 
 
 def get_selectivo_facturado(
@@ -447,61 +480,58 @@ def get_selectivo_facturado(
             "Either invoice_id or (from_date and to_date and company) must be provided"
         )
 
-    def generator():
-        company_filter = str()
-        if company:
-            company_filter = f"And parent.company = {company!r}"
-
-        return dict(
-            frappe.db.sql(
-                f"""
-                    Select
-                        parent.name As invoice_id,
-                        Sum(
-                            Abs(child.base_tax_amount)
-                        ) As amount
-                    From
-                        `tabPurchase Taxes and Charges` As  child
-                    Inner Join
-                        `tabAccount` As account
-                        On account.name = child.account_head
-                        And account.dominican_tax_type = "ISC"
-                    Inner Join
-                        `tabPurchase Invoice` As  parent
-                        On
-                            child.parenttype = "Purchase Invoice"
-                            And child.parentfield = "taxes"
-                            And child.parent = parent.name
-                            And child.docstatus = parent.docstatus
-                            And child.add_deduct_tax = "Add"
-                    Where
-                        parent.docstatus = 1
-                        {company_filter}
-                        And parent.posting_date Between {from_date!r} And {to_date!r}
-                        Or parent.name In (
-                            Select ref.reference_name
-                            From `tabPayment Entry Reference` As ref
-                            Inner Join `tabPayment Entry` As pe
-                            On pe.name = ref.parent
-                            Where ref.reference_doctype = "Purchase Invoice"
-                            And ref.docstatus = 1
-                            And pe.posting_date Between {from_date!r} And {to_date!r}
-                        )
-                        And parent.is_opening = "No"
-                    Group by
-                        parent.name
-                """
-            )
-        )
-
-    global selectivo_facturado
-    if selectivo_facturado is None:
-        selectivo_facturado = generator()
-    
+    selectivo_facturado = _get_selectivo_facturado_data(from_date, to_date, company)
     return selectivo_facturado.get(invoice_id, 0.0) if invoice_id else sum(selectivo_facturado.values())
 
 
-otros_impuestos = None
+@timed_cache(10)
+def _get_otros_imp_facturado_data(from_date=None, to_date=None, company=None):
+    """Helper function to get otros impuestos data"""
+    company_filter = str()
+    if company:
+        company_filter = f"And parent.company = {company!r}"
+
+    return dict(
+        frappe.db.sql(
+            f"""
+                Select
+                    parent.name As invoice_id,
+                    Sum(
+                        Abs(child.base_tax_amount)
+                    ) As amount
+                From
+                    `tabPurchase Taxes and Charges` As  child
+                Inner Join
+                    `tabAccount` As account
+                    On account.name = child.account_head
+                    And account.dominican_tax_type Not In ("ISC", "ITBIS", "ISR", "LEGAL TIP")
+                Inner Join
+                    `tabPurchase Invoice` As  parent
+                    On
+                        child.parenttype = "Purchase Invoice"
+                        And child.parentfield = "taxes"
+                        And child.parent = parent.name
+                        And child.docstatus = parent.docstatus
+                        And child.add_deduct_tax = "Add"
+                Where
+                    parent.docstatus = 1
+                    {company_filter}
+                    And parent.posting_date Between {from_date!r} And {to_date!r}
+                    Or parent.name In (
+                        Select ref.reference_name
+                        From `tabPayment Entry Reference` As ref
+                        Inner Join `tabPayment Entry` As pe
+                        On pe.name = ref.parent
+                        Where ref.reference_doctype = "Purchase Invoice"
+                        And ref.docstatus = 1
+                        And pe.posting_date Between {from_date!r} And {to_date!r}
+                    )
+                    And parent.is_opening = "No"
+                Group by
+                    parent.name
+            """
+        )
+    )
 
 
 def get_otros_imp_facturado(
@@ -520,61 +550,58 @@ def get_otros_imp_facturado(
             "Either invoice_id or (from_date and to_date and company) must be provided"
         )
 
-    def generator():
-        company_filter = str()
-        if company:
-            company_filter = f"And parent.company = {company!r}"
-
-        return dict(
-            frappe.db.sql(
-                f"""
-                    Select
-                        parent.name As invoice_id,
-                        Sum(
-                            Abs(child.base_tax_amount)
-                        ) As amount
-                    From
-                        `tabPurchase Taxes and Charges` As  child
-                    Inner Join
-                        `tabAccount` As account
-                        On account.name = child.account_head
-                        And account.dominican_tax_type Not In ("ISC", "ITBIS", "ISR", "LEGAL TIP")
-                    Inner Join
-                        `tabPurchase Invoice` As  parent
-                        On
-                            child.parenttype = "Purchase Invoice"
-                            And child.parentfield = "taxes"
-                            And child.parent = parent.name
-                            And child.docstatus = parent.docstatus
-                            And child.add_deduct_tax = "Add"
-                    Where
-                        parent.docstatus = 1
-                        {company_filter}
-                        And parent.posting_date Between {from_date!r} And {to_date!r}
-                        Or parent.name In (
-                            Select ref.reference_name
-                            From `tabPayment Entry Reference` As ref
-                            Inner Join `tabPayment Entry` As pe
-                            On pe.name = ref.parent
-                            Where ref.reference_doctype = "Purchase Invoice"
-                            And ref.docstatus = 1
-                            And pe.posting_date Between {from_date!r} And {to_date!r}
-                        )
-                        And parent.is_opening = "No"
-                    Group by
-                        parent.name
-                """
-            )
-        )
-
-    global otros_impuestos
-    if otros_impuestos is None:
-        otros_impuestos = generator()
-    
+    otros_impuestos = _get_otros_imp_facturado_data(from_date, to_date, company)
     return otros_impuestos.get(invoice_id, 0.0) if invoice_id else sum(otros_impuestos.values())
 
 
-propina_legal = None
+@timed_cache(10)
+def _get_propina_facturada_data(from_date=None, to_date=None, company=None):
+    """Helper function to get propina legal data"""
+    company_filter = str()
+    if company:
+        company_filter = f"And parent.company = {company!r}"
+
+    return dict(
+        frappe.db.sql(
+            f"""
+                Select
+                    parent.name As invoice_id,
+                    Sum(
+                        Abs(child.base_tax_amount)
+                    ) As amount
+                From
+                    `tabPurchase Taxes and Charges` As  child
+                Inner Join
+                    `tabAccount` As account
+                    On account.name = child.account_head
+                    And account.dominican_tax_type = "LEGAL TIP"
+                Inner Join
+                    `tabPurchase Invoice` As  parent
+                    On
+                        child.parenttype = "Purchase Invoice"
+                        And child.parentfield = "taxes"
+                        And child.parent = parent.name
+                        And child.docstatus = parent.docstatus
+                        And child.add_deduct_tax = "Add"
+                Where
+                    parent.docstatus = 1
+                    {company_filter}
+                    And parent.posting_date Between {from_date!r} And {to_date!r}
+                    Or parent.name In (
+                        Select ref.reference_name
+                        From `tabPayment Entry Reference` As ref
+                        Inner Join `tabPayment Entry` As pe
+                        On pe.name = ref.parent
+                        Where ref.reference_doctype = "Purchase Invoice"
+                        And ref.docstatus = 1
+                        And pe.posting_date Between {from_date!r} And {to_date!r}
+                    )
+                    And parent.is_opening = "No"
+                Group by
+                    parent.name
+            """
+        )
+    )
 
 
 def get_propina_facturada(
@@ -592,61 +619,110 @@ def get_propina_facturada(
             "Either invoice_id or (from_date and to_date and company) must be provided"
         )
 
-    def generator():
-        company_filter = str()
-        if company:
-            company_filter = f"And parent.company = {company!r}"
-
-        return dict(
-            frappe.db.sql(
-                f"""
-                    Select
-                        parent.name As invoice_id,
-                        Sum(
-                            Abs(child.base_tax_amount)
-                        ) As amount
-                    From
-                        `tabPurchase Taxes and Charges` As  child
-                    Inner Join
-                        `tabAccount` As account
-                        On account.name = child.account_head
-                        And account.dominican_tax_type = "LEGAL TIP"
-                    Inner Join
-                        `tabPurchase Invoice` As  parent
-                        On
-                            child.parenttype = "Purchase Invoice"
-                            And child.parentfield = "taxes"
-                            And child.parent = parent.name
-                            And child.docstatus = parent.docstatus
-                            And child.add_deduct_tax = "Add"
-                    Where
-                        parent.docstatus = 1
-                        {company_filter}
-                        And parent.posting_date Between {from_date!r} And {to_date!r}
-                        Or parent.name In (
-                            Select ref.reference_name
-                            From `tabPayment Entry Reference` As ref
-                            Inner Join `tabPayment Entry` As pe
-                            On pe.name = ref.parent
-                            Where ref.reference_doctype = "Purchase Invoice"
-                            And ref.docstatus = 1
-                            And pe.posting_date Between {from_date!r} And {to_date!r}
-                        )
-                        And parent.is_opening = "No"
-                    Group by
-                        parent.name
-                """
-            )
-        )
-
-    global propina_legal
-    if propina_legal is None:
-        propina_legal = generator()
-    
+    propina_legal = _get_propina_facturada_data(from_date, to_date, company)
     return propina_legal.get(invoice_id, 0.0) if invoice_id else sum(propina_legal.values())
 
 
-mode_of_payment = None
+@timed_cache(10)
+def _get_forma_de_pago_data(from_date=None, to_date=None, company=None):
+    """Helper function to get forma de pago data"""
+    company_filter = str()
+    if company:
+        company_filter = f"And parent.company = {company!r}"
+
+    return dict(
+        frappe.db.sql(
+            f"""
+                Select
+                    invoice_id,
+                    Case 
+                        When Count(DISTINCT dgii_mode_of_payment) = 1 Then Max(dgii_mode_of_payment)
+                        Else '7. Mixto (no usar)'
+                    End As payment_mode
+                From (
+                    Select
+                        child.reference_name As invoice_id,
+                        mode.dgii_mode_of_payment
+                    From
+                        `tabPayment Entry Reference` As  child
+                    Inner Join
+                        `tabPayment Entry` As  parent
+                        On
+                            child.parenttype = "Payment Entry"
+                            And child.parentfield = "references"
+                            And child.parent = parent.name
+                            And child.docstatus = parent.docstatus
+                            And child.reference_doctype = "Purchase Invoice"
+                    Inner Join
+                        `tabMode of Payment` As mode
+                        On parent.mode_of_payment = mode.name
+                    Inner Join
+                        `tabPurchase Invoice` As  invoice
+                        On 
+                            child.reference_name = invoice.name
+                            And child.reference_doctype = "Purchase Invoice"
+                            And child.docstatus = invoice.docstatus
+                    Where
+                        parent.docstatus = 1
+                        {company_filter}
+                        And invoice.is_opening = "No"
+                        And invoice.posting_date Between {from_date!r} And {to_date!r}
+                   
+
+                Union All
+
+                    Select
+                        parent.name As invoice_id,
+                        mode.dgii_mode_of_payment As dgii_mode_of_payment
+                    From
+                        `tabPurchase Invoice` As  parent
+                    Inner Join
+                        `tabMode of Payment` As mode
+                        On parent.mode_of_payment = mode.name
+                    Where
+                        parent.docstatus = 1
+                        {company_filter}
+                        And parent.is_opening = "No"
+                        And parent.mode_of_payment Is Not Null
+                        And parent.posting_date Between {from_date!r} And {to_date!r}
+                
+                Union All
+
+                    Select
+                        invoice.name As invoice_id,
+                        mode.dgii_mode_of_payment As dgii_mode_of_payment
+                    From
+                        `tabJournal Entry` As  parent
+                    Inner Join
+                        `tabJournal Entry Account` As  child
+                        On
+                            child.parenttype = "Journal Entry"
+                            And child.parentfield = "accounts"
+                            And child.parent = parent.name
+                            And child.docstatus = parent.docstatus
+                            And child.reference_type = "Purchase Invoice"
+                    Inner Join
+                        `tabMode of Payment` As mode
+                        On parent.mode_of_payment = mode.name
+                    Inner Join
+                        `tabPurchase Invoice` As invoice
+                        On
+                            child.reference_name = invoice.name
+                            And child.reference_type = "Purchase Invoice"
+                            And child.docstatus = invoice.docstatus
+                    Where
+                        parent.docstatus = 1
+                        {company_filter}
+                        And parent.is_opening = "No"
+                        And invoice.posting_date Between {from_date!r} And {to_date!r}
+                ) As temp
+            Where
+                invoice_id Is Not Null
+            Group By
+                invoice_id
+            """
+        )
+    )
 
 
 def get_forma_de_pago(
@@ -667,109 +743,7 @@ def get_forma_de_pago(
         "7. Mixto (no usar)": 7,
     }
 
-    # read through the payment entries and categorize each invoice
-    def generator():
-        company_filter = str()
-        if company:
-            company_filter = f"And parent.company = {company!r}"
-
-        return dict(
-            frappe.db.sql(
-                f"""
-                    Select
-                        invoice_id,
-                        Case 
-                            When Count(DISTINCT dgii_mode_of_payment) = 1 Then Max(dgii_mode_of_payment)
-                            Else '7. Mixto (no usar)'
-                        End As payment_mode
-                    From (
-                        Select
-                            child.reference_name As invoice_id,
-                            mode.dgii_mode_of_payment
-                        From
-                            `tabPayment Entry Reference` As  child
-                        Inner Join
-                            `tabPayment Entry` As  parent
-                            On
-                                child.parenttype = "Payment Entry"
-                                And child.parentfield = "references"
-                                And child.parent = parent.name
-                                And child.docstatus = parent.docstatus
-                                And child.reference_doctype = "Purchase Invoice"
-                        Inner Join
-                            `tabMode of Payment` As mode
-                            On parent.mode_of_payment = mode.name
-                        Inner Join
-                            `tabPurchase Invoice` As  invoice
-                            On 
-                                child.reference_name = invoice.name
-                                And child.reference_doctype = "Purchase Invoice"
-                                And child.docstatus = invoice.docstatus
-                        Where
-                            parent.docstatus = 1
-                            {company_filter}
-                            And invoice.is_opening = "No"
-                            And invoice.posting_date Between {from_date!r} And {to_date!r}
-                       
-
-                    Union All
-
-                        Select
-                            parent.name As invoice_id,
-                            mode.dgii_mode_of_payment As dgii_mode_of_payment
-                        From
-                            `tabPurchase Invoice` As  parent
-                        Inner Join
-                            `tabMode of Payment` As mode
-                            On parent.mode_of_payment = mode.name
-                        Where
-                            parent.docstatus = 1
-                            {company_filter}
-                            And parent.is_opening = "No"
-                            And parent.mode_of_payment Is Not Null
-                            And parent.posting_date Between {from_date!r} And {to_date!r}
-                    
-                    Union All
-
-                        Select
-                            invoice.name As invoice_id,
-                            mode.dgii_mode_of_payment As dgii_mode_of_payment
-                        From
-                            `tabJournal Entry` As  parent
-                        Inner Join
-                            `tabJournal Entry Account` As  child
-                            On
-                                child.parenttype = "Journal Entry"
-                                And child.parentfield = "accounts"
-                                And child.parent = parent.name
-                                And child.docstatus = parent.docstatus
-                                And child.reference_type = "Purchase Invoice"
-                        Inner Join
-                            `tabMode of Payment` As mode
-                            On parent.mode_of_payment = mode.name
-                        Inner Join
-                            `tabPurchase Invoice` As invoice
-                            On
-                                child.reference_name = invoice.name
-                                And child.reference_type = "Purchase Invoice"
-                                And child.docstatus = invoice.docstatus
-                        Where
-                            parent.docstatus = 1
-                            {company_filter}
-                            And parent.is_opening = "No"
-                            And invoice.posting_date Between {from_date!r} And {to_date!r}
-                    ) As temp
-                Where
-                    invoice_id Is Not Null
-                Group By
-                    invoice_id
-                """
-            )
-        )
-    
-    global mode_of_payment
-    if mode_of_payment is None:
-        mode_of_payment = generator()
+    mode_of_payment = _get_forma_de_pago_data(from_date, to_date, company)
     
     try:
         return payment_mode_map[
