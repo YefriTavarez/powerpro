@@ -72,7 +72,7 @@ def get_file_address(from_date, to_date, txt=0):
             And pinvitm.parentfield = 'items'
             And pinvitm.docstatus = pinv.docstatus
         Where
-            pinv.posting_date Between {from_date!r} And {to_date!r}
+            pinv.posting_date Between "2025-03-01" And "2025-03-31"
             And pinv.docstatus = 1
             And pinv.ncf Is Not Null
             And pinv.ncf != ''
@@ -89,7 +89,7 @@ def get_file_address(from_date, to_date, txt=0):
                     Where
                         ref.reference_doctype = 'Purchase Invoice'
                         And pe.docstatus = 1
-                        And pe.posting_date Between {from_date!r} And {to_date!r}
+                        And pe.posting_date Between "2025-03-01" And "2025-03-31"
                 )
             )
         Group By
@@ -153,6 +153,13 @@ def get_file_address(from_date, to_date, txt=0):
 
             row.tax_id = row.tax_id.replace("-", "")
 
+            selectivo_facturado = helper.get_selectivo_facturado(from_date=from_date, to_date=to_date, invoice_id=row.name)
+            otros_imp_facturado = helper.get_otros_imp_facturado(from_date=from_date, to_date=to_date, invoice_id=row.name)
+            propina_facturada = helper.get_propina_facturada(from_date=from_date, to_date=to_date, invoice_id=row.name)
+
+            impuestos_combinados = flt(selectivo_facturado) + flt(otros_imp_facturado) + flt(propina_facturada)
+
+
             w.writerow([
                 row.tax_id if row.tax_id else "", 	# RNC                                                #01
                 helper.get_tipo_rnc(row),                                                                                            #02        
@@ -163,9 +170,9 @@ def get_file_address(from_date, to_date, txt=0):
                 _posting_day,  # FC AAAAMM                                                                               #06
                 _payment_date,  # FC AAAAMM                                                                              #07
                 _payment_day,  # FC AAAAMM                                                                               #07
-                row.monto_facturado_servicios,  # Monto Facturado en Servicios                                           #08
-                row.monto_facturado_bienes,	# Monto Facturado en bienes                                                  #09
-                flt(row.monto_facturado_servicios) + flt(row.monto_facturado_bienes),                                      #10
+                flt(row.monto_facturado_servicios) + impuestos_combinados,  # Monto Facturado en Servicios                                           #08 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
+                flt(row.monto_facturado_bienes) + impuestos_combinados,	# Monto Facturado en bienes                                                  #09 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
+                flt(row.monto_facturado_servicios) + flt(row.monto_facturado_bienes) + impuestos_combinados,                                      #10 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
                 helper.get_itbis_facturado(from_date=from_date, to_date=to_date, invoice_id=row.name),                   #11
                 helper.get_itbis_retenido(from_date=from_date, to_date=to_date, invoice_id=row.name),                    #12
                 helper.get_itbis_sujeto_proporcionalidad(from_date=from_date, to_date=to_date, invoice_id=row.name),     #13
@@ -175,9 +182,9 @@ def get_file_address(from_date, to_date, txt=0):
                 helper.get_tipo_retencion_isr(from_date=from_date, to_date=to_date, invoice_id=row.name),                #17
                 helper.get_isr_retenido(from_date=from_date, to_date=to_date, invoice_id=row.name),                      #18
                 helper.get_isr_percibido(from_date=from_date, to_date=to_date, invoice_id=row.name),                     #19
-                helper.get_selectivo_facturado(from_date=from_date, to_date=to_date, invoice_id=row.name),               #20
-                helper.get_otros_imp_facturado(from_date=from_date, to_date=to_date, invoice_id=row.name),               #21
-                helper.get_propina_facturada(from_date=from_date, to_date=to_date, invoice_id=row.name),                 #22
+                selectivo_facturado,               #20
+                otros_imp_facturado,               #21
+                propina_facturada,                 #22
                 helper.get_forma_de_pago(from_date=from_date, to_date=to_date, invoice_id=row.name),                     #23
             ])
 
