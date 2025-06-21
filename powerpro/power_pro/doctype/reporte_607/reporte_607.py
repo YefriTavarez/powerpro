@@ -85,6 +85,7 @@ def get_file_address(from_date, to_date, company, txt=0):
         	OR pe.posting_date BETWEEN {from_date!r} AND {to_date!r}
             AND per.retention_amount > 0
             AND per.isr_amount > 0
+            AND IFNull(sinv.ncf, "") != ""
            
         GROUP BY 
             sinv.name
@@ -138,7 +139,7 @@ def get_file_address(from_date, to_date, company, txt=0):
             tax_id_type_map[row.tipo_rnc],															# 1
             row.ncf,																# 2
             row.return_against_ncf or "",													# 3
-            income_type_map[row.tipo_de_ingreso],													# 4
+            income_type_map.get(row.tipo_de_ingreso, "N/A"),													# 4
             row.posting_date.strftime(DGII_DATE_FORMAT),									# 5
             # 6   row.payment_date.strftime("%Y%m%d") if row.payment_date  else "",
             get_retention_date(row),
