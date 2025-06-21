@@ -31,7 +31,7 @@ class Project(Document):
         self.create_tasks_from_template()
 
     def validate(self):
-        self.update_percent_complete()
+        project.Project.update_percent_complete(self)
         self.validate_required_fields()
 
     def on_trash(self):
