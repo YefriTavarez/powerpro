@@ -91,6 +91,7 @@ def get_file_address(from_date, to_date, txt=0):
                         And pe.docstatus = 1
                         And pe.posting_date Between {from_date!r} And {to_date!r}
                 )
+                And pinv.posting_date <= {to_date!r} # ensure not future invoices to this range
             )
         Group By
             pinv.name
@@ -171,7 +172,7 @@ def get_file_address(from_date, to_date, txt=0):
                 _payment_date,  # FC AAAAMM                                                                              #07
                 _payment_day,  # FC AAAAMM                                                                               #07
                 flt(row.monto_facturado_servicios) + impuestos_combinados,  # Monto Facturado en Servicios                                           #08 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
-                flt(row.monto_facturado_bienes) + impuestos_combinados,	# Monto Facturado en bienes                                                  #09 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
+                flt(row.monto_facturado_bienes),	# Monto Facturado en bienes                                                  #09 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
                 flt(row.monto_facturado_servicios) + flt(row.monto_facturado_bienes) + impuestos_combinados,                                      #10 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
                 helper.get_itbis_facturado(from_date=from_date, to_date=to_date, invoice_id=row.name),                   #11
                 helper.get_itbis_retenido(from_date=from_date, to_date=to_date, invoice_id=row.name),                    #12
