@@ -25,6 +25,9 @@ class Task(Document):
 
         task.Task.validate_progress(self)
         task.Task.validate_status(self)
+        # extend validate_status
+        if self.status == "Template" and self.project:
+            frappe.throw("No se puede establecer el estado de la tarea como 'Template' si está asociada a un proyecto.")
 
         task.Task.update_depends_on(self)
         # task.Task.validate_dependencies_for_template_task(self)
