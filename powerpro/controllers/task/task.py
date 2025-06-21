@@ -41,6 +41,51 @@ class Task(Document):
 
         task.Task.validate_completed_on(self)
 
+
+    def watch_status_change(self):
+        previous = self.get_doc_before_save()
+        
+        # Handle status change events
+        if previous.status != self.status:
+            # Call a generic handler for all status transitions
+            self.run_method("on_status_change", previous.status, self.status)
+            
+            # Call a handler specific to the new status (e.g., on_completed, on_opened, etc.)
+            method_name = f"on_{self.status.lower().replace(' ', '_')}"
+            self.run_method(method_name)
+            
+            # Optional: If reopening logic is needed
+            if previous.status in ("Completed", "Cancelled") and self.status == "Open":
+                self.run_method("on_reopened")
+
+    # on_opened - Status changes to Open from any other
+    # Task is newly opened or reset
+    
+    # on_started - Status changes to Working
+    # Actual work begins
+    
+    # on_pending_review - Status changes to Pending Review
+    # Task is ready for feedback
+    
+    # on_overdue - Status changes to Overdue
+    # Deadline missed
+    
+    # on_completed - Status changes to Completed
+    # Work is finalized
+    
+    # on_cancelled - Status changes to Cancelled
+    # Task is aborted
+
+    # on_template_mode - Status changes to Template
+    # Task is used as a blueprint
+    
+    # on_reopened - Status changes from Completed, Cancelled, etc., to Open
+    # Resumed task
+
+    # on_status_change - Any change in status
+    # Generic handler for logging, notifications, etc.
+
+
     def on_update(self):
         # self.update_nsm_model()
         self.reschedule_dependent_tasks()
