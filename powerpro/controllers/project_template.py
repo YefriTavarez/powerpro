@@ -13,6 +13,7 @@ class ProjectTemplate(project_template.ProjectTemplate):
 
 	def validate(self):
 		self.validate_project_docfields()
+		self.validate_optional_tasks()
 	
 	def before_insert(self):
 		self.set_project_docfields()
@@ -33,6 +34,33 @@ class ProjectTemplate(project_template.ProjectTemplate):
 					f"""El campo {field.label!r} en la fila #{field.idx} no puede ser de solo lectura y requerido al mismo tiempo""",
 					title="Error de Validación"
 				)
+
+	def validate_optional_tasks(self):
+		# optional tasks cannot be as dependant task in other tasks in the template
+		if not any(
+			task.is_optional for task in self.tasks
+		):
+			return # no optional tasks, nothing to validate
+		
+		for task in self.tasks:
+			if not task.is_optional:
+				continue
+			
+			# check if this task_id is used in the depends_on (Task Depends On) field of other tasks
+			# for this template.
+			for other_task in self.tasks:
+				if other_task.name == task.name:
+					continue
+
+				if frappe.db.exists("Task Depends On", {
+					"parent": other_task.task,
+					"task": task.task,
+				}):
+					frappe.throw(
+						f"""La 'Tarea > {task.task}' no puede ser marcada como opcional porque 
+						está siendo usada como una tarea dependiente en la Tarea > {other_task.task}""",
+						title="Error de Validación"
+					)
 
 	@frappe.whitelist()
 	def set_project_docfields(self, for_reload=False, with_memory=False):
