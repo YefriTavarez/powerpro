@@ -28,13 +28,18 @@ class Project(Document):
         self.onload()
 
     def after_insert(self):
+        optional_tasks_included = False
         optional_tasks = []
         if hasattr(self, "_optional_tasks_included"):
             optional_tasks = frappe.parse_json(
                 getattr(self, "_optional_tasks", "[]")
             )
 
-        self.create_tasks_from_template(optional_tasks)
+            optional_tasks_included = True
+
+        self.create_tasks_from_template(
+            optional_tasks, optional_tasks_included
+        )
 
     def validate(self):
         project.Project.update_percent_complete(self)
@@ -107,7 +112,7 @@ class Project(Document):
         if not self.project_template:
             frappe.throw("Debes seleccionar una plantilla de proyecto.")
 
-    def create_tasks_from_template(self, optional_tasks=None):
+    def create_tasks_from_template(self, optional_tasks=None, optional_tasks_included=False):
         # template_tasks = frappe.get_all(
         #     "Task",
         #     filters={
@@ -141,18 +146,22 @@ class Project(Document):
             })
 
         optional_tasks_condition = ""
-        if optional_tasks:
-            optional_tasks_condition = """
-                And (
-                    template_task.is_optional = 0
-                    Or (
-                        template_task.is_optional = 1
-                            And template_task.task In ({})
+        if optional_tasks_included:
+            if optional_tasks:
+                optional_tasks_condition = """
+                    And (
+                        template_task.is_optional = 0
+                        Or (
+                            template_task.is_optional = 1
+                                And template_task.task In ({})
+                        )
                     )
+                """.format(
+                    ", ".join(frappe.db.escape(task) for task in optional_tasks)
                 )
-            """.format(
-                ", ".join(frappe.db.escape(task) for task in optional_tasks)
-            )
+            else:
+                optional_tasks_condition = "And template_task.is_optional = 0"
+            
 
         template_tasks = frappe.db.sql(
             """
