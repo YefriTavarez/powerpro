@@ -82,12 +82,16 @@ def get_depends_on_tasks_from_template(project, name, only_names=False):
             row.parenttype = doctype
             row.parentfield = "depends_on"
             out.append(row)
-        else:
-            frappe.throw(
-                f"La tarea '{template_name}' no existe en el proyecto '{doc.project}'. "
-                "Asegurese de NO depender de una tarea que está más abajo en la plantilla. "
-                "<br>Solo se puede depender de tareas anteriores (ya creadas más arriba en la tabla)."
-            )
+        else: 
+            # if task does not exist in the project, let's ignore it as it might be an optional task
+            # optional tasks, when not included in the project will be reported as a broken dependency
+            # we will just ignore this, because the user might want to match optional with optional tasks.
+            ...
+            # frappe.throw(
+            #     f"La tarea '{template_name}' no existe en el proyecto '{doc.project}'. "
+            #     "Asegurese de NO depender de una tarea que está más abajo en la plantilla. "
+            #     "<br>Solo se puede depender de tareas anteriores (ya creadas más arriba en la tabla)."
+            # )
 
     return out
 
