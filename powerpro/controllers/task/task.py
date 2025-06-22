@@ -44,6 +44,17 @@ class Task(Document):
             task.Task.validate_parent_template_task(self)
             task.Task.validate_depends_on_tasks(self)
 
+            # validate the task is not marked as optional
+            if self.is_template and self.status == "Template":
+                for dep in self.depends_on:
+                    result = frappe.db.get_value("Project Template Task", {
+                        "task": dep.task
+                    }, ["is_optional", "parent"], as_dict=True)
+                    if result and result.is_optional:
+                        frappe.throw(
+                            f"No puede agregar la tarea '{dep.task}' como dependiente porque es una tarea opcional en la plantilla del proyecto '{result.parent}'.",
+                        )
+
         task.Task.validate_completed_on(self)
 
 
