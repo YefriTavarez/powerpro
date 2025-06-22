@@ -13,7 +13,7 @@ class ProjectTemplate(project_template.ProjectTemplate):
 
 	def validate(self):
 		self.validate_project_docfields()
-		self.validate_optional_tasks()
+		# self.validate_optional_tasks()
 	
 	def before_insert(self):
 		self.set_project_docfields()
