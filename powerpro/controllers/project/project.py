@@ -28,7 +28,13 @@ class Project(Document):
         self.onload()
 
     def after_insert(self):
-        self.create_tasks_from_template()
+        optional_tasks = []
+        if hasattr(self, "_optional_tasks_included"):
+            optional_tasks = frappe.parse_json(
+                getattr(self, "_optional_tasks", "[]")
+            )
+
+        self.create_tasks_from_template(optional_tasks)
 
     def validate(self):
         project.Project.update_percent_complete(self)
@@ -101,7 +107,7 @@ class Project(Document):
         if not self.project_template:
             frappe.throw("Debes seleccionar una plantilla de proyecto.")
 
-    def create_tasks_from_template(self):
+    def create_tasks_from_template(self, optional_tasks=None):
         # template_tasks = frappe.get_all(
         #     "Task",
         #     filters={
@@ -134,6 +140,20 @@ class Project(Document):
                 "depends_on": helper.get_depends_on_tasks_from_template(project=self.name, name=template_task.name),
             })
 
+        optional_tasks_condition = ""
+        if optional_tasks:
+            optional_tasks_condition = """
+                And (
+                    template_task.is_optional = 0
+                    Or (
+                        template_task.is_optional = 1
+                            And template_task.task In ({})
+                    )
+                )
+            """.format(
+                ", ".join(frappe.db.escape(task) for task in optional_tasks)
+            )
+
         template_tasks = frappe.db.sql(
             """
                 Select
@@ -158,10 +178,12 @@ class Project(Document):
                 Where
                     task.name = template_task.task
                     And task.status = "Template"
+                    {optional_tasks_condition}
                 Order By
                     template_task.idx Asc
             """.format(
-                project_template=self.project_template
+                project_template=self.project_template,
+                optional_tasks_condition=optional_tasks_condition,
             ),
             as_dict=True
         )
