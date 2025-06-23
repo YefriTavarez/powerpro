@@ -47,5 +47,5 @@ frappe.ui.form.ControlSignature.prototype.on_reset_sign = function() {
 		if (value) {
 			self.set_model_value("");
 		}
-	}, 250);
+	});
 }
