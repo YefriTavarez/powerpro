@@ -40,8 +40,12 @@ frappe.ui.form.ControlSignature.prototype.on_reset_sign = function() {
 	this.$pad.jSignature("reset");
 	this.set_my_value("");
 
-	const value = this.get_value();
-	if (value) {
-		this.set_model_value("");
-	}
+	setTimeout(() => {
+		const self = this;
+		const value = self.get_value();
+		
+		if (value) {
+			self.set_model_value("");
+		}
+	}, 250);
 }
