@@ -180,6 +180,7 @@ override_doctype_class = {
     "Web Form": "powerpro.controllers.web_form.WebForm",
     "File": "powerpro.controllers.file.File",
     "Project": "powerpro.controllers.project.Project",
+    "Work Order": "powerpro.controllers.work_order.WorkOrder",
     "Project Template": "powerpro.controllers.project_template.ProjectTemplate",
     "Project Template Task": "powerpro.controllers.project_template_task.ProjectTemplateTask",
     "Task": "powerpro.controllers.task.Task",
