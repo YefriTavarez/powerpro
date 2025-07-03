@@ -174,6 +174,7 @@ override_doctype_class = {
     "Quality Procedure": "powerpro.controllers.quality_procedure.QualityProcedure",
     "Custom Field": "powerpro.controllers.custom_field.CustomField",
     "Salary Slip": "powerpro.controllers.salary_slip.SalarySlip",
+    "Stock Entry": "powerpro.controllers.stock_entry.StockEntry",
     "Payroll Entry": "powerpro.controllers.payroll_entry.PayrollEntry",
     "Asset Maintenance": "powerpro.controllers.asset_maintenance.AssetMaintenance",
     "Asset Maintenance Log": "powerpro.controllers.asset_maintenance_log.AssetMaintenanceLog",

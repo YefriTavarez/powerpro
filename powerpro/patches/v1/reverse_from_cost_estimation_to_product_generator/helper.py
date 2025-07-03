@@ -139,6 +139,11 @@ def map_record_to_product_generator(record_data):
                 mapping[f'tinta_retiro_{i}'] = record_data[tinta_key]
                 if color_key in record_data:
                     mapping[f'tinta_retiro_{i}_color'] = record_data[color_key]
+    else:
+        # If no back colors, set default values
+        mapping['cantidad_tinta_retiro'] = ''
+        mapping['tinta_retiro_1'] = ''
+        mapping['tinta_retiro_1_color'] = ''
     
     # Laminating
     mapping['requiere_laminado'] = bool(record_data.get('incluye_laminado', 0))
