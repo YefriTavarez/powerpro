@@ -1,0 +1,404 @@
+# Copyright (c) 2024, Yefri Tavarez and contributors
+# For license information, please see license.txt
+
+import frappe
+from frappe import _
+from frappe.utils import flt
+
+
+def run_reposting_tool(doc):
+    """
+    Master orchestrator for stock item reposting.
+    Performs backup reminder, resolves items, and processes each item.
+
+    ToDo List for Stock Item Reposting Tool
+    1. Backup Reminder
+       - Prompt user to ensure database backups are made before proceeding.
+    2. Resolve Items
+       - Fetch stock items that need reposting based on document configuration.
+       - Support both individual and batch modes (item group, pasted list).
+       - Sort items by creation date in descending order (cancel most recent first).
+    3. For Each Item:
+       a. Cancel affected stock transactions (set docstatus = 2, call on_cancel()).
+       b. Change is_stock_item property as needed (to_stock parameter).
+       c. Save and commit changes.
+       d. Resubmit affected stock transactions (set docstatus = 1, call on_submit()).
+       e. Handle errors and log appropriately.
+    4. Dry Run Support
+       - If dry_run is enabled, simulate changes without making actual modifications.
+    5. Final Status Message
+       - Show summary of processed items and any errors encountered.
+    """
+    # TODO: Implement the actual reposting logic here
+    # This is where you would add the core functionality
+    # For now, we'll add a placeholder
+    frappe.msgprint("Reposting tool logic executed", alert=True)
+    
+    # Example of what might be implemented:
+    # - Fetch stock items that need reposting and sort them by creation date in descending order so we cancel the most recent ones first
+    # - Do a fake cancel (doc.docstatus = 2; doc.on_cancel())
+    # - Process each item (to make it a stock item)
+    # - Update stock ledger entries (doc.docstatus = 1; doc.on_submit())
+    # - Commit changes
+    
+    try:
+        # Backup reminder
+        frappe.msgprint(
+            _("Reminder: Ensure database backups have been made before proceeding with stock reposting."),
+            alert=True,
+            indicator="orange"
+        )
+        
+        # Resolve items based on document configuration
+        items = resolve_items(doc)
+        
+        if not items:
+            frappe.msgprint(_("No items found to process."), alert=True)
+            return
+        
+        frappe.msgprint(_("Found {0} items to process.").format(len(items)), alert=True)
+        
+        # Process each item
+        processed_count = 0
+        for item in items:
+            try:
+                process_item(item['item_code'], doc.available_qty, doc.dry_run)
+                processed_count += 1
+            except Exception as item_error:
+                frappe.log_error(
+                    message=f"Error processing item {item['item_code']}: {str(item_error)}", 
+                    title="Process Item Error"
+                )
+                continue
+        
+        # Final status message
+        if doc.dry_run:
+            frappe.msgprint(
+                _("Dry run completed. {0} items would be processed.").format(processed_count),
+                alert=True,
+                indicator="blue"
+            )
+        else:
+            frappe.msgprint(
+                _("Processing completed. {0} items successfully processed.").format(processed_count),
+                alert=True,
+                indicator="green"
+            )
+            
+    except Exception as e:
+        frappe.log_error(
+            message=f"Run Reposting Tool Error: {str(e)}", 
+            title="Stock Item Reposting Tool Error"
+        )
+        frappe.msgprint(
+            _("Error during reposting: {0}").format(str(e)), 
+            alert=True,
+            indicator="red"
+        )
+        raise
+
+
+def resolve_items(doc):
+    """
+    Handles mode selection and resolves items from various sources.
+    Calls get_items_from_group for group-based resolution and parses pasted lists.
+    """
+    try:
+        items = []
+        
+        if doc.mode == 'Individual':
+            if doc.item:
+                # Validate item exists
+                if frappe.db.exists("Item", doc.item):
+                    items.append({'item_code': doc.item})
+                else:
+                    frappe.throw(_("Item {0} does not exist").format(doc.item))
+            else:
+                frappe.throw(_("Please select an item for individual mode"))
+                
+        elif doc.mode == 'Batch':
+            # Get items from item group if specified
+            if doc.item_group:
+                try:
+                    group_items = get_items_from_group(doc.item_group)
+                    items.extend(group_items)
+                except Exception as e:
+                    frappe.log_error(
+                        message=f"Error getting items from group {doc.item_group}: {str(e)}", 
+                        title="Get Items From Group Error"
+                    )
+            
+            # Parse pasted item list
+            if doc.item_list_paste:
+                try:
+                    pasted_items = []
+                    for line in doc.item_list_paste.splitlines():
+                        item_code = line.strip()
+                        if item_code:
+                            # Validate each item exists
+                            if frappe.db.exists("Item", item_code):
+                                pasted_items.append({'item_code': item_code})
+                            else:
+                                frappe.msgprint(
+                                    _("Item {0} does not exist and will be skipped").format(item_code),
+                                    alert=True,
+                                    indicator="orange"
+                                )
+                    items.extend(pasted_items)
+                except Exception as e:
+                    frappe.log_error(
+                        message=f"Error parsing pasted item list: {str(e)}", 
+                        title="Parse Item List Error"
+                    )
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_items = []
+        for item in items:
+            if item['item_code'] not in seen:
+                seen.add(item['item_code'])
+                unique_items.append(item)
+        
+        return unique_items
+        
+    except Exception as e:
+        frappe.log_error(
+            message=f"Resolve Items Error: {str(e)}", 
+            title="Stock Item Reposting Tool - Resolve Items Error"
+        )
+        raise
+
+
+def get_items_from_group(group):
+    """
+    Recursive retrieval of child groups and items from an item group.
+    """
+    try:
+        items = []
+        
+        if not group:
+            return items
+        
+        # Validate group exists
+        if not frappe.db.exists("Item Group", group):
+            frappe.throw(_("Item Group {0} does not exist").format(group))
+        
+        # Get direct items from this group
+        direct_items = frappe.db.sql("""
+            SELECT name as item_code
+            FROM `tabItem`
+            WHERE item_group = %s
+            AND disabled = 0
+        """, (group,), as_dict=True)
+        
+        items.extend(direct_items)
+        
+        # Get child groups recursively
+        child_groups = frappe.db.sql("""
+            SELECT name
+            FROM `tabItem Group`
+            WHERE parent_item_group = %s
+            AND is_group = 1
+        """, (group,), as_dict=True)
+        
+        for child_group in child_groups:
+            try:
+                child_items = get_items_from_group(child_group.name)
+                items.extend(child_items)
+            except Exception as e:
+                frappe.log_error(
+                    message=f"Error processing child group {child_group.name}: {str(e)}", 
+                    title="Get Items From Child Group Error"
+                )
+                continue
+        
+        return items
+        
+    except Exception as e:
+        frappe.log_error(
+            message=f"Get Items From Group Error for group {group}: {str(e)}", 
+            title="Stock Item Reposting Tool - Get Items From Group Error"
+        )
+        raise
+
+
+def process_item(item_code, available_qty, dry_run):
+    """
+    Processes individual items: cancels/resubmits affected stock transactions,
+    toggles is_stock_item based on to_stock parameter, and respects dry_run flag.
+    """
+    try:
+        if not item_code:
+            return
+        
+        # Get item document
+        item_doc = frappe.get_doc("Item", item_code)
+        
+        # Determine target stock status
+        should_be_stock_item = True # available_qty > 0
+        
+        if dry_run:
+            frappe.msgprint(
+                _("DRY RUN - Item {0}: Would change is_stock_item from {1} to {2}").format(
+                    item_code, 
+                    item_doc.is_stock_item, 
+                    should_be_stock_item
+                ),
+                alert=True,
+                indicator="blue"
+            )
+            return
+        
+        # Check if change is needed
+        if item_doc.is_stock_item == should_be_stock_item:
+            frappe.msgprint(
+                _("Item {0}: No change needed (already {1})").format(
+                    item_code, 
+                    "stock item" if should_be_stock_item else "non-stock item"
+                ),
+                alert=True,
+                indicator="gray"
+            )
+            return
+        
+        # Cancel affected stock transactions
+        try:
+            cancel_stock_transactions(item_code)
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error canceling stock transactions for item {item_code}: {str(e)}", 
+                title="Cancel Stock Transactions Error"
+            )
+            raise
+        
+        # Update item stock status
+        try:
+            item_doc.is_stock_item = should_be_stock_item
+            item_doc.save(ignore_permissions=True)
+            frappe.db.commit()
+            
+            frappe.msgprint(
+                _("Item {0}: Successfully updated to {1}").format(
+                    item_code, 
+                    "stock item" if should_be_stock_item else "non-stock item"
+                ),
+                alert=True,
+                indicator="green"
+            )
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error updating item {item_code}: {str(e)}", 
+                title="Update Item Error"
+            )
+            raise
+        
+        # Resubmit affected stock transactions
+        try:
+            resubmit_stock_transactions(item_code)
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error resubmitting stock transactions for item {item_code}: {str(e)}", 
+                title="Resubmit Stock Transactions Error"
+            )
+            # Don't raise here as item is already updated
+            
+    except Exception as e:
+        frappe.log_error(
+            message=f"Process Item Error for item {item_code}: {str(e)}", 
+            title="Stock Item Reposting Tool - Process Item Error"
+        )
+        frappe.msgprint(
+            _("Error processing item {0}: {1}").format(item_code, str(e)), 
+            alert=True,
+            indicator="red"
+        )
+        raise
+
+
+def cancel_stock_transactions(item_code):
+    """
+    Cancel stock transactions that would be affected by changing item stock status.
+    """
+    try:
+        # Get stock ledger entries for the item
+        stock_entries = frappe.db.sql("""
+            SELECT DISTINCT voucher_type, voucher_no
+            FROM `tabStock Ledger Entry`
+            WHERE item_code = %s
+            AND is_cancelled = 0
+            ORDER BY posting_date DESC, posting_time DESC
+        """, (item_code,), as_dict=True)
+        
+        cancelled_count = 0
+        for entry in stock_entries:
+            try:
+                # Get the document
+                doc = frappe.get_doc(entry.voucher_type, entry.voucher_no)
+                if doc.docstatus == 1:  # Only cancel submitted documents
+                    doc.cancel()
+                    cancelled_count += 1
+            except Exception as e:
+                frappe.log_error(
+                    message=f"Error canceling {entry.voucher_type} {entry.voucher_no}: {str(e)}", 
+                    title="Cancel Individual Transaction Error"
+                )
+                continue
+        
+        if cancelled_count > 0:
+            frappe.msgprint(
+                _("Cancelled {0} stock transactions for item {1}").format(cancelled_count, item_code),
+                alert=True,
+                indicator="orange"
+            )
+            
+    except Exception as e:
+        frappe.log_error(
+            message=f"Cancel Stock Transactions Error for item {item_code}: {str(e)}", 
+            title="Cancel Stock Transactions Error"
+        )
+        raise
+
+
+def resubmit_stock_transactions(item_code):
+    """
+    Resubmit previously cancelled stock transactions.
+    """
+    try:
+        # Get cancelled stock ledger entries for the item
+        cancelled_entries = frappe.db.sql("""
+            SELECT DISTINCT voucher_type, voucher_no
+            FROM `tabStock Ledger Entry`
+            WHERE item_code = %s
+            AND is_cancelled = 1
+            ORDER BY posting_date ASC, posting_time ASC
+        """, (item_code,), as_dict=True)
+        
+        resubmitted_count = 0
+        for entry in cancelled_entries:
+            try:
+                # Get the document
+                doc = frappe.get_doc(entry.voucher_type, entry.voucher_no)
+                if doc.docstatus == 2:  # Only resubmit cancelled documents
+                    doc.submit()
+                    resubmitted_count += 1
+            except Exception as e:
+                frappe.log_error(
+                    message=f"Error resubmitting {entry.voucher_type} {entry.voucher_no}: {str(e)}", 
+                    title="Resubmit Individual Transaction Error"
+                )
+                continue
+        
+        if resubmitted_count > 0:
+            frappe.msgprint(
+                _("Resubmitted {0} stock transactions for item {1}").format(resubmitted_count, item_code),
+                alert=True,
+                indicator="green"
+            )
+            
+    except Exception as e:
+        frappe.log_error(
+            message=f"Resubmit Stock Transactions Error for item {item_code}: {str(e)}", 
+            title="Resubmit Stock Transactions Error"
+        )
+        raise
