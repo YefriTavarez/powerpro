@@ -20,9 +20,10 @@ def run_reposting_tool(doc):
                 process_item(doc, item['item_code'], doc.available_qty, doc.dry_run)
                 processed_count += 1
             except Exception as item_error:
+                traceback = frappe.get_traceback(with_context=True)
                 frappe.log_error(
-                    message=f"Error processing item {item['item_code']}: {str(item_error)}", 
-                    title="Process Item Error"
+                    title=f"Error processing item {item['item_code']}: {str(item_error)}", 
+                    message=traceback,
                 )
                 continue
 
