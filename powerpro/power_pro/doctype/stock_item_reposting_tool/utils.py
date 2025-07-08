@@ -42,9 +42,10 @@ def run_reposting_tool(doc):
         #     )
 
     except Exception as e:
+        traceback = frappe.get_traceback(with_context=True)
         frappe.log_error(
-            message=f"Run Reposting Tool Error: {str(e)}", 
-            title="Stock Item Reposting Tool Error"
+            title=f"Run Reposting Tool Error: {str(e)}", 
+            message=traceback,
         )
         frappe.msgprint(
             _("Error during reposting: {0}").format(str(e)), 
@@ -95,9 +96,10 @@ def resolve_items(doc):
         return unique_items
 
     except Exception as e:
+        traceback = frappe.get_traceback(with_context=True)
         frappe.log_error(
-            message=f"Resolve Items Error: {str(e)}", 
-            title="Stock Item Reposting Tool - Resolve Items Error"
+            title=f"Resolve Items Error: {str(e)}", 
+            message=traceback,
         )
         raise
 
@@ -136,9 +138,10 @@ def get_items_from_group(group):
         return items
 
     except Exception as e:
+        traceback = frappe.get_traceback(with_context=True)
         frappe.log_error(
-            message=f"Get Items From Group Error for group {group}: {str(e)}", 
-            title="Stock Item Reposting Tool - Get Items From Group Error"
+            title=f"Get Items From Group Error for group {group}: {str(e)}", 
+            message=traceback,
         )
         raise
 
@@ -201,9 +204,10 @@ def process_item(doc, item_code, available_qty, dry_run):
         doc.add_comment("Comment", get_comment_text(item_code, cancelled_pks, should_be_stock_item))
 
     except Exception as e:
+        traceback = frappe.get_traceback(with_context=True)
         frappe.log_error(
-            message=f"Process Item Error for item {item_code}: {str(e)}", 
-            title="Stock Item Reposting Tool - Process Item Error"
+            title=f"Process Item Error for item {item_code}: {str(e)}", 
+            message=traceback,
         )
         frappe.msgprint(
             _("Error processing item {0}: {1}").format(item_code, str(e)), 
@@ -249,7 +253,10 @@ def cancel_stock_transactions(item_code) -> list[str]:
                 doc.docstatus = 2
                 doc.set_docstatus()
 
-                doc.on_cancel()
+                # doc.on_cancel()
+                doc.update_stock_ledger()
+                doc.make_gl_entries_on_cancel()
+                doc.repost_future_sle_and_gle()
 
                 cancelled_pks.append((doctype, doc.name))
 
@@ -261,9 +268,10 @@ def cancel_stock_transactions(item_code) -> list[str]:
             )
         return cancelled_pks
     except Exception as e:
+        traceback = frappe.get_traceback(with_context=True)
         frappe.log_error(
-            message=f"Cancel Stock Transactions Error for item {item_code}: {str(e)}", 
-            title="Cancel Stock Transactions Error"
+            title=f"Cancel Stock Transactions Error for item {item_code}: {str(e)}", 
+            message=traceback,
         )
         raise
 
@@ -274,7 +282,11 @@ def resubmit_stock_transactions(item_code, cancelled_pks) -> list[str]:
             doc = frappe.get_doc(pk[0], pk[1])
             doc.docstatus = 1
             doc.set_docstatus()
-            doc.on_submit()
+            # doc.on_submit()
+            doc.update_stock_ledger()
+            doc.make_gl_entries()
+            doc.repost_future_sle_and_gle()
+
             resubmitted_pks.append(doc.name)
 
             doc.add_comment("Comment", _("Stock item reposting tool: Stock transaction {0} resubmitted for item {1}").format(doc.name, item_code))
@@ -287,8 +299,9 @@ def resubmit_stock_transactions(item_code, cancelled_pks) -> list[str]:
             )
         return resubmitted_pks
     except Exception as e:
+        traceback = frappe.get_traceback(with_context=True)
         frappe.log_error(
-            message=f"Resubmit Stock Transactions Error: {str(e)}", 
-            title="Resubmit Stock Transactions Error"
+            title=f"Resubmit Stock Transactions Error: {str(e)}", 
+            message=traceback,
         )
         raise
