@@ -46,7 +46,7 @@ def get_item_by_product_type_query(doctype, txt, searchfield="name", start=0, pa
 			From
 				`tabItem`
 			Where
-				tipo_producto {product_type!r}
+				tipo_producto = {product_type!r}
 				And name Like {searchstr!r}
 		""", as_list=True
 	)
