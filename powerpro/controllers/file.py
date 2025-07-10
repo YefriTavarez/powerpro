@@ -10,6 +10,10 @@ from frappe.core.doctype.file import file
 
 
 class File(file.File):
+	# override
+	def validate_duplicate_entry(self):
+		...
+
 	# override the validate_file_path method
 	def validate_file_path(self):
 		# this is the only change in this method
