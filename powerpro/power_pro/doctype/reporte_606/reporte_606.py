@@ -420,12 +420,27 @@ def get_summary_data(from_date, to_date):
     data = frappe.db.sql(f"""
         Select
             Sum(pinv.base_total) as subtotal,
-            Sum(pinv.total_itbis) as itbis
+            Sum(
+                Case 
+                    When IfNull(account.dominican_tax_type, "") = "ITBIS" and IfNull(taxes.add_deduct_tax, "") = "Add" Then taxes.tax_amount
+                    Else 0
+                End
+            ) as itbis
         From
             `tabPurchase Invoice` as pinv
+        Left Join
+            `tabPurchase Taxes and Charges` As taxes
+            On taxes.parent = pinv.name
+            And taxes.parenttype = 'Purchase Invoice'
+            And taxes.parentfield = 'taxes'
+            And taxes.docstatus = pinv.docstatus
+        Left Join
+            `tabAccount` As account
+            On account.name = taxes.account_head
         Where
             pinv.posting_date Between {from_date!r} And {to_date!r} And 
             pinv.docstatus = 1
+            And Left(pinv.bill_no, 3) In ("B01", "B04", "B11", "B13", "B14", "B15", "E31", "E34","E41", "E43")
     """, as_dict=True)
 
     return data[0] if data else {}
