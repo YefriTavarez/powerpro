@@ -161,7 +161,7 @@ def get_file_address(from_date, to_date, txt=0):
             impuestos_combinados = flt(selectivo_facturado) + flt(otros_imp_facturado) + flt(propina_facturada)
 
 
-            w.writerow([
+            write_row = [
                 row.tax_id if row.tax_id else "", 	# RNC                                                #01
                 helper.get_tipo_rnc(row),                                                                                            #02        
                 helper.get_tipo_bienes_y_servicios_comprados(row),        # Tipo de RNC                                              #03 row.ncf,		# NCF                                                                                    #04
@@ -187,10 +187,26 @@ def get_file_address(from_date, to_date, txt=0):
                 otros_imp_facturado,               #21
                 propina_facturada,                 #22
                 helper.get_forma_de_pago(from_date=from_date, to_date=to_date, invoice_id=row.name),                     #23
-            ])
+            ]
+
+            if ncf := row.get("ncf"):
+                # handle credit notes
+                if ncf.startswith("B04") \
+                    or ncf.startswith("E34"):
+                    # credit notes should always be positive numbers,
+                    # however a credit note in ERPNext is just an invoice with a negative amount
+                    # so we need to make the amount positive
+                    for index, element in enumerate( write_row.copy() ):
+                        # if element is a numeric value, make it positive
+                        if isinstance( element, (int, float) ):
+                            write_row[index] = abs(element)
+
+            w.writerow(write_row)
 
         frappe.response['result'] = cstr(w.getvalue())
         frappe.response['type'] = 'csv'
+
+    # result and type are dynamic, so, yes, this line is correctly indented
     frappe.response['doctype'] = "Reporte_606_" + str(int(time.time()))
 
 def generate_txt(result, from_date, to_date):
