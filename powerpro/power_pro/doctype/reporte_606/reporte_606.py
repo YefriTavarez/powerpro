@@ -37,14 +37,14 @@ def get_file_address(from_date, to_date, txt=0):
             NULL As fecha_pago,
             Sum(
                 If (
-                    pinvitm.item_type != "Bienes",
+                    IfNull(pinvitm.item_type, "") != "Bienes",
                     Abs(pinvitm.base_amount),
                     0
                 )
             ) As monto_facturado_servicios,
             Sum(
                 If (
-                    pinvitm.item_type = "Bienes",
+                    IfNull(pinvitm.item_type, "") = "Bienes",
                     Abs(pinvitm.base_amount),
                     0
                 )
@@ -95,7 +95,7 @@ def get_file_address(from_date, to_date, txt=0):
             )
         Group By
             pinv.name
-	""", as_dict=True)
+	""", as_dict=True, debug=True)
     
     if cint(txt) == 1:
         content = generate_txt(result, from_date, to_date)
@@ -165,13 +165,13 @@ def get_file_address(from_date, to_date, txt=0):
                 row.tax_id if row.tax_id else "", 	# RNC                                                #01
                 helper.get_tipo_rnc(row),                                                                                            #02        
                 helper.get_tipo_bienes_y_servicios_comprados(row),        # Tipo de RNC                                              #03 row.ncf,		# NCF                                                                                    #04
-                row.ncf,                                                                                               #04
+                row.ncf,                                                                                                 #04
                 helper.get_ncf_modificado(from_date=from_date, to_date=to_date, invoice_id=row.name),		              #05
                 _posting_date,  # FC AAAAMM                                                                              #06
-                _posting_day,  # FC AAAAMM                                                                               #06
+                _posting_day,   # FC AAAAMM                                                                              #06
                 _payment_date,  # FC AAAAMM                                                                              #07
-                _payment_day,  # FC AAAAMM                                                                               #07
-                flt(row.monto_facturado_servicios) + impuestos_combinados,  # Monto Facturado en Servicios                                           #08 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
+                _payment_day,   # FC AAAAMM                                                                              #07
+                flt(row.monto_facturado_servicios),  # Monto Facturado en Servicios                                           #08 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
                 flt(row.monto_facturado_bienes),	# Monto Facturado en bienes                                                  #09 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
                 flt(row.monto_facturado_servicios) + flt(row.monto_facturado_bienes) + impuestos_combinados,                                      #10 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
                 helper.get_itbis_facturado(from_date=from_date, to_date=to_date, invoice_id=row.name),                   #11
@@ -438,9 +438,9 @@ def get_summary_data(from_date, to_date):
             `tabAccount` As account
             On account.name = taxes.account_head
         Where
-            pinv.posting_date Between {from_date!r} And {to_date!r} And 
-            pinv.docstatus = 1
-            And Left(pinv.bill_no, 3) In ("B01", "B04", "B11", "B13", "B14", "B15", "E31", "E34","E41", "E43")
+            pinv.posting_date Between {from_date!r} And {to_date!r}
+            And pinv.docstatus = 1
+            And Left(pinv.ncf, 3) In ("B01", "B03", "B04", "B11", "B13", "B14", "B15", "E31", "E33", "E34", "E41", "E43")
     """, as_dict=True)
 
     return data[0] if data else {}

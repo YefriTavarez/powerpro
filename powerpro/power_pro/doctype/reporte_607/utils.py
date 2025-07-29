@@ -2,9 +2,9 @@
 # For license information, please see license.txt
 
 tax_id_type_map = {
-	"RNC": 1,
-	"CEDULA": 2,
-	"PASAPORTE": 3,
+	"RNC": "1",
+	"CEDULA": "2",
+	"PASAPORTE": "3",
 }
 
 

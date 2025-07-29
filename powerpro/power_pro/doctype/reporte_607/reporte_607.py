@@ -42,6 +42,7 @@ def get_file_address(from_date, to_date, company, txt=0):
 			cust.tax_id,
 			cust.tipo_rnc,
 			sinv.ncf,
+			sinv.is_return,
 			sinv.return_against_ncf,
 			sinv.tipo_de_ingreso,
 			sinv.posting_date,
@@ -161,9 +162,22 @@ def get_file_address(from_date, to_date, company, txt=0):
             row.cc_payment or 0.00,													# 18
             row.credit or row.base_grand_total,										# 19
             row.bonos_regalo or 0.00,												# 20
-            row.permuta_de_pago or 0.00,												# 21
+            row.permuta_de_pago or 0.00,											# 21
             row.otros or 0.00														# 22
         ])
+
+        if row.is_return: # if the invoice is a credit note
+            if ncf := row.get("ncf"):
+                # handle credit notes
+                if ncf.startswith("B04") \
+                    or ncf.startswith("E34"):
+                    # credit notes should always be positive numbers,
+                    # however a credit note in ERPNext is just an invoice with a negative amount
+                    # so we need to make the amount positive
+                    for index, element in enumerate( d.copy() ):
+                        # if element is a numeric value, make it positive
+                        if isinstance( element, (int, float) ):
+                            d[index] = abs(element)
 
         if txt:
             txt_content += "|".join([str(column) for column in d]) + "\n"
