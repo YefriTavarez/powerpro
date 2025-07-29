@@ -2,6 +2,9 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
+
+from typing import Union
+from datetime import datetime
 import frappe
 from frappe.utils import cstr, flt, cint, getdate
 from frappe.model.document import Document
@@ -142,9 +145,13 @@ def get_file_address(from_date, to_date, txt=0):
                 _posting_date = date.strftime("%Y%m")
                 _posting_day = date.strftime("%d")
 
-            if date := get_retention_date_if_in_range(row, from_date, to_date):
-                _payment_date = date.strftime("%Y%m")
-                _payment_day = date.strftime("%d")
+            if invoice_has_retention(row, from_date, to_date):
+                date = get_payment_date(row.name, from_date, to_date)
+                if date:
+                    date = frappe.utils.getdate(date)
+
+                    _payment_date = date.strftime("%Y%m")
+                    _payment_day = date.strftime("%d")
 
             if not row.tax_id:
                 row.tax_id = frappe.get_value("Supplier", row.supplier, "tax_id")
@@ -162,18 +169,18 @@ def get_file_address(from_date, to_date, txt=0):
 
 
             write_row = [
-                row.tax_id if row.tax_id else "", 	# RNC                                                #01
-                helper.get_tipo_rnc(row),                                                                                            #02        
-                helper.get_tipo_bienes_y_servicios_comprados(row),        # Tipo de RNC                                              #03 row.ncf,		# NCF                                                                                    #04
+                row.tax_id if row.tax_id else "", 	# RNC                                                                #01
+                helper.get_tipo_rnc(row),                                                                                #02        
+                helper.get_tipo_bienes_y_servicios_comprados(row),        # Tipo de RNC                                  #03 
                 row.ncf,                                                                                                 #04
                 helper.get_ncf_modificado(from_date=from_date, to_date=to_date, invoice_id=row.name),		              #05
                 _posting_date,  # FC AAAAMM                                                                              #06
                 _posting_day,   # FC AAAAMM                                                                              #06
                 _payment_date,  # FC AAAAMM                                                                              #07
                 _payment_day,   # FC AAAAMM                                                                              #07
-                flt(row.monto_facturado_servicios),  # Monto Facturado en Servicios                                           #08 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
-                flt(row.monto_facturado_bienes),	# Monto Facturado en bienes                                                  #09 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
-                flt(row.monto_facturado_servicios) + flt(row.monto_facturado_bienes) + impuestos_combinados,                                      #10 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
+                flt(row.monto_facturado_servicios),  # Monto Facturado en Servicios                                       #08 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
+                flt(row.monto_facturado_bienes),	# Monto Facturado en bienes                                           #09 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
+                flt(row.monto_facturado_servicios) + flt(row.monto_facturado_bienes) + impuestos_combinados,               #10 Esta + get_selectivo_facturado + get_otros_imp_facturado + get_propina_facturada
                 helper.get_itbis_facturado(from_date=from_date, to_date=to_date, invoice_id=row.name),                   #11
                 helper.get_itbis_retenido(from_date=from_date, to_date=to_date, invoice_id=row.name),                    #12
                 helper.get_itbis_sujeto_proporcionalidad(from_date=from_date, to_date=to_date, invoice_id=row.name),     #13
@@ -183,9 +190,9 @@ def get_file_address(from_date, to_date, txt=0):
                 helper.get_tipo_retencion_isr(from_date=from_date, to_date=to_date, invoice_id=row.name),                #17
                 helper.get_isr_retenido(from_date=from_date, to_date=to_date, invoice_id=row.name),                      #18
                 helper.get_isr_percibido(from_date=from_date, to_date=to_date, invoice_id=row.name),                     #19
-                selectivo_facturado,               #20
-                otros_imp_facturado,               #21
-                propina_facturada,                 #22
+                selectivo_facturado,                                                                                     #20
+                otros_imp_facturado,                                                                                     #21
+                propina_facturada,                                                                                       #22
                 helper.get_forma_de_pago(from_date=from_date, to_date=to_date, invoice_id=row.name),                     #23
             ]
 
@@ -208,6 +215,32 @@ def get_file_address(from_date, to_date, txt=0):
 
     # result and type are dynamic, so, yes, this line is correctly indented
     frappe.response['doctype'] = "Reporte_606_" + str(int(time.time()))
+
+
+def invoice_has_retention(row, from_date, to_date) -> bool:
+    # if the posting is not within the report range, return True
+    return str(row.posting_date) < from_date or str(row.posting_date) > to_date
+
+
+def get_payment_date(pinv_id, from_date, to_date) -> Union[datetime, None]:
+    out = frappe.db.sql(f"""
+        Select
+            pe.posting_date
+        From
+            `tabPayment Entry Reference` As ref
+        Inner Join
+            `tabPayment Entry` As pe
+            On pe.name = ref.parent
+        Where
+            ref.reference_doctype = 'Purchase Invoice'
+            And pe.docstatus = 1
+            And pe.posting_date Between {from_date!r} And {to_date!r}
+            And ref.reference_name = {pinv_id!r}
+        Group By
+            ref.reference_name
+    """, as_dict=True)
+
+    return out[0]['posting_date'] if out else None
 
 def generate_txt(result, from_date, to_date):
     # load company details
