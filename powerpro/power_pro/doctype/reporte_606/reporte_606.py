@@ -219,7 +219,39 @@ def get_file_address(from_date, to_date, txt=0):
 
 def invoice_has_retention(row, from_date, to_date) -> bool:
     # if the posting is not within the report range, return True
-    return str(row.posting_date) < from_date or str(row.posting_date) > to_date
+    out = frappe.db.sql(f"""
+        Select
+            taxes.add_deduct_tax
+        From
+            `tabPurchase Invoice` As pinv
+        Inner Join
+            `tabPurchase Taxes and Charges` As taxes
+            On taxes.parent = pinv.name
+            And taxes.parenttype = 'Purchase Invoice'
+            And taxes.parentfield = 'taxes'
+            And taxes.docstatus = pinv.docstatus
+        Inner Join
+            `tabAccount` As account
+            On account.name = taxes.account_head
+        Where
+            pinv.name = {row.name!r}
+            And pinv.docstatus = 1
+            And account.dominican_tax_type = 'ISR'
+            And Sum(taxes.base_tax_amount) > 0
+        Group By
+            taxes.add_deduct_tax
+    """, as_dict=True)
+
+    if out:
+        # ensure isr is always deducted
+        if out[0]['add_deduct_tax'] == 'Add':
+            frappe.throw(
+                _(f"El ISR siempre se deduce, por favor verifique la factura {row.name} y asegurese de que el tipo de retención en ISR sea 'Deducir'")
+            )
+
+        return True
+    else:
+        return False
 
 
 def get_payment_date(pinv_id, from_date, to_date) -> Union[datetime, None]:
