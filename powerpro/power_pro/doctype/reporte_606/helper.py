@@ -310,20 +310,23 @@ def get_tipo_retencion_isr(
     misma.
     """
 
-    # retention_map = {
-    #     "1. Alquileres": 1,
-    #     "2. Honorarios por servicios": 2,
-    #     "3. Otras rentas": 3,
-    #     "4. Otras rentas (rentas presuntas)": 4,
-    #     "5. Intereses pagados a personas jurídicas residentes": 5,
-    #     "6. Intereses pagados a personas físicas residentes": 6,
-    #     "7. Retención por proveedor": 7,
-    # }
+    retention_map = {
+        "1. Alquileres": 1,
+        "2. Honorarios por servicios": 2,
+        "3. Otras rentas": 3,
+        "4. Otras rentas (rentas presuntas)": 4,
+        "5. Intereses pagados a personas jurídicas residentes": 5,
+        "6. Intereses pagados a personas físicas residentes": 6,
+        "7. Retención por proveedores del Estado": 7,
+        "8. Juegos telefónicos": 8,
+        "9. Retenciones subsector de ganadería de carne bovina": 9,
+    }
 
     if _has_retencion_isr(
         invoice_id=invoice_id, from_date=from_date, to_date=to_date, company=company
     ):
-        return 2
+        tipo_retencion_str = frappe.get_value("Purchase Invoice", invoice_id, "tipo_de_retención_en_isr")
+        return retention_map.get(tipo_retencion_str, "")
 
     return ""
 
