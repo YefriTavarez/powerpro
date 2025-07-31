@@ -236,6 +236,7 @@ def get_payment_date(pinv_id, from_date, to_date) -> Union[datetime, None]:
             And pe.docstatus = 1
             And pe.posting_date Between {from_date!r} And {to_date!r}
             And ref.reference_name = {pinv_id!r}
+            And ref.outstanding_amount = 0
         Group By
             ref.reference_name
     """, as_dict=True)
