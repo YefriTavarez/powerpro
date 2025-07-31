@@ -71,7 +71,7 @@ def get_file_address(from_date, to_date, company, txt=0):
 		INNER JOIN 
         	`tabCustomer` AS cust 
         ON 
-        	sinv.customer = cust.name 
+        	sinv.customer = cust.name
         LEFT JOIN
             `tabPayment Entry Reference` AS per
         ON
@@ -83,14 +83,18 @@ def get_file_address(from_date, to_date, company, txt=0):
 		WHERE 
             sinv.docstatus = 1  AND sinv.company = {company!r}
             AND (
-                sinv.posting_date BETWEEN {from_date!r} AND {to_date!r}
-                OR pe.posting_date BETWEEN {from_date!r} AND {to_date!r}
+                -- Set 1: Invoices created within the date range
+                (sinv.posting_date BETWEEN {from_date!r} AND {to_date!r})
+                OR 
+                -- Set 2: Invoices created in previous periods but have payments with retention/ISR in the date range
+                (sinv.posting_date < {from_date!r} 
+                 AND pe.posting_date BETWEEN {from_date!r} AND {to_date!r}
+                 AND (COALESCE(per.retention_amount, 0) > 0 OR COALESCE(per.isr_amount, 0) > 0))
             )
-            AND per.retention_amount > 0
-            AND per.isr_amount > 0
-            AND IFNull(sinv.ncf, "") != ""
-           
-        GROUP BY 
+            AND sinv.ncf IS NOT NULL 
+            AND sinv.ncf != ""
+            AND sinv.ncf != "NULL"
+        GROUP BY
             sinv.name
 	""", as_dict=True)
     #sinv.ncf NOT LIKE '%s'
