@@ -326,7 +326,7 @@ def get_tipo_retencion_isr(
         invoice_id=invoice_id, from_date=from_date, to_date=to_date, company=company
     ):
         tipo_retencion_str = frappe.get_value("Purchase Invoice", invoice_id, "tipo_de_retención_en_isr")
-        return retention_map.get(tipo_retencion_str, "")
+        return retention_map.get(tipo_retencion_str, 2)
 
     return ""
 
