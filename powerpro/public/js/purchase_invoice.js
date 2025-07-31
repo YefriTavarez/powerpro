@@ -246,7 +246,7 @@
 		if (doc.tax_id) {
 			let len = doc.tax_id.length;
 			
-			if (![9, 11].includes(len)) {
+			if (![9, 11, 13].includes(len)) {
 				frappe.msgprint(`El RNC/Cedula ingresados tiene <b>${len}</b> caracteres favor verificar, deben ser 9 u 11.`);
 				frappe.validated = false;
 				return false; 
