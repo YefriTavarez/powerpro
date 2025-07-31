@@ -236,20 +236,15 @@ def invoice_has_retention(row, from_date, to_date) -> bool:
         Where
             pinv.name = {row.name!r}
             And pinv.docstatus = 1
-            And account.dominican_tax_type = 'ISR'
+            And account.dominican_tax_type In ('ISR', 'ITBIS')
+            And taxes.add_deduct_tax = 'Deduct'
         Group By
-            taxes.add_deduct_tax
+            account.dominican_tax_type
         Having
             Sum(taxes.base_tax_amount) > 0
     """, as_dict=True)
 
     if out:
-        # ensure isr is always deducted
-        if out[0]['add_deduct_tax'] == 'Add':
-            frappe.throw(
-                _(f"El ISR siempre se deduce, por favor verifique la factura {row.name} y asegurese de que el tipo de retención en ISR sea 'Deducir'")
-            )
-
         return True
     else:
         return False
