@@ -237,9 +237,10 @@ def invoice_has_retention(row, from_date, to_date) -> bool:
             pinv.name = {row.name!r}
             And pinv.docstatus = 1
             And account.dominican_tax_type = 'ISR'
-            And Sum(taxes.base_tax_amount) > 0
         Group By
             taxes.add_deduct_tax
+        Having
+            Sum(taxes.base_tax_amount) > 0
     """, as_dict=True)
 
     if out:

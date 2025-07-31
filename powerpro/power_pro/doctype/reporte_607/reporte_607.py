@@ -82,8 +82,10 @@ def get_file_address(from_date, to_date, company, txt=0):
             pe.name = per.parent
 		WHERE 
             sinv.docstatus = 1  AND sinv.company = {company!r}
-            AND sinv.posting_date BETWEEN {from_date!r} AND {to_date!r}
-        	OR pe.posting_date BETWEEN {from_date!r} AND {to_date!r}
+            AND (
+                sinv.posting_date BETWEEN {from_date!r} AND {to_date!r}
+                OR pe.posting_date BETWEEN {from_date!r} AND {to_date!r}
+            )
             AND per.retention_amount > 0
             AND per.isr_amount > 0
             AND IFNull(sinv.ncf, "") != ""
