@@ -64,20 +64,23 @@ def sign_pdf_with_base64(
     try:
         # Open the existing PDF
         doc = fitz.open(pdf_path)
-        page = doc[0]  # Assume signing on the first page
         
-        # Define where the signature should be placed
-        rect = fitz.Rect(x, y, x + width, y + height)
-        
-        # Insert the signature image
-        page.insert_image(rect, filename=unique_filename)
+        # Iterate over all pages and add signature and date to each one
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            
+            # Define where the signature should be placed
+            rect = fitz.Rect(x, y, x + width, y + height)
+            
+            # Insert the signature image
+            page.insert_image(rect, filename=unique_filename)
 
-        page.insert_text(
-            (
-                x - (date_x_pos * 72),
-                y + (height / date_y_pos)
-            ), utils.today(), fontsize=date_size, color=date_color
-        )
+            page.insert_text(
+                (
+                    x - (date_x_pos * 72),
+                    y + (height / date_y_pos)
+                ), utils.today(), fontsize=date_size, color=date_color
+            )
 
         # Save the new signed PDF
         doc.save(output_path)
