@@ -19,9 +19,6 @@ def render_pdf_on_template(pdf1_buffer, pdf2_path, canvas):
     
     # Leer PDF2 (contenido a sobreponer) desde el archivo
     pdf2 = PdfReader(pdf2_path)
-    pdf2_page = pdf2.pages[0]
-    pdf2_width = float(pdf2_page.mediabox.width)  # En puntos
-    pdf2_height = float(pdf2_page.mediabox.height)  # En puntos
     
     # Definir márgenes en pulgadas y convertirlos a puntos
     left_margin = flt(canvas.margin_left) * 72
@@ -34,32 +31,36 @@ def render_pdf_on_template(pdf1_buffer, pdf2_path, canvas):
     right_margin = flt(canvas.margin_right) * 72  # 0.5 pulgadas = 0.5 * 72 puntos
     top_margin = flt(canvas.margin_top) * 72  # 0.5 pulgadas = 0.5 * 72 puntos
     
-    
-    # Calcular ancho y altura disponibles para PDF2
-    available_width = pdf1_width - left_margin - right_margin  # Ancho disponible en puntos
-    available_height = pdf1_height - top_margin - bottom_margin  # Altura disponible en puntos
-
-    # Calcular las coordenadas para posicionar PDF2 dentro del área restante
-    x_offset = left_margin + (available_width - pdf2_width) / 2  # Centrar horizontalmente en puntos
-    y_offset = bottom_margin + (available_height - pdf2_height) / 2  # Centrar verticalmente en puntos
-
     # Crear un buffer para el PDF combinado
     output_buffer = BytesIO()
     writer = PdfWriter()
     
-    # Crear una página combinada
-    combined_page = PageObject.create_blank_page(width=pdf1_width, height=pdf1_height)
-    combined_page.merge_page(pdf1_page)  # Agregar PDF1 como base
+    # Iterar sobre todas las páginas de PDF2
+    for pdf2_page in pdf2.pages:
+        pdf2_width = float(pdf2_page.mediabox.width)  # En puntos
+        pdf2_height = float(pdf2_page.mediabox.height)  # En puntos
+        
+        # Calcular ancho y altura disponibles para PDF2
+        available_width = pdf1_width - left_margin - right_margin  # Ancho disponible en puntos
+        available_height = pdf1_height - top_margin - bottom_margin  # Altura disponible en puntos
 
-    # Posicionar y combinar PDF2
-    pdf2_translated = PageObject.create_blank_page(width=pdf1_width, height=pdf1_height)
-    pdf2_translated.merge_page(pdf2_page)
-    transformation = Transformation().translate(tx=x_offset, ty=y_offset)  # Aplicar transformación con desplazamiento
-    pdf2_translated.add_transformation(transformation)
-    combined_page.merge_page(pdf2_translated)  # Combinar ambos
-    
-    # Agregar la página combinada al escritor
-    writer.add_page(combined_page)
+        # Calcular las coordenadas para posicionar PDF2 dentro del área restante
+        x_offset = left_margin + (available_width - pdf2_width) / 2  # Centrar horizontalmente en puntos
+        y_offset = bottom_margin + (available_height - pdf2_height) / 2  # Centrar verticalmente en puntos
+
+        # Crear una página combinada
+        combined_page = PageObject.create_blank_page(width=pdf1_width, height=pdf1_height)
+        combined_page.merge_page(pdf1_page)  # Agregar PDF1 como base
+
+        # Posicionar y combinar PDF2
+        pdf2_translated = PageObject.create_blank_page(width=pdf1_width, height=pdf1_height)
+        pdf2_translated.merge_page(pdf2_page)
+        transformation = Transformation().translate(tx=x_offset, ty=y_offset)  # Aplicar transformación con desplazamiento
+        pdf2_translated.add_transformation(transformation)
+        combined_page.merge_page(pdf2_translated)  # Combinar ambos
+        
+        # Agregar la página combinada al escritor
+        writer.add_page(combined_page)
     
     # Escribir el PDF resultante en el buffer
     writer.write(output_buffer)
