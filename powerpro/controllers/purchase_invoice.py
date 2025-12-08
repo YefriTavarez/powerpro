@@ -25,7 +25,7 @@ def before_submit(doc, event):
 
 def assign_ncf(doc):
     # si ya tiene un NCF asignado, no hacer nada
-    if doc.ncf and doc.amended_from:
+    if doc.ncf:
         # si es una factura rectificativa, no hacer nada
         return # salir de la función
 
