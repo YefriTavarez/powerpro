@@ -58,7 +58,7 @@ def set_ncf(doc):
     # if doc.is_pos and doc.ncf:
     #     return False
 
-    if doc.ncf and not doc.is_return:
+    if doc.ncf:
         return False
 
     ncf_manager = get_serie(doc)
