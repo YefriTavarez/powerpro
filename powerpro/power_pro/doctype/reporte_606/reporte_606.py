@@ -92,8 +92,10 @@ def get_file_address(from_date, to_date, txt=0):
                     Where
                         ref.reference_doctype = 'Purchase Invoice'
                         And pe.docstatus = 1
+                        And ref.outstanding_amount = 0
                         And pe.posting_date Between {from_date!r} And {to_date!r}
                 )
+                # And pinv.outstanding_amount = 0 # Plan B: ID70EBAD4C65E0
                 And pinv.posting_date <= {to_date!r} # ensure not future invoices to this range
             )
         Group By
@@ -251,6 +253,7 @@ def invoice_has_retention(row, from_date, to_date) -> bool:
 
 
 def get_payment_date(pinv_id, from_date, to_date) -> Union[datetime, None]:
+    # Max(pe.posting_date) As posting_date # Plan B: ID70EBAD4C65E0
     out = frappe.db.sql(f"""
         Select
             pe.posting_date
@@ -259,12 +262,21 @@ def get_payment_date(pinv_id, from_date, to_date) -> Union[datetime, None]:
         Inner Join
             `tabPayment Entry` As pe
             On pe.name = ref.parent
+            And ref.parentfield = "references"
+            And ref.parenttype = "Payment Entry"
+        # Plan B: ID70EBAD4C65E0
+        #
+        # Inner Join
+        #     `tabPurchase Invoice` As pinv
+        #     On pinv.name = ref.reference_name
+        #
         Where
             ref.reference_doctype = 'Purchase Invoice'
             And pe.docstatus = 1
             And pe.posting_date Between {from_date!r} And {to_date!r}
             And ref.reference_name = {pinv_id!r}
             And ref.outstanding_amount = 0
+            # And pinv.outstanding_amount = 0 # Plan B: ID70EBAD4C65E0
         Group By
             ref.reference_name
     """, as_dict=True)
