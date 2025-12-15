@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe import client
+from frappe import client, _
 
 
 @frappe.whitelist()
