@@ -243,7 +243,7 @@
 	function _validate_rnc(frm) {
 		const { doc } = frm;
 
-		if (doc.supplier_group === "Proveedores Internacionales") {
+		if (doc.supplier_classification === "Proveedores Internacionales") {
 			return ; // skip validation for international suppliers
 		}
 
