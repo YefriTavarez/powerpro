@@ -243,6 +243,10 @@
 	function _validate_rnc(frm) {
 		const { doc } = frm;
 
+		if (doc.supplier_group === "Proveedores Internacionales") {
+			return ; // skip validation for international suppliers
+		}
+
 		if (doc.tax_id) {
 			let len = doc.tax_id.length;
 			
