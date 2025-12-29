@@ -362,6 +362,9 @@ def validate_rnc(doc):
     if not doc.tax_id:
         return
 
+    if doc.supplier_classification == "Proveedores Internacionales":
+        return # skip for international providers
+
     len_tax_id = len(doc.tax_id)
 
     if len_tax_id == 9 or len_tax_id == 11:
