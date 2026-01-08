@@ -405,7 +405,12 @@ class PrintCard(Document):
             })
 
         if self.estado != "Borrador":
-            frappe.throw("Ehhh....! Un PrintCard nuevo que no esta en Borrador")
+            frappe.msgprint(
+                "Ehhh....! Un PrintCard nuevo que no esta en Borrador."
+                "Este PrintCard sera marcado como Borrador.",
+                alert=True,
+            )
+            self.db_set("estado", "Borrador")
 
         arte.estado = "Borrador"
         arte.archivo_actual = self.archivo
