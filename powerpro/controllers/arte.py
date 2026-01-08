@@ -15,7 +15,7 @@ class Arte(Document):
 		if not self.archivo_actual:
 			return
 
-		filename = f"[AP]{self.codigo_arte}.v{self.version_actual}.pdf"
+		filename = f"[AP]{self.codigo_arte}-{self.producto}.v{self.version_actual}.pdf"
 
 		if filename in self.archivo_actual:
 			return # the current file is already named correctly
