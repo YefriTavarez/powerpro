@@ -150,7 +150,7 @@ def get_file_address(from_date, to_date, txt=0):
             if invoice_has_retention(row, from_date, to_date):
                 date = get_payment_date(row.name, from_date, to_date)
                 if date:
-                    date = frappe.utils.getdate(date)
+                    date = getdate(date)
 
                     _payment_date = date.strftime("%Y%m")
                     _payment_day = date.strftime("%d")
@@ -300,19 +300,15 @@ def generate_txt(result, from_date, to_date):
     ]
     for row in result:
         # Prepare date fields as in CSV generation
-        _posting_date_aaaammdd = ""
+        posting_date = ""
         if row.posting_date:
-            _posting_date_aaaammdd = row.posting_date.strftime("%Y%m%d")
+            posting_date = row.posting_date.strftime("%Y%m%d")
 
-        _payment_date_obj = get_retention_date_if_in_range(row, from_date, to_date)
-        _payment_date_aaaammdd = ""
-        if _payment_date_obj:  # If it's a date object and not an empty string
-            # Assuming _payment_date_obj is a date object if not empty string
-            try:
-                _payment_date_aaaammdd = _payment_date_obj.strftime("%Y%m%d")
-            except AttributeError: # Handles case where _payment_date_obj might be "" or other non-date
-                pass
-
+        payment_date = ""
+        if invoice_has_retention(row, from_date, to_date):
+            
+            if date := get_payment_date(row.name, from_date, to_date):
+                payment_date = getdate(date).strftime("%Y%m%d")
 
         if not row.tax_id:
             row.tax_id = frappe.get_value("Supplier", row.supplier, "tax_id")
@@ -321,8 +317,6 @@ def generate_txt(result, from_date, to_date):
             frappe.throw(_("Tax ID not found for supplier {0}").format(row.supplier))
 
         row.tax_id = row.tax_id.replace("-", "")
-
-
 
         selectivo_facturado = helper.get_selectivo_facturado(from_date=from_date, to_date=to_date, invoice_id=row.name)
         otros_imp_facturado = helper.get_otros_imp_facturado(from_date=from_date, to_date=to_date, invoice_id=row.name)
@@ -337,8 +331,8 @@ def generate_txt(result, from_date, to_date):
             f"{helper.get_tipo_bienes_y_servicios_comprados(row) or ''}|"  # 3
             f"{row.ncf or ''}|"  # 4
             f"{helper.get_ncf_modificado(from_date=from_date, to_date=to_date, invoice_id=row.name)}|"  # 5
-            f"{_posting_date_aaaammdd}|"  # 6
-            f"{_payment_date_aaaammdd}|"  # 8
+            f"{posting_date}|"  # 6
+            f"{payment_date}|"  # 8
             f"{flt(row.monto_facturado_servicios) + flt(impuestos_combinados, 2)}|"  # 10
             f"{flt(row.monto_facturado_bienes, 2)}|"  # 11
             f"{flt(row.monto_facturado_servicios, 2) + flt(row.monto_facturado_bienes, 2) + flt(impuestos_combinados, 2)}|"  # 12
@@ -369,12 +363,12 @@ def get_retention_date(row):
     # else:
     posting_date = frappe.get_value(
             "Payment Entry", reference_row.parent, "posting_date")
-    return frappe.utils.getdate(posting_date).strftime("%Y%m")
+    return getdate(posting_date).strftime("%Y%m")
 
 
 def get_retention_amount(row, from_date, typeof):
     retention_date = get_retention_date(row)
-    bill_date = frappe.utils.getdate(from_date).strftime("%Y%m")
+    bill_date = getdate(from_date).strftime("%Y%m")
 
     if retention_date == 0 or bill_date != retention_date:
         return 0
