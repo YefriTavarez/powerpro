@@ -23,6 +23,7 @@ frappe.provide("powerpro.masks");
 		// _set_qty_mask(frm);
 		_set_queries(frm);
 		_render_docfields(frm);
+		add_create_buttons(frm);
 	}
 
 	function project_template(frm) {
@@ -132,7 +133,83 @@ frappe.provide("powerpro.masks");
 		}
 	});
 
-	frappe.ui.form.on("Project", {
+	
+
+	function add_create_buttons(frm) {
+		const { doc } = frm;
+		if (!doc) return;
+
+		const has_required = !!(doc.sales_order && doc.sku_producto);
+		if (!has_required) return;
+
+		if (frappe.model.can_create("Delivery Note")) {
+			frm.add_custom_button(
+				__("Delivery Note"),
+				() => prompt_and_make(frm, "dn"),
+				__("Create")
+			);
+		}
+
+		if (frappe.model.can_create("Sales Invoice")) {
+			frm.add_custom_button(
+				__("Sales Invoice"),
+				() => prompt_and_make(frm, "si"),
+				__("Create")
+			);
+		}
+	}
+
+	function prompt_and_make(frm, type) {
+		const title = type === "dn" ? __("Create Delivery Note") : __("Create Sales Invoice");
+		const d = new frappe.ui.Dialog({
+			title,
+			fields: [
+				{
+					fieldtype: "Float",
+					fieldname: "qty",
+					label: __("Quantity"),
+					reqd: 1,
+					default: cur_frm?.doc?.cantidad_a_producir || 0,
+				},
+			],
+			primary_action_label: __("Create"),
+			primary_action(values) {
+				if (!values || !values.qty || flt(values.qty) <= 0) {
+					frappe.msgprint({
+						message: __("Please enter a quantity greater than 0"),
+						title: __("Invalid Quantity"),
+						indicator: "red",
+					});
+					return;
+				}
+
+				const method =
+					type === "dn"
+						? "powerpro.controllers.project.project.make_delivery_note_from_project"
+						: "powerpro.controllers.project.project.make_sales_invoice_from_project";
+
+				frappe.model.open_mapped_doc({
+					method,
+					args: {
+						project: frm.doc.name,
+						item_code: frm.doc.sku_producto,
+						qty: values.qty,
+					},
+					frm: frm,
+					freeze: true,
+					freeze_message:
+						type === "dn"
+							? __("Creating Delivery Note ...")
+							: __("Creating Sales Invoice ..."),
+				});
+
+				d.hide();
+			},
+		});
+
+		d.show();
+	}
+frappe.ui.form.on("Project", {
 		setup,
 		refresh,
 		project_template,

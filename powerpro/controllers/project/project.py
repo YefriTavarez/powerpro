@@ -2,12 +2,18 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 from erpnext.projects.doctype.project import project
 
 from powerpro.controllers.project import helper
 from powerpro.controllers.project.utils import get_duration_in_minutes
+from frappe.utils import flt
+from erpnext.selling.doctype.sales_order.sales_order import (
+    make_delivery_note as so_make_delivery_note,
+    make_sales_invoice as so_make_sales_invoice,
+)
 
 
 class Project(Document):
@@ -314,3 +320,107 @@ class Project(Document):
             if for_validate:
                 frappe.throw("La Plantilla de Proyecto es obligatoria")
             return
+
+
+@frappe.whitelist()
+def make_delivery_note_from_project(project: str, item_code: str, qty: float):
+    """Create a Delivery Note from the Sales Order linked to the given Project,
+    restricted to a single item and quantity.
+    Returns a doc to be opened via open_mapped_doc on the client.
+    """
+    qty = flt(qty)
+    if qty <= 0:
+        frappe.throw(_("Quantity must be greater than zero."))
+
+    proj = frappe.get_doc("Project", project)
+    if not getattr(proj, 'sales_order', None):
+        frappe.throw(_("Project {0} has no linked Sales Order.").format(proj.name))
+
+    so = frappe.get_doc("Sales Order", proj.sales_order)
+    if so.docstatus != 1:
+        frappe.throw(_("Sales Order {0} must be submitted.").format(so.name))
+
+    # Let ERPNext build the remaining-to-deliver DN, then keep only the requested item
+    dn = so_make_delivery_note(so.name)
+
+    # Pick the first mapped line for the requested item
+    target_row = None
+    for row in dn.items:
+        if row.item_code == item_code:
+            target_row = row
+            break
+
+    if not target_row:
+        frappe.throw(_("No pending quantity to deliver for item {0} on Sales Order {1}.").format(item_code, so.name))
+
+    max_qty = flt(target_row.qty)
+    if qty > max_qty:
+        frappe.throw(_("Requested quantity {0} exceeds pending to deliver {1} for item {2}.").format(qty, max_qty, item_code))
+
+    # Keep only this row and set the requested qty
+    dn.items = [target_row]
+    dn.items[0].qty = qty
+
+    # Ensure SO links present
+    if not getattr(dn.items[0], 'against_sales_order', None):
+        dn.items[0].against_sales_order = so.name
+
+    dn.run_method("set_missing_values")
+    dn.run_method("calculate_taxes_and_totals")
+    return dn
+
+
+@frappe.whitelist()
+def make_sales_invoice_from_project(project: str, item_code: str, qty: float):
+    """Create a Sales Invoice from the Sales Order linked to the given Project,
+    restricted to a single item and quantity (or amount for unit-price rows).
+    Returns a doc to be opened via open_mapped_doc on the client.
+    """
+    qty = flt(qty)
+    if qty <= 0:
+        frappe.throw(_("Quantity must be greater than zero."))
+
+    proj = frappe.get_doc("Project", project)
+    if not getattr(proj, 'sales_order', None):
+        frappe.throw(_("Project {0} has no linked Sales Order.").format(proj.name))
+
+    so = frappe.get_doc("Sales Order", proj.sales_order)
+    if so.docstatus != 1:
+        frappe.throw(_("Sales Order {0} must be submitted.").format(so.name))
+
+    # Let ERPNext build the remaining-to-bill SI, then keep only the requested item
+    si = so_make_sales_invoice(so.name)
+
+    target_row = None
+    for row in si.items:
+        if row.item_code == item_code:
+            target_row = row
+            break
+
+    if not target_row:
+        frappe.throw(_("No pending amount/qty to bill for item {0} on Sales Order {1}.").format(item_code, so.name))
+
+    # If the mapped row has a qty > 0, treat input as qty; otherwise treat as amount
+    if flt(getattr(target_row, 'qty', 0)) > 0:
+        max_qty = flt(target_row.qty)
+        if qty > max_qty:
+            frappe.throw(_("Requested quantity {0} exceeds pending to bill {1} for item {2}.").format(qty, max_qty, item_code))
+        target_row.qty = qty
+    else:
+        # amount-based (unit price rows)
+        max_amt = abs(flt(getattr(target_row, 'amount', 0)))
+        if qty > max_amt:
+            frappe.throw(_("Requested amount {0} exceeds pending to bill {1} for item {2}.").format(qty, max_amt, item_code))
+        target_row.amount = qty
+        if flt(getattr(target_row, 'rate', 0)):
+            target_row.qty = qty / flt(target_row.rate)
+
+    si.items = [target_row]
+
+    # Ensure SO link present
+    if not getattr(si.items[0], 'sales_order', None):
+        si.items[0].sales_order = so.name
+
+    si.run_method("set_missing_values")
+    si.run_method("calculate_taxes_and_totals")
+    return si
