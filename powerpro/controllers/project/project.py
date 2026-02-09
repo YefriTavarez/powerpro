@@ -486,9 +486,18 @@ def get_sales_invoice_items_from_projects(projects: list[str] | str):
             if si.items:
                 row = si.items[0].as_dict()
                 # Avoid conflicting primary keys on client insert
+                row.pop('doctype', None)
                 row.pop('name', None)
-                row.pop('owner', None)
                 row.pop('idx', None)
+                row.pop('docstatus', None)
+                row.pop('creation', None)
+                row.pop('modified', None)
+                row.pop('owner', None)
+                row.pop('modified_by', None)
+                row.pop('_user_tags', None)
+                row.pop('_liked_by', None)
+                row.pop('_comments', None)
+                row.pop('_assign', None)
                 items.append(row)
         except Exception as e:
             errors.append(f"{prj}: {frappe.get_traceback() if frappe.conf.developer_mode else str(e)}")
