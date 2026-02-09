@@ -43,7 +43,6 @@ function open_projects_multiselect(frm, target_type) {
             }, 
                 // change() {
                 //     const { value } = this;
-                //     console.log({ value, self: this });
                 //     d.get_results();
                 //     // d.show_child_results();
                 // } 
@@ -68,7 +67,6 @@ function open_projects_multiselect(frm, target_type) {
             if (dialog.get_value("sku_producto")) filters.push(['Project', 'sku_producto', '=', dialog.get_value("sku_producto")]);
             if (dialog.get_value("arte")) filters.push(['Project', 'arte', '=', dialog.get_value("arte")]);
 
-            console.log({ filters });
 
             return { filters };
         },
@@ -104,6 +102,4 @@ function open_projects_multiselect(frm, target_type) {
             });
         }
     });
-
-    console.log({ multi_dialog: d });
 }
