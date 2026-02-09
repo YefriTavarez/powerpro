@@ -355,11 +355,7 @@ def make_delivery_note_from_project(project_id: str):
     dn = so_make_delivery_note(so.name)
 
     # Pick the first mapped line for the requested item
-    target_row = None
-    for row in dn.items:
-        if row.item_code == item_code:
-            target_row = row
-            break
+    target_row = get_target_row(dn.items, item_code, project_id)
 
     if not target_row:
         frappe.throw(_("No pending quantity to deliver for item {0} on Sales Order {1}.").format(item_code, so.name))
@@ -373,8 +369,11 @@ def make_delivery_note_from_project(project_id: str):
     dn.items[0].qty = qty
 
     # Ensure SO links present
-    if not getattr(dn.items[0], 'against_sales_order', None):
-        dn.items[0].against_sales_order = so.name
+    if not getattr(target_row, 'against_sales_order', None):
+        target_row.against_sales_order = so.name
+
+    if not getattr(target_row, 'project', None):
+        target_row.project = project_id
 
     dn.run_method("set_missing_values")
     dn.run_method("calculate_taxes_and_totals")
@@ -410,11 +409,7 @@ def make_sales_invoice_from_project(project_id: str):
     # Let ERPNext build the remaining-to-bill SI, then keep only the requested item
     si = so_make_sales_invoice(so.name)
 
-    target_row = None
-    for row in si.items:
-        if row.item_code == item_code:
-            target_row = row
-            break
+    target_row = get_target_row(si.items, item_code, project_id)
 
     if not target_row:
         frappe.throw(_("No pending amount/qty to bill for item {0} on Sales Order {1}.").format(item_code, so.name))
@@ -434,11 +429,14 @@ def make_sales_invoice_from_project(project_id: str):
         if flt(getattr(target_row, 'rate', 0)):
             target_row.qty = qty / flt(target_row.rate)
 
-    si.items = [target_row]
-
     # Ensure SO link present
-    if not getattr(si.items[0], 'sales_order', None):
-        si.items[0].sales_order = so.name
+    if not getattr(target_row, 'sales_order', None):
+        target_row.sales_order = so.name
+
+    if not getattr(target_row, 'project', None):
+        target_row.project = project_id
+
+    si.items = [target_row]
 
     si.run_method("set_missing_values")
     si.run_method("calculate_taxes_and_totals")
@@ -498,6 +496,7 @@ def get_sales_invoice_items_from_projects(projects: list[str] | str):
                 row.pop('_liked_by', None)
                 row.pop('_comments', None)
                 row.pop('_assign', None)
+                
                 items.append(row)
         except Exception as e:
             errors.append(f"{prj}: {frappe.get_traceback() if frappe.conf.developer_mode else str(e)}")
@@ -535,14 +534,76 @@ def get_delivery_note_items_from_projects(projects: list[str] | str):
                 errors.append(_(f"Project {prj} has no valid quantity (cantidad_a_producir)."))
                 continue
 
-            dn = make_delivery_note_from_project(proj.name, proj.sku_producto, qty)
+            frappe.flags.args = frappe._dict({
+                "project": proj.name,
+                "item_code": proj.sku_producto,
+                "qty": qty,
+                "sales_order": proj.sales_order,
+            })
+            dn = make_delivery_note_from_project(proj.name)
             if dn.items:
                 row = dn.items[0].as_dict()
                 row.pop('name', None)
                 row.pop('owner', None)
                 row.pop('idx', None)
+                row.pop('docstatus', None)
+                row.pop('creation', None)
+                row.pop('modified', None)
+                row.pop('modified_by', None)
+                row.pop('_user_tags', None)
+                row.pop('_liked_by', None)
+                row.pop('_comments', None)
+                row.pop('_assign', None)
+
                 items.append(row)
         except Exception as e:
             errors.append(f"{prj}: {frappe.get_traceback() if frappe.conf.developer_mode else str(e)}")
 
     return {"items": items, "errors": errors}
+
+
+def get_target_row(items: list[dict], item_code: str, project_id: str):
+    """Get the target Sales Order item row for this project from the given items.
+
+    items: list of SO-derived item rows (e.g. from the mapped Sales Invoice).
+    Project (via project_id) supplies: item_code, requested qty, and optionally Customer Art.
+
+    Rules (in order):
+    1. Consider only rows whose item_code matches the project's item code.
+    2. If the project has Customer Art set, consider only rows with that Customer Art;
+       if none match, fall back to item_code-only.
+    3. Among those, pick the first row that "satisfies the qty": its pending
+       (remaining) qty or amount is >= the project's requested qty. If none do, return None.
+
+    Returns the chosen row or None if no row matches.
+    """
+    project_arte = frappe.db.get_value("Project", project_id, "arte")
+    requested_qty = flt(frappe.db.get_value("Project", project_id, "cantidad_a_producir")) or 0
+
+    def _get(row, key, default=None):
+        if isinstance(row, dict):
+            return row.get(key, default)
+        return getattr(row, key, default)
+
+    def satisfies_qty(row):
+        q = flt(_get(row, "qty", 0))
+        if q > 0:
+            return q >= requested_qty
+        return abs(flt(_get(row, "amount", 0))) >= requested_qty
+
+    # 1. Consider only rows whose item_code matches the project's item code.
+    candidates = [r for r in items if _get(r, "item_code") == item_code]
+    if not candidates:
+        return None
+
+    # 2. If project has Customer Art, consider only rows with that arte; if none match, fall back to item_code-only.
+    if project_arte:
+        by_arte = [r for r in candidates if _get(r, "producto_del_cliente") == project_arte]
+        if by_arte:
+            candidates = by_arte
+
+    # 3. Pick the first row that satisfies the qty.
+    for row in candidates:
+        if satisfies_qty(row):
+            return row
+    return None

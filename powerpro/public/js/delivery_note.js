@@ -4,15 +4,15 @@
 frappe.ui.form.on('Delivery Note', {
     refresh(frm) {
         if (frm.is_new() || frm.doc.docstatus === 0) {
-            add_projects_fetch_button_dn(frm);
+            add_projects_fetch_button(frm);
         }
     }
 });
 
-function add_projects_fetch_button_dn(frm) {
+function add_projects_fetch_button(frm) {
     frm.add_custom_button(
         __('Projects'),
-        () => open_projects_multiselect_dn(frm),
+        () => open_projects_multiselect(frm),
         __('Get Items From')
     );
 }
