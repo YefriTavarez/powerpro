@@ -137,12 +137,20 @@ frappe.provide("powerpro.masks");
 
 	function add_create_buttons(frm) {
 		const { doc } = frm;
-		if (!doc) return;
+		console.log("doc", doc);
+		if (!doc) {
+			console.log("doc is not found");
+			return;
+		}
 
 		const has_required = !!(doc.sales_order && doc.sku_producto);
-		if (!has_required) return;
+		if (!has_required) {
+			console.log("has_required is false");
+			return;
+		}
 
 		if (frappe.model.can_create("Delivery Note")) {
+			console.log("can create delivery note");
 			frm.add_custom_button(
 				__("Delivery Note"),
 				() => prompt_and_make(frm, "dn"),
@@ -151,6 +159,7 @@ frappe.provide("powerpro.masks");
 		}
 
 		if (frappe.model.can_create("Sales Invoice")) {
+			console.log("can create sales invoice");
 			frm.add_custom_button(
 				__("Sales Invoice"),
 				() => prompt_and_make(frm, "si"),
@@ -194,6 +203,7 @@ frappe.provide("powerpro.masks");
 						project: frm.doc.name,
 						item_code: frm.doc.sku_producto,
 						qty: values.qty,
+						sales_order: frm.doc.sales_order || "",
 					},
 					frm: frm,
 					freeze: true,

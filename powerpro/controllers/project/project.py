@@ -323,20 +323,31 @@ class Project(Document):
 
 
 @frappe.whitelist()
-def make_delivery_note_from_project(project: str, item_code: str, qty: float):
+def make_delivery_note_from_project(project_id: str):
     """Create a Delivery Note from the Sales Order linked to the given Project,
     restricted to a single item and quantity.
     Returns a doc to be opened via open_mapped_doc on the client.
     """
-    qty = flt(qty)
+    args = frappe.flags.args
+
+    project = args.project
+    item_code = args.item_code
+    qty = args.qty
+    sales_order = args.sales_order
+    qty = flt(args.qty)
+
+    # qty = flt(qty)
     if qty <= 0:
         frappe.throw(_("Quantity must be greater than zero."))
 
-    proj = frappe.get_doc("Project", project)
-    if not getattr(proj, 'sales_order', None):
-        frappe.throw(_("Project {0} has no linked Sales Order.").format(proj.name))
+    if not sales_order:
+        sales_order = frappe.db.get_value("Project", project_id, "sales_order")
 
-    so = frappe.get_doc("Sales Order", proj.sales_order)
+    if not sales_order:
+        frappe.throw(_("Sales Order is required."))
+
+
+    so = frappe.get_doc("Sales Order", sales_order)
     if so.docstatus != 1:
         frappe.throw(_("Sales Order {0} must be submitted.").format(so.name))
 
@@ -371,20 +382,28 @@ def make_delivery_note_from_project(project: str, item_code: str, qty: float):
 
 
 @frappe.whitelist()
-def make_sales_invoice_from_project(project: str, item_code: str, qty: float):
+def make_sales_invoice_from_project(project_id: str):
     """Create a Sales Invoice from the Sales Order linked to the given Project,
     restricted to a single item and quantity (or amount for unit-price rows).
     Returns a doc to be opened via open_mapped_doc on the client.
     """
-    qty = flt(qty)
+    args = frappe.flags.args
+    project = args.project
+    item_code = args.item_code
+    sales_order = args.sales_order
+    qty = flt(args.qty)
+
+    # qty = flt(qty)
     if qty <= 0:
         frappe.throw(_("Quantity must be greater than zero."))
 
-    proj = frappe.get_doc("Project", project)
-    if not getattr(proj, 'sales_order', None):
-        frappe.throw(_("Project {0} has no linked Sales Order.").format(proj.name))
+    if not sales_order:
+        sales_order = frappe.db.get_value("Project", project_id, "sales_order")
 
-    so = frappe.get_doc("Sales Order", proj.sales_order)
+    if not sales_order:
+        frappe.throw(_("Sales Order is required."))
+
+    so = frappe.get_doc("Sales Order", sales_order)
     if so.docstatus != 1:
         frappe.throw(_("Sales Order {0} must be submitted.").format(so.name))
 
