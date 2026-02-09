@@ -78,6 +78,7 @@ function open_projects_multiselect(frm, target_type) {
                     const row = frm.add_child('items');
                     Object.assign(row, it);
                 }
+
                 frm.refresh_field('items');
                 if (errors.length) {
                     frappe.msgprint({
