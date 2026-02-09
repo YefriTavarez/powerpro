@@ -330,7 +330,7 @@ def make_delivery_note_from_project(project_id: str):
     """
     args = frappe.flags.args
 
-    project = args.project
+    # project = args.project
     item_code = args.item_code
     qty = args.qty
     sales_order = args.sales_order
@@ -388,7 +388,7 @@ def make_sales_invoice_from_project(project_id: str):
     Returns a doc to be opened via open_mapped_doc on the client.
     """
     args = frappe.flags.args
-    project = args.project
+    # project = args.project
     item_code = args.item_code
     sales_order = args.sales_order
     qty = flt(args.qty)
