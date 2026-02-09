@@ -40,23 +40,37 @@ function open_projects_multiselect(frm, target_type) {
                         ['Sales Order', 'customer', '=', frm.doc.customer || ""],
                     ].concat(frm.doc.company ? [['Sales Order', 'company', '=', frm.doc.company]] : [])
                 };
-            } },
+            }, 
+                // change() {
+                //     const { value } = this;
+                //     console.log({ value, self: this });
+                //     d.get_results();
+                //     // d.show_child_results();
+                // } 
+            },
             { fieldname: 'sku_producto', fieldtype: 'Link', options: 'Item', label: __('SKU Producto') },
             { fieldname: 'arte', fieldtype: 'Link', options: 'Arte', label: __('Arte'), get_query() {
                 return {
                     filters: [
-                        ['Arte', ' cliente', '=', frm.doc.customer || ""],
-                    ].concat(frm.doc.company ? [['Arte', 'company', '=', frm.doc.company]] : [])
+                        ['Arte', 'cliente', '=', frm.doc.customer || ""],
+                    ]
                 };
             } },
         ],
         get_query() {
-            return {
-                filters: [
-                    ['Project', 'sales_order', 'is', 'set'],
-                    ['Project', 'customer', '=', frm.doc.customer || ""],
-                ].concat(frm.doc.company ? [['Project','company','=','' + frm.doc.company]] : [])
-            };
+            const { dialog } = this;
+            const filters = [
+                ['Project', 'customer', '=', frm.doc.customer || ""],
+                ['Project', 'company', '=', frm.doc.company || ""],
+            ];
+            
+            if (dialog.get_value("sales_order")) filters.push(['Project', 'sales_order', '=', dialog.get_value("sales_order")]);
+            if (dialog.get_value("sku_producto")) filters.push(['Project', 'sku_producto', '=', dialog.get_value("sku_producto")]);
+            if (dialog.get_value("arte")) filters.push(['Project', 'arte', '=', dialog.get_value("arte")]);
+
+            console.log({ filters });
+
+            return { filters };
         },
         size: 'large',
         action(selections) {
@@ -90,4 +104,6 @@ function open_projects_multiselect(frm, target_type) {
             });
         }
     });
+
+    console.log({ multi_dialog: d });
 }
