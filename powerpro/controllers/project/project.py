@@ -443,3 +443,97 @@ def make_sales_invoice_from_project(project_id: str):
     si.run_method("set_missing_values")
     si.run_method("calculate_taxes_and_totals")
     return si
+
+
+@frappe.whitelist()
+def get_sales_invoice_items_from_projects(projects: list[str] | str):
+    """Return a set of Sales Invoice Item rows aggregated from the given projects.
+    Uses each Project's sales_order, sku_producto and cantidad_a_producir.
+    """
+    import json
+
+    if isinstance(projects, str):
+        try:
+            projects = json.loads(projects)
+        except Exception:
+            projects = [p.strip() for p in projects.split(',') if p.strip()]
+
+    items = []
+    errors = []
+
+    for prj in projects or []:
+        try:
+            proj = frappe.get_doc("Project", prj)
+            if not getattr(proj, 'sales_order', None):
+                errors.append(_(f"Project {prj} has no linked Sales Order."))
+                continue
+            if not getattr(proj, 'sku_producto', None):
+                errors.append(_(f"Project {prj} has no sku_producto set."))
+                continue
+            qty = flt(getattr(proj, 'cantidad_a_producir', 0))
+            if qty <= 0:
+                errors.append(_(f"Project {prj} has no valid quantity (cantidad_a_producir)."))
+                continue
+
+            # si = make_sales_invoice_from_project(proj.name, proj.sku_producto, qty)
+            frappe.flags.args = frappe._dict({
+                "project": proj.name,
+                "item_code": proj.sku_producto,
+                "qty": qty,
+                "sales_order": proj.sales_order,
+            })
+            si = make_sales_invoice_from_project(proj.name)
+            if si.items:
+                row = si.items[0].as_dict()
+                # Avoid conflicting primary keys on client insert
+                row.pop('name', None)
+                row.pop('owner', None)
+                row.pop('idx', None)
+                items.append(row)
+        except Exception as e:
+            errors.append(f"{prj}: {frappe.get_traceback() if frappe.conf.developer_mode else str(e)}")
+
+    return {"items": items, "errors": errors}
+
+
+@frappe.whitelist()
+def get_delivery_note_items_from_projects(projects: list[str] | str):
+    """Return a set of Delivery Note Item rows aggregated from the given projects.
+    Uses each Project's sales_order, sku_producto and cantidad_a_producir.
+    """
+    import json
+
+    if isinstance(projects, str):
+        try:
+            projects = json.loads(projects)
+        except Exception:
+            projects = [p.strip() for p in projects.split(',') if p.strip()]
+
+    items = []
+    errors = []
+
+    for prj in projects or []:
+        try:
+            proj = frappe.get_doc("Project", prj)
+            if not getattr(proj, 'sales_order', None):
+                errors.append(_(f"Project {prj} has no linked Sales Order."))
+                continue
+            if not getattr(proj, 'sku_producto', None):
+                errors.append(_(f"Project {prj} has no sku_producto set."))
+                continue
+            qty = flt(getattr(proj, 'cantidad_a_producir', 0))
+            if qty <= 0:
+                errors.append(_(f"Project {prj} has no valid quantity (cantidad_a_producir)."))
+                continue
+
+            dn = make_delivery_note_from_project(proj.name, proj.sku_producto, qty)
+            if dn.items:
+                row = dn.items[0].as_dict()
+                row.pop('name', None)
+                row.pop('owner', None)
+                row.pop('idx', None)
+                items.append(row)
+        except Exception as e:
+            errors.append(f"{prj}: {frappe.get_traceback() if frappe.conf.developer_mode else str(e)}")
+
+    return {"items": items, "errors": errors}

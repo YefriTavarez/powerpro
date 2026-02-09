@@ -71,6 +71,8 @@ doctype_js = {
     "Asset Maintenance": "public/js/asset_maintenance.js",
     # native doctype
     "Task Hub": "public/js/task_hub/actions.js",
+    "Sales Invoice": "public/js/sales_invoice.js",
+    "Delivery Note": "public/js/delivery_note.js",
 }
 
 doctype_list_js = {
