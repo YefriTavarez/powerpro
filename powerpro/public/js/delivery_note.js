@@ -17,15 +17,45 @@ function add_projects_fetch_button_dn(frm) {
     );
 }
 
-function open_projects_multiselect_dn(frm) {
+
+function open_projects_multiselect(frm, target_type) {
+    const { doc } = frm;
+
+    if (!doc.customer) {
+        frappe.throw(__('Customer is required'));
+    }
+
+    const filters = { };
+    if (frm.doc.company) filters['company'] = frm.doc.company;
+    // Only projects that have a linked Sales Order and sku_producto
     const d = new frappe.ui.form.MultiSelectDialog({
         doctype: 'Project',
         target: frm,
-        setters: {},
+        sales_order: "",
+        sku_producto: "",
+        arte: "",
+        setters: [
+            { fieldname: 'sales_order', fieldtype: 'Link', options: 'Sales Order', label: __('Sales Order'), get_query() {
+                return {
+                    filters: [
+                        ['Sales Order', 'customer', '=', frm.doc.customer || ""],
+                    ].concat(frm.doc.company ? [['Sales Order', 'company', '=', frm.doc.company]] : [])
+                };
+            } },
+            { fieldname: 'sku_producto', fieldtype: 'Link', options: 'Item', label: __('SKU Producto') },
+            { fieldname: 'arte', fieldtype: 'Link', options: 'Arte', label: __('Arte'), get_query() {
+                return {
+                    filters: [
+                        ['Arte', ' cliente', '=', frm.doc.customer || ""],
+                    ].concat(frm.doc.company ? [['Arte', 'company', '=', frm.doc.company]] : [])
+                };
+            } },
+        ],
         get_query() {
             return {
                 filters: [
                     ['Project', 'sales_order', 'is', 'set'],
+                    ['Project', 'customer', '=', frm.doc.customer || ""],
                 ].concat(frm.doc.company ? [['Project','company','=','' + frm.doc.company]] : [])
             };
         },

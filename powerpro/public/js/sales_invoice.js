@@ -18,6 +18,12 @@ function add_projects_fetch_button(frm) {
 }
 
 function open_projects_multiselect(frm, target_type) {
+    const { doc } = frm;
+
+    if (!doc.customer) {
+        frappe.throw(__('Customer is required'));
+    }
+
     const filters = { };
     if (frm.doc.company) filters['company'] = frm.doc.company;
     // Only projects that have a linked Sales Order and sku_producto
@@ -32,21 +38,15 @@ function open_projects_multiselect(frm, target_type) {
                 return {
                     filters: [
                         ['Sales Order', 'customer', '=', frm.doc.customer || ""],
-                    ].concat(frm.doc.company ? [['Sales Order','company','=','' + frm.doc.company]] : [])
+                    ].concat(frm.doc.company ? [['Sales Order', 'company', '=', frm.doc.company]] : [])
                 };
             } },
-            { fieldname: 'sku_producto', fieldtype: 'Link', options: 'Item', label: __('SKU Producto'), get_query() {
+            { fieldname: 'sku_producto', fieldtype: 'Link', options: 'Item', label: __('SKU Producto') },
+            { fieldname: 'arte', fieldtype: 'Link', options: 'Arte', label: __('Arte'), get_query() {
                 return {
                     filters: [
-                        ['Item', 'item_code', 'is', 'set'],
-                    ].concat(frm.doc.company ? [['Item','company','=','' + frm.doc.company]] : [])
-                };
-            } },
-            { fieldname: 'arte', fieldtype: 'Link', options: 'Item', label: __('Arte'), get_query() {
-                return {
-                    filters: [
-                        ['Arte', ' name', 'is', 'set'],
-                    ].concat(frm.doc.company ? [['Item','company','=','' + frm.doc.company]] : [])
+                        ['Arte', ' cliente', '=', frm.doc.customer || ""],
+                    ].concat(frm.doc.company ? [['Arte', 'company', '=', frm.doc.company]] : [])
                 };
             } },
         ],
