@@ -28,34 +28,57 @@ function open_projects_multiselect(frm, target_type) {
     const filters = { };
     if (frm.doc.company) filters['company'] = frm.doc.company;
     // Only projects that have a linked Sales Order and sku_producto
-    const d = new frappe.ui.form.MultiSelectDialog({
+    const multiselect = new frappe.ui.form.MultiSelectDialog({
         doctype: 'Project',
         target: frm,
         sales_order: "",
         sku_producto: "",
         arte: "",
         setters: [
-            { fieldname: 'sales_order', fieldtype: 'Link', options: 'Sales Order', label: __('Sales Order'), get_query() {
-                return {
-                    filters: [
-                        ['Sales Order', 'customer', '=', frm.doc.customer || ""],
-                    ].concat(frm.doc.company ? [['Sales Order', 'company', '=', frm.doc.company]] : [])
-                };
-            }, 
-                // change() {
-                //     const { value } = this;
-                //     d.get_results();
-                //     // d.show_child_results();
-                // } 
+            {
+                fieldname: 'sales_order',
+                fieldtype: 'Link',
+                options: 'Sales Order',
+                label: __('Sales Order'),
+                get_query() {
+                    return {
+                        filters: [
+                            ['Sales Order', 'customer', '=', frm.doc.customer || ""],
+                        ].concat(frm.doc.company ? [['Sales Order', 'company', '=', frm.doc.company]] : [])
+                    };
+                }, 
+                change() {
+                    // const { value } = this;
+                    multiselect.get_results();
+                },
             },
-            { fieldname: 'sku_producto', fieldtype: 'Link', options: 'Item', label: __('SKU Producto') },
-            { fieldname: 'arte', fieldtype: 'Link', options: 'Arte', label: __('Arte'), get_query() {
-                return {
-                    filters: [
-                        ['Arte', 'cliente', '=', frm.doc.customer || ""],
-                    ]
-                };
-            } },
+            {
+                fieldname: 'sku_producto',
+                fieldtype: 'Link',
+                options: 'Item',
+                label: __('SKU Producto'),
+                change() {
+                    // const { value } = this;
+                    multiselect.get_results();
+                },
+            },
+            {
+                fieldname: 'arte',
+                fieldtype: 'Link',
+                options: 'Producto del Cliente',
+                label: __('Producto del Cliente'),
+                get_query() {
+                    return {
+                        filters: [
+                            ['Producto del Cliente', 'cliente', '=', frm.doc.customer || ""],
+                        ]
+                    };
+                },
+                change() {
+                    // const { value } = this;
+                    multiselect.get_results();
+                },
+            },
         ],
         get_query() {
             const { dialog } = this;
@@ -99,7 +122,7 @@ function open_projects_multiselect(frm, target_type) {
                     });
                 }
             }).always(() => {
-                d.dialog.hide();
+                multiselect.dialog.hide();
             });
         }
     });
