@@ -7,11 +7,11 @@ import requests
 
 
 DB_TEMPLATE_CALL_RE = re.compile(
-	r"""frappe\.(?:db\.)?get_value\(
+	r"""(?:\{\{\s*)?frappe\.(?:db\.)?get_value\(
 		\s*(['"])(?P<doctype>.*?)\1\s*,
 		\s*(?P<name_expr>[^,]+?)\s*,
 		\s*(['"])(?P<fieldname>.*?)\4\s*
-	\)""",
+	\)(?:\s*\}\})?""",
 	re.VERBOSE,
 )
 
