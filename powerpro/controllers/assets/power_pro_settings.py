@@ -30,6 +30,9 @@ def get_power_pro_settings(fields=None):
 		"magenta_color",
 		"yellow_color",
 		"key_color",
+		"printcard_client_base_url",
+		"printcard_client_username",
+		"printcard_client_timeout_seconds",
 	]
 
 	if fields:

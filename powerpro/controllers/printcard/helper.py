@@ -8,7 +8,10 @@ if TYPE_CHECKING:
 	from frappe.model import document as document
 
 
+import base64
+import binascii
 import io
+import re
 import uuid
 
 from weasyprint import HTML
@@ -18,6 +21,31 @@ from frappe.utils import flt
 
 from powerpro.controllers.pdf_manager import pdf_manipulator as pdf_manager 
 from powerpro.controllers.pdf_manager import signature_helper as signature_helper
+
+
+PAYLOAD_CANVAS_REQUIRED_FIELDS = (
+	"codigo_html",
+	"codigo_css",
+	"ancho_pdf",
+	"alto_pdf",
+	"ancho_specs",
+	"orientation",
+	"margin_top",
+	"margin_right",
+	"margin_bottom",
+	"margin_left",
+)
+
+DEFAULT_PAYLOAD_SAFETY = {
+	"strict_schema": False,
+	"validate_pdf": False,
+	"allow_template_functions": True,
+	"allow_frappe_proxy": False,
+	"enforce_canvas_limits": False,
+	"sanitize_html_css": False,
+}
+
+SCRIPT_TAG_RE = re.compile(r"<script\b[^<]*(?:(?!</script>)<[^<]*)*</script>", re.IGNORECASE)
 
 
 @frappe.whitelist()
@@ -41,6 +69,7 @@ def generate_pdf_for_printcard(canvas=None, printcard=None, pdf_path=None):
 
 	if not canvas:
 		canvas = get_best_canvas(width, height)
+
 
 	if not canvas:
 		frappe.respond_as_web_page(
@@ -111,6 +140,222 @@ def generate_pdf_for_printcard(canvas=None, printcard=None, pdf_path=None):
 	# frappe.local.response.filecontent = pdf_buffer.getvalue()
 	frappe.local.response.filecontent = output.getvalue()
 	frappe.local.response.type = "pdf"
+
+
+@frappe.whitelist()
+def generate_pdf_from_payload(payload=None):
+	"""Generate a PrintCard PDF from request payload only (no PrintCard/Canvas records required)."""
+	try:
+		payload_data = _coerce_payload_dict(payload)
+		decoded_pdf = _decode_pdf_base64(payload_data.get("pdf_base64"))
+		doc_data = payload_data.get("doc") or {}
+		canvas_data = payload_data.get("canvas") or {}
+		ink_colors = payload_data.get("ink_colors") or {}
+		lookups = payload_data.get("lookups") or {}
+		options = payload_data.get("options") or {}
+		safety = _get_payload_safety(payload_data.get("safety"))
+
+		_validate_payload_schema(payload_data, canvas_data, safety)
+
+		if safety.get("validate_pdf"):
+			pdf_manager.get_pdf_dimensions(decoded_pdf)
+
+		output_pdf = _render_payload_pdf(
+			pdf_content=decoded_pdf,
+			doc_data=doc_data,
+			canvas_data=canvas_data,
+			ink_colors=ink_colors,
+			lookups=lookups,
+			safety=safety,
+		)
+
+		filename = _get_payload_filename(doc_data, options)
+		return_mode = options.get("return_mode", "base64")
+		if return_mode == "inline":
+			frappe.local.response.filename = filename
+			frappe.local.response.filecontent = output_pdf
+			frappe.local.response.type = "pdf"
+			return
+
+		return {
+			"ok": True,
+			"pdf_base64": base64.b64encode(output_pdf).decode("utf-8"),
+			"filename": filename,
+		}
+	except frappe.ValidationError as err:
+		return _payload_error("VALIDATION_ERROR", str(err))
+	except Exception as err:
+		frappe.log_error(frappe.get_traceback(), "generate_pdf_from_payload failed")
+		return _payload_error("INTERNAL_ERROR", str(err))
+
+
+def _payload_error(code, message, details=None):
+	return {
+		"ok": False,
+		"error": {
+			"code": code,
+			"message": message,
+			"details": details or {},
+		},
+	}
+
+
+def _coerce_payload_dict(payload):
+	if isinstance(payload, str) and payload.strip():
+		payload = frappe.parse_json(payload)
+
+	if not payload:
+		payload = frappe.form_dict.get("payload")
+		if isinstance(payload, str) and payload.strip():
+			payload = frappe.parse_json(payload)
+
+	if not payload:
+		request = getattr(frappe, "request", None)
+		if request and request.data:
+			request_data = request.data.decode("utf-8") if isinstance(request.data, bytes) else request.data
+			payload = frappe.parse_json(request_data)
+
+	if not isinstance(payload, dict):
+		frappe.throw("Invalid payload. Expected a JSON object.")
+
+	return payload
+
+
+def _decode_pdf_base64(pdf_base64):
+	if not pdf_base64 or not isinstance(pdf_base64, str):
+		frappe.throw("The 'pdf_base64' field is required.")
+
+	if "," in pdf_base64 and pdf_base64.strip().startswith("data:"):
+		pdf_base64 = pdf_base64.split(",", 1)[1]
+
+	try:
+		return base64.b64decode(pdf_base64, validate=True)
+	except (ValueError, binascii.Error) as err:
+		frappe.throw(f"Invalid 'pdf_base64' value: {err}")
+
+
+def _get_payload_safety(safety):
+	payload_safety = safety or {}
+	if not isinstance(payload_safety, dict):
+		frappe.throw("The 'safety' field must be an object.")
+	return {**DEFAULT_PAYLOAD_SAFETY, **payload_safety}
+
+
+def _validate_payload_schema(payload_data, canvas_data, safety):
+	required_root = ("pdf_base64", "doc", "canvas")
+	missing_root = [key for key in required_root if key not in payload_data]
+	if missing_root:
+		frappe.throw(f"Missing required payload fields: {', '.join(missing_root)}")
+
+	if not isinstance(payload_data.get("doc"), dict):
+		frappe.throw("The 'doc' field must be an object.")
+
+	if not isinstance(canvas_data, dict):
+		frappe.throw("The 'canvas' field must be an object.")
+
+	missing_canvas = [field for field in PAYLOAD_CANVAS_REQUIRED_FIELDS if field not in canvas_data]
+	if missing_canvas:
+		frappe.throw(f"Missing required canvas fields: {', '.join(missing_canvas)}")
+
+	if safety.get("strict_schema"):
+		allowed_root = {"pdf_base64", "doc", "canvas", "ink_colors", "lookups", "options", "safety"}
+		unknown_root = sorted(set(payload_data) - allowed_root)
+		if unknown_root:
+			frappe.throw(f"Unknown payload fields when strict_schema is enabled: {', '.join(unknown_root)}")
+
+	if safety.get("enforce_canvas_limits"):
+		for dimension_field in ("ancho_pdf", "alto_pdf"):
+			if flt(canvas_data.get(dimension_field)) <= 0:
+				frappe.throw(f"Canvas field '{dimension_field}' must be greater than zero.")
+
+
+def _render_payload_pdf(pdf_content, doc_data, canvas_data, ink_colors, lookups, safety):
+	doc_ctx = frappe._dict(doc_data)
+	canvas_ctx = frappe._dict(canvas_data)
+	html_template = canvas_ctx.codigo_html or ""
+	css_template = canvas_ctx.codigo_css or ""
+
+	if safety.get("sanitize_html_css"):
+		html_template = SCRIPT_TAG_RE.sub("", html_template)
+		css_template = SCRIPT_TAG_RE.sub("", css_template)
+
+	render_context = {
+		"doc": doc_ctx,
+		"canvas": canvas_ctx,
+	}
+
+	if safety.get("allow_template_functions"):
+		render_context.update({
+			"get_ink_color": _ink_color_from_payload(ink_colors),
+			"get_constrast_of_ink_color": _ink_contrast_from_payload(ink_colors),
+		})
+
+	if safety.get("allow_frappe_proxy"):
+		render_context["frappe"] = frappe._dict({
+			"get_value": _payload_get_value(lookups),
+		})
+
+	html = frappe.render_template(f"""
+		<div>
+			{html_template}
+			<style>
+				{css_template}
+				@page {{
+					size: {canvas_ctx.ancho_pdf}in {canvas_ctx.alto_pdf}in;
+					margin: {canvas_ctx.margin_top}in {canvas_ctx.margin_right}in {canvas_ctx.margin_bottom}in {canvas_ctx.margin_left}in;
+				}}
+			</style>
+		</div>
+	""", render_context)
+
+	pdf_buffer = io.BytesIO()
+	HTML(string=html).write_pdf(pdf_buffer)
+	pdf_buffer.seek(0)
+
+	output = pdf_manager.render_pdf_on_template(pdf_buffer, pdf_content, canvas=canvas_ctx)
+	return output.getvalue()
+
+
+def _payload_get_value(lookups):
+	lookups = lookups if isinstance(lookups, dict) else {}
+
+	def _get_value(doctype, name, fieldname):
+		if not doctype or not name or not fieldname:
+			return None
+		doctype_rows = lookups.get(doctype, {})
+		row = doctype_rows.get(name, {}) if isinstance(doctype_rows, dict) else {}
+		if not isinstance(row, dict):
+			return None
+		return row.get(fieldname)
+
+	return _get_value
+
+
+def _ink_color_from_payload(ink_colors):
+	palette = ink_colors if isinstance(ink_colors, dict) else {}
+
+	def _get_ink_color(ink_color_id):
+		return palette.get(ink_color_id) or "#ffffff"
+
+	return _get_ink_color
+
+
+def _ink_contrast_from_payload(ink_colors):
+	get_ink = _ink_color_from_payload(ink_colors)
+
+	def _get_contrast_color(ink_color_id):
+		return get_contrast(get_ink(ink_color_id))
+
+	return _get_contrast_color
+
+
+def _get_payload_filename(doc_data, options):
+	output_filename = (options or {}).get("output_filename")
+	if output_filename:
+		return output_filename
+
+	name = (doc_data or {}).get("name") or uuid.uuid4().hex
+	return f"{name}".replace("/", "-").replace(" ", "-") + ".pdf"
 
 
 def get_file_path(filename):
@@ -289,6 +534,9 @@ def _sign_pdf_with_base64(printcard_id) -> bool:
 
 def get_princard(name: str) -> "document.Document":
 	doctype = "PrintCard"
+	if not frappe.db.exists(doctype, name):
+		frappe.throw(f"The PrintCard {name} does not exist.")
+
 	return frappe.get_doc(doctype, name)
 
 

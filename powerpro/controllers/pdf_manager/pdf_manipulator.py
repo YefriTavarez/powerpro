@@ -4,32 +4,47 @@
 # import fitz  # PyMuPDF
 # import io
 
-from frappe import db
-from frappe.utils import flt
-
-from pypdf import PdfReader, PdfWriter, PageObject, Transformation
 from io import BytesIO
 
-def render_pdf_on_template(pdf1_buffer, pdf2_path, canvas):
+from frappe.utils import flt
+from pypdf import PageObject, PdfReader, PdfWriter, Transformation
+
+
+def _as_pdf_reader_input(pdf_source):
+    """Normalize path/bytes/stream into a PdfReader-compatible source."""
+    if isinstance(pdf_source, (bytes, bytearray)):
+        return BytesIO(pdf_source)
+    if hasattr(pdf_source, "read"):
+        return pdf_source
+    return pdf_source
+
+
+def _canvas_value(canvas, key, default=None):
+    if isinstance(canvas, dict):
+        return canvas.get(key, default)
+    return getattr(canvas, key, default)
+
+
+def render_pdf_on_template(pdf1_buffer, pdf2_source, canvas):
     # Leer PDF1 (template) desde el buffer
     pdf1 = PdfReader(pdf1_buffer)
     pdf1_page = pdf1.pages[0]
     pdf1_width = float(pdf1_page.mediabox.width)  # En puntos
     pdf1_height = float(pdf1_page.mediabox.height)  # En puntos
     
-    # Leer PDF2 (contenido a sobreponer) desde el archivo
-    pdf2 = PdfReader(pdf2_path)
+    # Leer PDF2 (contenido a sobreponer) desde archivo/bytes/stream
+    pdf2 = PdfReader(_as_pdf_reader_input(pdf2_source))
     
     # Definir márgenes en pulgadas y convertirlos a puntos
-    left_margin = flt(canvas.margin_left) * 72
-    bottom_margin = flt(canvas.margin_bottom) * 72  # 0.5 pulgadas = 0.5 * 72 puntos
-    if canvas.orientation == "Portrait":
-        bottom_margin = (flt(canvas.ancho_specs) + flt(canvas.margin_bottom)) * 72
+    left_margin = flt(_canvas_value(canvas, "margin_left")) * 72
+    bottom_margin = flt(_canvas_value(canvas, "margin_bottom")) * 72  # 0.5 pulgadas = 0.5 * 72 puntos
+    if _canvas_value(canvas, "orientation") == "Portrait":
+        bottom_margin = (flt(_canvas_value(canvas, "ancho_specs")) + flt(_canvas_value(canvas, "margin_bottom"))) * 72
     else: # Landscape
-        left_margin = (flt(canvas.ancho_specs) + flt(canvas.margin_left)) * 72
+        left_margin = (flt(_canvas_value(canvas, "ancho_specs")) + flt(_canvas_value(canvas, "margin_left"))) * 72
 
-    right_margin = flt(canvas.margin_right) * 72  # 0.5 pulgadas = 0.5 * 72 puntos
-    top_margin = flt(canvas.margin_top) * 72  # 0.5 pulgadas = 0.5 * 72 puntos
+    right_margin = flt(_canvas_value(canvas, "margin_right")) * 72  # 0.5 pulgadas = 0.5 * 72 puntos
+    top_margin = flt(_canvas_value(canvas, "margin_top")) * 72  # 0.5 pulgadas = 0.5 * 72 puntos
     
     # Crear un buffer para el PDF combinado
     output_buffer = BytesIO()
@@ -69,8 +84,8 @@ def render_pdf_on_template(pdf1_buffer, pdf2_path, canvas):
     return output_buffer
 
 
-def get_pdf_dimensions(pdf_path):
-    pdf = PdfReader(pdf_path)
+def get_pdf_dimensions(pdf_source):
+    pdf = PdfReader(_as_pdf_reader_input(pdf_source))
     page = pdf.pages[0]
     width = float(page.mediabox.width)
     height = float(page.mediabox.height)

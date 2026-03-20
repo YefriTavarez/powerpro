@@ -25,6 +25,13 @@
   "max_margin",
   "cost_estimation_manager_section",
   "cost_estimation_manager",
+  "printcard_api_section",
+  "printcard_client_base_url",
+  "column_break_printcard_api_1",
+  "printcard_client_username",
+  "printcard_client_password",
+  "column_break_printcard_api_2",
+  "printcard_client_timeout_seconds",
   "colors_tab",
   "cyan_color",
   "column_break_dbfa",
@@ -200,6 +207,41 @@
    "fieldtype": "Link",
    "label": "Cost Estimation Manager",
    "options": "Role"
+  },
+  {
+   "fieldname": "printcard_api_section",
+   "fieldtype": "Section Break",
+   "label": "PrintCard API Client"
+  },
+  {
+   "description": "Base URL used by the DB-free PrintCard PDF client.",
+   "fieldname": "printcard_client_base_url",
+   "fieldtype": "Data",
+   "label": "PrintCard Client Base URL"
+  },
+  {
+   "fieldname": "column_break_printcard_api_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "printcard_client_username",
+   "fieldtype": "Data",
+   "label": "PrintCard Client Username"
+  },
+  {
+   "fieldname": "printcard_client_password",
+   "fieldtype": "Password",
+   "label": "PrintCard Client Password"
+  },
+  {
+   "fieldname": "column_break_printcard_api_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "30",
+   "fieldname": "printcard_client_timeout_seconds",
+   "fieldtype": "Int",
+   "label": "PrintCard Client Timeout (Seconds)"
   }
  ],
  "grid_page_length": 50,
