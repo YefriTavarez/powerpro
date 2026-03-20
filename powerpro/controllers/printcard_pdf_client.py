@@ -46,24 +46,41 @@ class PrintCardPdfClient:
 
 		request_payload = self._prepare_payload(payload)
 		url = f"{self.base_url}{self.method_path}"
-		resp = requests.post(
-			url,
-			json=request_payload,
-			auth=(self.username, self.password),
-			timeout=self.timeout,
-		)
-
-		if resp.status_code >= 400:
-			frappe.throw(f"PrintCard PDF API returned HTTP {resp.status_code}: {resp.text}")
+		try:
+			resp = requests.post(
+				url,
+				json=request_payload,
+				auth=(self.username, self.password),
+				timeout=self.timeout,
+			)
+		except requests.RequestException as err:
+			frappe.throw(f"PrintCard PDF API request failed: {err}")
 
 		try:
-			data = resp.json()
+			raw_data = resp.json()
 		except ValueError as err:
 			frappe.throw(f"Invalid JSON response from PrintCard PDF API: {err}")
 
+		data = raw_data.get("message", raw_data) if isinstance(raw_data, dict) else {}
+
+		if resp.status_code >= 400:
+			error = data.get("error") if isinstance(data, dict) else None
+			message = None
+			if isinstance(error, dict):
+				message = error.get("message")
+			if not message:
+				message = data.get("message") if isinstance(data, dict) else None
+			frappe.throw(
+				f"PrintCard PDF API returned HTTP {resp.status_code}: {message or resp.text}"
+			)
+
 		if not data.get("ok"):
 			error = data.get("error") or {}
-			frappe.throw(error.get("message") or "PrintCard PDF API returned an error.")
+			message = error.get("message") or data.get("message") or "PrintCard PDF API returned an error."
+			details = error.get("details")
+			if details:
+				message = f"{message} | details: {details}"
+			frappe.throw(message)
 
 		return data
 
@@ -85,6 +102,7 @@ class PrintCardPdfClient:
 		if diagnostics["remaining_calls"] > 0:
 			frappe.throw(
 				f"Template still has unresolved DB calls: {diagnostics['remaining_calls']}. "
+				f"Resolved: {diagnostics['resolved']}. "
 				f"Examples: {diagnostics['unresolved'][:3]}"
 			)
 
