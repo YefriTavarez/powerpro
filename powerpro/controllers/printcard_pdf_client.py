@@ -1,4 +1,5 @@
 import base64
+import json
 import re
 
 import frappe
@@ -44,7 +45,7 @@ class PrintCardPdfClient:
 		if not isinstance(payload, dict):
 			frappe.throw("Payload must be a dict.")
 
-		request_payload = self._prepare_payload(payload)
+		request_payload = _to_json_safe(self._prepare_payload(payload))
 		url = f"{self.base_url}{self.method_path}"
 		try:
 			resp = requests.post(
@@ -197,3 +198,8 @@ def _lookup_value(lookups, doctype, name, fieldname):
 	if not isinstance(row, dict):
 		return None
 	return row.get(fieldname)
+
+
+def _to_json_safe(data):
+	"""Convert payload to JSON-safe primitives (datetime/date -> string, etc.)."""
+	return json.loads(frappe.as_json(data))
