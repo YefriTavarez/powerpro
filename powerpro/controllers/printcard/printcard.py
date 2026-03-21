@@ -525,6 +525,33 @@ class PrintCard(Document):
 
         return "0.0"
 
+    @frappe.whitelist()
+    def generate_printcard_pdf_on_demand(self):
+        allowed_user = (
+            frappe.session.user == "Administrator"
+            or "System Manager" in frappe.get_roles()
+        )
+
+        if not allowed_user:
+            frappe.throw(
+                "No tiene permisos para generar el PDF del PrintCard.",
+                frappe.PermissionError,
+            )
+
+        pdf_path = generate_pdf_for_printcard(printcard=self.name, pdf_path=True)
+
+        if not pdf_path:
+            frappe.throw(
+                "No se pudo generar el PDF del PrintCard.",
+            )
+
+        self.db_set("printcard_file", pdf_path)
+
+        return {
+            "printcard_file": pdf_path,
+            "message": "El archivo PDF del PrintCard ha sido generado satisfactoriamente.",
+        }
+
     def is_latest_version(self):
         return self.get_lastest_version_of_printcard(self.codigo_arte) == f"{self.version_arte_interna}.{self.version}"
 
@@ -642,19 +669,6 @@ class PrintCard(Document):
 
         if not db_doc:
             return # Nothing to do here
-
-        # PrintCard has been submitted for Approval (from Draft)
-        # at this point we should generate the PDF for the PrintCard
-        if db_doc.estado in {"Borrador", "Listo para Someter"} and self.estado == "Pendiente":
-            pdf_path = generate_pdf_for_printcard(printcard=self.name, pdf_path=True)
-
-            if pdf_path:
-                self.printcard_file = pdf_path
-
-                frappe.msgprint(
-                    f"El archivo PDF del PrintCard ha sido generado satisfactoriamente.",
-                    alert=True,
-                )
 
         # ToDo: double check why this is necessary
         if codigo := frappe.db.get_value("Producto del Cliente", {
