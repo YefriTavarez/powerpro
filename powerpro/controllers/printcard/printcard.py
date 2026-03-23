@@ -670,6 +670,19 @@ class PrintCard(Document):
         if not db_doc:
             return # Nothing to do here
 
+        # PrintCard has been submitted for Approval (from Draft)
+        # at this point we should generate the PDF for the PrintCard
+        if db_doc.estado in {"Borrador", "Listo para Someter"} and self.estado == "Pendiente":
+            pdf_path = generate_pdf_for_printcard(printcard=self.name, pdf_path=True)
+
+            if pdf_path:
+                self.printcard_file = pdf_path
+
+                frappe.msgprint(
+                    f"El archivo PDF del PrintCard ha sido generado satisfactoriamente.",
+                    alert=True,
+                )
+
         # ToDo: double check why this is necessary
         if codigo := frappe.db.get_value("Producto del Cliente", {
             "nombre_arte": self.nombre_arte,
