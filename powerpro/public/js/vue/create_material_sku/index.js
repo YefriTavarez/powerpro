@@ -278,7 +278,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 					options: "Item Group",
 					default: form.item_group_1 || frappe.boot?.powerpro_settings?.root_item_group_for_raw_materials,
 					read_only: Boolean(frappe.boot?.powerpro_settings?.root_item_group_for_raw_materials),
-					reqd: 0,
+					// reqd: 0,
 					change(event) {},
 				},
 				{
@@ -287,7 +287,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 					label: __("Item Group 2"),
 					options: "Item Group",
 					default: form.item_group_2,
-					reqd: 0,
+					// reqd: 0,
 					get_query() {
 						return {
 							filters: {
@@ -306,10 +306,10 @@ power.ui.CreateMaterialSKU = function(docname) {
 							const has_children = item_group_details.find(item_group => item_group.parent_item_group === value);
 
 							dialog.set_df_property("item_group_3", "hidden", !has_children);
-							dialog.set_df_property("item_group_3", "reqd", has_children);
+							// dialog.set_df_property("item_group_3", "reqd", has_children);
 						} else {
 							dialog.set_df_property("item_group_5", "hidden", 1);
-							dialog.set_df_property("item_group_3", "reqd", 0);
+							// dialog.set_df_property("item_group_3", "reqd", 0);
 						}
 
 						dialog.set_value("item_group_3", null);
@@ -340,10 +340,10 @@ power.ui.CreateMaterialSKU = function(docname) {
 							const has_children = item_group_details.find(item_group => item_group.parent_item_group === value);
 
 							dialog.set_df_property("item_group_4", "hidden", !has_children);
-							dialog.set_df_property("item_group_4", "reqd", has_children);
+							// dialog.set_df_property("item_group_4", "reqd", has_children);
 						} else {
 							dialog.set_df_property("item_group_4", "hidden", 1);
-							dialog.set_df_property("item_group_4", "reqd", 0);
+							// dialog.set_df_property("item_group_4", "reqd", 0);
 						}
 										
 						dialog.set_value("item_group_4", null);
@@ -374,10 +374,10 @@ power.ui.CreateMaterialSKU = function(docname) {
 							const has_children = item_group_details.find(item_group => item_group.parent_item_group === value);
 
 							dialog.set_df_property("item_group_5", "hidden", !has_children);
-							dialog.set_df_property("item_group_5", "reqd", has_children);
+							// dialog.set_df_property("item_group_5", "reqd", has_children);
 						} else {
 							dialog.set_df_property("item_group_5", "hidden", 1);
-							dialog.set_df_property("item_group_5", "reqd", 0);
+							// dialog.set_df_property("item_group_5", "reqd", 0);
 						}
 										
 						dialog.set_value("item_group_5", null);
