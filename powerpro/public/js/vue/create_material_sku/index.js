@@ -121,16 +121,26 @@ power.ui.CreateMaterialSKU = function(docname) {
 	}
 
 	function build_roll_parent_options(parent_material) {
-		return get_side_candidates(parent_material.roll_width).map(candidate => {
-			const label = candidate.is_original
-				? `${format_dimension(candidate.dimension)} in (${__("Full Roll Width")})`
-				: `${format_dimension(candidate.dimension)} in (${__("Roll Width")} x ${candidate.factor})`;
+		return get_side_candidates(parent_material.roll_width).flatMap(candidate => {
+			const factor_label = candidate.is_original
+				? __("Full Roll Width")
+				: `${__("Roll Width")} x ${candidate.factor}`
+			;
 
-			return {
-				label,
-				type: "Roll",
-				side: candidate.dimension,
-			};
+			return [
+				{
+					label: `${format_dimension(candidate.dimension)} x ${__("Variable")} in (${__("Width")} / ${factor_label})`,
+					type: "Roll",
+					side: candidate.dimension,
+					dimension_field: "sheet_width",
+				},
+				{
+					label: `${__("Variable")} x ${format_dimension(candidate.dimension)} in (${__("Height")} / ${factor_label})`,
+					type: "Roll",
+					side: candidate.dimension,
+					dimension_field: "sheet_height",
+				},
+			];
 		});
 	}
 
@@ -275,12 +285,19 @@ power.ui.CreateMaterialSKU = function(docname) {
 	function apply_selected_sheet_option(option_label) {
 		const option = derived_dimension_options.get(option_label);
 
-		if (!option || option.type !== "Sheet") {
+		if (!option) {
 			return;
 		}
 
-		dialog.set_value("sheet_width", option.width);
-		dialog.set_value("sheet_height", option.height);
+		if (option.type === "Sheet") {
+			dialog.set_value("sheet_width", option.width);
+			dialog.set_value("sheet_height", option.height);
+			return;
+		}
+
+		if (option.type === "Roll" && option.dimension_field) {
+			dialog.set_value(option.dimension_field, option.side);
+		}
 	}
 
 	function validate_derived_sheet_selection(values) {
@@ -311,12 +328,13 @@ power.ui.CreateMaterialSKU = function(docname) {
 		}
 
 		if (selected_option.type === "Roll") {
-			const matches_roll_side = dimensions_match(sheet_width, selected_option.side)
-				|| dimensions_match(sheet_height, selected_option.side)
+			const selected_dimension = selected_option.dimension_field === "sheet_height"
+				? sheet_height
+				: sheet_width
 			;
 
-			if (!matches_roll_side) {
-				frappe.throw(__("One sheet side must match the selected roll-width proportion."));
+			if (!dimensions_match(selected_dimension, selected_option.side)) {
+				frappe.throw(__("The selected roll-based dimension must match the corresponding sheet side."));
 			}
 		}
 
