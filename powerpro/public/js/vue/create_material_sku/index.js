@@ -183,12 +183,21 @@ power.ui.CreateMaterialSKU = function(docname) {
 		derived_dimension_options = new Map(
 			options.map(option => [option.label, option])
 		);
+		set_roll_dimension_lock();
 
 		dialog.set_df_property("derived_dimension_choice", "options", [
 			"",
 			...options.map(option => option.label),
 		]);
 		dialog.set_value("derived_dimension_choice", "");
+	}
+
+	function set_roll_dimension_lock(constrained_fieldname = null) {
+		const width_locked = constrained_fieldname === "sheet_width";
+		const height_locked = constrained_fieldname === "sheet_height";
+
+		dialog.set_df_property("sheet_width", "read_only", width_locked ? 1 : 0);
+		dialog.set_df_property("sheet_height", "read_only", height_locked ? 1 : 0);
 	}
 
 	function sync_hidden_standard_sheets(parent_material_sku = "") {
@@ -217,6 +226,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 	function clear_derived_sheet_helpers({ clear_parent = false } = {}) {
 		selected_parent_material = null;
 		set_derived_dimension_options();
+		set_roll_dimension_lock();
 		sync_hidden_standard_sheets();
 
 		if (clear_parent) {
@@ -286,16 +296,19 @@ power.ui.CreateMaterialSKU = function(docname) {
 		const option = derived_dimension_options.get(option_label);
 
 		if (!option) {
+			set_roll_dimension_lock();
 			return;
 		}
 
 		if (option.type === "Sheet") {
+			set_roll_dimension_lock();
 			dialog.set_value("sheet_width", option.width);
 			dialog.set_value("sheet_height", option.height);
 			return;
 		}
 
 		if (option.type === "Roll" && option.dimension_field) {
+			set_roll_dimension_lock(option.dimension_field);
 			dialog.set_value(option.dimension_field, option.side);
 		}
 	}
