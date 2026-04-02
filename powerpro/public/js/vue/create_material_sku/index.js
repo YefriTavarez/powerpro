@@ -121,26 +121,16 @@ power.ui.CreateMaterialSKU = function(docname) {
 	}
 
 	function build_roll_parent_options(parent_material) {
-		return get_side_candidates(parent_material.roll_width).flatMap(candidate => {
-			const factor_label = candidate.is_original
-				? __("Full Roll Width")
-				: `${__("Roll Width")} x ${candidate.factor}`
-			;
+		return get_side_candidates(parent_material.roll_width).map(candidate => {
+			const label = candidate.is_original
+				? `${format_dimension(candidate.dimension)} in (${__("Full Roll Width")})`
+				: `${format_dimension(candidate.dimension)} in (${__("Roll Width")} x ${candidate.factor})`;
 
-			return [
-				{
-					label: `${format_dimension(candidate.dimension)} x ${__("Variable")} in (${__("Width")} / ${factor_label})`,
-					type: "Roll",
-					side: candidate.dimension,
-					dimension_field: "sheet_width",
-				},
-				{
-					label: `${__("Variable")} x ${format_dimension(candidate.dimension)} in (${__("Height")} / ${factor_label})`,
-					type: "Roll",
-					side: candidate.dimension,
-					dimension_field: "sheet_height",
-				},
-			];
+			return {
+				label,
+				type: "Roll",
+				side: candidate.dimension,
+			};
 		});
 	}
 
@@ -183,21 +173,42 @@ power.ui.CreateMaterialSKU = function(docname) {
 		derived_dimension_options = new Map(
 			options.map(option => [option.label, option])
 		);
-		set_roll_dimension_lock();
 
 		dialog.set_df_property("derived_dimension_choice", "options", [
 			"",
 			...options.map(option => option.label),
 		]);
 		dialog.set_value("derived_dimension_choice", "");
+		sync_sheet_dimension_field_state();
 	}
 
-	function set_roll_dimension_lock(constrained_fieldname = null) {
-		const width_locked = constrained_fieldname === "sheet_width";
-		const height_locked = constrained_fieldname === "sheet_height";
+	function sync_sheet_dimension_field_state() {
+		const material_format = dialog?.get_value("material_format");
+		const derived_sheet = is_derived_sheet();
+		const selected_option = derived_dimension_options.get(
+			dialog?.get_value("derived_dimension_choice")
+		);
+		const is_sheet_parent = selected_parent_material?.raw_material_type === "Sheet";
+		const is_roll_parent = selected_parent_material?.raw_material_type === "Roll";
+		const width_read_only = Boolean(
+			derived_sheet && (
+				is_sheet_parent
+				|| (is_roll_parent && selected_option?.dimension_field === "sheet_width")
+			)
+		);
+		const height_read_only = Boolean(
+			derived_sheet && (
+				is_sheet_parent
+				|| (is_roll_parent && selected_option?.dimension_field === "sheet_height")
+			)
+		);
+		const width_required = material_format === "Sheet" && !derived_sheet && !width_read_only;
+		const height_required = material_format === "Sheet" && !derived_sheet && !height_read_only;
 
-		dialog.set_df_property("sheet_width", "read_only", width_locked ? 1 : 0);
-		dialog.set_df_property("sheet_height", "read_only", height_locked ? 1 : 0);
+		dialog.set_df_property("sheet_width", "read_only", width_read_only ? 1 : 0);
+		dialog.set_df_property("sheet_height", "read_only", height_read_only ? 1 : 0);
+		dialog.set_df_property("sheet_width", "reqd", width_required ? 1 : 0);
+		dialog.set_df_property("sheet_height", "reqd", height_required ? 1 : 0);
 	}
 
 	function sync_hidden_standard_sheets(parent_material_sku = "") {
@@ -226,7 +237,6 @@ power.ui.CreateMaterialSKU = function(docname) {
 	function clear_derived_sheet_helpers({ clear_parent = false } = {}) {
 		selected_parent_material = null;
 		set_derived_dimension_options();
-		set_roll_dimension_lock();
 		sync_hidden_standard_sheets();
 
 		if (clear_parent) {
@@ -248,10 +258,12 @@ power.ui.CreateMaterialSKU = function(docname) {
 
 		if (!derived_sheet) {
 			clear_derived_sheet_helpers({ clear_parent: true });
+			sync_sheet_dimension_field_state();
 			return;
 		}
 
 		sync_hidden_standard_sheets(dialog.get_value("parent_material_sku"));
+		sync_sheet_dimension_field_state();
 	}
 
 	async function rebuild_derived_dimension_options(parent_material_sku) {
@@ -283,6 +295,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 		;
 
 		set_derived_dimension_options(options);
+		sync_sheet_dimension_field_state();
 
 		if (!options.length) {
 			frappe.show_alert({
@@ -295,22 +308,14 @@ power.ui.CreateMaterialSKU = function(docname) {
 	function apply_selected_sheet_option(option_label) {
 		const option = derived_dimension_options.get(option_label);
 
-		if (!option) {
-			set_roll_dimension_lock();
+		if (!option || option.type !== "Sheet") {
+			sync_sheet_dimension_field_state();
 			return;
 		}
 
-		if (option.type === "Sheet") {
-			set_roll_dimension_lock();
-			dialog.set_value("sheet_width", option.width);
-			dialog.set_value("sheet_height", option.height);
-			return;
-		}
-
-		if (option.type === "Roll" && option.dimension_field) {
-			set_roll_dimension_lock(option.dimension_field);
-			dialog.set_value(option.dimension_field, option.side);
-		}
+		dialog.set_value("sheet_width", option.width);
+		dialog.set_value("sheet_height", option.height);
+		sync_sheet_dimension_field_state();
 	}
 
 	function validate_derived_sheet_selection(values) {
@@ -341,13 +346,12 @@ power.ui.CreateMaterialSKU = function(docname) {
 		}
 
 		if (selected_option.type === "Roll") {
-			const selected_dimension = selected_option.dimension_field === "sheet_height"
-				? sheet_height
-				: sheet_width
+			const matches_roll_side = dimensions_match(sheet_width, selected_option.side)
+				|| dimensions_match(sheet_height, selected_option.side)
 			;
 
-			if (!dimensions_match(selected_dimension, selected_option.side)) {
-				frappe.throw(__("The selected roll-based dimension must match the corresponding sheet side."));
+			if (!matches_roll_side) {
+				frappe.throw(__("One sheet side must match the selected roll-width proportion."));
 			}
 		}
 
