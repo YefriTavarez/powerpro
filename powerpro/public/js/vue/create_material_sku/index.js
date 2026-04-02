@@ -182,6 +182,16 @@ power.ui.CreateMaterialSKU = function(docname) {
 		sync_sheet_dimension_field_state();
 	}
 
+	function sync_gsm_field_state() {
+		const derived_sheet = is_derived_sheet();
+		const parent_gsm = to_number(selected_parent_material?.gsm);
+		const gsm_read_only = derived_sheet && parent_gsm !== null;
+		const gsm_required = !gsm_read_only;
+
+		dialog.set_df_property("gsm", "read_only", gsm_read_only ? 1 : 0);
+		dialog.set_df_property("gsm", "reqd", gsm_required ? 1 : 0);
+	}
+
 	function sync_sheet_dimension_field_state() {
 		const material_format = dialog?.get_value("material_format");
 		const derived_sheet = is_derived_sheet();
@@ -237,6 +247,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 	function clear_derived_sheet_helpers({ clear_parent = false } = {}) {
 		selected_parent_material = null;
 		set_derived_dimension_options();
+		sync_gsm_field_state();
 		sync_hidden_standard_sheets();
 
 		if (clear_parent) {
@@ -258,11 +269,13 @@ power.ui.CreateMaterialSKU = function(docname) {
 
 		if (!derived_sheet) {
 			clear_derived_sheet_helpers({ clear_parent: true });
+			sync_gsm_field_state();
 			sync_sheet_dimension_field_state();
 			return;
 		}
 
 		sync_hidden_standard_sheets(dialog.get_value("parent_material_sku"));
+		sync_gsm_field_state();
 		sync_sheet_dimension_field_state();
 	}
 
@@ -277,6 +290,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 
 		const requested_parent = parent_material_sku;
 		const { message } = await frappe.db.get_value("Item", requested_parent, [
+			"gsm",
 			"raw_material_type",
 			"roll_width",
 			"sheet_width",
@@ -294,7 +308,12 @@ power.ui.CreateMaterialSKU = function(docname) {
 			: build_sheet_parent_options(selected_parent_material || {})
 		;
 
+		if (to_number(selected_parent_material?.gsm) !== null) {
+			dialog.set_value("gsm", selected_parent_material.gsm);
+		}
+
 		set_derived_dimension_options(options);
+		sync_gsm_field_state();
 		sync_sheet_dimension_field_state();
 
 		if (!options.length) {
@@ -340,9 +359,15 @@ power.ui.CreateMaterialSKU = function(docname) {
 
 		const sheet_width = normalize_dimension(values.sheet_width);
 		const sheet_height = normalize_dimension(values.sheet_height);
+		const entered_gsm = to_number(values.gsm);
+		const parent_gsm = to_number(selected_parent_material?.gsm);
 
 		if (sheet_width === null || sheet_height === null) {
 			frappe.throw(__("Please enter both sheet width and sheet height."));
+		}
+
+		if (parent_gsm !== null && entered_gsm !== parent_gsm) {
+			frappe.throw(__("GSM must match the selected parent SKU."));
 		}
 
 		if (selected_option.type === "Roll") {
@@ -828,6 +853,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 		dialog.set_df_property("parent_material_sku", "hidden", 1);
 		dialog.set_df_property("derived_dimension_choice", "hidden", 1);
 		dialog.set_df_property("item_groups_section", "hidden", 1); // table
+		sync_gsm_field_state();
 		refresh_derived_sheet_helper_visibility();
 		
 		// Show the dialog
