@@ -24,7 +24,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 	const DIMENSION_MATCH_TOLERANCE = 0.001;
 
 	const url = "/api/method/powerpro.controllers.assets.item_group.get_all_item_groups";
-	frappe.dom.freeze(__("Loading..."));
+	frappe.dom.freeze(__("Cargando..."));
 	fetch(url)
 		.then(response => response.json())
 		.then(({ message }) => {
@@ -123,8 +123,8 @@ power.ui.CreateMaterialSKU = function(docname) {
 	function build_roll_parent_options(parent_material) {
 		return get_side_candidates(parent_material.roll_width).map(candidate => {
 			const label = candidate.is_original
-				? `${format_dimension(candidate.dimension)} in (${__("Full Roll Width")})`
-				: `${format_dimension(candidate.dimension)} in (${__("Roll Width")} x ${candidate.factor})`;
+				? `${format_dimension(candidate.dimension)} in (${__("Ancho Completo del Rollo")})`
+				: `${format_dimension(candidate.dimension)} in (${__("Ancho del Rollo")} x ${candidate.factor})`;
 
 			return {
 				label,
@@ -400,7 +400,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 
 	function _render_dialog(form) {
 		dialog = new frappe.ui.Dialog({
-			title: __("Create a new SKU"),
+			title: __("Crear un nuevo SKU"),
 			size: "extra-large", // Makes the dialog wider
 			fields: [
 				{
@@ -411,12 +411,12 @@ power.ui.CreateMaterialSKU = function(docname) {
 				},
 				{
 					fieldtype: "Section Break",
-					label: __("Material Specification"),
+					label: __("Especificación del Material"),
 				},
 				{
 					fieldname: "material_format",
 					fieldtype: "Select",
-					label: __("Material Format"),
+					label: __("Formato del Material"),
 					reqd: 1,
 					default: "Roll",
 					options: [
@@ -445,13 +445,13 @@ power.ui.CreateMaterialSKU = function(docname) {
 				{
 					fieldname: "standard_sheet_size",
 					fieldtype: "Select",
-					label: __("Standard Sheet Size"),
+					label: __("Tamaño de Hoja Estándar"),
 					// hidden: 1,
 					reqd: 0,
 					default: "",
 					options: [
 						"",
-						"Standard",
+						"Estándar",
 						"Derivado",
 					],
 					change(event) {
@@ -468,7 +468,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 				{
 					fieldname: "roll_width",
 					fieldtype: "Float",
-					label: `${__("Roll Width")} (in)`,
+					label: `${__("Ancho del Rollo")} (in)`,
 					reqd: 1,
 					precision: 3,
 					async change(event) {
@@ -484,7 +484,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 				{
 					fieldname: "sheet_width",
 					fieldtype: "Float",
-					label: `${__("Sheet Width")} (in)`,
+					label: `${__("Ancho de la Hoja")} (in)`,
 					hidden: 1,
 					precision: 3,
 					async change(event) {
@@ -500,7 +500,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 				{
 					fieldname: "sheet_height",
 					fieldtype: "Float",
-					label: `${__("Sheet Height")} (in)`,
+					label: `${__("Alto de la Hoja")} (in)`,
 					hidden: 1,
 					precision: 3,
 					async change(event) {
@@ -516,13 +516,13 @@ power.ui.CreateMaterialSKU = function(docname) {
 				{
 					fieldtype: "Section Break",
 					fieldname: "derived_sheet_section",
-					label: __("Derived Sheet"),
+					label: __("Hoja Derivada"),
 					hidden: 1,
 				},
 				{
 					fieldname: "parent_material_sku",
 					fieldtype: "Link",
-					label: __("Parent Material SKU"),
+					label: __("SKU Padre del Material"),
 					options: "Item",
 					hidden: 1,
 					get_query() {
@@ -552,7 +552,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 				{
 					fieldname: "derived_dimension_choice",
 					fieldtype: "Select",
-					label: __("Derived Dimension"),
+					label: __("Dimensión Derivada"),
 					options: [""],
 					hidden: 1,
 					change() {
@@ -561,7 +561,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 				},
 				{
 					fieldtype: "Section Break",
-					label: __("Weight"),
+					label: __("Peso"),
 				},
 				{
 					fieldname: "gsm",
@@ -593,7 +593,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 				{
 					fieldname: "standard_sheets",
 					fieldtype: "Table",
-					label: __("Standard Sheets"),
+					label: __("Hojas Estándar"),
 					reqd: 0,
 					cannot_add_rows: 0,
 					in_place_edit: true,
@@ -606,7 +606,7 @@ power.ui.CreateMaterialSKU = function(docname) {
 							fieldname: 'item',
 							fieldtype: 'Link',
 							options: 'Item',
-							label: __('Item'),
+							label: __('Artículo'),
 							in_list_view: 1,
 							reqd: 1,
 							get_query(doc) {
@@ -646,33 +646,33 @@ power.ui.CreateMaterialSKU = function(docname) {
 								}
 							},
 						},
-						{
-							fieldname: 'description',
-							fieldtype: 'Small Text',
-							label: __('Description'),
-							in_list_view: 1,
-						}
-					],
-				},
-				{
-					fieldtype: "Section Break",
-					label: __("Item Group"),
-					fieldname: "item_groups_section",
-				},
-				{
-					fieldname: "item_group_1",
-					fieldtype: "Link",
-					label: __("Item Group 1"),
+							{
+								fieldname: 'description',
+								fieldtype: 'Small Text',
+								label: __('Descripción'),
+								in_list_view: 1,
+							}
+						],
+					},
+					{
+						fieldtype: "Section Break",
+						label: __("Grupo de Artículos"),
+						fieldname: "item_groups_section",
+					},
+					{
+						fieldname: "item_group_1",
+						fieldtype: "Link",
+						label: __("Grupo de Artículos 1"),
 					options: "Item Group",
 					default: form.item_group_1 || frappe.boot?.powerpro_settings?.root_item_group_for_raw_materials,
 					read_only: Boolean(frappe.boot?.powerpro_settings?.root_item_group_for_raw_materials),
 					// reqd: 0,
 					change(event) {},
 				},
-				{
-					fieldname: "item_group_2",
-					fieldtype: "Link",
-					label: __("Item Group 2"),
+					{
+						fieldname: "item_group_2",
+						fieldtype: "Link",
+						label: __("Grupo de Artículos 2"),
 					options: "Item Group",
 					default: form.item_group_2,
 					// reqd: 0,
@@ -703,10 +703,10 @@ power.ui.CreateMaterialSKU = function(docname) {
 						dialog.set_value("item_group_3", null);
 					},
 				},
-				{
-					fieldname: "item_group_3",
-					fieldtype: "Link",
-					label: __("Item Group 3"),
+					{
+						fieldname: "item_group_3",
+						fieldtype: "Link",
+						label: __("Grupo de Artículos 3"),
 					options: "Item Group",
 					default: form.item_group_3,
 					hidden: !Boolean(form.item_group_3),
@@ -737,10 +737,10 @@ power.ui.CreateMaterialSKU = function(docname) {
 						dialog.set_value("item_group_4", null);
 					},
 				},
-				{
-					fieldname: "item_group_4",
-					fieldtype: "Link",
-					label: __("Item Group 4"),
+					{
+						fieldname: "item_group_4",
+						fieldtype: "Link",
+						label: __("Grupo de Artículos 4"),
 					options: "Item Group",
 					default: form.item_group_4,
 					hidden: !Boolean(form.item_group_4),
@@ -771,10 +771,10 @@ power.ui.CreateMaterialSKU = function(docname) {
 						dialog.set_value("item_group_5", null);
 					},
 				},
-				{
-					fieldname: "item_group_5",
-					fieldtype: "Link",
-					label: __("Item Group 5"),
+					{
+						fieldname: "item_group_5",
+						fieldtype: "Link",
+						label: __("Grupo de Artículos 5"),
 					options: "Item Group",
 					default: form.item_group_5,
 					hidden: !Boolean(form.item_group_5),
@@ -788,13 +788,20 @@ power.ui.CreateMaterialSKU = function(docname) {
 					change(event) {},
 				},
 			],
-			primary_action_label: __("Please, do!"),
+			primary_action_label: __("Crear SKU"),
 			primary_action(values) {
 				validate_derived_sheet_selection(values);
 
+				const payload = {
+					...values,
+					standard_sheet_size: values.standard_sheet_size === "Estándar"
+						? "Standard"
+						: values.standard_sheet_size,
+				};
+
 				frappe.call("powerpro.manufacturing_pro.doctype.raw_material.client.create_material_sku", {
 					material_id: docname,
-					...values,
+					...payload,
 				}).then(function(response) {
 					const { message } = response;
 
