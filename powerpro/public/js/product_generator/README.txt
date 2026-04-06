@@ -1,0 +1,1 @@
+This folder is just AI purposes. It is not loaded by the doctype Product Generator. The real scripts are comming from the Client Scripts.
