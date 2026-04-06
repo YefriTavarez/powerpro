@@ -39,10 +39,12 @@ frappe.ui.form.on('Product Generator', {
     },
 
     cantidad_tinta_tiro(frm) {
+        limpiar_tintas_excedentes(frm, 'tiro');
         render_tintas(frm);
     },
 
     cantidad_tinta_retiro(frm) {
+        limpiar_tintas_excedentes(frm, 'retiro');
         render_tintas(frm);
     },
 
@@ -79,8 +81,22 @@ frappe.ui.form.on('Product Generator', {
 });
 
 function render_tintas(frm) {
+    limpiar_tintas_excedentes(frm, 'tiro');
+    limpiar_tintas_excedentes(frm, 'retiro');
     ['tiro', 'retiro'].forEach(tipo => render_barras(frm, tipo));
     mostrar_boton_cuatricomia(frm);  // <- Aquí se llama siempre después de renderizar
+}
+
+function limpiar_tintas_excedentes(frm, tipo) {
+    const cantidad = cint(frm.doc[`cantidad_tinta_${tipo}`] || 0);
+    for (let i = 1; i <= 8; i++) {
+        if (i > cantidad) {
+            const campo = `tinta_${tipo}_${i}`;
+            const campo_color = `${campo}_color`;
+            if (frm.doc[campo]) frm.set_value(campo, null);
+            if (frm.doc[campo_color]) frm.set_value(campo_color, null);
+        }
+    }
 }
 
 function render_barras(frm, tipo) {

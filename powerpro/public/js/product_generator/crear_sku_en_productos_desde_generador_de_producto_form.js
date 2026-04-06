@@ -120,6 +120,7 @@ frappe.ui.form.on('Product Generator', {
                 reference_type: frm.doctype,
                 reference_name: frm.doc.name,
             };
+            sanitize_item_ink_slots(doc_args);
             const autorizado = await verificar_permiso_usuario(frappe.session.user);
                  if (autorizado) {
             if (ya_existe.length > 0) {
@@ -246,4 +247,15 @@ function desbloquear_campos(frm) {
         }
     });
     frm.enable_save();
+}
+
+function sanitize_item_ink_slots(doc) {
+    ['tiro', 'retiro'].forEach(tipo => {
+        const cantidad = parseInt(doc[`cantidad_tinta_${tipo}`] || 0, 10) || 0;
+        for (let i = 1; i <= 8; i++) {
+            if (i > cantidad) {
+                doc[`tinta_${tipo}_${i}`] = null;
+            }
+        }
+    });
 }
