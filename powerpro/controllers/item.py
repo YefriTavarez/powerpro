@@ -48,6 +48,41 @@ def before_save(doc, method=None):
 	update_item_tax(doc)
 
 
+def validate_unique_product_hash(doc, method=None):
+	product_hash = (doc.get("product_hash") or "").strip()
+
+	# Only enforce when hash is present.
+	if not product_hash:
+		return
+
+	duplicate_name = frappe.db.exists("Item", {
+		"product_hash": product_hash,
+		"name": ["!=", doc.name],
+	})
+
+	if not duplicate_name:
+		return
+
+	duplicate = frappe.db.get_value(
+		"Item",
+		duplicate_name,
+		["name", "product_generator", "reference_type", "reference_name"],
+		as_dict=True,
+	)
+
+	link = frappe.utils.get_link_to_form("Item", duplicate_name, duplicate_name)
+	ref = ""
+	if duplicate and duplicate.get("reference_type") and duplicate.get("reference_name"):
+		ref = f" ({duplicate.reference_type}: {duplicate.reference_name})"
+	elif duplicate and duplicate.get("product_generator"):
+		ref = f" (Product Generator: {duplicate.product_generator})"
+
+	frappe.throw(
+		f"Ya existe un Item con este product_hash: {link}{ref}. "
+		f"No se permite duplicar especificaciones."
+	)
+
+
 def autoset_item_group(doc):
 	"""Will set the item_group value (the one that ERPNext knows about) based 
 	on the lowest level of the custom item group fields"""

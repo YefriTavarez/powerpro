@@ -210,6 +210,7 @@ doc_events = {
 	},
     "Item": {
         "autoname": "powerpro.controllers.item.autoname",
+        "validate": "powerpro.controllers.item.validate_unique_product_hash",
         "before_save": "powerpro.controllers.item.before_save",
     },
     "Item Group": {
