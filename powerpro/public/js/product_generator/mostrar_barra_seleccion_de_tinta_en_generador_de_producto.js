@@ -111,43 +111,37 @@ function render_barras(frm, tipo) {
         const campo = `tinta_${tipo}_${i}`;
         const campo_color = `${campo}_color`;
         const nombre_color = frm.doc[campo] || '';
+        const texto_barra = nombre_color || `Seleccionar tinta ${i}`;
+        const color_hex = frm.doc[campo_color] || '#d6dbe1';
 
-        if (!nombre_color) continue;
-
-        // Si ya tenemos el hex, úsalo directamente
-        let color_hex = frm.doc[campo_color];
-
-        const crear_barra = (hex) => {
-            const barra = $(`
-                <div style="display:flex;height:30px;border-radius:8px;overflow:hidden;margin:10px 0;">
-                    <div style="flex:0 0 20%;background:${hex};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;">
-                        &nbsp;
-                    </div>
-                    <div style="flex:0 0 60%;background:#f4f4f4;display:flex;align-items:center;padding-left:8px;font-size:13px;">
-                        ${nombre_color}
-                    </div>
-                    <div class="barra-boton" style="flex:0 0 20%;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;">
-                        <i class="fa fa-crosshairs"></i>
-                    </div>
+        const barra = $(`
+            <div style="display:flex;height:30px;border-radius:8px;overflow:hidden;margin:10px 0;">
+                <div class="barra-color" style="flex:0 0 20%;background:${color_hex};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;">
+                    ${nombre_color ? '&nbsp;' : i}
                 </div>
-            `);
+                <div style="flex:0 0 60%;background:#f4f4f4;display:flex;align-items:center;padding-left:8px;font-size:13px;${nombre_color ? '' : 'color:#6c757d;font-style:italic;'}">
+                    ${texto_barra}
+                </div>
+                <div class="barra-boton" style="flex:0 0 20%;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                    <i class="fa fa-crosshairs"></i>
+                </div>
+            </div>
+        `);
 
-            barra.find('.barra-boton').on('click', () => {
-                abrir_selector_tinta(frm, tipo, i, campo, campo_color);
-            });
+        barra.find('.barra-boton').on('click', () => {
+            abrir_selector_tinta(frm, tipo, i, campo, campo_color);
+        });
 
-            contenedor.append(barra);
-        };
+        contenedor.append(barra);
 
-        // Si no hay color_hex, busca desde el Doctype Ink Color
-        if (!color_hex) {
+        if (nombre_color && !frm.doc[campo_color]) {
             frappe.db.get_doc('Ink Color', nombre_color).then(doc => {
-                color_hex = doc.hexadecimal_color || '#ccc';
-                frm.set_value(campo_color, color_hex); // opcional para persistencia
-                crear_barra(color_hex);
+                if (frm.doc[campo] !== nombre_color) return;
+
+                const hex = doc.hexadecimal_color || '#ccc';
+                frm.set_value(campo_color, hex);
+                barra.find('.barra-color').css('background', hex);
             });
-        } else {
-            crear_barra(color_hex);
         }
     }
 }
