@@ -43,6 +43,9 @@ def set_return_against_ncf(doc):
 
 
 def set_ncf(doc):
+    if cint(frappe.db.get_single_value("Power-Pro Settings", "disable_ncf_generation")):
+        return
+
     if doc.informal_customer:
         return
 

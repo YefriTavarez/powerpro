@@ -24,6 +24,9 @@ def before_submit(doc, event):
 
 
 def assign_ncf(doc):
+    if cint(frappe.db.get_single_value("Power-Pro Settings", "disable_ncf_generation")):
+        return
+
     # si ya tiene un NCF asignado, no hacer nada
     if doc.ncf:
         # si es una factura rectificativa, no hacer nada
