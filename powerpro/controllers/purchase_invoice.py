@@ -351,6 +351,9 @@ def valid_prefix(doc):
         "E31",
         "E33",
         "E34",
+        "E41",
+        "E43",
+        "E47",
     ]
     if ncf_quantity != 11 and ncf_quantity != 13:
         frappe.throw(
