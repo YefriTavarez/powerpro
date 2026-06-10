@@ -109,7 +109,6 @@ def execute():
 			item,
 			new_item_code,
 			force=True,
-			ignore_permissions=True,
 			show_alert=False,
 			rebuild_search=False,
 		)
