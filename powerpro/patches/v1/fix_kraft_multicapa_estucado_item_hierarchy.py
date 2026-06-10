@@ -73,6 +73,17 @@ TARGET_VALUES = {
 
 
 def execute():
+	target_group_number = frappe.db.get_value(
+		"Item Group",
+		TARGET_VALUES["item_group"],
+		"item_group_number",
+	)
+
+	if not target_group_number:
+		frappe.throw(
+			f"El grupo de artículos '{TARGET_VALUES['item_group']}' no tiene un número asignado."
+		)
+
 	placeholders = ", ".join(["%s"] * len(ITEM_CODES))
 	items = frappe.db.sql_list(
 		f"""
@@ -80,9 +91,57 @@ def execute():
 		from `tabItem`
 		where name in ({placeholders})
 			or item_code in ({placeholders})
+		order by name
 		""",
 		(*ITEM_CODES, *ITEM_CODES),
 	)
 
 	for item in items:
 		frappe.db.set_value("Item", item, TARGET_VALUES, update_modified=False)
+
+		if item.startswith(f"{target_group_number}-"):
+			frappe.db.set_value("Item", item, "item_code", item, update_modified=False)
+			continue
+
+		new_item_code = get_next_item_code(target_group_number, item)
+		frappe.rename_doc(
+			"Item",
+			item,
+			new_item_code,
+			force=True,
+			ignore_permissions=True,
+			show_alert=False,
+			rebuild_search=False,
+		)
+		frappe.db.set_value("Item", new_item_code, TARGET_VALUES, update_modified=False)
+		frappe.db.set_value("Item", new_item_code, "item_code", new_item_code, update_modified=False)
+
+
+def get_next_item_code(group_number, current_item):
+	existing = frappe.db.sql_list(
+		"""
+		select name
+		from `tabItem`
+		where name like %s
+			and name != %s
+		union
+		select item_code
+		from `tabItem`
+		where item_code like %s
+			and name != %s
+		""",
+		(
+			f"{group_number}-%",
+			current_item,
+			f"{group_number}-%",
+			current_item,
+		),
+	)
+
+	used = [
+		int(code.split("-")[1])
+		for code in existing
+		if code and "-" in code and code.split("-")[1].isdigit()
+	]
+
+	return f"{group_number}-{max(used or [0]) + 1:03d}"
