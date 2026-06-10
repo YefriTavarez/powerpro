@@ -29,3 +29,4 @@ powerpro.patches.v1.assign_item_group_numbers
 powerpro.patches.v1.rename_items_with_new_naming
 powerpro.patches.v1.update_item_generator_smart_hashes
 powerpro.patches.v1.setup_dgii_isr_2026
+powerpro.patches.v1.fix_kraft_multicapa_estucado_item_hierarchy
