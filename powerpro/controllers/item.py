@@ -7,20 +7,25 @@ import frappe
 from frappe.utils import cint
 
 
+ITEM_GROUP_FIELDS = (
+	"custom_item_group_1",
+	"custom_item_group_2",
+	"custom_item_group_3",
+	"custom_item_group_4",
+	"custom_item_group_5",
+)
+
+
 def autoname(doc, method=None):
 	if doc.get("__newname"):
 		doc.name = doc.get("__newname")
 		return
 
+	normalize_item_group_hierarchy(doc)
+
 	# doc.name = get_next_value(doc)
 
-	for field in reversed([
-		"custom_item_group_1",
-		"custom_item_group_2",
-		"custom_item_group_3",
-		"custom_item_group_4",
-		"custom_item_group_5",
-	]):
+	for field in reversed(ITEM_GROUP_FIELDS):
 		group_name = doc.get(field)
 		if group_name:
 			group_number = frappe.db.get_value("Item Group", group_name, "item_group_number")
@@ -44,6 +49,7 @@ def autoname(doc, method=None):
 
 
 def before_save(doc, method=None):
+	normalize_item_group_hierarchy(doc)
 	autoset_item_group(doc)
 	update_item_tax(doc)
 
@@ -91,6 +97,73 @@ def autoset_item_group(doc):
 		or doc.custom_item_group_3 \
 		or doc.custom_item_group_2 \
 		or doc.custom_item_group_1
+
+
+def normalize_item_group_hierarchy(doc):
+	"""Populate custom Item Group levels from the selected leaf Item Group."""
+	leaf_item_group = get_leaf_item_group(doc)
+
+	if not leaf_item_group:
+		return
+
+	hierarchy = get_item_group_hierarchy(leaf_item_group)
+
+	for idx, fieldname in enumerate(ITEM_GROUP_FIELDS):
+		doc.set(fieldname, hierarchy[idx] if idx < len(hierarchy) else None)
+
+	if hierarchy:
+		doc.item_group = hierarchy[-1]
+
+
+def get_leaf_item_group(doc):
+	"""Return the deepest selected Item Group from item_group and custom fields."""
+	candidates = [
+		doc.get("item_group"),
+		*(doc.get(fieldname) for fieldname in reversed(ITEM_GROUP_FIELDS)),
+	]
+
+	deepest = None
+	deepest_level = -1
+
+	for item_group in candidates:
+		if not item_group:
+			continue
+
+		level = len(get_item_group_hierarchy(item_group))
+		if level > deepest_level:
+			deepest = item_group
+			deepest_level = level
+
+	return deepest
+
+
+def get_item_group_hierarchy(leaf_item_group):
+	"""Return the parent chain from business root to leaf, excluding ERPNext's tree root."""
+	hierarchy = []
+	current = leaf_item_group
+
+	while current:
+		row = frappe.db.get_value(
+			"Item Group",
+			current,
+			["name", "parent_item_group"],
+			as_dict=True,
+		)
+
+		if not row:
+			frappe.throw(f"El grupo de artículos '{current}' no existe.")
+
+		if row.parent_item_group:
+			hierarchy.append(row.name)
+
+		current = row.parent_item_group
+
+	hierarchy.reverse()
+
+	if len(hierarchy) > len(ITEM_GROUP_FIELDS):
+		hierarchy = hierarchy[-len(ITEM_GROUP_FIELDS):]
+
+	return hierarchy
 
 
 def update_item_tax(doc):
