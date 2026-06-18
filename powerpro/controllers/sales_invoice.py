@@ -12,7 +12,9 @@ def before_insert(doc, method):
 
 
 def on_submit(doc, method):
-    set_ncf(doc)
+    ...
+    # Let Nubef handle NCF Generation.
+    # set_ncf(doc)
 
 
 def on_cancel(doc, method):
