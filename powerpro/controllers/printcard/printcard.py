@@ -5,7 +5,7 @@
 import frappe
 from frappe.model.document import Document
 
-from frappe.desk.form.assign_to import add as assign_to, remove as remove_assignee
+from frappe.desk.form.assign_to import _add as assign_to, remove as remove_assignee
 
 from powerpro.controllers.printcard import (
     sign_pdf_with_base64,
