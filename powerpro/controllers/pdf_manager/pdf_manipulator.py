@@ -68,15 +68,30 @@ def render_pdf_on_template(pdf1_buffer, pdf2_path, canvas):
     
     return output_buffer
 
-
 def get_pdf_dimensions(pdf_path):
-    pdf = PdfReader(pdf_path)
-    page = pdf.pages[0]
-    width = float(page.mediabox.width)
-    height = float(page.mediabox.height)
-    
-    return width / 72, height / 72  # Convertir de puntos a pulgadas
+    """
+    Return the bounding-box dimensions of a PDF across all pages.
 
+    Uses the maximum width and maximum height found on any page so that
+    canvas selection fits mixed page sizes.
+
+    Args:
+        pdf_path (str): Path to the PDF file.
+
+    Returns:
+        tuple: (width, height) in inches.
+    """
+    pdf = PdfReader(pdf_path)
+    max_width = 0.0
+    max_height = 0.0
+
+    for page in pdf.pages:
+        width = float(page.mediabox.width)
+        height = float(page.mediabox.height)
+        max_width = max(max_width, width)
+        max_height = max(max_height, height)
+
+    return max_width / 72, max_height / 72
 
 def select_best_canvas(pdf_width, pdf_height, canvas_list, margin=0.5):
     """
