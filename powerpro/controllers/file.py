@@ -24,7 +24,7 @@ class File(file.File):
 			return
 
 		base_path = os.path.realpath(get_files_path(is_private=self.is_private))
-		if not os.path.realpath(super.get_full_path()).startswith(base_path):
+		if not os.path.realpath(self.get_full_path()).startswith(base_path):
 			frappe.throw(
 				_(f"The File URL you've entered {os.path.realpath(self.get_full_path())!r} is incorrect"),
 				title=_("Invalid File URL"),
