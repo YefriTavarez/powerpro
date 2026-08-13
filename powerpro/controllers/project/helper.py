@@ -129,7 +129,7 @@ def get_expected_dates(project, project_template, project_template_task):
 
 
     task_expected_end_date = frappe.utils.add_to_date(
-        project.last_task_end_date, minutes=project_template_task.get_duration_in_minutes()
+        task_expected_start_date, minutes=project_template_task.get_duration_in_minutes()
     )
 
     # update last task end date for next task
