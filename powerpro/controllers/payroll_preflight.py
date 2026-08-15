@@ -52,6 +52,141 @@ def get_payroll_preflight(payroll_entry):
     }
 
 
+@frappe.whitelist()
+def get_payroll_preview(payroll_entry):
+    """Calculate Salary Slips in memory without inserting or saving documents."""
+    entry = frappe.get_doc("Payroll Entry", payroll_entry)
+    if not frappe.has_permission("Payroll Entry", "read", doc=entry) or not frappe.has_permission(
+        "Salary Slip", "read"
+    ):
+        frappe.throw(_("Not permitted to preview payroll."), frappe.PermissionError)
+
+    preflight = get_payroll_preflight(entry.name)
+    if preflight["summary"]["blockers"]:
+        return {
+            "payroll_entry": entry.name,
+            "status": "blocked",
+            "currency": entry.currency,
+            "preflight": preflight,
+            "rows": [],
+            "errors": [],
+            "totals": {},
+            "read_only": True,
+            "saved_documents": 0,
+        }
+
+    employees = [row.employee for row in entry.employees if row.employee]
+    existing = {
+        row.employee: row
+        for row in frappe.get_all(
+            "Salary Slip",
+            filters={
+                "employee": ["in", employees],
+                "payroll_entry": entry.name,
+                "docstatus": ["<", 2],
+            },
+            fields=["name", "employee", "gross_pay", "total_deduction", "net_pay"],
+            order_by="creation desc",
+        )
+    }
+
+    rows = []
+    errors = []
+    component_totals = Counter()
+    calculated_totals = Counter()
+    stored_totals = Counter()
+    for employee in employees:
+        try:
+            slip = _calculate_salary_slip_in_memory(entry, employee)
+            employer_total = 0.0
+            for detail in [*slip.earnings, *slip.deductions]:
+                component_totals[detail.salary_component] += float(detail.amount or 0)
+                if detail.salary_component in ("AFP Empleador", "ARS Empleador"):
+                    employer_total += float(detail.amount or 0)
+
+            stored = existing.get(employee)
+            calculated_totals["gross_pay"] += float(slip.gross_pay or 0)
+            calculated_totals["total_deduction"] += float(slip.total_deduction or 0)
+            calculated_totals["net_pay"] += float(slip.net_pay or 0)
+            calculated_totals["employer_afp_ars"] += employer_total
+            if stored:
+                stored_totals["net_pay"] += float(stored.net_pay or 0)
+            rows.append({
+                "employee": employee,
+                "employee_name": slip.employee_name,
+                "salary_structure": slip.salary_structure,
+                "gross_pay": _money(slip.gross_pay),
+                "total_deduction": _money(slip.total_deduction),
+                "net_pay": _money(slip.net_pay),
+                "employer_afp_ars": _money(employer_total),
+                "existing_salary_slip": stored.name if stored else None,
+                "stored_net_pay": _money(stored.net_pay) if stored else None,
+                "net_pay_delta": _money(float(slip.net_pay or 0) - float(stored.net_pay or 0)) if stored else None,
+            })
+        except Exception as exc:
+            errors.append({"employee": employee, "message": str(exc)})
+        finally:
+            if frappe.message_log:
+                frappe.message_log.clear()
+
+    comparable_rows = [row for row in rows if row["stored_net_pay"] is not None]
+    changed_rows = [row for row in comparable_rows if abs(row["net_pay_delta"]) >= 0.01]
+    totals = {
+        "employees": len(rows),
+        "existing_slips": len(comparable_rows),
+        "changed_existing_slips": len(changed_rows),
+        "gross_pay": _money(calculated_totals["gross_pay"]),
+        "total_deduction": _money(calculated_totals["total_deduction"]),
+        "net_pay": _money(calculated_totals["net_pay"]),
+        "stored_net_pay": _money(stored_totals["net_pay"]),
+        "net_pay_delta": _money(calculated_totals["net_pay"] - stored_totals["net_pay"]),
+        "employer_afp_ars": _money(calculated_totals["employer_afp_ars"]),
+        "components": {key: _money(value) for key, value in sorted(component_totals.items())},
+    }
+
+    status = "preview_with_errors" if errors else "preview_with_differences" if changed_rows else "preview_ready"
+
+    return {
+        "payroll_entry": entry.name,
+        "status": status,
+        "currency": entry.currency,
+        "preflight": preflight,
+        "rows": rows,
+        "errors": errors,
+        "totals": totals,
+        "read_only": True,
+        "saved_documents": 0,
+    }
+
+
+def _calculate_salary_slip_in_memory(entry, employee):
+    slip = frappe.get_doc({
+        "doctype": "Salary Slip",
+        "employee": employee,
+        "salary_slip_based_on_timesheet": entry.salary_slip_based_on_timesheet,
+        "payroll_frequency": entry.payroll_frequency,
+        "start_date": entry.start_date,
+        "end_date": entry.end_date,
+        "company": entry.company,
+        "posting_date": entry.posting_date,
+        "deduct_tax_for_unclaimed_employee_benefits": entry.deduct_tax_for_unclaimed_employee_benefits,
+        "deduct_tax_for_unsubmitted_tax_exemption_proof": entry.deduct_tax_for_unsubmitted_tax_exemption_proof,
+        "payroll_entry": entry.name,
+        "exchange_rate": entry.exchange_rate,
+        "currency": entry.currency,
+    })
+    slip.get_emp_and_working_day_details()
+    if not slip.salary_structure:
+        frappe.throw(_("No active Salary Structure found for employee {0}.").format(employee))
+    slip.set_salary_structure_assignment()
+    slip.calculate_net_pay()
+    return slip
+
+
+def _money(value):
+    return round(float(value or 0), 2)
+
+
 def _add_issue(issues, severity, code, title, message, records=None):
     records = records or []
     issues.append({

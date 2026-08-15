@@ -12,6 +12,9 @@ frappe.ui.form.on("Payroll Entry", {
             frm.add_custom_button(__("Validar preparación de nómina"), () => {
                 frm.trigger("show_payroll_preflight");
             }, __("Acciones"));
+            frm.add_custom_button(__("Previsualizar cálculos de nómina"), () => {
+                frm.trigger("show_payroll_preview");
+            }, __("Acciones"));
         }
     },
 
@@ -58,6 +61,20 @@ frappe.ui.form.on("Payroll Entry", {
             },
         });
     },
+
+    show_payroll_preview: function (frm) {
+        frappe.call({
+            method: "powerpro.controllers.payroll_preflight.get_payroll_preview",
+            args: { payroll_entry: frm.doc.name },
+            freeze: true,
+            freeze_message: __("Calculando previsualización sin guardar documentos..."),
+            callback: function (r) {
+                if (r.message) {
+                    show_payroll_preview_dialog(r.message);
+                }
+            },
+        });
+    },
 });
 
 
@@ -95,6 +112,59 @@ function show_payroll_preflight_dialog(report) {
         title: __("Validación de nómina"),
         indicator: status.indicator,
         message: summary + (issues || `<p>${__("No se encontraron observaciones.")}</p>`),
+        wide: true,
+    });
+}
+
+
+function show_payroll_preview_dialog(report) {
+    if (report.status === "blocked") {
+        show_payroll_preflight_dialog(report.preflight);
+        return;
+    }
+
+    const money = (value) => format_currency(value || 0, report.currency);
+    const totals = report.totals;
+    const summary = `<p><strong>${__("Previsualización sin guardar")}</strong> · `
+        + `${totals.employees} ${__("empleados")}</p>
+        <div class="row mb-3">
+            <div class="col-sm-3"><strong>${__("Bruto")}</strong><br>${money(totals.gross_pay)}</div>
+            <div class="col-sm-3"><strong>${__("Deducciones")}</strong><br>${money(totals.total_deduction)}</div>
+            <div class="col-sm-3"><strong>${__("Neto")}</strong><br>${money(totals.net_pay)}</div>
+            <div class="col-sm-3"><strong>${__("AFP/ARS empleador")}</strong><br>${money(totals.employer_afp_ars)}</div>
+        </div>`;
+    const reconciliation = totals.changed_existing_slips
+        ? `<p class="text-warning"><strong>${__("Reconciliación pendiente")}:</strong> `
+            + `${totals.changed_existing_slips} ${__("comprobantes existentes cambiarían al recalcularse")}; `
+            + `${__("diferencia neta total")}: ${money(totals.net_pay_delta)}.</p>`
+        : `<p class="text-success">${__("Los netos previsualizados coinciden con los comprobantes existentes comparables.")}</p>`;
+
+    const rows = report.rows.map((row) => `<tr>
+        <td>${frappe.utils.escape_html(row.employee_name || row.employee)}</td>
+        <td class="text-right">${money(row.gross_pay)}</td>
+        <td class="text-right">${money(row.total_deduction)}</td>
+        <td class="text-right">${money(row.net_pay)}</td>
+        <td class="text-right">${row.stored_net_pay === null ? "—" : money(row.stored_net_pay)}</td>
+        <td class="text-right">${row.net_pay_delta === null ? "—" : money(row.net_pay_delta)}</td>
+        <td class="text-right">${money(row.employer_afp_ars)}</td>
+    </tr>`).join("");
+    const table = `<div class="table-responsive"><table class="table table-bordered table-sm">
+        <thead><tr><th>${__("Empleado")}</th><th>${__("Bruto")}</th><th>${__("Deducciones")}</th>
+        <th>${__("Neto previsto")}</th><th>${__("Neto guardado")}</th><th>${__("Diferencia")}</th>
+        <th>${__("AFP/ARS empleador")}</th></tr></thead>
+        <tbody>${rows}</tbody>
+    </table></div>`;
+
+    const errors = report.errors.length
+        ? `<hr><p class="text-danger"><strong>${__("Errores")}</strong></p>${report.errors.map((error) =>
+            `<p>${frappe.utils.escape_html(error.employee)}: ${frappe.utils.escape_html(error.message)}</p>`
+        ).join("")}`
+        : "";
+
+    frappe.msgprint({
+        title: __("Previsualización de nómina"),
+        indicator: report.errors.length || totals.changed_existing_slips ? "orange" : "green",
+        message: summary + reconciliation + table + errors,
         wide: true,
     });
 }

@@ -3,6 +3,7 @@ import unittest
 from powerpro.controllers.payroll_preflight import (
     _formula_has_cap,
     _is_dominican_id_shape,
+    _money,
     _normalise_formula,
     _rate_matches,
 )
@@ -24,6 +25,10 @@ class PayrollPreflightHelpersTest(unittest.TestCase):
     def test_rate_comparison(self):
         self.assertTrue(_rate_matches(2.87, 2.87))
         self.assertFalse(_rate_matches(2.86, 2.87))
+
+    def test_money_rounding(self):
+        self.assertEqual(_money(10.126), 10.13)
+        self.assertEqual(_money(None), 0.0)
 
 
 if __name__ == "__main__":
