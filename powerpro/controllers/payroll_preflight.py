@@ -8,6 +8,8 @@ import frappe
 from frappe import _
 from frappe.utils import getdate
 
+from powerpro.payroll_rules.dominican_republic import get_isr_scale, get_tss_rule
+
 
 EXPECTED_RATES = {
     "employee_afp": 2.87,
@@ -447,6 +449,8 @@ def _check_holiday_lists(entry, employees, issues):
 
 
 def _check_payroll_rules(entry, issues):
+    tss_rule = get_tss_rule(getdate(entry.end_date))
+    isr_scale = get_isr_scale(getdate(entry.end_date))
     settings = frappe.get_single("DGII Payroll Settings")
     rate_checks = (
         ("employee_afp", settings.pension_fund_provider, _("Employee AFP")),
@@ -512,7 +516,17 @@ def _check_payroll_rules(entry, issues):
                 "warning",
                 "TSS_CEILINGS_NOT_CONFIGURED",
                 _("TSS contribution ceilings are not date-effective"),
-                _("{0}: these formulas have no explicit ceiling: {1}.").format(structure_name, ", ".join(uncapped)),
+                _(
+                    "{0}: these formulas have no explicit ceiling: {1}. Applicable ceilings at {2}: "
+                    "pensions {3}, health {4}, SRL {5}."
+                ).format(
+                    structure_name,
+                    ", ".join(uncapped),
+                    entry.end_date,
+                    tss_rule.pension_ceiling,
+                    tss_rule.sfs_ceiling,
+                    tss_rule.srl_ceiling,
+                ),
                 uncapped,
             )
 
@@ -523,7 +537,10 @@ def _check_payroll_rules(entry, issues):
                 "warning",
                 "DGII_ISR_HARDCODED",
                 _("ISR brackets are hard-coded"),
-                _("{0} embeds annual ISR thresholds in its formula; validate or version them for every fiscal year.").format(structure_name),
+                _(
+                    "{0} embeds annual ISR thresholds in its formula. The versioned reference for {1} "
+                    "is exempt through {2}; validate the monthly taxable-base method independently."
+                ).format(structure_name, entry.end_date, isr_scale.exempt_through),
             )
 
 
