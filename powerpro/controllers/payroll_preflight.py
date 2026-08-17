@@ -16,7 +16,15 @@ EXPECTED_RATES = {
     "employee_ars": 3.04,
     "employer_afp": 7.10,
     "employer_ars": 7.09,
+    "employer_infotep": 1.00,
 }
+
+EMPLOYER_COMPONENTS = (
+    "AFP Empleador",
+    "ARS Empleador",
+    "INFOTEP Empleador",
+    "SRL Empleador",
+)
 
 
 @frappe.whitelist()
@@ -101,16 +109,20 @@ def get_payroll_preview(payroll_entry):
         try:
             slip = _calculate_salary_slip_in_memory(entry, employee)
             employer_total = 0.0
+            employer_afp_ars = 0.0
             for detail in [*slip.earnings, *slip.deductions]:
                 component_totals[detail.salary_component] += float(detail.amount or 0)
-                if detail.salary_component in ("AFP Empleador", "ARS Empleador"):
+                if detail.salary_component in EMPLOYER_COMPONENTS:
                     employer_total += float(detail.amount or 0)
+                if detail.salary_component in ("AFP Empleador", "ARS Empleador"):
+                    employer_afp_ars += float(detail.amount or 0)
 
             stored = existing.get(employee)
             calculated_totals["gross_pay"] += float(slip.gross_pay or 0)
             calculated_totals["total_deduction"] += float(slip.total_deduction or 0)
             calculated_totals["net_pay"] += float(slip.net_pay or 0)
-            calculated_totals["employer_afp_ars"] += employer_total
+            calculated_totals["employer_afp_ars"] += employer_afp_ars
+            calculated_totals["employer_contributions"] += employer_total
             if stored:
                 stored_totals["net_pay"] += float(stored.net_pay or 0)
             rows.append({
@@ -120,7 +132,8 @@ def get_payroll_preview(payroll_entry):
                 "gross_pay": _money(slip.gross_pay),
                 "total_deduction": _money(slip.total_deduction),
                 "net_pay": _money(slip.net_pay),
-                "employer_afp_ars": _money(employer_total),
+                "employer_afp_ars": _money(employer_afp_ars),
+                "employer_contributions": _money(employer_total),
                 "existing_salary_slip": stored.name if stored else None,
                 "stored_net_pay": _money(stored.net_pay) if stored else None,
                 "net_pay_delta": _money(float(slip.net_pay or 0) - float(stored.net_pay or 0)) if stored else None,
@@ -143,6 +156,7 @@ def get_payroll_preview(payroll_entry):
         "stored_net_pay": _money(stored_totals["net_pay"]),
         "net_pay_delta": _money(calculated_totals["net_pay"] - stored_totals["net_pay"]),
         "employer_afp_ars": _money(calculated_totals["employer_afp_ars"]),
+        "employer_contributions": _money(calculated_totals["employer_contributions"]),
         "components": {key: _money(value) for key, value in sorted(component_totals.items())},
     }
 
@@ -455,6 +469,7 @@ def _check_payroll_rules(entry, issues):
     rate_checks = (
         ("employee_afp", settings.pension_fund_provider, _("Employee AFP")),
         ("employee_ars", settings.health_insurance_rate, _("Employee ARS")),
+        ("employer_infotep", settings.infotep_employer_rate, _("Employer INFOTEP")),
     )
     for key, actual, label in rate_checks:
         expected = EXPECTED_RATES[key]
@@ -466,6 +481,24 @@ def _check_payroll_rules(entry, issues):
                 _("{0} rate is incorrect").format(label),
                 _("Configured: {0}%; expected: {1}%.").format(round(float(actual or 0), 4), expected),
             )
+
+    srl_rate = float(settings.srl_employer_rate or 0)
+    if not 1.0 <= srl_rate <= 1.6:
+        _add_issue(
+            issues,
+            "blocker",
+            "RATE_EMPLOYER_SRL",
+            _("Employer SRL rate is outside the legal configuration range"),
+            _("Configured: {0}%; expected a company-specific rate between 1.00% and 1.60%.").format(srl_rate),
+        )
+    if not settings.srl_rate_verified:
+        _add_issue(
+            issues,
+            "blocker",
+            "TSS_SRL_RATE_UNVERIFIED",
+            _("SRL rate has not been verified against TSS"),
+            _("Reconcile the configured {0}% rate to IGC's current TSS notification or pre-liquidation, then enable the verification checkbox.").format(srl_rate),
+        )
 
     structures = frappe.get_all(
         "Salary Structure",
@@ -485,6 +518,11 @@ def _check_payroll_rules(entry, issues):
         expected_formulas = {
             "AFP Empleador": "base*0.0710",
             "ARS Empleador": "base*0.0709",
+            "INFOTEP Empleador": "(base+COM)*(infotep_employer_rate/100)",
+            "SRL Empleador": (
+                "(base+COM+VACifbase+COM+VAC<=srl_ceilingelsesrl_ceiling)"
+                "*(srl_employer_rate/100)"
+            ),
         }
         for component, expected_formula in expected_formulas.items():
             if _normalise_formula(formulas.get(component)) != expected_formula:
