@@ -11,6 +11,7 @@ from frappe.utils import get_link_to_form
 from powerpro.utils import (
 	round_to_nearest_eighth,
 )
+from .batch_series import get_roll_serial_and_batch_fields
 
 # from powerpro.utils import generate_material_primary_key
 
@@ -126,6 +127,9 @@ def create_material_sku(
 		"stock_uom": get_uom(material_format),
 		"valuation_method": "FIFO",
 	})
+
+	if material_format == "Roll":
+		item.update(get_roll_serial_and_batch_fields(item_name, gsm))
 
 	if standard_sheet_size == "Derivado":
 		for row in standard_sheets:
