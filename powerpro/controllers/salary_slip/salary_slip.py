@@ -21,6 +21,9 @@ class SalarySlip(SalarySlip):
     def pull_sal_struct(self):
         from hrms.payroll.doctype.salary_structure.salary_structure import make_salary_slip
 
+        helper.set_dgii_payroll_settings(self)
+        helper.set_mid_month_start(self)
+
         if self.salary_slip_based_on_timesheet:
             self.salary_structure = self._salary_structure_doc.name
             self.hour_rate = self._salary_structure_doc.hour_rate
@@ -34,6 +37,10 @@ class SalarySlip(SalarySlip):
             # self.add_earning_for_hourly_wages(self, self._salary_structure_doc.salary_component, wages_amount)
 
         make_salary_slip(self._salary_structure_doc.name, self)
+
+    def calculate_net_pay(self, skip_tax_breakup_computation: bool = False):
+        super().calculate_net_pay(skip_tax_breakup_computation=skip_tax_breakup_computation)
+        helper.populate_employer_contributions(self)
 
     # @overrides
     def set_time_sheet(self):

@@ -1,6 +1,8 @@
 # Copyright (c) 2024, Miguel Higuera and Contributors
 # For license information, please see license.txt
 
+from collections import defaultdict
+
 import frappe
 
 from frappe import _
@@ -8,8 +10,125 @@ from frappe.utils import flt
 from frappe.desk.reportview import get_match_cond
 from hrms.payroll.doctype.payroll_entry import payroll_entry
 
+from powerpro.controllers.salary_slip.helper import LEGACY_EMPLOYER_COMPONENTS
+from powerpro.payroll_rules.employer_contributions import DEDICATED_MODE
+
 
 class PayrollEntry(payroll_entry.PayrollEntry):
+    def get_payable_amount_for_earnings_and_deductions(
+        self,
+        accounts,
+        earnings,
+        deductions,
+        currencies,
+        company_currency,
+        accounting_dimensions,
+        precision,
+        payable_amount,
+    ):
+        payable_amount = super().get_payable_amount_for_earnings_and_deductions(
+            accounts,
+            earnings,
+            deductions,
+            currencies,
+            company_currency,
+            accounting_dimensions,
+            precision,
+            payable_amount,
+        )
+        debits, credits = self._get_dedicated_employer_contribution_totals()
+
+        for (account, cost_center), amount in debits.items():
+            payable_amount = self.get_accounting_entries_and_payable_amount(
+                account,
+                cost_center or self.cost_center,
+                amount,
+                currencies,
+                company_currency,
+                payable_amount,
+                accounting_dimensions,
+                precision,
+                entry_type="debit",
+                accounts=accounts,
+            )
+
+        for (account, cost_center), amount in credits.items():
+            payable_amount = self.get_accounting_entries_and_payable_amount(
+                account,
+                cost_center or self.cost_center,
+                amount,
+                currencies,
+                company_currency,
+                payable_amount,
+                accounting_dimensions,
+                precision,
+                entry_type="credit",
+                accounts=accounts,
+            )
+
+        return payable_amount
+
+    def _get_dedicated_employer_contribution_totals(self):
+        slip_names = [row.name for row in self.get_sal_slip_list(ss_status=1, as_dict=True)]
+        if not slip_names:
+            return {}, {}
+
+        slips = [frappe.get_doc("Salary Slip", name) for name in slip_names]
+        dedicated_slips = [
+            slip for slip in slips if slip.get("employer_contribution_mode") == DEDICATED_MODE
+        ]
+        if not dedicated_slips:
+            return {}, {}
+        if len(dedicated_slips) != len(slips):
+            frappe.throw(
+                _("Payroll Entry {0} mixes legacy and dedicated employer contribution modes.").format(
+                    self.name
+                )
+            )
+
+        debits = defaultdict(float)
+        credits = defaultdict(float)
+        for slip in dedicated_slips:
+            legacy_rows = [
+                row.salary_component
+                for table in ("earnings", "deductions")
+                for row in slip.get(table, [])
+                if row.salary_component in LEGACY_EMPLOYER_COMPONENTS and flt(row.amount)
+            ]
+            if legacy_rows:
+                frappe.throw(
+                    _("Salary Slip {0} contains both dedicated and legacy employer contributions.").format(
+                        slip.name
+                    )
+                )
+            contribution_count = len(slip.get("employer_contributions", []))
+            monthly_settlement = bool(
+                slip.get("mid_month_start") or slip.payroll_frequency == "Monthly"
+            )
+            if monthly_settlement and contribution_count != 4:
+                frappe.throw(
+                    _("Salary Slip {0} does not contain four employer contribution snapshots.").format(
+                        slip.name
+                    )
+                )
+            if not monthly_settlement and contribution_count:
+                frappe.throw(
+                    _("Salary Slip {0} has employer contributions outside the monthly settlement.").format(
+                        slip.name
+                    )
+                )
+
+            cost_centers = self.get_payroll_cost_centers_for_employee(
+                slip.employee, slip.salary_structure
+            )
+            for contribution in slip.employer_contributions:
+                for cost_center, percentage in cost_centers.items():
+                    amount = flt(contribution.amount) * flt(percentage) / 100
+                    debits[(contribution.expense_account, cost_center)] += amount
+                    credits[(contribution.payable_account, cost_center)] += amount
+
+        return dict(debits), dict(credits)
+
     # @disabled
     def __make_filters(self):
         filters = frappe._dict(

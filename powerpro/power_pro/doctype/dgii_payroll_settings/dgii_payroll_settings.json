@@ -22,6 +22,7 @@
   "column_break_jdsg",
   "pension_fund_provider",
   "employer_contributions_section",
+  "employer_contribution_mode",
   "infotep_employer_rate",
   "column_break_employer_contributions",
   "srl_employer_rate",
@@ -115,6 +116,15 @@
    "fieldname": "employer_contributions_section",
    "fieldtype": "Section Break",
    "label": "Employer Contributions"
+  },
+  {
+   "default": "Salary Component Pairs",
+   "description": "Legacy mode keeps balanced excluded Salary Component rows. Dedicated mode stores employer contributions separately and posts them directly in the payroll accrual Journal Entry.",
+   "fieldname": "employer_contribution_mode",
+   "fieldtype": "Select",
+   "label": "Employer Contribution Accounting Mode",
+   "options": "Salary Component Pairs\nDedicated Journal Entries",
+   "reqd": 1
   },
   {
    "default": "1",
