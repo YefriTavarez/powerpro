@@ -1,8 +1,8 @@
 # Copyright (c) 2026, Yefri Tavarez and Contributors
 # For license information, please see license.txt
 
-"""Sincroniza el Salary Component `ISR` y las filas ISR en las estructuras
-salariales con la escala DGII 2026 (Art. 296 del Código Tributario 11-92).
+"""Sincroniza el componente de ISR y sus filas en las estructuras salariales
+con la escala DGII 2026 (Art. 296 del Código Tributario 11-92).
 
 Reglas implementadas:
 
@@ -43,22 +43,47 @@ ISR_FORMULA = (
 ISR_CONDITION = 'mid_month_start or payroll_frequency == "Monthly"'
 
 STRUCTURES = ("General Quincenal", "General Mensual")
+ISR_COMPONENT_NAMES = ("Impuesto Sobre la Renta Mensual", "ISR")
 
 
 def execute():
-	update_isr_salary_component()
+	component_names = get_existing_isr_component_names()
+	if not component_names:
+		frappe.throw(
+			"No se encontró un Salary Component de ISR compatible. "
+			f"Nombres esperados: {', '.join(ISR_COMPONENT_NAMES)}"
+		)
+
+	for component_name in component_names:
+		update_isr_salary_component(component_name)
+
+	updated_rows = 0
 	for structure_name in STRUCTURES:
-		update_salary_structure_isr_row(structure_name)
+		updated_rows += update_salary_structure_isr_rows(structure_name, component_names)
+
+	if not updated_rows:
+		frappe.throw(
+			"No se encontró ninguna fila de ISR en las estructuras salariales "
+			f"esperadas: {', '.join(STRUCTURES)}"
+		)
+
+	frappe.clear_cache(doctype="Salary Component")
+	frappe.clear_cache(doctype="Salary Structure")
+	print(
+		"[setup_dgii_isr_2026] "
+		f"Componentes sincronizados: {', '.join(component_names)}; "
+		f"filas actualizadas: {updated_rows}."
+	)
 
 
-def update_isr_salary_component():
-	name = "ISR"
+def get_existing_isr_component_names():
+	return tuple(
+		name for name in ISR_COMPONENT_NAMES if frappe.db.exists("Salary Component", name)
+	)
 
-	if not frappe.db.exists("Salary Component", name):
-		print(f"[setup_dgii_isr_2026] Salary Component '{name}' no existe; se omite.")
-		return
 
-	doc = frappe.get_doc("Salary Component", name)
+def update_isr_salary_component(component_name):
+	doc = frappe.get_doc("Salary Component", component_name)
 	doc.update({
 		"amount_based_on_formula": 1,
 		"formula": ISR_FORMULA,
@@ -72,16 +97,19 @@ def update_isr_salary_component():
 	doc.flags.ignore_permissions = True
 	doc.save()
 
-	print(f"[setup_dgii_isr_2026] Salary Component '{name}' sincronizado con escala DGII 2026.")
+	print(
+		f"[setup_dgii_isr_2026] Salary Component '{component_name}' "
+		"sincronizado con escala DGII 2026."
+	)
 
 
-def update_salary_structure_isr_row(structure_name):
+def update_salary_structure_isr_rows(structure_name, component_names):
 	if not frappe.db.exists("Salary Structure", structure_name):
 		print(
 			f"[setup_dgii_isr_2026] Salary Structure '{structure_name}' "
 			"no existe; se omite."
 		)
-		return
+		return 0
 
 	row_names = frappe.get_all(
 		"Salary Detail",
@@ -89,7 +117,7 @@ def update_salary_structure_isr_row(structure_name):
 			"parent": structure_name,
 			"parenttype": "Salary Structure",
 			"parentfield": "deductions",
-			"salary_component": "ISR",
+			"salary_component": ["in", component_names],
 		},
 		pluck="name",
 	)
@@ -99,7 +127,7 @@ def update_salary_structure_isr_row(structure_name):
 			f"[setup_dgii_isr_2026] '{structure_name}' no contiene fila ISR; "
 			"se omite."
 		)
-		return
+		return 0
 
 	for row_name in row_names:
 		frappe.db.set_value(
@@ -115,6 +143,7 @@ def update_salary_structure_isr_row(structure_name):
 		)
 
 	print(
-		f"[setup_dgii_isr_2026] Fila ISR sincronizada en Salary Structure "
-		f"'{structure_name}'."
+		f"[setup_dgii_isr_2026] {len(row_names)} fila(s) ISR sincronizada(s) "
+		f"en Salary Structure '{structure_name}'."
 	)
+	return len(row_names)
