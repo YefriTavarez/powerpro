@@ -1,0 +1,97 @@
+{
+ "actions": [],
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "contribution_code",
+  "contribution_name",
+  "base_amount",
+  "rate",
+  "ceiling",
+  "amount",
+  "expense_account",
+  "payable_account",
+  "rule_effective_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "contribution_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "contribution_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Contribution",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "base_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Cotizable Base",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Rate",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ceiling",
+   "fieldtype": "Currency",
+   "label": "Ceiling",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount",
+   "options": "currency",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "expense_account",
+   "fieldtype": "Link",
+   "label": "Expense Account",
+   "options": "Account",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "payable_account",
+   "fieldtype": "Link",
+   "label": "Payable Account",
+   "options": "Account",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "rule_effective_from",
+   "fieldtype": "Date",
+   "label": "Rule Effective From",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "module": "Power Pro",
+ "name": "Employer Contribution Detail",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

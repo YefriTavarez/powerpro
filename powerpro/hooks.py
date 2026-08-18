@@ -228,6 +228,7 @@ doc_events = {
         "validate": [
             "powerpro.controllers.salary_slip.helper.set_dgii_payroll_settings",
             "powerpro.controllers.salary_slip.helper.set_mid_month_start",
+            "powerpro.controllers.salary_slip.helper.validate_employer_contributions",
         ],
     },
     "Timesheet": {
