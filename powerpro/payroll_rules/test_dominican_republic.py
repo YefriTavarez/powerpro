@@ -33,6 +33,20 @@ class DominicanPayrollRulesTest(unittest.TestCase):
         self.assertEqual(calculate_monthly_isr("50000.00", date(2025, 7, 31)), Decimal("2297.25"))
         self.assertEqual(calculate_monthly_isr("71545.00", date(2025, 7, 31)), Decimal("6504.85"))
 
+    def test_isr_regression_for_june_2026_payroll(self):
+        cases = {
+            "47045.00": Decimal("1854.00"),
+            "70567.50": Decimal("6309.35"),
+            "39988.25": Decimal("795.49"),
+            "37636.00": Decimal("442.65"),
+        }
+        for monthly_taxable_income, expected in cases.items():
+            with self.subTest(monthly_taxable_income=monthly_taxable_income):
+                self.assertEqual(
+                    calculate_monthly_isr(monthly_taxable_income, date(2026, 6, 30)),
+                    expected,
+                )
+
     def test_infotep_employer_uses_salary_and_commissions(self):
         self.assertEqual(calculate_infotep_employer("50000.00"), Decimal("500.00"))
         self.assertEqual(calculate_infotep_employer("50000.00", "10000.00"), Decimal("600.00"))
