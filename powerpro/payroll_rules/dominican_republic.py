@@ -3,6 +3,8 @@
 Sources:
 - TSS Resolution 01-2024 and TSS notice dated 2024-02-08.
 - TSS Resolution 01-2025 dated 2025-03-11.
+- TSS User Guide 2024, employer contribution rates and cotizable bases.
+- INFOTEP Law 116-80, Article 24.
 - DGII Contributor Guide 11, Retenciones del ISR, July 2025.
 - DGII official help CA4598, confirming the 2026 scale remains in effect
   until the new statutory brackets begin in fiscal year 2027.
@@ -21,6 +23,14 @@ DGII_ISR_GUIDE_URL = (
     "https://dgii.gov.do/publicacionesOficiales/bibliotecaVirtual/contribuyentes/"
     "retencionesRetribucionesComplementarias/Documents/2-Guia-11-Retenciones%20del%20Impuesto%20Sobre%20la%20Renta.pdf"
 )
+TSS_USER_GUIDE_URL = "https://www.tss.gob.do/assets/guiausuario24b.pdf"
+INFOTEP_LAW_116_80_URL = (
+    "https://www.infotep.gob.do/index.php/marco-legal/category/14-leyes"
+    "?download=19%3Aley116"
+)
+
+INFOTEP_EMPLOYER_RATE = Decimal("0.01")
+DEFAULT_IGC_SRL_RATE = Decimal("0.012")
 
 
 @dataclass(frozen=True)
@@ -126,6 +136,33 @@ def calculate_monthly_isr(monthly_taxable_income, on_date):
         annual_tax = scale.fourth_fixed + (annual - Decimal("867123.01")) * scale.fourth_rate
 
     return (annual_tax / Decimal("12")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+def calculate_infotep_employer(monthly_salary, commissions=0, rate=INFOTEP_EMPLOYER_RATE):
+    """Calculate the monthly employer INFOTEP contribution.
+
+    The normal employer contribution is 1% of salary plus commissions. The
+    separate employee withholding on annual profit sharing is intentionally
+    outside this payroll component.
+    """
+    cotizable = max(_decimal(monthly_salary) + _decimal(commissions), Decimal("0"))
+    return (cotizable * _decimal(rate)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+def calculate_srl_employer(
+    monthly_salary,
+    on_date,
+    commissions=0,
+    statutory_vacation=0,
+    rate=DEFAULT_IGC_SRL_RATE,
+):
+    """Calculate monthly employer SRL subject to the date-effective ceiling."""
+    cotizable = max(
+        _decimal(monthly_salary) + _decimal(commissions) + _decimal(statutory_vacation),
+        Decimal("0"),
+    )
+    capped = min(cotizable, get_tss_rule(on_date).srl_ceiling)
+    return (capped * _decimal(rate)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 def _latest_rule(rules, on_date):

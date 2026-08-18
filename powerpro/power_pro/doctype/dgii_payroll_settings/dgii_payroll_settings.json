@@ -20,7 +20,12 @@
   "health_insurance_rate",
   "dependents_rate",
   "column_break_jdsg",
-  "pension_fund_provider"
+  "pension_fund_provider",
+  "employer_contributions_section",
+  "infotep_employer_rate",
+  "column_break_employer_contributions",
+  "srl_employer_rate",
+  "srl_rate_verified"
  ],
  "fields": [
   {
@@ -105,6 +110,40 @@
    "label": "Monto por Dependiente",
    "non_negative": 1,
    "precision": "2"
+  },
+  {
+   "fieldname": "employer_contributions_section",
+   "fieldtype": "Section Break",
+   "label": "Employer Contributions"
+  },
+  {
+   "default": "1",
+   "description": "Monthly employer INFOTEP percentage. Law 116-80 establishes 1% of salary payroll; commissions are included by the TSS reporting guide.",
+   "fieldname": "infotep_employer_rate",
+   "fieldtype": "Percent",
+   "label": "INFOTEP Employer Rate",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "column_break_employer_contributions",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1.2",
+   "description": "Company-specific SRL percentage. The DEV default reflects the 1.20% rate used in IGC payroll from February 2025 onward and must be reconciled to the production TSS classification.",
+   "fieldname": "srl_employer_rate",
+   "fieldtype": "Percent",
+   "label": "SRL Employer Rate",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "default": "0",
+   "description": "Enable only after reconciling the configured SRL percentage to IGC's current TSS notification or pre-liquidation.",
+   "fieldname": "srl_rate_verified",
+   "fieldtype": "Check",
+   "label": "SRL Rate Verified Against TSS"
   }
  ],
  "index_web_pages_for_search": 1,

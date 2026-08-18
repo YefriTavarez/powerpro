@@ -32,3 +32,4 @@ powerpro.patches.v1.setup_dgii_isr_2026
 powerpro.patches.v1.fix_kraft_multicapa_estucado_item_hierarchy
 powerpro.patches.v1.rename_kraft_multicapa_estucado_items
 powerpro.patches.v1.fix_tss_employer_contribution_rates
+powerpro.patches.v1.setup_igc_employer_contributions

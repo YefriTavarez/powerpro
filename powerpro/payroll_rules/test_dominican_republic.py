@@ -3,7 +3,9 @@ from datetime import date
 from decimal import Decimal
 
 from powerpro.payroll_rules.dominican_republic import (
+    calculate_infotep_employer,
     calculate_monthly_isr,
+    calculate_srl_employer,
     get_isr_scale,
     get_tss_rule,
 )
@@ -30,6 +32,20 @@ class DominicanPayrollRulesTest(unittest.TestCase):
         self.assertEqual(calculate_monthly_isr("34685.00", date(2025, 7, 31)), Decimal("0.00"))
         self.assertEqual(calculate_monthly_isr("50000.00", date(2025, 7, 31)), Decimal("2297.25"))
         self.assertEqual(calculate_monthly_isr("71545.00", date(2025, 7, 31)), Decimal("6504.85"))
+
+    def test_infotep_employer_uses_salary_and_commissions(self):
+        self.assertEqual(calculate_infotep_employer("50000.00"), Decimal("500.00"))
+        self.assertEqual(calculate_infotep_employer("50000.00", "10000.00"), Decimal("600.00"))
+
+    def test_srl_employer_uses_2026_ceiling(self):
+        self.assertEqual(
+            calculate_srl_employer("50000.00", date(2026, 8, 31)),
+            Decimal("600.00"),
+        )
+        self.assertEqual(
+            calculate_srl_employer("150000.00", date(2026, 8, 31)),
+            Decimal("1114.70"),
+        )
 
 
 if __name__ == "__main__":
