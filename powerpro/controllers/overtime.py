@@ -1,0 +1,234 @@
+# Copyright (c) 2026, PowerPro contributors
+# For license information, please see license.txt
+
+"""Read-only reconciliation for approved overtime authorizations."""
+
+from datetime import datetime, time, timedelta
+
+import frappe
+from frappe import _
+from frappe.utils import cint, flt, get_datetime, getdate
+
+from powerpro.payroll_rules.overtime import (
+	REGULAR_DAY,
+	classify_workday,
+	coerce_time,
+	get_shift_window,
+	reconcile_authorized_overtime,
+)
+
+
+WEEKDAY_FIELDS = {
+	0: "custom_trabaja_lunes",
+	1: "custom_trabaja_martes",
+	2: "custom_trabaja_miercoles",
+	3: "custom_trabaja_jueves",
+	4: "custom_trabaja_viernes",
+	5: "custom_trabaja_sabado",
+	6: "custom_trabaja_domingo",
+}
+
+
+@frappe.whitelist()
+def get_reconciliation_preview(authorization):
+	"""Compare approval, schedule, holidays, and punches without saving data."""
+	doc = frappe.get_doc("Overtime Authorization", authorization)
+	if not frappe.has_permission("Overtime Authorization", "read", doc=doc):
+		frappe.throw(
+			_("Not permitted to read Overtime Authorization {0}.").format(doc.name),
+			frappe.PermissionError,
+		)
+	if doc.docstatus != 1:
+		frappe.throw(_("Only an approved Overtime Authorization can be reconciled."))
+
+	result = _reconcile(doc, include_weekly_context=True)
+	result.update({
+		"authorization": doc.name,
+		"read_only": True,
+		"saved_documents": 0,
+		"payroll_connected": False,
+	})
+	return result
+
+
+def _reconcile(doc, *, include_weekly_context):
+	context = _get_context(doc)
+	regular_before = (
+		_get_verified_regular_overtime_before(doc) if include_weekly_context else 0
+	)
+	settings = frappe.get_single("DGII Payroll Settings")
+	configured_cap = flt(settings.max_weekly_extra_hours)
+	expected_hours = flt(settings.weekly_expected_hours)
+	regular_cap = configured_cap or (max(68 - expected_hours, 0) if expected_hours else 24)
+
+	result = reconcile_authorized_overtime(
+		authorization_start=doc.authorization_start,
+		authorization_end=doc.authorization_end,
+		maximum_hours=doc.maximum_hours,
+		checkins=context["checkins"],
+		day_classification=context["classification"],
+		shift_start=context["shift_start"],
+		shift_end=context["shift_end"],
+		approved_regular_overtime_before=regular_before,
+		regular_35_percent_cap=regular_cap,
+		night_start=coerce_time(settings.start_night_hours, time(21, 0)),
+		night_end=coerce_time(settings.end_night_hours, time(7, 0)),
+	)
+	result["warnings"] = [*context["warnings"], *result["warnings"]]
+	result.update({
+		"work_date": str(getdate(doc.work_date)),
+		"shift_type": doc.shift_type,
+		"holiday_list": context["holiday_list"],
+		"holiday_descriptions": context["holiday_descriptions"],
+		"scheduled_shift_start": _iso(context["shift_start"]),
+		"scheduled_shift_end": _iso(context["shift_end"]),
+		"weekly_regular_overtime_before": round(regular_before, 4),
+		"regular_35_percent_weekly_cap": round(regular_cap, 4),
+	})
+	return result
+
+
+def _get_context(doc):
+	context = get_schedule_context(doc.work_date, doc.shift_type, doc.holiday_list)
+	if doc.day_classification and doc.day_classification != context["classification"]:
+		context["warnings"].append(
+			"Approved day classification was "
+			f"{doc.day_classification}; current schedule resolves "
+			f"{context['classification']}."
+		)
+	work_date = getdate(doc.work_date)
+	checkins = _get_checkins(doc.employee, work_date)
+	if not checkins:
+		context["warnings"].append(
+			"No Employee Checkin evidence was found for this work date."
+		)
+	context["checkins"] = checkins
+	return context
+
+
+def get_schedule_context(work_date, shift_type, holiday_list=None):
+	"""Resolve the schedule classification without changing any document."""
+	work_date = getdate(work_date)
+	shift = _get_record_values(
+		"Shift Type",
+		shift_type,
+		[
+			"start_time",
+			"end_time",
+			"holiday_list",
+			"custom_hora_salida_viernes",
+			*WEEKDAY_FIELDS.values(),
+		],
+	)
+	if not shift:
+		frappe.throw(_("Shift Type {0} does not exist.").format(frappe.bold(shift_type)))
+
+	holiday_list = holiday_list or shift.get("holiday_list")
+	holidays = _get_holidays(holiday_list, work_date)
+	has_legal_holiday = any(not row.get("weekly_off") for row in holidays)
+	has_weekly_off = any(row.get("weekly_off") for row in holidays)
+
+	workday_field = WEEKDAY_FIELDS[work_date.weekday()]
+	if workday_field in shift:
+		is_shift_workday = bool(cint(shift.get(workday_field)))
+	else:
+		is_shift_workday = not has_weekly_off
+
+	classification = classify_workday(
+		is_shift_workday=is_shift_workday,
+		has_legal_holiday=has_legal_holiday,
+	)
+	shift_start, shift_end = get_shift_window(
+		work_date,
+		shift.get("start_time"),
+		shift.get("end_time"),
+		shift.get("custom_hora_salida_viernes"),
+	)
+	warnings = []
+	if not holiday_list:
+		warnings.append("No Holiday List could be resolved for this authorization.")
+
+	return {
+		"classification": classification,
+		"shift_start": shift_start,
+		"shift_end": shift_end,
+		"holiday_list": holiday_list,
+		"holiday_descriptions": [row.get("description") for row in holidays if row.get("description")],
+		"warnings": warnings,
+	}
+
+
+def _get_verified_regular_overtime_before(doc):
+	work_date = getdate(doc.work_date)
+	week_start = work_date - timedelta(days=work_date.weekday())
+	week_end = week_start + timedelta(days=6)
+	names = frappe.get_all(
+		"Overtime Authorization",
+		filters={
+			"employee": doc.employee,
+			"docstatus": 1,
+			"work_date": ["between", [week_start, week_end]],
+			"authorization_start": ["<", doc.authorization_start],
+		},
+		pluck="name",
+		order_by="authorization_start asc",
+	)
+	total = 0.0
+	for name in names:
+		if name == doc.name:
+			continue
+		previous = frappe.get_doc("Overtime Authorization", name)
+		context = _get_context(previous)
+		if context["classification"] != REGULAR_DAY:
+			continue
+		result = _reconcile(previous, include_weekly_context=False)
+		total += flt(result["verified_hours"])
+	return total
+
+
+def _get_record_values(doctype, name, requested_fields):
+	if not name:
+		return None
+	meta = frappe.get_meta(doctype)
+	fields = [fieldname for fieldname in requested_fields if meta.has_field(fieldname)]
+	if not fields:
+		return frappe._dict()
+	return frappe.db.get_value(doctype, name, fields, as_dict=True)
+
+
+def _get_holidays(holiday_list, work_date):
+	if not holiday_list:
+		return []
+	meta = frappe.get_meta("Holiday")
+	fields = ["description"]
+	if meta.has_field("weekly_off"):
+		fields.append("weekly_off")
+	rows = frappe.get_all(
+		"Holiday",
+		filters={"parent": holiday_list, "holiday_date": work_date},
+		fields=fields,
+		order_by="idx asc",
+	)
+	for row in rows:
+		row["weekly_off"] = bool(cint(row.get("weekly_off")))
+	return rows
+
+
+def _get_checkins(employee, work_date):
+	meta = frappe.get_meta("Employee Checkin")
+	fields = [fieldname for fieldname in ("time", "log_type", "accion", "shift") if meta.has_field(fieldname)]
+	window_start = datetime.combine(work_date, time.min)
+	window_end = datetime.combine(work_date, time.min) + timedelta(days=2)
+	return frappe.get_all(
+		"Employee Checkin",
+		filters={
+			"employee": employee,
+			"time": ["between", [window_start, window_end]],
+		},
+		fields=fields,
+		order_by="time asc",
+	)
+
+
+def _iso(value):
+	return get_datetime(value).isoformat() if value else None

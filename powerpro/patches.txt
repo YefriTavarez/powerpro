@@ -35,3 +35,4 @@ powerpro.patches.v1.fix_tss_employer_contribution_rates
 powerpro.patches.v1.setup_igc_employer_contributions
 powerpro.patches.v1.setup_dedicated_employer_contribution_journal
 powerpro.patches.v1.fix_dgii_isr_component_mapping_2026
+powerpro.patches.v1.setup_overtime_authorization

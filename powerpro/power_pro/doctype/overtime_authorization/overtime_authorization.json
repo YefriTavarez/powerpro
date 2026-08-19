@@ -1,0 +1,331 @@
+{
+ "actions": [],
+ "autoname": "OT-AUTH-.YYYY.-.#####",
+ "creation": "2026-08-19 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee_details_section",
+  "employee",
+  "employee_name",
+  "company",
+  "employee_details_column",
+  "department",
+  "designation",
+  "schedule_section",
+  "work_date",
+  "shift_assignment",
+  "shift_type",
+  "holiday_list",
+  "day_classification",
+  "legal_holiday_description",
+  "schedule_column",
+  "authorization_start",
+  "authorization_end",
+  "maximum_hours",
+  "authorization_section",
+  "reason",
+  "planned_settlement",
+  "authorization_column",
+  "requested_by",
+  "approver",
+  "approval_section",
+  "status",
+  "approved_by",
+  "approved_on",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee_details_section",
+   "fieldtype": "Section Break",
+   "label": "Employee"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "employee_details_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "schedule_section",
+   "fieldtype": "Section Break",
+   "label": "Approved Window"
+  },
+  {
+   "fieldname": "work_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Work Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "shift_assignment",
+   "fieldtype": "Link",
+   "label": "Resolved Shift Assignment",
+   "options": "Shift Assignment",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.default_shift",
+   "fieldname": "shift_type",
+   "fieldtype": "Link",
+   "label": "Shift Type",
+   "options": "Shift Type",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "holiday_list",
+   "fieldtype": "Link",
+   "label": "Resolved Holiday List",
+   "options": "Holiday List",
+   "read_only": 1
+  },
+  {
+   "fieldname": "day_classification",
+   "fieldtype": "Select",
+   "label": "Day Classification",
+   "options": "Regular Workday\nLegal Holiday\nWeekly Rest\nLegal Holiday on Weekly Rest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "legal_holiday_description",
+   "fieldtype": "Small Text",
+   "label": "Holiday Description",
+   "read_only": 1
+  },
+  {
+   "fieldname": "schedule_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "authorization_start",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Authorization Start",
+   "reqd": 1
+  },
+  {
+   "fieldname": "authorization_end",
+   "fieldtype": "Datetime",
+   "label": "Authorization End",
+   "reqd": 1
+  },
+  {
+   "fieldname": "maximum_hours",
+   "fieldtype": "Float",
+   "label": "Maximum Authorized Hours",
+   "non_negative": 1,
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "fieldname": "authorization_section",
+   "fieldtype": "Section Break",
+   "label": "Authorization"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Business Reason",
+   "reqd": 1
+  },
+  {
+   "default": "Cash",
+   "description": "Operational preference only. Payroll or compensatory leave is not created by this Phase 1 record.",
+   "fieldname": "planned_settlement",
+   "fieldtype": "Select",
+   "label": "Planned Settlement",
+   "options": "Cash\nCompensatory Rest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "authorization_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approver",
+   "fieldtype": "Link",
+   "label": "Approver",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approval_section",
+   "fieldtype": "Section Break",
+   "label": "Approval Audit"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Draft\nApproved\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_on",
+   "fieldtype": "Datetime",
+   "label": "Approved On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Overtime Authorization",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-08-19 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Power Pro",
+ "name": "Overtime Authorization",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Manufacturing Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "employee,employee_name,reason",
+ "show_name_in_global_search": 1,
+ "sort_field": "work_date",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Orange",
+   "title": "Draft"
+  },
+  {
+   "color": "Green",
+   "title": "Approved"
+  },
+  {
+   "color": "Red",
+   "title": "Cancelled"
+  }
+ ],
+ "title_field": "employee_name",
+ "track_changes": 1
+}
