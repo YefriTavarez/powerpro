@@ -201,3 +201,5 @@
 "Authorization End must be after Authorization Start.","El fin autorizado debe ser posterior al inicio autorizado."
 "Work Date must match the date of Authorization Start.","La fecha de trabajo debe coincidir con la fecha del inicio autorizado."
 "Maximum Authorized Hours must be greater than zero.","El máximo de horas autorizadas debe ser mayor que cero."
+"Holiday List {0} does not cover Work Date {1}.","La lista de días feriados {0} no cubre la fecha de trabajo {1}."
+"Not set","No configurada"

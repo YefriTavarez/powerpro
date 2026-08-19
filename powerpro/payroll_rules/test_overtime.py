@@ -20,6 +20,7 @@ REGULAR_DAY = overtime.REGULAR_DAY
 WEEKLY_REST = overtime.WEEKLY_REST
 classify_workday = overtime.classify_workday
 get_shift_window = overtime.get_shift_window
+holiday_list_covers = overtime.holiday_list_covers
 reconcile_authorized_overtime = overtime.reconcile_authorized_overtime
 
 
@@ -28,6 +29,11 @@ def dt(value):
 
 
 class OvertimeRulesTest(unittest.TestCase):
+    def test_holiday_list_must_cover_work_date(self):
+        self.assertTrue(holiday_list_covers("2026-08-19", "2026-01-01", "2026-12-31"))
+        self.assertFalse(holiday_list_covers("2026-08-19", "2025-01-01", "2025-12-31"))
+        self.assertFalse(holiday_list_covers("2026-08-19", None, None))
+
     def test_friday_shift_uses_custom_end_time(self):
         start, end = get_shift_window(
             "2026-08-21",

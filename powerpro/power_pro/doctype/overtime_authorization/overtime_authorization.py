@@ -147,6 +147,13 @@ class OvertimeAuthorization(Document):
 		context = get_schedule_context(
 			self.work_date, self.shift_type, self.holiday_list
 		)
+		if not context["holiday_list_covers_work_date"]:
+			frappe.throw(
+				_("Holiday List {0} does not cover Work Date {1}.").format(
+					frappe.bold(self.holiday_list or _("Not set")),
+					frappe.bold(self.work_date),
+				)
+			)
 		self.day_classification = context["classification"]
 		self.legal_holiday_description = "; ".join(
 			context["holiday_descriptions"]

@@ -14,6 +14,7 @@ from powerpro.payroll_rules.overtime import (
 	classify_workday,
 	coerce_time,
 	get_shift_window,
+	holiday_list_covers,
 	reconcile_authorized_overtime,
 )
 
@@ -124,6 +125,7 @@ def get_schedule_context(work_date, shift_type, holiday_list=None):
 		frappe.throw(_("Shift Type {0} does not exist.").format(frappe.bold(shift_type)))
 
 	holiday_list = holiday_list or shift.get("holiday_list")
+	holiday_list_coverage = _get_holiday_list_coverage(holiday_list, work_date)
 	holidays = _get_holidays(holiday_list, work_date)
 	has_legal_holiday = any(not row.get("weekly_off") for row in holidays)
 	has_weekly_off = any(row.get("weekly_off") for row in holidays)
@@ -147,14 +149,39 @@ def get_schedule_context(work_date, shift_type, holiday_list=None):
 	warnings = []
 	if not holiday_list:
 		warnings.append("No Holiday List could be resolved for this authorization.")
+	elif not holiday_list_coverage["covers_work_date"]:
+		warnings.append(
+			f"Holiday List {holiday_list} does not cover work date {work_date}."
+		)
 
 	return {
 		"classification": classification,
 		"shift_start": shift_start,
 		"shift_end": shift_end,
 		"holiday_list": holiday_list,
+		"holiday_list_from_date": holiday_list_coverage["from_date"],
+		"holiday_list_to_date": holiday_list_coverage["to_date"],
+		"holiday_list_covers_work_date": holiday_list_coverage["covers_work_date"],
 		"holiday_descriptions": [row.get("description") for row in holidays if row.get("description")],
 		"warnings": warnings,
+	}
+
+
+def _get_holiday_list_coverage(holiday_list, work_date):
+	if not holiday_list:
+		return {"from_date": None, "to_date": None, "covers_work_date": False}
+	values = frappe.db.get_value(
+		"Holiday List", holiday_list, ["from_date", "to_date"], as_dict=True
+	)
+	if not values:
+		return {"from_date": None, "to_date": None, "covers_work_date": False}
+	from_date = getdate(values.from_date) if values.from_date else None
+	to_date = getdate(values.to_date) if values.to_date else None
+	covers_work_date = holiday_list_covers(work_date, from_date, to_date)
+	return {
+		"from_date": str(from_date) if from_date else None,
+		"to_date": str(to_date) if to_date else None,
+		"covers_work_date": covers_work_date,
 	}
 
 

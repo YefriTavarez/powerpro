@@ -41,6 +41,14 @@ def classify_workday(*, is_shift_workday, has_legal_holiday):
     return REGULAR_DAY
 
 
+def holiday_list_covers(work_date, from_date, to_date):
+    """Return whether a dated Holiday List safely covers the work date."""
+    if not from_date or not to_date:
+        return False
+    work_date = _as_date(work_date)
+    return _as_date(from_date) <= work_date <= _as_date(to_date)
+
+
 def get_shift_window(work_date, start_time, end_time, friday_end_time=None):
     """Build one scheduled shift window, including Friday and overnight rules."""
     if isinstance(work_date, datetime):
@@ -270,6 +278,14 @@ def _as_datetime(value):
     if isinstance(value, datetime):
         return value
     return datetime.fromisoformat(str(value))
+
+
+def _as_date(value):
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    return date.fromisoformat(str(value))
 
 
 def _round_hours(value):

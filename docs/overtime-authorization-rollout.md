@@ -44,6 +44,9 @@ salary rows, create leave, or post accounting entries.
 - The effective submitted Shift Assignment is resolved first; the Employee
   default shift is used only when no assignment covers the work date.
 - Overlapping non-cancelled authorizations for the same employee are rejected.
+- Authorization is blocked unless its resolved Holiday List covers the work
+  date, preventing an expired calendar from silently classifying a holiday as a
+  regular day.
 - A punch is only evidence. Verified time is limited by the approved window and
   maximum hours.
 - On a regular workday, only verified time outside the scheduled shift counts.
