@@ -1,7 +1,7 @@
 # Copyright (c) 2026, PowerPro contributors
 # For license information, please see license.txt
 
-"""Read-only reconciliation for approved overtime authorizations."""
+"""Read-only reconciliation for approved overtime records."""
 
 from datetime import datetime, time, timedelta
 
@@ -53,6 +53,39 @@ def get_reconciliation_preview(authorization):
 	return result
 
 
+@frappe.whitelist()
+def get_retroactive_adjustment_preview(adjustment):
+	"""Preview a historical adjustment or return its immutable submitted snapshot."""
+	doc = frappe.get_doc("Retroactive Overtime Adjustment", adjustment)
+	if not frappe.has_permission("Retroactive Overtime Adjustment", "read", doc=doc):
+		frappe.throw(
+			_("Not permitted to read Retroactive Overtime Adjustment {0}.").format(
+				doc.name
+			),
+			frappe.PermissionError,
+		)
+	if doc.docstatus == 2:
+		frappe.throw(_("A cancelled Retroactive Overtime Adjustment cannot be reconciled."))
+
+	if doc.docstatus == 1:
+		return _submitted_adjustment_snapshot(doc)
+
+	result = reconcile_overtime_document(doc, include_weekly_context=True)
+	result.update({
+		"adjustment": doc.name,
+		"read_only": True,
+		"saved_documents": 0,
+		"payroll_connected": False,
+		"snapshot": False,
+	})
+	return result
+
+
+def reconcile_overtime_document(doc, *, include_weekly_context=True):
+	"""Public app helper used by guarded controllers without saving documents."""
+	return _reconcile(doc, include_weekly_context=include_weekly_context)
+
+
 def _reconcile(doc, *, include_weekly_context):
 	context = _get_context(doc)
 	regular_before = (
@@ -96,6 +129,7 @@ def _reconcile(doc, *, include_weekly_context):
 		"scheduled_shift_end": _iso(context["shift_end"]),
 		"weekly_regular_overtime_before": round(regular_before, 4),
 		"regular_35_percent_weekly_cap": round(regular_cap, 4),
+		"source_checkins": [_serialize_checkin(row) for row in context["checkins"]],
 	})
 	return result
 
@@ -200,27 +234,34 @@ def _get_verified_regular_overtime_before(doc):
 	work_date = getdate(doc.work_date)
 	week_start = work_date - timedelta(days=work_date.weekday())
 	week_end = week_start + timedelta(days=6)
-	names = frappe.get_all(
-		"Overtime Authorization",
-		filters={
-			"employee": doc.employee,
-			"docstatus": 1,
-			"work_date": ["between", [week_start, week_end]],
-			"authorization_start": ["<", doc.authorization_start],
-		},
-		pluck="name",
-		order_by="authorization_start asc",
-	)
 	total = 0.0
-	for name in names:
-		if name == doc.name:
+	for doctype in ("Overtime Authorization", "Retroactive Overtime Adjustment"):
+		if not frappe.db.exists("DocType", doctype):
 			continue
-		previous = frappe.get_doc("Overtime Authorization", name)
-		context = _get_context(previous)
-		if context["classification"] != REGULAR_DAY:
-			continue
-		result = _reconcile(previous, include_weekly_context=False)
-		total += flt(result["verified_hours"])
+		names = frappe.get_all(
+			doctype,
+			filters={
+				"employee": doc.employee,
+				"docstatus": 1,
+				"work_date": ["between", [week_start, week_end]],
+				"authorization_start": ["<", doc.authorization_start],
+			},
+			pluck="name",
+			order_by="authorization_start asc",
+		)
+		for name in names:
+			if doctype == doc.doctype and name == doc.name:
+				continue
+			previous = frappe.get_doc(doctype, name)
+			if doctype == "Retroactive Overtime Adjustment":
+				if previous.day_classification == REGULAR_DAY:
+					total += flt(previous.verified_hours)
+				continue
+			context = _get_context(previous)
+			if context["classification"] != REGULAR_DAY:
+				continue
+			result = _reconcile(previous, include_weekly_context=False)
+			total += flt(result["verified_hours"])
 	return total
 
 
@@ -254,7 +295,11 @@ def _get_holidays(holiday_list, work_date):
 
 def _get_checkins(employee, work_date):
 	meta = frappe.get_meta("Employee Checkin")
-	fields = [fieldname for fieldname in ("time", "log_type", "accion", "shift") if meta.has_field(fieldname)]
+	fields = [
+		fieldname
+		for fieldname in ("name", "time", "log_type", "accion", "shift")
+		if fieldname == "name" or meta.has_field(fieldname)
+	]
 	window_start = datetime.combine(work_date, time.min)
 	window_end = datetime.combine(work_date, time.min) + timedelta(days=2)
 	return frappe.get_all(
@@ -270,3 +315,33 @@ def _get_checkins(employee, work_date):
 
 def _iso(value):
 	return get_datetime(value).isoformat() if value else None
+
+
+def _serialize_checkin(row):
+	return {
+		key: _iso(value) if key == "time" else value
+		for key, value in row.items()
+		if key in {"name", "time", "log_type", "accion", "shift"}
+	}
+
+
+def _submitted_adjustment_snapshot(doc):
+	return {
+		"adjustment": doc.name,
+		"classification": doc.day_classification,
+		"verified_hours": flt(doc.verified_hours),
+		"regular_35_hours": flt(doc.regular_35_hours),
+		"regular_100_hours": flt(doc.regular_100_hours),
+		"holiday_100_hours": flt(doc.holiday_100_hours),
+		"weekly_rest_hours": flt(doc.weekly_rest_hours),
+		"night_hours": flt(doc.night_hours),
+		"warnings": (doc.reconciliation_warnings or "").splitlines(),
+		"intervals": frappe.parse_json(doc.reconciliation_intervals or "[]"),
+		"source_checkins": frappe.parse_json(doc.source_checkins or "[]"),
+		"read_only": True,
+		"saved_documents": 0,
+		"payroll_connected": False,
+		"snapshot": True,
+		"reconciled_by": doc.reconciled_by,
+		"reconciled_on": _iso(doc.reconciled_on),
+	}

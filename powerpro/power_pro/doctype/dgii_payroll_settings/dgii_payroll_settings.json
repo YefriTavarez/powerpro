@@ -28,7 +28,13 @@
   "srl_employer_rate",
   "srl_rate_verified",
   "overtime_authorization_section",
-  "enable_overtime_authorization"
+  "enable_overtime_authorization",
+  "retroactive_overtime_section",
+  "enable_retroactive_overtime_adjustment",
+  "retroactive_overtime_from_date",
+  "retroactive_overtime_column",
+  "retroactive_overtime_to_date",
+  "retroactive_overtime_submission_deadline"
  ],
  "fields": [
   {
@@ -169,6 +175,46 @@
    "fieldname": "enable_overtime_authorization",
    "fieldtype": "Check",
    "label": "Enable Overtime Authorization"
+  },
+  {
+   "fieldname": "retroactive_overtime_section",
+   "fieldtype": "Section Break",
+   "label": "Retroactive Overtime Adjustment"
+  },
+  {
+   "default": "0",
+   "description": "Temporary exception gate for approving already-worked overtime from Employee Checkins. Keep disabled outside the controlled historical cleanup period.",
+   "fieldname": "enable_retroactive_overtime_adjustment",
+   "fieldtype": "Check",
+   "label": "Enable Retroactive Overtime Adjustment"
+  },
+  {
+   "depends_on": "eval:doc.enable_retroactive_overtime_adjustment",
+   "description": "Earliest Work Date that may be submitted as a retroactive adjustment.",
+   "fieldname": "retroactive_overtime_from_date",
+   "fieldtype": "Date",
+   "label": "Retroactive Overtime From Date",
+   "mandatory_depends_on": "eval:doc.enable_retroactive_overtime_adjustment"
+  },
+  {
+   "fieldname": "retroactive_overtime_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.enable_retroactive_overtime_adjustment",
+   "description": "Latest historical Work Date that may be submitted as a retroactive adjustment.",
+   "fieldname": "retroactive_overtime_to_date",
+   "fieldtype": "Date",
+   "label": "Retroactive Overtime To Date",
+   "mandatory_depends_on": "eval:doc.enable_retroactive_overtime_adjustment"
+  },
+  {
+   "depends_on": "eval:doc.enable_retroactive_overtime_adjustment",
+   "description": "Last calendar date on which an approver may submit a historical adjustment. After this date, the exception path closes automatically.",
+   "fieldname": "retroactive_overtime_submission_deadline",
+   "fieldtype": "Date",
+   "label": "Retroactive Overtime Submission Deadline",
+   "mandatory_depends_on": "eval:doc.enable_retroactive_overtime_adjustment"
   }
  ],
  "index_web_pages_for_search": 1,
