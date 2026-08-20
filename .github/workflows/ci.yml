@@ -96,6 +96,8 @@ jobs:
           bench new-site --db-root-password root --admin-password admin test_site
           bench --site test_site install-app erpnext
           bench --site test_site install-app hrms
+          bench --site test_site execute erpnext.setup.utils.before_tests
+          bench --site test_site execute hrms.tests.test_utils.before_tests
           bench --site test_site install-app powerpro
           bench build
         env:
@@ -105,8 +107,6 @@ jobs:
         working-directory: /home/runner/frappe-bench
         run: |
           bench --site test_site set-config allow_tests true
-          bench --site test_site execute erpnext.setup.utils.before_tests
-          bench --site test_site execute hrms.tests.test_utils.before_tests
           bench --site test_site run-tests --app powerpro
         env:
           TYPE: server
