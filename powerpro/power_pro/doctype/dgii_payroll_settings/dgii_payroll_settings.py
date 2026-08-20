@@ -16,6 +16,7 @@ class DGIIPayrollSettings(Document):
 
 		dependents_rate: DF.Currency
 		end_night_hours: DF.Time | None
+		enable_overtime_authorization: DF.Check
 		extra_hours_rate: DF.Percent
 		extraordinary_hours_rate: DF.Percent
 		health_insurance_rate: DF.Percent

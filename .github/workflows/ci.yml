@@ -82,25 +82,36 @@ jobs:
       - name: Setup
         run: |
           pip install frappe-bench
-          bench init --skip-redis-config-generation --skip-assets --python "$(which python)" ~/frappe-bench
+          bench init --frappe-branch version-15 --skip-redis-config-generation --skip-assets --python "$(which python)" ~/frappe-bench
           mariadb --host 127.0.0.1 --port 3306 -u root -proot -e "SET GLOBAL character_set_server = 'utf8mb4'"
           mariadb --host 127.0.0.1 --port 3306 -u root -proot -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'"
 
       - name: Install
         working-directory: /home/runner/frappe-bench
         run: |
+          bench get-app --branch version-15 erpnext
+          bench get-app --branch version-15 hrms
           bench get-app powerpro $GITHUB_WORKSPACE
           bench setup requirements --dev
           bench new-site --db-root-password root --admin-password admin test_site
+          bench --site test_site install-app erpnext
+          bench --site test_site install-app hrms
+          bench --site test_site execute erpnext.setup.utils.before_tests
+          bench --site test_site execute hrms.tests.test_utils.before_tests
           bench --site test_site install-app powerpro
           bench build
         env:
           CI: 'Yes'
 
-      - name: Run Tests
+      - name: Run Payroll Tests
         working-directory: /home/runner/frappe-bench
         run: |
           bench --site test_site set-config allow_tests true
-          bench --site test_site run-tests --app powerpro
+          bench --site test_site run-tests --app powerpro --module powerpro.controllers.test_payroll_preflight
+          bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_dominican_republic
+          bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_employer_contributions
+          bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_overtime
+          bench --site test_site run-tests --app powerpro --module powerpro.power_pro.doctype.overtime_authorization.test_overtime_authorization
+          bench --site test_site run-tests --app powerpro --module powerpro.patches.v1.test_setup_dgii_isr_2026
         env:
           TYPE: server

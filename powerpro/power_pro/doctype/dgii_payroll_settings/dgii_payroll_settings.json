@@ -26,7 +26,9 @@
   "infotep_employer_rate",
   "column_break_employer_contributions",
   "srl_employer_rate",
-  "srl_rate_verified"
+  "srl_rate_verified",
+  "overtime_authorization_section",
+  "enable_overtime_authorization"
  ],
  "fields": [
   {
@@ -94,6 +96,7 @@
   },
   {
    "default": "0",
+   "description": "Total weekly-hours threshold at which overtime changes from +35% to +100%. Example: 68 with 44 expected hours permits 24 hours at +35%.",
    "fieldname": "max_weekly_extra_hours",
    "fieldtype": "Float",
    "label": "Max Weekly Extra Hours"
@@ -154,6 +157,18 @@
    "fieldname": "srl_rate_verified",
    "fieldtype": "Check",
    "label": "SRL Rate Verified Against TSS"
+  },
+  {
+   "fieldname": "overtime_authorization_section",
+   "fieldtype": "Section Break",
+   "label": "Overtime Authorization"
+  },
+  {
+   "default": "0",
+   "description": "Feature gate for pre-approved overtime records and read-only punch reconciliation. It does not feed Salary Slips, Additional Salary, leave, or accounting entries.",
+   "fieldname": "enable_overtime_authorization",
+   "fieldtype": "Check",
+   "label": "Enable Overtime Authorization"
   }
  ],
  "index_web_pages_for_search": 1,
