@@ -42,6 +42,11 @@ salary rows, create leave, or post accounting entries.
 ## Rules enforced in Phase 1
 
 - Only active employees explicitly marked `Overtime Eligible` may be selected.
+- The Employee's configured `Overtime Approver` is copied server-side on every
+  validation. Client-supplied approver values are ignored, and only that exact
+  assigned user may submit the authorization.
+- `Requested By` is restored from the immutable document owner on every
+  validation so an editable draft cannot rewrite its requester audit.
 - Submission must occur before the authorized start time; retroactive approval
   is rejected.
 - The start, end, reason, maximum hours, shift, requester, approver, and approval

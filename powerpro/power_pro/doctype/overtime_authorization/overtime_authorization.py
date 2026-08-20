@@ -7,12 +7,27 @@ from frappe.model.document import Document
 from frappe.utils import flt, get_datetime, getdate, now_datetime
 
 
+def apply_employee_approver_snapshot(authorization, employee):
+	"""Make the Employee assignment authoritative over any client-supplied value."""
+	authorization.approver = employee.overtime_approver
+
+
+def is_assigned_approver(assigned_approver, acting_user):
+	return bool(assigned_approver) and assigned_approver == acting_user
+
+
+def apply_requester_snapshot(authorization, acting_user):
+	"""Keep the immutable document owner authoritative for the request audit."""
+	authorization.requested_by = authorization.owner or acting_user
+
+
 class OvertimeAuthorization(Document):
 	def before_insert(self):
-		self.requested_by = frappe.session.user
+		apply_requester_snapshot(self, frappe.session.user)
 
 	def validate(self):
 		self._validate_feature_flag()
+		apply_requester_snapshot(self, frappe.session.user)
 		if not self.employee or not self.work_date:
 			frappe.throw(_("Employee and Work Date are required."))
 		self._set_employee_snapshot()
@@ -30,8 +45,7 @@ class OvertimeAuthorization(Document):
 				title=_("Retroactive approval is not allowed"),
 			)
 
-		roles = set(frappe.get_roles())
-		if self.approver and self.approver != frappe.session.user and "System Manager" not in roles:
+		if not is_assigned_approver(self.approver, frappe.session.user):
 			frappe.throw(
 				_("Only the assigned approver {0} may submit this authorization.").format(
 					frappe.bold(self.approver)
@@ -86,7 +100,7 @@ class OvertimeAuthorization(Document):
 		self.shift_assignment, self.shift_type = self._resolve_shift(
 			employee.default_shift
 		)
-		self.approver = self.approver or employee.overtime_approver
+		apply_employee_approver_snapshot(self, employee)
 		self._employee_holiday_list = employee.holiday_list
 		if not self.shift_type:
 			frappe.throw(_("Employee {0} has no Shift Type.").format(frappe.bold(self.employee)))

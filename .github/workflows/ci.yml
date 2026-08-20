@@ -111,6 +111,7 @@ jobs:
           bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_dominican_republic
           bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_employer_contributions
           bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_overtime
+          bench --site test_site run-tests --app powerpro --module powerpro.power_pro.doctype.overtime_authorization.test_overtime_authorization
           bench --site test_site run-tests --app powerpro --module powerpro.patches.v1.test_setup_dgii_isr_2026
         env:
           TYPE: server
