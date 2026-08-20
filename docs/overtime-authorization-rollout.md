@@ -7,6 +7,11 @@ with the employee's shift, Holiday List, and Employee Checkin evidence. This
 first phase is intentionally disconnected from Salary Slips, Additional Salary,
 Compensatory Leave, and accounting entries.
 
+`Planned Settlement` records management's intent only. In Phase 1, an operator
+must still perform the reviewed payroll or compensatory-rest action separately;
+the authorization preview never creates money, leave, attendance, or ledger
+entries. Production users must not treat the preview itself as settlement.
+
 ## Before state
 
 - Employee Checkin captured attendance evidence, but a late punch could not
@@ -55,8 +60,9 @@ salary rows, create leave, or post accounting entries.
 - Legal-holiday work is classified once at +100%, including a legal holiday
   that coincides with weekly rest; premiums are not stacked.
 - Ordinary weekly-rest work remains a separate settlement category.
-- Regular overtime is split between +35% and +100% using the configured weekly
-  extra-hours threshold (or 68 minus expected weekly hours).
+- Regular overtime is split between +35% and +100% using the configured total
+  weekly-hours threshold. With 44 expected hours and a threshold of 68, the
+  +35% band is 24 hours; verified regular overtime above that band is +100%.
 - Night hours inside verified overtime are reported separately.
 
 ## DEV validation checklist
@@ -108,14 +114,54 @@ not delete the DocType or custom fields as a routine rollback.
 
 Do not activate this in production until all DEV checklist items pass. Then:
 
-1. Deploy the exact DEV-validated commit through Frappe Cloud.
-2. Confirm the production flag remains off after migration.
-3. Apply the approved employee/approver list with a before/after record for each
+1. Require a pull request against `develop` with green CI and record its exact
+   merge commit.
+2. Deploy that exact merge commit through Frappe Cloud using the site's normal
+   deployment and migration workflow; do not run patches or migrations again
+   manually after a successful deployment.
+3. Confirm the production flag remains off after migration and independently
+   read back the DocType, Employee custom fields, patch log, and zero-record
+   starting state.
+4. Apply the approved employee/approver list with a before/after record for each
    employee; do not bulk-enable all active employees.
-4. Enable the feature and run a one-operator pilot.
-5. Independently read back the authorization and preview results.
-6. Leave payroll, leave, and accounting integration off until a later phase has
+5. Enable the feature and run a one-operator pilot.
+6. Independently read back the authorization and preview results.
+7. Leave payroll, leave, and accounting integration off until a later phase has
    its own DEV-tested, rollback-ready change set.
+
+### Production go/no-go checks
+
+Before deployment:
+
+- The feature branch must contain no uncommitted files, have a reviewed PR, and
+  have green CI against Frappe, ERPNext, and HRMS version 15.
+- DEV must run the exact proposed commit and pass the pure calculation suite,
+  metadata/readback checks, authorization controller checks, and read-only
+  reconciliation evidence.
+- `Weekly Expected Hours` must be positive, and `Max Weekly Extra Hours` must be
+  the larger total weekly-hours threshold. IGC uses 44 and 68, producing a
+  24-hour +35% band.
+- Every pilot employee must have an active Shift Type and a Holiday List that
+  covers the authorization date. Production's Shift Type values are the source
+  of truth when DEV lacks optional weekday/Friday custom fields.
+- The selected approver must be enabled and hold HR Manager, Manufacturing
+  Manager, or System Manager.
+
+After deployment but before enablement:
+
+- Confirm Frappe Cloud reports a successful deployment of the exact merge
+  commit.
+- Confirm `powerpro.patches.v1.setup_overtime_authorization` appears once in
+  Patch Log.
+- Confirm the feature flag is false, eligible-employee count is zero, and
+  Overtime Authorization count is zero.
+- Confirm no new Salary Slip, Additional Salary, Attendance, leave, Journal
+  Entry, or Payroll Entry was created by deployment.
+
+No-go conditions include failed CI, a failed migration, missing/expired Holiday
+List coverage, an invalid 44/68 threshold relationship, an unexpected existing
+authorization, or any payroll/leave/accounting mutation during metadata
+deployment.
 
 ## Change-log template
 

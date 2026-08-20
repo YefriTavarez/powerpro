@@ -20,6 +20,7 @@ REGULAR_DAY = overtime.REGULAR_DAY
 WEEKLY_REST = overtime.WEEKLY_REST
 classify_workday = overtime.classify_workday
 get_shift_window = overtime.get_shift_window
+get_regular_35_percent_cap = overtime.get_regular_35_percent_cap
 holiday_list_covers = overtime.holiday_list_covers
 reconcile_authorized_overtime = overtime.reconcile_authorized_overtime
 
@@ -29,6 +30,12 @@ def dt(value):
 
 
 class OvertimeRulesTest(unittest.TestCase):
+    def test_weekly_total_threshold_is_converted_to_overtime_band_cap(self):
+        self.assertEqual(get_regular_35_percent_cap(44, 68), 24)
+        self.assertEqual(get_regular_35_percent_cap(40, 60), 20)
+        with self.assertRaises(ValueError):
+            get_regular_35_percent_cap(44, 44)
+
     def test_holiday_list_must_cover_work_date(self):
         self.assertTrue(holiday_list_covers("2026-08-19", "2026-01-01", "2026-12-31"))
         self.assertFalse(holiday_list_covers("2026-08-19", "2025-01-01", "2025-12-31"))

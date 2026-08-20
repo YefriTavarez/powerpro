@@ -197,6 +197,7 @@
 "Employee and Work Date are required.","El empleado y la fecha de trabajo son obligatorios."
 "Authorization Start and Authorization End are required.","El inicio y el fin autorizados son obligatorios."
 "Only active employees can receive overtime authorization.","Solo los empleados activos pueden recibir autorización de horas extra."
+"Max Weekly Extra Hours must be greater than Weekly Expected Hours before overtime can be reconciled.","El umbral máximo de horas semanales debe ser mayor que las horas semanales esperadas antes de conciliar las horas extra."
 "Employee {0} has no Overtime Approver configured.","El empleado {0} no tiene un aprobador de horas extra configurado."
 "Authorization End must be after Authorization Start.","El fin autorizado debe ser posterior al inicio autorizado."
 "Work Date must match the date of Authorization Start.","La fecha de trabajo debe coincidir con la fecha del inicio autorizado."

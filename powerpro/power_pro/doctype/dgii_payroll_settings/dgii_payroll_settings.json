@@ -96,6 +96,7 @@
   },
   {
    "default": "0",
+   "description": "Total weekly-hours threshold at which overtime changes from +35% to +100%. Example: 68 with 44 expected hours permits 24 hours at +35%.",
    "fieldname": "max_weekly_extra_hours",
    "fieldtype": "Float",
    "label": "Max Weekly Extra Hours"

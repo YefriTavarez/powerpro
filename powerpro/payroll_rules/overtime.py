@@ -49,6 +49,22 @@ def holiday_list_covers(work_date, from_date, to_date):
     return _as_date(from_date) <= work_date <= _as_date(to_date)
 
 
+def get_regular_35_percent_cap(weekly_expected_hours, weekly_total_threshold):
+    """Return ordinary overtime hours available before the +100% band.
+
+    DGII Payroll Settings stores the total weekly-hours threshold at which
+    extraordinary overtime begins. For example, a 44-hour workweek and a
+    68-hour threshold permit 24 hours in the +35% band.
+    """
+    expected = float(weekly_expected_hours or 0)
+    threshold = float(weekly_total_threshold or 0)
+    if expected <= 0 or threshold <= expected:
+        raise ValueError(
+            "Weekly total threshold must be greater than weekly expected hours"
+        )
+    return threshold - expected
+
+
 def get_shift_window(work_date, start_time, end_time, friday_end_time=None):
     """Build one scheduled shift window, including Friday and overnight rules."""
     if isinstance(work_date, datetime):

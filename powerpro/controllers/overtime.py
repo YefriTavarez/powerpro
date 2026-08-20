@@ -13,6 +13,7 @@ from powerpro.payroll_rules.overtime import (
 	REGULAR_DAY,
 	classify_workday,
 	coerce_time,
+	get_regular_35_percent_cap,
 	get_shift_window,
 	holiday_list_covers,
 	reconcile_authorized_overtime,
@@ -58,9 +59,19 @@ def _reconcile(doc, *, include_weekly_context):
 		_get_verified_regular_overtime_before(doc) if include_weekly_context else 0
 	)
 	settings = frappe.get_single("DGII Payroll Settings")
-	configured_cap = flt(settings.max_weekly_extra_hours)
 	expected_hours = flt(settings.weekly_expected_hours)
-	regular_cap = configured_cap or (max(68 - expected_hours, 0) if expected_hours else 24)
+	weekly_total_threshold = flt(settings.max_weekly_extra_hours)
+	try:
+		regular_cap = get_regular_35_percent_cap(
+			expected_hours,
+			weekly_total_threshold,
+		)
+	except ValueError:
+		frappe.throw(
+			_(
+				"Max Weekly Extra Hours must be greater than Weekly Expected Hours before overtime can be reconciled."
+			)
+		)
 
 	result = reconcile_authorized_overtime(
 		authorization_start=doc.authorization_start,
