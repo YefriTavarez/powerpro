@@ -129,6 +129,13 @@ def _reconcile(doc, *, include_weekly_context):
 		"scheduled_shift_end": _iso(context["shift_end"]),
 		"weekly_regular_overtime_before": round(regular_before, 4),
 		"regular_35_percent_weekly_cap": round(regular_cap, 4),
+		"rates": {
+			"regular_overtime_percent": round(flt(settings.extra_hours_rate), 4),
+			"extraordinary_overtime_percent": round(
+				flt(settings.extraordinary_hours_rate), 4
+			),
+			"night_hours_percent": round(flt(settings.night_hours_rate), 4),
+		},
 		"source_checkins": [_serialize_checkin(row) for row in context["checkins"]],
 	})
 	return result
