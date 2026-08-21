@@ -21,12 +21,20 @@ FIELDS = (
 
 
 def preview():
+	settings_meta = frappe.get_meta("DGII Payroll Settings")
 	return {
 		"feature_enabled": bool(
 			frappe.db.get_single_value(
 				"DGII Payroll Settings", "enable_overtime_authorization"
 			)
 		),
+		"retroactive_adjustment_enabled": bool(
+			frappe.db.get_single_value(
+				"DGII Payroll Settings", "enable_retroactive_overtime_adjustment"
+			)
+		)
+		if settings_meta.has_field("enable_retroactive_overtime_adjustment")
+		else False,
 		"employee_fields": {
 			fieldname: bool(
 				frappe.db.exists(
@@ -84,5 +92,11 @@ def disable():
 	frappe.db.set_single_value(
 		"DGII Payroll Settings", "enable_overtime_authorization", 0
 	)
+	if frappe.get_meta("DGII Payroll Settings").has_field(
+		"enable_retroactive_overtime_adjustment"
+	):
+		frappe.db.set_single_value(
+			"DGII Payroll Settings", "enable_retroactive_overtime_adjustment", 0
+		)
 	frappe.clear_cache(doctype="DGII Payroll Settings")
 	print("[setup_overtime_authorization] Feature disabled; records preserved.")

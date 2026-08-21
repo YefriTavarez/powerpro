@@ -1,0 +1,442 @@
+{
+ "actions": [],
+ "autoname": "OT-ADJ-.YYYY.-.#####",
+ "creation": "2026-08-20 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee_details_section",
+  "employee",
+  "employee_name",
+  "company",
+  "employee_details_column",
+  "department",
+  "designation",
+  "historical_window_section",
+  "work_date",
+  "shift_assignment",
+  "shift_type",
+  "holiday_list",
+  "day_classification",
+  "legal_holiday_description",
+  "historical_window_column",
+  "authorization_start",
+  "authorization_end",
+  "maximum_hours",
+  "exception_section",
+  "reason",
+  "exception_justification",
+  "supporting_reference",
+  "planned_settlement",
+  "exception_column",
+  "requested_by",
+  "approver",
+  "reconciliation_section",
+  "verified_hours",
+  "regular_35_hours",
+  "regular_100_hours",
+  "reconciliation_column",
+  "holiday_100_hours",
+  "weekly_rest_hours",
+  "night_hours",
+  "reconciliation_warnings",
+  "reconciliation_intervals",
+  "source_checkins",
+  "reconciled_by",
+  "reconciled_on",
+  "approval_section",
+  "status",
+  "approved_by",
+  "approved_on",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee_details_section",
+   "fieldtype": "Section Break",
+   "label": "Employee"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "employee_details_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "historical_window_section",
+   "fieldtype": "Section Break",
+   "label": "Historical Work Window"
+  },
+  {
+   "fieldname": "work_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Work Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "shift_assignment",
+   "fieldtype": "Link",
+   "label": "Resolved Shift Assignment",
+   "options": "Shift Assignment",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.default_shift",
+   "fieldname": "shift_type",
+   "fieldtype": "Link",
+   "label": "Shift Type",
+   "options": "Shift Type",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "holiday_list",
+   "fieldtype": "Link",
+   "label": "Resolved Holiday List",
+   "options": "Holiday List",
+   "read_only": 1
+  },
+  {
+   "fieldname": "day_classification",
+   "fieldtype": "Select",
+   "label": "Day Classification",
+   "options": "Regular Workday\nLegal Holiday\nWeekly Rest\nLegal Holiday on Weekly Rest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "legal_holiday_description",
+   "fieldtype": "Small Text",
+   "label": "Holiday Description",
+   "read_only": 1
+  },
+  {
+   "fieldname": "historical_window_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "authorization_start",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Reviewed Start",
+   "reqd": 1
+  },
+  {
+   "fieldname": "authorization_end",
+   "fieldtype": "Datetime",
+   "label": "Reviewed End",
+   "reqd": 1
+  },
+  {
+   "fieldname": "maximum_hours",
+   "fieldtype": "Float",
+   "label": "Maximum Adjusted Hours",
+   "non_negative": 1,
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "fieldname": "exception_section",
+   "fieldtype": "Section Break",
+   "label": "Exception Review"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Business Reason",
+   "reqd": 1
+  },
+  {
+   "description": "Explain why pre-approval was unavailable and why management is accepting the historical exception.",
+   "fieldname": "exception_justification",
+   "fieldtype": "Small Text",
+   "label": "Exception Justification",
+   "reqd": 1
+  },
+  {
+   "description": "Optional reference to an email, work order, production incident, or other corroborating record.",
+   "fieldname": "supporting_reference",
+   "fieldtype": "Small Text",
+   "label": "Supporting Reference"
+  },
+  {
+   "default": "Cash",
+   "description": "Operational preference only. Payroll or compensatory leave is not created by this record.",
+   "fieldname": "planned_settlement",
+   "fieldtype": "Select",
+   "label": "Planned Settlement",
+   "options": "Cash\nCompensatory Rest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "exception_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approver",
+   "fieldtype": "Link",
+   "label": "Approver",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reconciliation_section",
+   "fieldtype": "Section Break",
+   "label": "Reconciliation Snapshot"
+  },
+  {
+   "fieldname": "verified_hours",
+   "fieldtype": "Float",
+   "label": "Verified Hours",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "regular_35_hours",
+   "fieldtype": "Float",
+   "label": "Regular Overtime +35%",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "regular_100_hours",
+   "fieldtype": "Float",
+   "label": "Regular Overtime +100%",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reconciliation_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "holiday_100_hours",
+   "fieldtype": "Float",
+   "label": "Legal Holiday +100%",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "weekly_rest_hours",
+   "fieldtype": "Float",
+   "label": "Weekly Rest Hours",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "night_hours",
+   "fieldtype": "Float",
+   "label": "Night Hours",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reconciliation_warnings",
+   "fieldtype": "Small Text",
+   "label": "Reconciliation Warnings",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reconciliation_intervals",
+   "fieldtype": "Code",
+   "label": "Verified Intervals",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_checkins",
+   "fieldtype": "Code",
+   "label": "Source Employee Checkins",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reconciled_by",
+   "fieldtype": "Link",
+   "label": "Reconciled By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reconciled_on",
+   "fieldtype": "Datetime",
+   "label": "Reconciled On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approval_section",
+   "fieldtype": "Section Break",
+   "label": "Approval Audit"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Draft\nApproved\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_on",
+   "fieldtype": "Datetime",
+   "label": "Approved On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Retroactive Overtime Adjustment",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-08-20 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Power Pro",
+ "name": "Retroactive Overtime Adjustment",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Manufacturing Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "employee,employee_name,reason,exception_justification",
+ "show_name_in_global_search": 1,
+ "sort_field": "work_date",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Orange",
+   "title": "Draft"
+  },
+  {
+   "color": "Green",
+   "title": "Approved"
+  },
+  {
+   "color": "Red",
+   "title": "Cancelled"
+  }
+ ],
+ "title_field": "employee_name",
+ "track_changes": 1
+}
