@@ -32,6 +32,7 @@
   "requested_by",
   "approver",
   "reconciliation_section",
+  "draft_reconciliation_preview",
   "verified_hours",
   "regular_35_hours",
   "regular_100_hours",
@@ -233,6 +234,13 @@
    "label": "Reconciliation Snapshot"
   },
   {
+   "depends_on": "eval:doc.docstatus == 0",
+   "fieldname": "draft_reconciliation_preview",
+   "fieldtype": "HTML",
+   "label": "Draft Reconciliation Preview"
+  },
+  {
+   "depends_on": "eval:doc.docstatus > 0",
    "fieldname": "verified_hours",
    "fieldtype": "Float",
    "label": "Verified Hours",
@@ -240,6 +248,7 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval:doc.docstatus > 0",
    "fieldname": "regular_35_hours",
    "fieldtype": "Float",
    "label": "Regular Overtime +35%",
@@ -247,6 +256,7 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval:doc.docstatus > 0",
    "fieldname": "regular_100_hours",
    "fieldtype": "Float",
    "label": "Regular Overtime +100%",
@@ -258,6 +268,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval:doc.docstatus > 0",
    "fieldname": "holiday_100_hours",
    "fieldtype": "Float",
    "label": "Legal Holiday +100%",
@@ -265,6 +276,7 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval:doc.docstatus > 0",
    "fieldname": "weekly_rest_hours",
    "fieldtype": "Float",
    "label": "Weekly Rest Hours",
@@ -272,6 +284,7 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval:doc.docstatus > 0",
    "fieldname": "night_hours",
    "fieldtype": "Float",
    "label": "Night Hours",
@@ -279,12 +292,14 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval:doc.docstatus > 0",
    "fieldname": "reconciliation_warnings",
    "fieldtype": "Small Text",
    "label": "Reconciliation Warnings",
    "read_only": 1
   },
   {
+   "depends_on": "eval:doc.docstatus > 0",
    "fieldname": "reconciliation_intervals",
    "fieldtype": "Code",
    "label": "Verified Intervals",
@@ -292,6 +307,7 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval:doc.docstatus > 0",
    "fieldname": "source_checkins",
    "fieldtype": "Code",
    "label": "Source Employee Checkins",
@@ -299,6 +315,7 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval:doc.docstatus > 0",
    "fieldname": "reconciled_by",
    "fieldtype": "Link",
    "label": "Reconciled By",
@@ -306,6 +323,7 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval:doc.docstatus > 0",
    "fieldname": "reconciled_on",
    "fieldtype": "Datetime",
    "label": "Reconciled On",

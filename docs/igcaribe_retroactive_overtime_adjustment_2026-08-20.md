@@ -128,3 +128,63 @@ business behavior without removing the DocType or its database table.
 - Leaving the temporary gate enabled indefinitely weakens the preapproval
   control. The configured deadline and final manual disablement are mandatory
   rollout controls.
+
+## 2026-08-21 — Draft reconciliation preview fix
+
+### Before state
+
+- A Draft adjustment displayed the submitted-snapshot fields as zero.
+- The supervisor had to open `Overtime > Preview Reconciliation` to see the
+  actual calculated hours.
+- Choosing Cash or Compensatory Rest changed only the operational preference;
+  it did not make the calculated hours visible on the form.
+
+### Change
+
+- Branch: `agent/retroactive-overtime-draft-preview`
+- Base: merged production source `origin/develop` at `dfcaac4`.
+- A saved Draft now loads a read-only reconciliation preview automatically.
+- The preview shows verified hours, configured percentage rates, hour
+  categories, verified intervals, warnings, and the selected settlement note.
+- Calculation-related edits mark the preview stale and instruct the operator
+  to save before relying on a recalculation.
+- The zero-value submitted-snapshot fields are hidden while the document is a
+  Draft. They appear only after submission or cancellation.
+- Submission still performs the authoritative server-side recalculation and
+  stores the immutable snapshot. No Draft calculation is persisted as approval
+  evidence.
+
+### Validation
+
+- JavaScript syntax: passed.
+- Draft-preview renderer smoke test: passed for two hours at the configured
+  +35% rate, Cash settlement, interval rendering, and zero warnings.
+- DocType JSON and Draft/submitted visibility assertions: passed.
+- Spanish translation CSV structure: passed.
+- Pure overtime rules: 14 tests passed.
+- Retroactive policy rules: 3 tests passed.
+- Python compilation and `git diff --check`: passed.
+
+### Production deployment and verification
+
+1. Merge the fix branch after review and deploy it through the normal Frappe
+   Cloud `Deploy and Update` flow so the standard DocType metadata is reloaded.
+2. Do not run tests directly against production.
+3. Open a saved Draft adjustment and verify the preview appears without using
+   the Overtime menu.
+4. Confirm the preview shows current configured rates, calculated hours,
+   intervals, warnings, and the settlement note.
+5. Change a calculation input and confirm the form asks for a save before
+   recalculating.
+6. Submit only after reviewing the preview; verify the same calculation is
+   stored in the submitted snapshot.
+7. Confirm the deployment creates no Salary Slip, Additional Salary, Leave
+   Allocation, Payroll Entry, or Journal Entry.
+
+### Rollback
+
+1. Revert the fix commit and redeploy through the normal Frappe Cloud flow.
+2. Existing submitted adjustment snapshots remain unchanged.
+3. If an immediate operational fallback is needed before redeployment, use the
+   existing `Overtime > Preview Reconciliation` action and keep the retroactive
+   feature gate disabled for new approvals.
