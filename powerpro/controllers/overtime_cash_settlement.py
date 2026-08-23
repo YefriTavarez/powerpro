@@ -169,7 +169,7 @@ def cancel_cash_settlement(adjustment):
 	)
 
 
-def prevent_direct_overtime_salary_cancel(additional_salary, _=None):
+def prevent_direct_overtime_salary_cancel(additional_salary, method=None):
 	"""Keep the adjustment as the authoritative rollback entry point."""
 	if additional_salary.ref_doctype != "Retroactive Overtime Adjustment":
 		return
