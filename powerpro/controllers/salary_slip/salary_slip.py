@@ -13,10 +13,22 @@ from frappe import _
 from frappe.utils import flt
 from hrms.payroll.doctype.salary_slip.salary_slip import SalarySlip
 
+from powerpro.controllers.overtime_cash_settlement import (
+	sync_adjustments_from_salary_slip,
+)
+
 from . import helper
 
 
 class SalarySlip(SalarySlip):
+    def on_submit(self):
+        super().on_submit()
+        sync_adjustments_from_salary_slip(self, paid=True)
+
+    def on_cancel(self):
+        super().on_cancel()
+        sync_adjustments_from_salary_slip(self, paid=False)
+
     # @overrides
     def pull_sal_struct(self):
         from hrms.payroll.doctype.salary_structure.salary_structure import make_salary_slip
