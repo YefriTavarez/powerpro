@@ -117,20 +117,60 @@ submitted assignment `HR-SSA-24-12-00058` (DOP 136.38/hour). A hypothetical
 10.0000 regular +35% hours plus 1.0967 night hours produced DOP 1,841.13 and
 DOP 22.44 respectively, total DOP 1,863.57. No document was inserted or saved.
 
-The prior Francis DEV pilot has no submitted Salary Structure Assignment
-covering 2026-07-15. Cash settlement correctly stops in that situation; the
-existing Compensatory Rest pilot is unaffected.
+Full DEV transaction validation completed on 2026-08-23 against merged cash
+settlement commit `9c01ccd1` plus the cancellation-guard correction described
+below:
 
-The full Frappe transaction test remains a DEV deployment gate. It must prove:
+- Before state: Francis Florentino had no submitted Salary Structure Assignment
+  covering July 2026, so cash settlement correctly stopped without creating a
+  payroll input.
+- Approved test setup: temporary submitted assignment `HR-SSA-26-08-00001`
+  copied the existing `General Quincenal` structure with an explicitly approved
+  test-only monthly base of DOP 22,908.00. The calculated hourly rate was DOP
+  120.16.
+- Exact transaction: same-day adjustment `OT-ADJ-2026-00002` covered 2026-07-20
+  18:00–20:00, used existing Employee Checkins, and was capped at 2.0000 hours.
+- After approval: the immutable result was 2.0000 regular +35% hours and DOP
+  324.43. Submitted Additional Salary `SALADIC-26-08-00001` was created for
+  `Horas Extras 35%` with that exact amount and source link.
+- Payroll inclusion: draft Salary Slip `Sal Slip/None/00001` for 2026-07-16
+  through 2026-07-31 contained base salary DOP 11,454.00 plus the exact DOP
+  324.43 overtime row. Gross pay was DOP 11,778.43.
+- Submission: submitting the Salary Slip changed the adjustment from `Created`
+  to `Paid` and stored the Salary Slip reference.
+- Rollback validation: cancelling the Salary Slip returned the adjustment to
+  `Created` while preserving the submitted Additional Salary. Cancelling the
+  source adjustment then cancelled the linked Additional Salary.
+- Idempotency: a second cash-settlement attempt raised the expected validation
+  error and did not create a duplicate payroll input.
+- Cleanup: the temporary assignment, adjustment, Additional Salary, and Salary
+  Slip are all cancelled. Francis has zero active temporary assignments, zero
+  active 2026-07-20 test adjustments, and zero submitted linked test Additional
+  Salary records.
+- Control record: original `OT-ADJ-2026-00001` remained submitted and unchanged
+  at 2.0000 verified hours, `Approved`, and `Pending` settlement.
+- Scope: production and the Excel workbook were not changed.
 
-1. a valid same-day Cash adjustment creates the expected submitted Additional
-   Salary records;
-2. a regenerated draft Salary Slip includes them;
-3. submitting/cancelling the Salary Slip changes settlement status as designed;
-4. a second settlement attempt is rejected;
-5. a multi-day adjustment is rejected;
-6. the test transaction or test records are rolled back/removed;
-7. no production or Excel records are touched.
+### DEV-discovered direct-cancel guard correction
+
+- Before state: cancelling a linked Additional Salary directly reached the
+  intended hook, but the hook's second parameter was named `_`. Frappe passed
+  the event method into that parameter, shadowing the translation function and
+  raising `TypeError: 'str' object is not callable` instead of a controlled
+  validation message.
+- Exact application action: commit `c260273` renames the unused parameter to
+  `method` and adds a regression test that invokes the hook with
+  `before_cancel`.
+- After state: direct cancellation raises the expected `ValidationError`
+  instructing the operator to cancel the linked Retroactive Overtime Adjustment
+  instead. The linked Additional Salary remains submitted.
+- Validation: 7 controller lifecycle tests and 5 calculation tests passed in
+  the DEV Frappe runtime; Python compilation and `git diff --check` also passed.
+- Review status: correction is published in pull request #37. It must be merged
+  and the resulting merge commit deployed before production rollout.
+- Correction rollback: revert `c260273` and redeploy the prior merged commit
+  `9c01ccd1`. No schema or payroll-record rollback is required for this code-only
+  correction.
 
 ## Production replication
 
