@@ -4,6 +4,7 @@
 frappe.ui.form.on("Retroactive Overtime Adjustment", {
 	refresh(frm) {
 		configure_reconciliation_display(frm);
+		add_cash_settlement_actions(frm);
 
 		if (frm.doc.docstatus === 0) {
 			frm.dashboard.set_headline_alert(
@@ -60,6 +61,34 @@ const SNAPSHOT_FIELDS = [
 	"reconciled_by",
 	"reconciled_on",
 ];
+
+function add_cash_settlement_actions(frm) {
+	if (frm.doc.docstatus !== 1 || frm.doc.planned_settlement !== "Cash") {
+		return;
+	}
+
+	const references = parse_json_list(frm.doc.settlement_references);
+	references.forEach((reference) => {
+		frm.add_custom_button(__("Open {0}", [reference]), () => {
+			frappe.set_route("Form", "Additional Salary", reference);
+		}, __("Cash Settlement"));
+	});
+
+	if (["Created", "Paid"].includes(frm.doc.settlement_status)) {
+		return;
+	}
+	frm.add_custom_button(__("Create Cash Settlement"), () => {
+		frappe.confirm(
+			__("Create and submit the linked Additional Salary earnings now?"),
+			() => frappe.call({
+				method: "powerpro.controllers.overtime_cash_settlement.create_cash_settlement",
+				args: { adjustment: frm.doc.name },
+				freeze: true,
+				freeze_message: __("Creating overtime payroll earnings..."),
+			}).then(() => frm.reload_doc())
+		);
+	}, __("Cash Settlement"));
+}
 
 function configure_reconciliation_display(frm) {
 	const is_draft = frm.doc.docstatus === 0;
@@ -157,7 +186,10 @@ function render_draft_reconciliation_preview(frm, result) {
 		return;
 	}
 
-	const rows = get_reconciliation_rows(result);
+	const rows = [
+		...get_reconciliation_rows(result),
+		...get_cash_settlement_rows(result.cash_settlement),
+	];
 	const body = rows
 		.map(([label, value]) => (
 			`<tr><td>${escape_value(label)}</td>`
@@ -171,7 +203,7 @@ function render_draft_reconciliation_preview(frm, result) {
 		))
 		.join("");
 	const settlement_note = frm.doc.planned_settlement === "Cash"
-		? __("Cash is the planned settlement. This preview does not create a payment or Additional Salary.")
+		? __("Submitting this adjustment will create linked Additional Salary earnings using the displayed calculation.")
 		: __("Compensatory Rest is the planned settlement. This preview does not create leave or a Leave Allocation.");
 
 	wrapper.html(`
@@ -216,6 +248,39 @@ function get_reconciliation_rows(result) {
 	];
 }
 
+function get_cash_settlement_rows(settlement) {
+	if (!settlement) {
+		return [];
+	}
+	const currency = settlement.currency || "DOP";
+	const rows = [
+		[__("Hourly rate"), format_currency(settlement.hourly_rate || 0, currency)],
+	];
+	(settlement.lines || []).forEach((line) => {
+		rows.push([
+			__("{0}: {1} hours", [line.component, format_number(line.hours || 0, null, 4)]),
+			format_currency(line.amount || 0, currency),
+		]);
+	});
+	rows.push([
+		__("Estimated cash settlement"),
+		format_currency(settlement.total_amount || 0, currency),
+	]);
+	return rows;
+}
+
+function parse_json_list(value) {
+	if (!value) {
+		return [];
+	}
+	try {
+		const parsed = typeof value === "string" ? JSON.parse(value) : value;
+		return Array.isArray(parsed) ? parsed : [];
+	} catch (error) {
+		return [];
+	}
+}
+
 function escape_value(value) {
 	return frappe.utils.escape_html(String(value ?? ""));
 }
@@ -232,7 +297,10 @@ function render_warnings(warnings) {
 }
 
 function show_retroactive_reconciliation(result) {
-	const rows = get_reconciliation_rows(result);
+	const rows = [
+		...get_reconciliation_rows(result),
+		...get_cash_settlement_rows(result.cash_settlement),
+	];
 	const body = rows
 		.map(([label, value]) => `<tr><td>${frappe.utils.escape_html(String(label))}</td><td class="text-right">${frappe.utils.escape_html(String(value))}</td></tr>`)
 		.join("");
@@ -244,7 +312,7 @@ function show_retroactive_reconciliation(result) {
 	frappe.msgprint({
 		title: result.snapshot ? __("Reconciliation Snapshot") : __("Read-only Reconciliation Preview"),
 		indicator: result.verified_hours > 0 ? "green" : "orange",
-		message: `${snapshot}<table class="table table-bordered"><tbody>${body}</tbody></table>${warnings}<p class="text-muted">${__("No Salary Slip, Additional Salary, leave, or accounting record was created.")}</p>`,
+		message: `${snapshot}<table class="table table-bordered"><tbody>${body}</tbody></table>${warnings}`,
 		wide: true,
 	});
 }

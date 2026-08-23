@@ -13,6 +13,7 @@ SPEC.loader.exec_module(retroactive)
 
 is_adjustment_date_allowed = retroactive.is_adjustment_date_allowed
 is_completed_historical_window = retroactive.is_completed_historical_window
+is_review_window_on_work_date = retroactive.is_review_window_on_work_date
 is_submission_deadline_open = retroactive.is_submission_deadline_open
 
 
@@ -42,6 +43,40 @@ class RetroactiveOvertimeAdjustmentPolicyTest(unittest.TestCase):
 		self.assertFalse(
 			is_completed_historical_window(
 				"2026-08-20 20:00:00", "2026-08-20 09:00:00"
+			)
+		)
+
+	def test_day_shift_window_cannot_span_multiple_dates(self):
+		self.assertTrue(
+			is_review_window_on_work_date(
+				"2026-08-10",
+				"2026-08-10 16:00:00",
+				"2026-08-10 20:40:11",
+			)
+		)
+		self.assertFalse(
+			is_review_window_on_work_date(
+				"2026-08-10",
+				"2026-08-10 10:47:03",
+				"2026-08-15 10:47:03",
+			)
+		)
+
+	def test_overnight_shift_may_end_only_on_following_date(self):
+		self.assertTrue(
+			is_review_window_on_work_date(
+				"2026-08-10",
+				"2026-08-10 22:00:00",
+				"2026-08-11 06:30:00",
+				allow_overnight=True,
+			)
+		)
+		self.assertFalse(
+			is_review_window_on_work_date(
+				"2026-08-10",
+				"2026-08-10 22:00:00",
+				"2026-08-12 06:30:00",
+				allow_overnight=True,
 			)
 		)
 

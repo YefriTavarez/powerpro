@@ -224,6 +224,9 @@ doc_events = {
     "Salary Structure Assignment": {
         "validate": "powerpro.controllers.salary_structure_assignment.validate",
     },
+    "Additional Salary": {
+        "before_cancel": "powerpro.controllers.overtime_cash_settlement.prevent_direct_overtime_salary_cancel",
+    },
     "Salary Slip": {
         "validate": [
             "powerpro.controllers.salary_slip.helper.set_dgii_payroll_settings",

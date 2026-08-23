@@ -8,9 +8,15 @@ from frappe import _
 from frappe.utils import flt, getdate, now_datetime
 
 from powerpro.controllers.overtime import reconcile_overtime_document
+from powerpro.controllers.overtime_cash_settlement import (
+	before_cancel_adjustment,
+	cancel_cash_settlement,
+	prepare_cash_settlement,
+)
 from powerpro.payroll_rules.retroactive_overtime import (
 	is_adjustment_date_allowed,
 	is_completed_historical_window,
+	is_review_window_on_work_date,
 	is_submission_deadline_open,
 )
 from powerpro.power_pro.doctype.overtime_authorization.overtime_authorization import (
@@ -52,6 +58,25 @@ class RetroactiveOvertimeAdjustment(OvertimeAuthorization):
 
 	def _validate_window(self):
 		super()._validate_window()
+		shift = frappe.db.get_value(
+			"Shift Type", self.shift_type, ["start_time", "end_time"], as_dict=True
+		)
+		allow_overnight = bool(
+			shift and shift.start_time and shift.end_time and shift.end_time <= shift.start_time
+		)
+		if not is_review_window_on_work_date(
+			self.work_date,
+			self.authorization_start,
+			self.authorization_end,
+			allow_overnight=allow_overnight,
+		):
+			frappe.throw(
+				_(
+					"Reviewed Start and Reviewed End must belong to Work Date. "
+					"Only a shift that crosses midnight may end on the following date."
+				),
+				title=_("One work date per adjustment"),
+			)
 		if not is_completed_historical_window(
 			self.authorization_end, now_datetime()
 		):
@@ -139,3 +164,11 @@ class RetroactiveOvertimeAdjustment(OvertimeAuthorization):
 		self.status = "Approved"
 		self.approved_by = frappe.session.user
 		self.approved_on = now_datetime()
+		prepare_cash_settlement(self, result)
+
+	def before_cancel(self):
+		before_cancel_adjustment(self)
+
+	def on_cancel(self):
+		super().on_cancel()
+		cancel_cash_settlement(self)

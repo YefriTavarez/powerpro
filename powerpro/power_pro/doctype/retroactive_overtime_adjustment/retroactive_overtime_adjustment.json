@@ -45,6 +45,17 @@
   "source_checkins",
   "reconciled_by",
   "reconciled_on",
+  "cash_settlement_section",
+  "settlement_status",
+  "settlement_hourly_rate",
+  "settlement_amount",
+  "settlement_currency",
+  "cash_settlement_column",
+  "settlement_salary_slip",
+  "settlement_created_by",
+  "settlement_created_on",
+  "settlement_breakdown",
+  "settlement_references",
   "approval_section",
   "status",
   "approved_by",
@@ -203,7 +214,7 @@
   },
   {
    "default": "Cash",
-   "description": "Operational preference only. Payroll or compensatory leave is not created by this record.",
+   "description": "Approved Cash adjustments create linked Additional Salary earnings. Compensatory Rest remains a separate operational action.",
    "fieldname": "planned_settlement",
    "fieldtype": "Select",
    "label": "Planned Settlement",
@@ -327,6 +338,91 @@
    "fieldname": "reconciled_on",
    "fieldtype": "Datetime",
    "label": "Reconciled On",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.planned_settlement == 'Cash' && doc.docstatus > 0",
+   "fieldname": "cash_settlement_section",
+   "fieldtype": "Section Break",
+   "label": "Cash Settlement"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Pending",
+   "fieldname": "settlement_status",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Settlement Status",
+   "options": "Pending\nCreated\nPaid\nNot Applicable\nCancelled",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_hourly_rate",
+   "fieldtype": "Currency",
+   "label": "Hourly Rate",
+   "options": "settlement_currency",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_amount",
+   "fieldtype": "Currency",
+   "label": "Cash Settlement Amount",
+   "options": "settlement_currency",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_currency",
+   "fieldtype": "Link",
+   "label": "Settlement Currency",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cash_settlement_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_salary_slip",
+   "fieldtype": "Link",
+   "label": "Salary Slip",
+   "options": "Salary Slip",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_created_by",
+   "fieldtype": "Link",
+   "label": "Settlement Created By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_created_on",
+   "fieldtype": "Datetime",
+   "label": "Settlement Created On",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_breakdown",
+   "fieldtype": "Code",
+   "label": "Settlement Calculation",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_references",
+   "fieldtype": "Code",
+   "label": "Additional Salary References",
+   "options": "JSON",
    "read_only": 1
   },
   {

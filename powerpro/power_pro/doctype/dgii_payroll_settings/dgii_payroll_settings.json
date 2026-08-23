@@ -171,7 +171,7 @@
   },
   {
    "default": "0",
-   "description": "Feature gate for pre-approved overtime records and read-only punch reconciliation. It does not feed Salary Slips, Additional Salary, leave, or accounting entries.",
+   "description": "Feature gate for approved overtime records and punch reconciliation. Approved Cash retroactive adjustments create linked Additional Salary earnings; Compensatory Rest remains separate.",
    "fieldname": "enable_overtime_authorization",
    "fieldtype": "Check",
    "label": "Enable Overtime Authorization"

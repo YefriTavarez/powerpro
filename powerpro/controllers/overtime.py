@@ -71,6 +71,17 @@ def get_retroactive_adjustment_preview(adjustment):
 		return _submitted_adjustment_snapshot(doc)
 
 	result = reconcile_overtime_document(doc, include_weekly_context=True)
+	if doc.planned_settlement == "Cash":
+		from powerpro.controllers.overtime_cash_settlement import build_cash_settlement
+
+		result["cash_settlement"] = build_cash_settlement(doc, result)
+		weekly_rest_hours = flt(
+			result["cash_settlement"].get("unsettled_weekly_rest_hours")
+		)
+		if weekly_rest_hours:
+			result["warnings"].append(
+				f"{weekly_rest_hours} ordinary weekly-rest hours require compensatory or manual review and are excluded from automatic cash settlement."
+			)
 	result.update({
 		"adjustment": doc.name,
 		"read_only": True,
@@ -333,6 +344,8 @@ def _serialize_checkin(row):
 
 
 def _submitted_adjustment_snapshot(doc):
+	settlement = frappe.parse_json(doc.get("settlement_breakdown") or "{}")
+	references = frappe.parse_json(doc.get("settlement_references") or "[]")
 	return {
 		"adjustment": doc.name,
 		"classification": doc.day_classification,
@@ -346,9 +359,23 @@ def _submitted_adjustment_snapshot(doc):
 		"intervals": frappe.parse_json(doc.reconciliation_intervals or "[]"),
 		"source_checkins": frappe.parse_json(doc.source_checkins or "[]"),
 		"read_only": True,
-		"saved_documents": 0,
-		"payroll_connected": False,
+		"rates": _get_current_overtime_rates(),
+		"cash_settlement": settlement or None,
+		"settlement_status": doc.get("settlement_status"),
+		"saved_documents": len(references),
+		"payroll_connected": bool(references),
 		"snapshot": True,
 		"reconciled_by": doc.reconciled_by,
 		"reconciled_on": _iso(doc.reconciled_on),
+	}
+
+
+def _get_current_overtime_rates():
+	settings = frappe.get_single("DGII Payroll Settings")
+	return {
+		"regular_overtime_percent": round(flt(settings.extra_hours_rate), 4),
+		"extraordinary_overtime_percent": round(
+			flt(settings.extraordinary_hours_rate), 4
+		),
+		"night_hours_percent": round(flt(settings.night_hours_rate), 4),
 	}
