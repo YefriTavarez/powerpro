@@ -8,6 +8,24 @@ from powerpro.controllers import overtime_cash_settlement as settlement
 
 
 class OvertimeCashSettlementControllerTest(unittest.TestCase):
+	def test_direct_additional_salary_cancel_hook_returns_controlled_validation(self):
+		additional_salary = SimpleNamespace(
+			ref_doctype="Retroactive Overtime Adjustment",
+			ref_docname="OT-ADJ-2026-00001",
+		)
+		with (
+			patch.object(settlement.frappe.db, "get_value", return_value=1),
+			self.assertRaises(frappe.ValidationError) as raised,
+		):
+			settlement.prevent_direct_overtime_salary_cancel(
+				additional_salary, "before_cancel"
+			)
+
+		self.assertIn(
+			"Retroactive Overtime Adjustment",
+			str(raised.exception),
+		)
+
 	def test_paid_adjustment_uses_live_salary_slip_link_as_cancel_guard(self):
 		adjustment = SimpleNamespace(
 			name="OT-ADJ-2026-00001",
