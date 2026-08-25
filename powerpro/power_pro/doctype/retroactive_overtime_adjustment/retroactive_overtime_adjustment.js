@@ -11,6 +11,9 @@ frappe.ui.form.on("Retroactive Overtime Adjustment", {
 				__("Historical overtime is an audited exception and requires existing Employee Checkin evidence."),
 				"orange"
 			);
+			if (frm.is_new()) {
+				set_reviewed_end_from_last_out(frm);
+			}
 			load_draft_reconciliation_preview(frm);
 		}
 
@@ -30,8 +33,14 @@ frappe.ui.form.on("Retroactive Overtime Adjustment", {
 		}
 	},
 
-	employee: mark_reconciliation_preview_stale,
-	work_date: mark_reconciliation_preview_stale,
+	employee(frm) {
+		mark_reconciliation_preview_stale(frm);
+		set_reviewed_end_from_last_out(frm);
+	},
+	work_date(frm) {
+		mark_reconciliation_preview_stale(frm);
+		set_reviewed_end_from_last_out(frm);
+	},
 	authorization_start: mark_reconciliation_preview_stale,
 	authorization_end: mark_reconciliation_preview_stale,
 	maximum_hours: mark_reconciliation_preview_stale,
@@ -47,6 +56,51 @@ frappe.ui.form.on("Retroactive Overtime Adjustment", {
 		}
 	},
 });
+
+function set_reviewed_end_from_last_out(frm) {
+	if (
+		frm.doc.docstatus !== 0
+		|| !frm.doc.employee
+		|| !frm.doc.work_date
+	) {
+		return Promise.resolve(null);
+	}
+
+	const request_id = (frm.__reviewed_end_request_id || 0) + 1;
+	frm.__reviewed_end_request_id = request_id;
+	return frappe.call({
+		method: "powerpro.controllers.overtime.get_retroactive_reviewed_end_default",
+		args: {
+			employee: frm.doc.employee,
+			work_date: frm.doc.work_date,
+		},
+	}).then(({ message }) => {
+		if (request_id !== frm.__reviewed_end_request_id || !message) {
+			return null;
+		}
+		if (!message.reviewed_end) {
+			return frm.set_value("authorization_end", null).then(() => {
+				frappe.show_alert({
+					message: message.warning
+						|| __("No valid OUT check-in was found. Reviewed End was not filled."),
+					indicator: "orange",
+				}, 8);
+				return message;
+			});
+		}
+
+		return frm.set_value("authorization_end", message.reviewed_end).then(() => {
+			const source = message.source_checkin?.name;
+			frappe.show_alert({
+				message: source
+					? __("Reviewed End set from Employee Checkin {0}.", [source])
+					: __("Reviewed End set from the last valid OUT check-in."),
+				indicator: "green",
+			}, 5);
+			return message;
+		});
+	});
+}
 
 const SNAPSHOT_FIELDS = [
 	"verified_hours",

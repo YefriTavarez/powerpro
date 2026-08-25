@@ -299,3 +299,8 @@
 "No submitted Salary Structure Assignment covers {0}.","Ninguna asignación de estructura salarial sometida cubre {0}."
 "Salary Structure Assignment {0} has no valid hourly rate.","La asignación de estructura salarial {0} no tiene una tarifa por hora válida."
 "Salary Component {0} must exist as an enabled Earning.","El componente salarial {0} debe existir como una ganancia habilitada."
+"Not permitted to create a Retroactive Overtime Adjustment.","No tiene permiso para crear un ajuste retroactivo de horas extra."
+"No valid OUT check-in was found after the scheduled shift end for this work date. Reviewed End was not filled.","No se encontró una marcación de salida válida después del fin del turno programado para esta fecha de trabajo. El fin revisado no se completó."
+"No valid OUT check-in was found. Reviewed End was not filled.","No se encontró una marcación de salida válida. El fin revisado no se completó."
+"Reviewed End set from Employee Checkin {0}.","Fin revisado establecido desde la marcación del empleado {0}."
+"Reviewed End set from the last valid OUT check-in.","Fin revisado establecido desde la última marcación de salida válida."
