@@ -188,3 +188,78 @@ business behavior without removing the DocType or its database table.
 3. If an immediate operational fallback is needed before redeployment, use the
    existing `Overtime > Preview Reconciliation` action and keep the retroactive
    feature gate disabled for new approvals.
+
+## 2026-08-25 — Reviewed End from the last valid OUT check-in
+
+### Before state
+
+- A new or amended adjustment could retain an unrelated copied Reviewed End.
+- A daytime record could therefore fail the one-work-date guard before the
+  operator knew which Employee Checkin should close the reviewed window.
+- There was no automatic, evidence-based default for Reviewed End.
+
+### Exact application change
+
+- Branch: `agent/retroactive-overtime-last-out-default`.
+- Base: deployed production source `origin/develop` at `25070cf`.
+- When Employee or Work Date changes, and when a new or amended form opens,
+  the server resolves the employee's effective Shift Assignment and Shift Type.
+- Reviewed End is set to the last valid `OUT` at or after the scheduled shift
+  end that still belongs to that shift occurrence.
+- Day shifts accept only a same-date `OUT` before midnight.
+- Overnight shifts accept a following-date `OUT` before the next occurrence of
+  the shift starts.
+- A populated check-in Shift Type must match the employee's resolved Shift
+  Type. When `accion` is populated, only explicit final-shift actions such as
+  `Fin Jornada` are accepted even if a break row also carries `log_type = OUT`;
+  break and unknown actions are excluded. A plain `log_type = OUT` remains
+  supported when `accion` is absent.
+- If no valid `OUT` exists, Reviewed End is cleared and the operator sees a
+  warning. The system does not invent 23:59:59 or another unworked time.
+- The selection is read-only. It creates no overtime adjustment, Additional
+  Salary, Salary Slip, leave, attendance, accounting, or check-in record.
+
+### Validation
+
+- Ten retroactive policy tests passed, including daytime, overnight,
+  next-shift exclusion, Shift Type mismatch, missing OUT, and legacy
+  `Fin Jornada` cases.
+- Python compilation passed.
+- JavaScript syntax validation passed.
+- Spanish translation CSV parsed with 306 two-column rows and no duplicate
+  source keys.
+- `git diff --check` passed.
+- No DEV or production site data was changed during local validation.
+
+### Production replication
+
+1. Review and merge the implementation branch into `develop`.
+2. Deploy the resulting `develop` commit through the normal Frappe Cloud
+   deployment for `igcaribe-bench`; do not run a separate manual patch or test
+   suite on production.
+3. Read back the deployed PowerPro commit and confirm the site is responsive.
+4. Open a new or amended Retroactive Overtime Adjustment using an existing
+   employee and Work Date with known check-ins.
+5. Verify Reviewed End matches the displayed source Employee Checkin and does
+   not cross to another work date for a daytime shift.
+6. Save and review the reconciliation preview before approval. Reviewed Start
+   and Maximum Adjusted Hours remain operator-controlled and must still form a
+   valid window.
+
+### Rollback
+
+1. Disable Retroactive Overtime Adjustment in DGII Payroll Settings if an
+   immediate operational stop is required.
+2. Revert the implementation commit and redeploy the preceding PowerPro
+   `develop` commit through Frappe Cloud.
+3. Existing adjustments and submitted reconciliation snapshots remain intact;
+   this change performs no data migration or backfill.
+
+### Production risks
+
+- Incorrect Shift Assignments can select the wrong shift boundary; the source
+  check-in identifier is shown so the operator can verify it before saving.
+- Missing or incorrectly typed `OUT` records intentionally leave Reviewed End
+  blank and require attendance correction or manual review.
+- This default does not approve overtime. Existing reconciliation, approver,
+  maximum-hours, overlap, payroll, and settlement controls still apply.

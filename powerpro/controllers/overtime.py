@@ -18,6 +18,9 @@ from powerpro.payroll_rules.overtime import (
 	holiday_list_covers,
 	reconcile_authorized_overtime,
 )
+from powerpro.payroll_rules.retroactive_overtime import (
+	select_last_valid_out_checkin,
+)
 
 
 WEEKDAY_FIELDS = {
@@ -89,6 +92,59 @@ def get_retroactive_adjustment_preview(adjustment):
 		"payroll_connected": False,
 		"snapshot": False,
 	})
+	return result
+
+
+@frappe.whitelist()
+def get_retroactive_reviewed_end_default(employee, work_date):
+	"""Propose Reviewed End from the last valid OUT in the resolved shift."""
+	if not frappe.has_permission(
+		"Retroactive Overtime Adjustment", ptype="create"
+	):
+		frappe.throw(
+			_("Not permitted to create a Retroactive Overtime Adjustment."),
+			frappe.PermissionError,
+		)
+	if not employee or not work_date:
+		return {"reviewed_end": None, "warning": _("Employee and Work Date are required.")}
+
+	probe = frappe.new_doc("Retroactive Overtime Adjustment")
+	probe.employee = employee
+	probe.work_date = getdate(work_date)
+	probe._set_employee_snapshot()
+	probe._set_holiday_list()
+
+	context = get_schedule_context(
+		probe.work_date,
+		probe.shift_type,
+		probe.holiday_list,
+	)
+	checkins = _get_checkins(probe.employee, getdate(probe.work_date))
+	selected = select_last_valid_out_checkin(
+		checkins,
+		context["shift_start"],
+		context["shift_end"],
+		shift_type=probe.shift_type,
+	)
+	result = {
+		"reviewed_end": None,
+		"source_checkin": None,
+		"shift_type": probe.shift_type,
+		"shift_assignment": probe.shift_assignment,
+		"scheduled_shift_start": _iso(context["shift_start"]),
+		"scheduled_shift_end": _iso(context["shift_end"]),
+		"overnight_shift": getdate(context["shift_end"]) > getdate(context["shift_start"]),
+	}
+	if not selected:
+		result["warning"] = _(
+			"No valid OUT check-in was found after the scheduled shift end for this work date. Reviewed End was not filled."
+		)
+		return result
+
+	result["reviewed_end"] = get_datetime(selected.get("time")).strftime(
+		"%Y-%m-%d %H:%M:%S"
+	)
+	result["source_checkin"] = _serialize_checkin(selected)
 	return result
 
 
