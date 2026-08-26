@@ -42,6 +42,12 @@ hourly rate. If a legacy assignment has no populated `salary_per_hour`, the
 existing PowerPro calculation (`base / 23.83 / 8`, rounded to two decimals) is
 used without modifying the assignment.
 
+Settlement Payroll Date defaults to today and remains editable. It controls
+which payroll period receives the Additional Salary; it does not change the
+historical Work Date used to select the salary assignment and hourly rate. For
+Cash it is required and cannot be earlier than Work Date. For Compensatory Rest
+it is hidden, cleared, and ignored.
+
 The configured DGII Payroll Settings rates supply the premiums:
 
 - `Horas Extras 35%`: regular +35% hours × hourly rate × 1.35;
@@ -62,7 +68,7 @@ already classified once as legal-holiday +100%.
 Submitting a new approved Cash adjustment creates and submits one non-recurring
 Additional Salary record for every non-zero settlement component. Each record:
 
-- uses Work Date as Payroll Date;
+- uses Settlement Payroll Date as Payroll Date;
 - has `overwrite_salary_structure_amount = 0`;
 - links back through `ref_doctype = Retroactive Overtime Adjustment` and
   `ref_docname = <adjustment>`;
@@ -88,12 +94,14 @@ settlement during retries or simultaneous requests.
 2. Review the draft hours, configured rates, hourly rate, line amounts, total,
    warnings, verified intervals, and source check-ins.
 3. Select Cash or Compensatory Rest.
-4. The assigned approver submits the adjustment.
-5. For Cash, verify Settlement Status is `Created` and open the linked
+4. For Cash, confirm Settlement Payroll Date matches the payroll period that
+   should receive the earning.
+5. The assigned approver submits the adjustment.
+6. For Cash, verify Settlement Status is `Created` and open the linked
    Additional Salary records from the form.
-6. Generate or regenerate the Salary Slip covering Work Date.
-7. Verify the overtime earning amounts and net pay before submitting.
-8. Submit the Salary Slip; Settlement Status becomes `Paid`.
+7. Generate or regenerate the Salary Slip covering Settlement Payroll Date.
+8. Verify the overtime earning amounts and net pay before submitting.
+9. Submit the Salary Slip; Settlement Status becomes `Paid`.
 
 For a valid Cash adjustment approved before this release, the assigned approver
 may use **Cash Settlement > Create Cash Settlement**. The same date and duplicate
@@ -213,5 +221,8 @@ remove those payroll inputs; they must be reconciled first.
 - Missing or disabled overtime Salary Components block submission atomically.
 - Existing draft Salary Slips do not automatically recalculate after a new
   Additional Salary record is created; regenerate or explicitly refresh them.
+- Existing submitted adjustments are not backfilled with Settlement Payroll
+  Date. Any older Cash adjustment that still needs settlement must be amended
+  with an explicit date instead of silently assuming Work Date.
 - Automatic processing is limited to new submitted Cash adjustments. There is
   no deployment-time historical backfill.

@@ -13,6 +13,12 @@ def is_adjustment_date_allowed(work_date, from_date, to_date):
 	return _as_date(from_date) <= _as_date(work_date) <= _as_date(to_date)
 
 
+def is_settlement_payroll_date_valid(work_date, settlement_payroll_date):
+	if not work_date or not settlement_payroll_date:
+		return False
+	return _as_date(settlement_payroll_date) >= _as_date(work_date)
+
+
 def is_completed_historical_window(authorization_end, reference_datetime):
 	return bool(authorization_end) and _as_datetime(authorization_end) <= _as_datetime(
 		reference_datetime

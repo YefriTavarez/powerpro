@@ -8,6 +8,58 @@ from powerpro.controllers import overtime_cash_settlement as settlement
 
 
 class OvertimeCashSettlementControllerTest(unittest.TestCase):
+	def test_cash_settlement_uses_selected_payroll_date(self):
+		adjustment = SimpleNamespace(
+			company="INDUSTRIA GRÁFICA DEL CARIBE",
+			work_date="2026-08-10",
+			settlement_payroll_date="2026-08-31",
+		)
+		assignment = frappe._dict({
+			"name": "HR-SSA-TEST-00001",
+			"salary_per_hour": 100,
+			"base": 19064,
+		})
+		reconciliation = {
+			"regular_35_hours": 1,
+			"regular_100_hours": 0,
+			"holiday_100_hours": 0,
+			"weekly_rest_hours": 0,
+			"night_hours": 0,
+			"rates": {
+				"regular_overtime_percent": 35,
+				"extraordinary_overtime_percent": 100,
+				"night_hours_percent": 15,
+			},
+		}
+		with (
+			patch.object(
+				settlement,
+				"_get_effective_salary_assignment",
+				return_value=assignment,
+			),
+			patch.object(settlement, "_get_company_currency", return_value="DOP"),
+		):
+			result = settlement.build_cash_settlement(adjustment, reconciliation)
+
+		self.assertEqual(result["payroll_date"], "2026-08-31")
+		self.assertEqual(result["salary_structure_assignment"], assignment.name)
+
+	def test_cash_settlement_rejects_payroll_date_before_work_date(self):
+		adjustment = SimpleNamespace(
+			work_date="2026-08-10",
+			settlement_payroll_date="2026-08-09",
+		)
+		with self.assertRaises(frappe.ValidationError):
+			settlement.validate_settlement_payroll_date(adjustment)
+
+	def test_cash_settlement_requires_payroll_date(self):
+		adjustment = SimpleNamespace(
+			work_date="2026-08-10",
+			settlement_payroll_date=None,
+		)
+		with self.assertRaises(frappe.ValidationError):
+			settlement.validate_settlement_payroll_date(adjustment)
+
 	def test_direct_additional_salary_cancel_hook_returns_controlled_validation(self):
 		additional_salary = SimpleNamespace(
 			ref_doctype="Retroactive Overtime Adjustment",

@@ -28,6 +28,7 @@
   "exception_justification",
   "supporting_reference",
   "planned_settlement",
+  "settlement_payroll_date",
   "exception_column",
   "requested_by",
   "approver",
@@ -220,6 +221,15 @@
    "label": "Planned Settlement",
    "options": "Cash\nCompensatory Rest",
    "reqd": 1
+  },
+  {
+   "default": "Today",
+   "depends_on": "eval:doc.planned_settlement == 'Cash'",
+   "description": "Date whose Salary Slip should include this cash earning. It does not change the historical Work Date.",
+   "fieldname": "settlement_payroll_date",
+   "fieldtype": "Date",
+   "label": "Settlement Payroll Date",
+   "mandatory_depends_on": "eval:doc.planned_settlement == 'Cash'"
   },
   {
    "fieldname": "exception_column",
