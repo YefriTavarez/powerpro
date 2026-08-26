@@ -16,6 +16,7 @@ class DGIIPayrollSettings(Document):
 
 		dependents_rate: DF.Currency
 		end_night_hours: DF.Time | None
+		enable_overtime_candidate_generation: DF.Check
 		enable_overtime_authorization: DF.Check
 		enable_retroactive_overtime_adjustment: DF.Check
 		extra_hours_rate: DF.Percent
@@ -23,6 +24,9 @@ class DGIIPayrollSettings(Document):
 		health_insurance_rate: DF.Percent
 		max_weekly_extra_hours: DF.Float
 		night_hours_rate: DF.Percent
+		overtime_candidate_designation_keywords: DF.SmallText | None
+		overtime_candidate_lookback_days: DF.Int
+		overtime_candidate_threshold_minutes: DF.Int
 		pension_fund_provider: DF.Percent
 		retroactive_overtime_from_date: DF.Date | None
 		retroactive_overtime_submission_deadline: DF.Date | None

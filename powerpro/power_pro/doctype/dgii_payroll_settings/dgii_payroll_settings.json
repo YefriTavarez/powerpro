@@ -29,6 +29,12 @@
   "srl_rate_verified",
   "overtime_authorization_section",
   "enable_overtime_authorization",
+  "overtime_candidate_section",
+  "enable_overtime_candidate_generation",
+  "overtime_candidate_threshold_minutes",
+  "overtime_candidate_column",
+  "overtime_candidate_lookback_days",
+  "overtime_candidate_designation_keywords",
   "retroactive_overtime_section",
   "enable_retroactive_overtime_adjustment",
   "retroactive_overtime_from_date",
@@ -175,6 +181,48 @@
    "fieldname": "enable_overtime_authorization",
    "fieldtype": "Check",
    "label": "Enable Overtime Authorization"
+  },
+  {
+   "fieldname": "overtime_candidate_section",
+   "fieldtype": "Section Break",
+   "label": "Overtime Candidate Automation"
+  },
+  {
+   "default": "0",
+   "description": "When enabled, an hourly idempotent job creates review-only candidates from Employee Checkins. It never creates payroll, Additional Salary, leave, or accounting records.",
+   "fieldname": "enable_overtime_candidate_generation",
+   "fieldtype": "Check",
+   "label": "Enable Overtime Candidate Generation"
+  },
+  {
+   "default": "15",
+   "depends_on": "eval:doc.enable_overtime_candidate_generation",
+   "description": "Minimum delay after the scheduled shift end before a regular-workday candidate is surfaced. Legal holidays are always evaluated.",
+   "fieldname": "overtime_candidate_threshold_minutes",
+   "fieldtype": "Int",
+   "label": "Candidate Threshold (Minutes)",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "overtime_candidate_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "2",
+   "depends_on": "eval:doc.enable_overtime_candidate_generation",
+   "description": "Number of completed calendar days reevaluated by each hourly run. Existing candidates are updated idempotently until a supervisor makes a final decision.",
+   "fieldname": "overtime_candidate_lookback_days",
+   "fieldtype": "Int",
+   "label": "Candidate Lookback Days",
+   "non_negative": 1
+  },
+  {
+   "default": "Operador\nAuxiliar\nMecánico\nElectricista\nInspector\nPrensista\nTroquelador",
+   "depends_on": "eval:doc.enable_overtime_candidate_generation",
+   "description": "One designation keyword per line. Matching active plant employees are surfaced as Eligibility Pending until Overtime Eligible and Approver are configured.",
+   "fieldname": "overtime_candidate_designation_keywords",
+   "fieldtype": "Small Text",
+   "label": "Plant Designation Keywords"
   },
   {
    "fieldname": "retroactive_overtime_section",

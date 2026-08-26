@@ -250,23 +250,11 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"powerpro.tasks.all"
-# 	],
-# 	"daily": [
-# 		"powerpro.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"powerpro.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"powerpro.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"powerpro.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"hourly": [
+		"powerpro.controllers.overtime_candidates.scheduled_generate_overtime_candidates",
+	],
+}
 
 # Testing
 # -------
