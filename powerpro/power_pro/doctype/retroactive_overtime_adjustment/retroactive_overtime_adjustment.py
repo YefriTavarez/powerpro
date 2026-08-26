@@ -12,6 +12,7 @@ from powerpro.controllers.overtime_cash_settlement import (
 	before_cancel_adjustment,
 	cancel_cash_settlement,
 	prepare_cash_settlement,
+	validate_settlement_payroll_date,
 )
 from powerpro.payroll_rules.retroactive_overtime import (
 	is_adjustment_date_allowed,
@@ -104,6 +105,11 @@ class RetroactiveOvertimeAdjustment(OvertimeAuthorization):
 
 		if not (self.exception_justification or "").strip():
 			frappe.throw(_("Exception Justification is required."))
+
+		if self.planned_settlement == "Cash":
+			validate_settlement_payroll_date(self)
+		else:
+			self.settlement_payroll_date = None
 
 	def _validate_no_overlap(self):
 		for doctype in ("Overtime Authorization", "Retroactive Overtime Adjustment"):

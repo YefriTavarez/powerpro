@@ -304,3 +304,8 @@
 "No valid OUT check-in was found. Reviewed End was not filled.","No se encontró una marcación de salida válida. El fin revisado no se completó."
 "Reviewed End set from Employee Checkin {0}.","Fin revisado establecido desde la marcación del empleado {0}."
 "Reviewed End set from the last valid OUT check-in.","Fin revisado establecido desde la última marcación de salida válida."
+"Settlement Payroll Date","Fecha de nómina para liquidación"
+"Settlement payroll date","Fecha de nómina para liquidación"
+"Date whose Salary Slip should include this cash earning. It does not change the historical Work Date.","Fecha de la nómina salarial que debe incluir esta ganancia en efectivo. No cambia la fecha histórica de trabajo."
+"Settlement Payroll Date is required for Cash settlement.","La fecha de nómina para liquidación es obligatoria para una liquidación en efectivo."
+"Settlement Payroll Date cannot be before Work Date.","La fecha de nómina para liquidación no puede ser anterior a la fecha de trabajo."

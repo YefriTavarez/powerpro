@@ -14,6 +14,7 @@ SPEC.loader.exec_module(retroactive)
 is_adjustment_date_allowed = retroactive.is_adjustment_date_allowed
 is_completed_historical_window = retroactive.is_completed_historical_window
 is_review_window_on_work_date = retroactive.is_review_window_on_work_date
+is_settlement_payroll_date_valid = retroactive.is_settlement_payroll_date_valid
 is_submission_deadline_open = retroactive.is_submission_deadline_open
 select_last_valid_out_checkin = retroactive.select_last_valid_out_checkin
 
@@ -34,6 +35,18 @@ class RetroactiveOvertimeAdjustmentPolicyTest(unittest.TestCase):
 		self.assertFalse(
 			is_adjustment_date_allowed("2026-06-30", "2026-07-01", "2026-08-31")
 		)
+
+	def test_settlement_payroll_date_cannot_precede_work_date(self):
+		self.assertTrue(
+			is_settlement_payroll_date_valid("2026-08-10", "2026-08-10")
+		)
+		self.assertTrue(
+			is_settlement_payroll_date_valid("2026-08-10", "2026-08-31")
+		)
+		self.assertFalse(
+			is_settlement_payroll_date_valid("2026-08-10", "2026-08-09")
+		)
+		self.assertFalse(is_settlement_payroll_date_valid("2026-08-10", None))
 
 	def test_only_completed_work_can_be_adjusted(self):
 		self.assertTrue(

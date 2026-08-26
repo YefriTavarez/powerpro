@@ -7,10 +7,13 @@ import json
 
 import frappe
 from frappe import _
-from frappe.utils import flt, now_datetime
+from frappe.utils import flt, getdate, now_datetime
 
 from powerpro.payroll_rules.overtime_cash_settlement import (
 	calculate_cash_settlement,
+)
+from powerpro.payroll_rules.retroactive_overtime import (
+	is_settlement_payroll_date_valid,
 )
 
 
@@ -23,6 +26,7 @@ SETTLEMENT_CANCELLED = "Cancelled"
 
 def build_cash_settlement(adjustment, reconciliation):
 	"""Build a read-only cash preview from an approved-style snapshot."""
+	payroll_date = validate_settlement_payroll_date(adjustment)
 	assignment = _get_effective_salary_assignment(adjustment)
 	hourly_rate = _get_hourly_rate(assignment)
 	rates = reconciliation.get("rates") or _get_overtime_rates()
@@ -40,9 +44,19 @@ def build_cash_settlement(adjustment, reconciliation):
 	settlement.update({
 		"salary_structure_assignment": assignment.name,
 		"currency": _get_company_currency(adjustment.company),
-		"payroll_date": str(adjustment.work_date),
+		"payroll_date": str(payroll_date),
 	})
 	return settlement
+
+
+def validate_settlement_payroll_date(adjustment):
+	"""Return the selected payroll date after enforcing the cash-settlement policy."""
+	payroll_date = getattr(adjustment, "settlement_payroll_date", None)
+	if not payroll_date:
+		frappe.throw(_("Settlement Payroll Date is required for Cash settlement."))
+	if not is_settlement_payroll_date_valid(adjustment.work_date, payroll_date):
+		frappe.throw(_("Settlement Payroll Date cannot be before Work Date."))
+	return getdate(payroll_date)
 
 
 def prepare_cash_settlement(adjustment, reconciliation):

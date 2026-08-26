@@ -7,6 +7,7 @@ frappe.ui.form.on("Retroactive Overtime Adjustment", {
 		add_cash_settlement_actions(frm);
 
 		if (frm.doc.docstatus === 0) {
+			set_settlement_payroll_date_default(frm);
 			frm.dashboard.set_headline_alert(
 				__("Historical overtime is an audited exception and requires existing Employee Checkin evidence."),
 				"orange"
@@ -48,14 +49,40 @@ frappe.ui.form.on("Retroactive Overtime Adjustment", {
 		if (frm.doc.docstatus !== 0) {
 			return;
 		}
-		if (frm.__retroactive_overtime_preview) {
-			render_draft_reconciliation_preview(
-				frm,
-				frm.__retroactive_overtime_preview
+		let update = Promise.resolve();
+		if (frm.doc.planned_settlement === "Cash" && !frm.doc.settlement_payroll_date) {
+			update = frm.set_value(
+				"settlement_payroll_date",
+				frappe.datetime.get_today()
 			);
+		} else if (frm.doc.planned_settlement !== "Cash" && frm.doc.settlement_payroll_date) {
+			update = frm.set_value("settlement_payroll_date", null);
 		}
+		return update.then(() => {
+			if (frm.__retroactive_overtime_preview) {
+				render_draft_reconciliation_preview(
+					frm,
+					frm.__retroactive_overtime_preview
+				);
+			}
+		});
 	},
+	settlement_payroll_date: mark_reconciliation_preview_stale,
 });
+
+function set_settlement_payroll_date_default(frm) {
+	if (
+		frm.doc.docstatus === 0
+		&& frm.doc.planned_settlement === "Cash"
+		&& !frm.doc.settlement_payroll_date
+	) {
+		return frm.set_value(
+			"settlement_payroll_date",
+			frappe.datetime.get_today()
+		);
+	}
+	return Promise.resolve();
+}
 
 function set_reviewed_end_from_last_out(frm) {
 	if (
@@ -308,6 +335,12 @@ function get_cash_settlement_rows(settlement) {
 	}
 	const currency = settlement.currency || "DOP";
 	const rows = [
+		[
+			__("Settlement payroll date"),
+			settlement.payroll_date
+				? frappe.datetime.str_to_user(settlement.payroll_date)
+				: "",
+		],
 		[__("Hourly rate"), format_currency(settlement.hourly_rate || 0, currency)],
 	];
 	(settlement.lines || []).forEach((line) => {
