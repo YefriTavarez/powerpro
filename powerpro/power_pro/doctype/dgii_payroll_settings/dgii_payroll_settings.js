@@ -16,6 +16,24 @@ frappe.ui.form.on("DGII Payroll Settings", {
 			}, __("Overtime Candidates"));
 		}
 	},
+
+	enable_overtime_candidate_generation(frm) {
+		if (!frm.doc.enable_overtime_candidate_generation) {
+			return;
+		}
+		if (!frm.doc.overtime_candidate_threshold_minutes) {
+			frm.set_value("overtime_candidate_threshold_minutes", 15);
+		}
+		if (!frm.doc.overtime_candidate_lookback_days) {
+			frm.set_value("overtime_candidate_lookback_days", 2);
+		}
+		if (!frm.doc.overtime_candidate_designation_keywords) {
+			frm.set_value(
+				"overtime_candidate_designation_keywords",
+				"Operador\nAuxiliar\nMecánico\nElectricista\nInspector\nPrensista\nTroquelador"
+			);
+		}
+	},
 });
 
 function run_candidate_scan(dry_run) {

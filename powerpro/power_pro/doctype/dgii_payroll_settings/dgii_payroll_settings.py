@@ -1,8 +1,11 @@
 # Copyright (c) 2024, Yefri Tavarez and contributors
 # For license information, please see license.txt
 
-# import frappe
 from frappe.model.document import Document
+from frappe.utils import cint
+
+
+DEFAULT_OVERTIME_CANDIDATE_KEYWORDS = "Operador\nAuxiliar\nMecánico\nElectricista\nInspector\nPrensista\nTroquelador"
 
 
 class DGIIPayrollSettings(Document):
@@ -34,4 +37,15 @@ class DGIIPayrollSettings(Document):
 		start_night_hours: DF.Time | None
 		weekly_expected_hours: DF.Float
 	# end: auto-generated types
-	pass
+
+	def validate(self):
+		if not self.enable_overtime_candidate_generation:
+			return
+		if cint(self.overtime_candidate_threshold_minutes) <= 0:
+			self.overtime_candidate_threshold_minutes = 15
+		if cint(self.overtime_candidate_lookback_days) <= 0:
+			self.overtime_candidate_lookback_days = 2
+		if not (self.overtime_candidate_designation_keywords or "").strip():
+			self.overtime_candidate_designation_keywords = (
+				DEFAULT_OVERTIME_CANDIDATE_KEYWORDS
+			)
