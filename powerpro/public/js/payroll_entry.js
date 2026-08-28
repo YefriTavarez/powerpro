@@ -15,6 +15,17 @@ frappe.ui.form.on("Payroll Entry", {
             frm.add_custom_button(__("Previsualizar cálculos de nómina"), () => {
                 frm.trigger("show_payroll_preview");
             }, __("Acciones"));
+
+            if (frm.doc.docstatus === 1) {
+                frm.add_custom_button(__("Crear lote Banco Popular"), () => {
+                    frappe.new_doc("Payroll Bank Batch", {
+                        payroll_entry: frm.doc.name,
+                        company: frm.doc.company,
+                        currency: frm.doc.currency,
+                        payment_date: frm.doc.posting_date,
+                    });
+                }, __("Acciones"));
+            }
         }
     },
 
