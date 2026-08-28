@@ -127,6 +127,61 @@ class OvertimeCandidateRulesTest(unittest.TestCase):
 			"EMP-001::2026-08-10",
 		)
 
+	def test_completed_refresh_invalidates_reviewable_candidate_without_signal(self):
+		self.assertEqual(
+			candidates.get_candidate_refresh_action(
+				existing_status=candidates.OPEN,
+				evaluation_complete=True,
+				candidate_present=False,
+			),
+			"invalidate",
+		)
+
+	def test_incomplete_evaluation_never_invalidates_candidate(self):
+		self.assertIsNone(
+			candidates.get_candidate_refresh_action(
+				existing_status=candidates.OPEN,
+				evaluation_complete=False,
+				candidate_present=False,
+			)
+		)
+
+	def test_final_decision_is_never_overwritten_by_refresh(self):
+		self.assertIsNone(
+			candidates.get_candidate_refresh_action(
+				existing_status="Approved Cash",
+				evaluation_complete=True,
+				candidate_present=False,
+			)
+		)
+
+	def test_existing_overtime_supersedes_reviewable_candidate(self):
+		self.assertEqual(
+			candidates.get_candidate_refresh_action(
+				existing_status=candidates.NEEDS_CHECKIN_REVIEW,
+				evaluation_complete=True,
+				candidate_present=True,
+				existing_overtime=True,
+			),
+			"supersede",
+		)
+
+	def test_overnight_shift_is_not_complete_before_scheduled_end(self):
+		self.assertFalse(
+			candidates.is_shift_evaluation_complete(
+				"2026-08-11T06:00:00",
+				"2026-08-11T05:59:59",
+			)
+		)
+
+	def test_shift_is_complete_at_scheduled_end(self):
+		self.assertTrue(
+			candidates.is_shift_evaluation_complete(
+				"2026-08-11T06:00:00",
+				"2026-08-11T06:00:00",
+			)
+		)
+
 
 if __name__ == "__main__":
 	unittest.main()

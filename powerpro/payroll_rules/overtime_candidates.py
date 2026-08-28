@@ -22,6 +22,7 @@ from powerpro.payroll_rules.overtime import (
 OPEN = "Open"
 ELIGIBILITY_PENDING = "Eligibility Pending"
 NEEDS_CHECKIN_REVIEW = "Needs Check-in Review"
+REVIEWABLE_STATUSES = frozenset({OPEN, ELIGIBILITY_PENDING, NEEDS_CHECKIN_REVIEW})
 LEGAL_HOLIDAY_CLASSIFICATIONS = {LEGAL_HOLIDAY, HOLIDAY_ON_WEEKLY_REST}
 
 
@@ -43,6 +44,28 @@ def designation_matches_keywords(designation, keywords):
 
 def candidate_dedupe_key(employee, work_date):
 	return f"{str(employee or '').strip()}::{str(work_date or '').split(' ', 1)[0]}"
+
+
+def get_candidate_refresh_action(
+	*,
+	existing_status,
+	evaluation_complete,
+	candidate_present,
+	existing_overtime=False,
+):
+	"""Return the safe action for an existing candidate during an evidence refresh."""
+	if existing_status not in REVIEWABLE_STATUSES:
+		return None
+	if existing_overtime:
+		return "supersede"
+	if evaluation_complete and not candidate_present:
+		return "invalidate"
+	return None
+
+
+def is_shift_evaluation_complete(shift_end, evaluation_time):
+	"""Return whether the scheduled shift has ended at the scan time."""
+	return _as_datetime(shift_end) <= _as_datetime(evaluation_time)
 
 
 def analyze_overtime_candidate(

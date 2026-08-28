@@ -43,10 +43,12 @@ function run_candidate_scan(dry_run) {
 		freeze: true,
 		freeze_message: __("Reviewing completed Employee Checkins..."),
 	}).then(({ message }) => {
+		const action_label = (future, completed) => dry_run ? future : completed;
 		const summary = [
 			__("Candidates found: {0}", [message.candidate_count || 0]),
-			__("Created: {0}", [message.created || 0]),
-			__("Updated: {0}", [message.updated || 0]),
+			__(action_label("Would create: {0}", "Created: {0}"), [message.created || 0]),
+			__(action_label("Would update: {0}", "Updated: {0}"), [message.updated || 0]),
+			__("Unchanged: {0}", [message.unchanged || 0]),
 			__("Skipped because overtime already exists: {0}", [message.skipped_existing_overtime || 0]),
 		].join("<br>");
 		frappe.msgprint({
