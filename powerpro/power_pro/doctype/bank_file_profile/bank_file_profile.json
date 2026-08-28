@@ -1,0 +1,204 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:profile_name",
+ "creation": "2026-08-28 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "profile_section",
+  "profile_name",
+  "company",
+  "enabled",
+  "is_default",
+  "profile_column",
+  "format_version",
+  "currency",
+  "bank_identity_section",
+  "activation_number",
+  "company_identification",
+  "registered_company_name",
+  "layout_section",
+  "routing_code",
+  "service_code",
+  "contact_method",
+  "layout_column",
+  "file_prefix",
+  "file_suffix"
+ ],
+ "fields": [
+  {
+   "fieldname": "profile_section",
+   "fieldtype": "Section Break",
+   "label": "Perfil bancario"
+  },
+  {
+   "fieldname": "profile_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Nombre del perfil",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Empresa",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Habilitado"
+  },
+  {
+   "default": "0",
+   "description": "Perfil sugerido al crear un lote para esta empresa.",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Predeterminado"
+  },
+  {
+   "fieldname": "profile_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Banco Popular Nómina v1",
+   "fieldname": "format_version",
+   "fieldtype": "Select",
+   "label": "Versión del formato",
+   "options": "Banco Popular Nómina v1",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "DOP",
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Moneda",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bank_identity_section",
+   "fieldtype": "Section Break",
+   "label": "Identificación registrada en el Banco Popular"
+  },
+  {
+   "description": "Número de activación utilizado para formar el nombre PE...txt.",
+   "fieldname": "activation_number",
+   "fieldtype": "Data",
+   "label": "Número de activación",
+   "reqd": 1
+  },
+  {
+   "description": "RNC registrado por el banco, solo dígitos.",
+   "fieldname": "company_identification",
+   "fieldtype": "Data",
+   "label": "RNC registrado",
+   "reqd": 1
+  },
+  {
+   "description": "Nombre exacto registrado por el banco; máximo 35 bytes.",
+   "fieldname": "registered_company_name",
+   "fieldtype": "Data",
+   "label": "Razón social registrada",
+   "reqd": 1
+  },
+  {
+   "fieldname": "layout_section",
+   "fieldtype": "Section Break",
+   "label": "Layout fijo"
+  },
+  {
+   "default": "101010708",
+   "fieldname": "routing_code",
+   "fieldtype": "Data",
+   "label": "Código bancario",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "01",
+   "fieldname": "service_code",
+   "fieldtype": "Data",
+   "label": "Código de servicio",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "contact_method",
+   "fieldtype": "Data",
+   "label": "Forma de contacto",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "layout_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "PE",
+   "fieldname": "file_prefix",
+   "fieldtype": "Data",
+   "label": "Prefijo del archivo",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "E",
+   "fieldname": "file_suffix",
+   "fieldtype": "Data",
+   "label": "Sufijo del archivo",
+   "read_only": 1,
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-08-28 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Power Pro",
+ "name": "Bank File Profile",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Payroll Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "profile_name",
+ "track_changes": 1
+}
