@@ -36,6 +36,25 @@ decision is never overwritten by the scheduler. The saved record includes the
 employee/shift/holiday snapshot, candidate intervals, source check-ins,
 warnings, an evidence hash, the decision reason, user, and timestamp.
 
+## HR correction workflow
+
+Users with HR Manager, Manufacturing Manager, or System Manager can open the
+`Overtime Candidate` list and use **Overtime Tools > Refresh from Check-ins**.
+The dialog requires a Company, accepts an explicit date range of up to 32
+calendar days, and always shows a read-only preview before asking for
+confirmation. Today and future dates are rejected; an overnight shift is not
+treated as fully evaluated until its scheduled end has passed.
+
+The confirmed refresh creates or updates only reviewable candidates. If a
+successfully evaluated employee/date no longer has a qualifying overtime signal
+after the check-ins are corrected, the reviewable candidate is marked
+`Invalid Check-in` with an audit reason, user, and timestamp. A final supervisor
+decision is never overwritten. A candidate linked to an existing non-cancelled
+overtime record is superseded instead.
+
+Scheduled generation does not perform stale-candidate invalidation. That action
+is restricted to the explicit, previewed HR workflow.
+
 ## Safe rollout sequence
 
 1. Deploy the app update. The new feature flag defaults to disabled, so no

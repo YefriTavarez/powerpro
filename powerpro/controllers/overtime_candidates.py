@@ -18,13 +18,15 @@ from powerpro.payroll_rules.overtime_candidates import (
 	ELIGIBILITY_PENDING,
 	NEEDS_CHECKIN_REVIEW,
 	OPEN,
+	REVIEWABLE_STATUSES,
 	analyze_overtime_candidate,
 	candidate_dedupe_key,
+	get_candidate_refresh_action,
+	is_shift_evaluation_complete,
 	parse_designation_keywords,
 )
 
 
-REVIEWABLE_STATUSES = {OPEN, ELIGIBILITY_PENDING, NEEDS_CHECKIN_REVIEW}
 DECISIONS = {
 	"Approved Cash",
 	"Approved Compensatory Rest",
@@ -44,20 +46,30 @@ def scheduled_generate_overtime_candidates():
 
 @frappe.whitelist()
 def generate_overtime_candidates(
+	company=None,
 	from_date=None,
 	to_date=None,
 	dry_run=1,
+	invalidate_stale=0,
 ):
 	"""Preview or idempotently generate candidates for a bounded date range."""
 	_assert_review_role()
 	return _generate_overtime_candidates(
+		company=company,
 		from_date=from_date,
 		to_date=to_date,
 		dry_run=bool(cint(dry_run)),
+		invalidate_stale=bool(cint(invalidate_stale)),
 	)
 
 
-def _generate_overtime_candidates(from_date=None, to_date=None, dry_run=True):
+def _generate_overtime_candidates(
+	company=None,
+	from_date=None,
+	to_date=None,
+	dry_run=True,
+	invalidate_stale=False,
+):
 	"""Internal generator used by the role-checked API and trusted scheduler."""
 	dry_run = bool(cint(dry_run))
 	if not dry_run and not _generation_enabled():
@@ -67,9 +79,13 @@ def _generate_overtime_candidates(from_date=None, to_date=None, dry_run=True):
 		)
 
 	settings = frappe.get_single("DGII Payroll Settings")
-	to_date = getdate(to_date or getdate(now_datetime()) - timedelta(days=1))
+	scan_time = now_datetime()
+	latest_completed_date = getdate(scan_time) - timedelta(days=1)
+	to_date = getdate(to_date or latest_completed_date)
 	lookback_days = max(cint(settings.get("overtime_candidate_lookback_days") or 2), 1)
 	from_date = getdate(from_date or to_date - timedelta(days=lookback_days - 1))
+	if to_date > latest_completed_date:
+		frappe.throw(_("To Date must be a completed calendar date before today."))
 	if to_date < from_date:
 		frappe.throw(_("To Date must be on or after From Date."))
 	if (to_date - from_date).days > 31:
@@ -81,10 +97,12 @@ def _generate_overtime_candidates(from_date=None, to_date=None, dry_run=True):
 	keywords = parse_designation_keywords(
 		settings.get("overtime_candidate_designation_keywords") or DEFAULT_PLANT_KEYWORDS
 	)
-	employees = _get_active_employees()
+	employees = _get_active_employees(company)
 	checkins_by_employee = _get_checkins_by_employee(from_date, to_date)
+	reviewable_candidates = _get_reviewable_candidates(from_date, to_date, company)
 	result = {
 		"dry_run": dry_run,
+		"company": company,
 		"from_date": str(from_date),
 		"to_date": str(to_date),
 		"threshold_minutes": threshold,
@@ -93,31 +111,51 @@ def _generate_overtime_candidates(from_date=None, to_date=None, dry_run=True):
 		"unchanged": 0,
 		"skipped_existing_overtime": 0,
 		"superseded": 0,
+		"invalidated": 0,
 		"candidates": [],
+		"stale_candidates": [],
 	}
 
 	work_date = from_date
 	while work_date <= to_date:
 		for employee in employees:
 			rows = checkins_by_employee.get(employee.name, [])
-			if not rows:
-				continue
-			candidate = _build_candidate(
+			dedupe_key = candidate_dedupe_key(employee.name, work_date)
+			existing_candidate = reviewable_candidates.get(dedupe_key)
+			candidate, evaluation_complete = _build_candidate(
 				employee,
 				work_date,
 				rows,
 				threshold=threshold,
 				keywords=keywords,
+				evaluation_time=scan_time,
 			)
 			if not candidate:
+				if invalidate_stale:
+					_handle_stale_candidate(
+						result,
+						employee,
+						work_date,
+						evaluation_complete=evaluation_complete,
+						dry_run=dry_run,
+						existing_candidate=existing_candidate,
+					)
 				continue
 			existing_overtime = _get_existing_overtime_record(employee.name, work_date)
 			if existing_overtime:
 				result["skipped_existing_overtime"] += 1
-				if not dry_run and _supersede_open_candidate(
-					employee.name, work_date, existing_overtime
-				):
-					result["superseded"] += 1
+				if existing_candidate:
+					result["stale_candidates"].append({
+						"candidate": existing_candidate.name,
+						"employee": employee.name,
+						"employee_name": employee.employee_name,
+						"work_date": str(work_date),
+						"action": "supersede",
+					})
+					if dry_run or _supersede_open_candidate(
+						employee.name, work_date, existing_overtime
+					):
+						result["superseded"] += 1
 				continue
 
 			preview = {
@@ -137,6 +175,7 @@ def _generate_overtime_candidates(from_date=None, to_date=None, dry_run=True):
 			}
 			result["candidates"].append(preview)
 			if dry_run:
+				result[_get_upsert_operation(candidate)] += 1
 				continue
 			operation = _upsert_candidate(candidate)
 			result[operation] += 1
@@ -206,7 +245,15 @@ def decide_overtime_candidate(candidate, decision, reason):
 	}
 
 
-def _build_candidate(employee, work_date, all_rows, *, threshold, keywords):
+def _build_candidate(
+	employee,
+	work_date,
+	all_rows,
+	*,
+	threshold,
+	keywords,
+	evaluation_time,
+):
 	shift_assignment, resolved_shift = _resolve_shift(
 		employee.name, work_date, employee.default_shift
 	)
@@ -217,9 +264,10 @@ def _build_candidate(employee, work_date, all_rows, *, threshold, keywords):
 			possible_shifts.append(row.get("shift"))
 	possible_shifts = list(dict.fromkeys(shift for shift in possible_shifts if shift))
 	if not possible_shifts:
-		return None
+		return None, False
 
 	best = None
+	evaluation_complete = False
 	for shift_type in possible_shifts:
 		try:
 			holiday_list = _resolve_holiday_list(employee, shift_type)
@@ -228,6 +276,9 @@ def _build_candidate(employee, work_date, all_rows, *, threshold, keywords):
 			continue
 		if not context["shift_start"] or not context["shift_end"]:
 			continue
+		if not is_shift_evaluation_complete(context["shift_end"], evaluation_time):
+			continue
+		evaluation_complete = True
 		window_start = context["shift_start"] - timedelta(hours=4)
 		window_end = (
 			context["shift_start"] + timedelta(days=1)
@@ -266,7 +317,7 @@ def _build_candidate(employee, work_date, all_rows, *, threshold, keywords):
 		best = (rank, shift_type, holiday_list, context, analysis)
 
 	if not best:
-		return None
+		return None, evaluation_complete
 	_, shift_type, holiday_list, context, analysis = best
 	serialized_checkins = [_serialize_checkin(row) for row in analysis["checkins"]]
 	evidence_hash = hashlib.sha256(
@@ -302,7 +353,48 @@ def _build_candidate(employee, work_date, all_rows, *, threshold, keywords):
 		"evidence_hash": evidence_hash,
 		"status": analysis["status"],
 		"generated_on": now_datetime(),
-	}
+	}, True
+
+
+def _handle_stale_candidate(
+	result,
+	employee,
+	work_date,
+	*,
+	evaluation_complete,
+	dry_run,
+	existing_candidate,
+):
+	if not existing_candidate:
+		return
+
+	existing_overtime = _get_existing_overtime_record(employee.name, work_date)
+	action = get_candidate_refresh_action(
+		existing_status=existing_candidate.status,
+		evaluation_complete=evaluation_complete,
+		candidate_present=False,
+		existing_overtime=bool(existing_overtime),
+	)
+	if not action:
+		return
+
+	result["stale_candidates"].append({
+		"candidate": existing_candidate.name,
+		"employee": employee.name,
+		"employee_name": employee.employee_name,
+		"work_date": str(work_date),
+		"action": action,
+	})
+	if action == "supersede":
+		result["skipped_existing_overtime"] += 1
+		if dry_run or _supersede_open_candidate(
+			employee.name, work_date, existing_overtime
+		):
+			result["superseded"] += 1
+		return
+
+	if dry_run or _invalidate_stale_candidate(existing_candidate.name):
+		result["invalidated"] += 1
 
 
 def _upsert_candidate(values):
@@ -326,7 +418,52 @@ def _upsert_candidate(values):
 	return "updated"
 
 
-def _get_active_employees():
+def _get_upsert_operation(values):
+	name = frappe.db.get_value(
+		"Overtime Candidate", {"dedupe_key": values["dedupe_key"]}, "name"
+	)
+	if not name:
+		return "created"
+	doc = frappe.get_doc("Overtime Candidate", name)
+	if doc.status not in REVIEWABLE_STATUSES:
+		return "unchanged"
+	if doc.evidence_hash == values["evidence_hash"] and doc.status == values["status"]:
+		return "unchanged"
+	return "updated"
+
+
+def _invalidate_stale_candidate(name):
+	doc = frappe.get_doc("Overtime Candidate", name)
+	if doc.status not in REVIEWABLE_STATUSES:
+		return False
+	doc.status = "Invalid Check-in"
+	doc.decision_reason = _(
+		"No qualifying overtime remained after Employee Checkin evidence was refreshed."
+	)
+	doc.decided_by = frappe.session.user
+	doc.decided_on = now_datetime()
+	doc.flags.generated_by_overtime_scanner = True
+	doc.save(ignore_permissions=True)
+	return True
+
+
+def _get_reviewable_candidates(from_date, to_date, company=None):
+	filters = {
+		"work_date": ["between", [from_date, to_date]],
+		"status": ["in", sorted(REVIEWABLE_STATUSES)],
+	}
+	if company:
+		filters["company"] = company
+	rows = frappe.get_all(
+		"Overtime Candidate",
+		filters=filters,
+		fields=["name", "dedupe_key", "status"],
+		limit_page_length=0,
+	)
+	return {row.dedupe_key: row for row in rows}
+
+
+def _get_active_employees(company=None):
 	meta = frappe.get_meta("Employee")
 	fields = [
 		"name",
@@ -340,9 +477,10 @@ def _get_active_employees():
 	for fieldname in ("overtime_eligible", "overtime_approver"):
 		if meta.has_field(fieldname):
 			fields.append(fieldname)
-	return frappe.get_all(
-		"Employee", filters={"status": "Active"}, fields=fields, order_by="name asc"
-	)
+	filters = {"status": "Active"}
+	if company:
+		filters["company"] = company
+	return frappe.get_all("Employee", filters=filters, fields=fields, order_by="name asc")
 
 
 def _get_checkins_by_employee(from_date, to_date):
