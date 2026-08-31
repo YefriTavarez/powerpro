@@ -37,3 +37,4 @@ powerpro.patches.v1.setup_dedicated_employer_contribution_journal
 powerpro.patches.v1.fix_dgii_isr_component_mapping_2026
 powerpro.patches.v1.setup_overtime_authorization
 powerpro.patches.v1.setup_banco_popular_payroll
+powerpro.patches.v1.setup_overtime_settlement

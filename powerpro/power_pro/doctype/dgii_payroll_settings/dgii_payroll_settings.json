@@ -29,6 +29,14 @@
   "srl_rate_verified",
   "overtime_authorization_section",
   "enable_overtime_authorization",
+  "overtime_settlement_section",
+  "enable_overtime_settlement",
+  "overtime_settlement_roles",
+  "overtime_compensatory_column",
+  "enable_overtime_compensatory_settlement",
+  "overtime_compensatory_leave_type",
+  "overtime_hours_per_leave_day",
+  "overtime_leave_increment",
   "overtime_candidate_section",
   "enable_overtime_candidate_generation",
   "overtime_candidate_threshold_minutes",
@@ -181,6 +189,63 @@
    "fieldname": "enable_overtime_authorization",
    "fieldtype": "Check",
    "label": "Enable Overtime Authorization"
+  },
+  {
+   "fieldname": "overtime_settlement_section",
+   "fieldtype": "Section Break",
+   "label": "Overtime Settlement"
+  },
+  {
+   "default": "0",
+   "description": "Enables explicit settlement actions after attendance reconciliation. Deployment does not activate this setting.",
+   "fieldname": "enable_overtime_settlement",
+   "fieldtype": "Check",
+   "label": "Enable Overtime Settlement"
+  },
+  {
+   "default": "HR Manager\nAccounts Manager\nSystem Manager",
+   "description": "One Frappe role per line. A user must also be able to read the source overtime record.",
+   "fieldname": "overtime_settlement_roles",
+   "fieldtype": "Small Text",
+   "label": "Settlement Roles"
+  },
+  {
+   "fieldname": "overtime_compensatory_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.enable_overtime_settlement",
+   "fieldname": "enable_overtime_compensatory_settlement",
+   "fieldtype": "Check",
+   "label": "Enable Compensatory Rest Settlement"
+  },
+  {
+   "depends_on": "eval:doc.enable_overtime_compensatory_settlement",
+   "fieldname": "overtime_compensatory_leave_type",
+   "fieldtype": "Link",
+   "label": "Compensatory Leave Type",
+   "mandatory_depends_on": "eval:doc.enable_overtime_compensatory_settlement",
+   "options": "Leave Type"
+  },
+  {
+   "default": "8",
+   "depends_on": "eval:doc.enable_overtime_compensatory_settlement",
+   "fieldname": "overtime_hours_per_leave_day",
+   "fieldtype": "Float",
+   "label": "Overtime Hours per Leave Day",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "default": "0.5",
+   "depends_on": "eval:doc.enable_overtime_compensatory_settlement",
+   "description": "Smallest leave-day credit posted to the consolidated allocation. Remaining hours stay in the overtime bank.",
+   "fieldname": "overtime_leave_increment",
+   "fieldtype": "Float",
+   "label": "Leave Credit Increment",
+   "non_negative": 1,
+   "precision": "2"
   },
   {
    "fieldname": "overtime_candidate_section",

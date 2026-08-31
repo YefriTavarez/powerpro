@@ -72,7 +72,7 @@
   },
   {
    "default": "Cash",
-   "description": "Operational preference only. This work call never creates payroll, leave, or accounting records by itself.",
+   "description": "Settlement is a separate preview-and-confirm action after attendance reconciliation.",
    "fieldname": "planned_settlement",
    "fieldtype": "Select",
    "label": "Planned Settlement",

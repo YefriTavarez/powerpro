@@ -155,15 +155,13 @@ def _get_adjustments(filters):
         "docstatus": 1,
         "status": "Approved",
         "planned_settlement": "Cash",
+        "settlement_status": ["in", ["Created", "Paid"]],
     }
     for fieldname in ("employee", "department", "settlement_status"):
         if filters.get(fieldname):
             conditions[fieldname] = filters[fieldname]
 
-    return frappe.get_list(
-        "Retroactive Overtime Adjustment",
-        filters=conditions,
-        fields=[
+    fields = [
             "name",
             "employee",
             "employee_name",
@@ -180,9 +178,27 @@ def _get_adjustments(filters):
             "settlement_currency",
             "settlement_status",
             "settlement_breakdown",
-        ],
-        order_by="employee_name asc, work_date asc, name asc",
-        limit_page_length=0,
+        ]
+    rows = []
+    for doctype in ("Retroactive Overtime Adjustment", "Overtime Authorization"):
+        if not frappe.db.exists("DocType", doctype):
+            continue
+        rows.extend(
+            frappe.get_list(
+                doctype,
+                filters=conditions,
+                fields=fields,
+                order_by="employee_name asc, work_date asc, name asc",
+                limit_page_length=0,
+            )
+        )
+    return sorted(
+        rows,
+        key=lambda row: (
+            (row.get("employee_name") or "").casefold(),
+            getdate(row.get("work_date")),
+            row.get("name") or "",
+        ),
     )
 
 

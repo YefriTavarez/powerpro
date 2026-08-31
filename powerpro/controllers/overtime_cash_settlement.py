@@ -22,6 +22,10 @@ SETTLEMENT_NOT_APPLICABLE = "Not Applicable"
 SETTLEMENT_CREATED = "Created"
 SETTLEMENT_PAID = "Paid"
 SETTLEMENT_CANCELLED = "Cancelled"
+OVERTIME_SETTLEMENT_SOURCES = {
+	"Retroactive Overtime Adjustment",
+	"Overtime Authorization",
+}
 
 
 def build_cash_settlement(adjustment, reconciliation):
@@ -88,6 +92,30 @@ def prepare_cash_settlement(adjustment, reconciliation):
 	return settlement
 
 
+def create_cash_settlement_for_source(source, reconciliation):
+	"""Create idempotent Additional Salary inputs and return frozen source values."""
+	settlement = build_cash_settlement(source, reconciliation)
+	_validate_cash_settlement(settlement)
+	created = _create_additional_salaries(source, settlement)
+	settlement["additional_salaries"] = created
+	values = {
+		"settlement_status": SETTLEMENT_CREATED,
+		"settlement_payroll_date": settlement["payroll_date"],
+		"settlement_hourly_rate": settlement["hourly_rate"],
+		"settlement_amount": settlement["total_amount"],
+		"settlement_currency": settlement["currency"],
+		"settlement_breakdown": json.dumps(
+			settlement, ensure_ascii=False, indent=2, sort_keys=True
+		),
+		"settlement_references": json.dumps(created, ensure_ascii=False, indent=2),
+		"settlement_created_by": frappe.session.user,
+		"settlement_created_on": now_datetime(),
+	}
+	if getattr(source, "meta", None) and source.meta.has_field("settlement_method"):
+		values["settlement_method"] = CASH
+	return settlement, values
+
+
 @frappe.whitelist()
 def create_cash_settlement(adjustment):
 	"""Explicitly settle a valid pre-release approved adjustment once."""
@@ -122,34 +150,19 @@ def create_cash_settlement(adjustment):
 		"night_hours": doc.night_hours,
 		"rates": _get_overtime_rates(),
 	}
-	settlement = build_cash_settlement(doc, reconciliation)
-	_validate_cash_settlement(settlement)
-	created = _create_additional_salaries(doc, settlement)
-	settlement["additional_salaries"] = created
-	values = {
-		"settlement_status": SETTLEMENT_CREATED,
-		"settlement_hourly_rate": settlement["hourly_rate"],
-		"settlement_amount": settlement["total_amount"],
-		"settlement_currency": settlement["currency"],
-		"settlement_breakdown": json.dumps(
-			settlement, ensure_ascii=False, indent=2, sort_keys=True
-		),
-		"settlement_references": json.dumps(created, ensure_ascii=False, indent=2),
-		"settlement_created_by": frappe.session.user,
-		"settlement_created_on": now_datetime(),
-	}
+	settlement, values = create_cash_settlement_for_source(doc, reconciliation)
 	frappe.db.set_value(doc.doctype, doc.name, values)
 	doc.add_comment(
 		"Info",
 		_("Cash settlement created through Additional Salary: {0}").format(
-			", ".join(created)
+			", ".join(settlement["additional_salaries"])
 		),
 	)
 	return {**settlement, "settlement_status": SETTLEMENT_CREATED}
 
 
 def before_cancel_adjustment(adjustment):
-	references = _get_linked_additional_salaries(adjustment.name, docstatus=1)
+	references = _get_linked_additional_salaries(adjustment, docstatus=1)
 	paid_slips = _get_submitted_salary_slips(references)
 	if not paid_slips and adjustment.get("settlement_status") != SETTLEMENT_PAID:
 		return
@@ -164,7 +177,7 @@ def before_cancel_adjustment(adjustment):
 
 def cancel_cash_settlement(adjustment):
 	"""Cancel linked payroll inputs after the adjustment itself is cancelled."""
-	references = _get_linked_additional_salaries(adjustment.name, docstatus=1)
+	references = _get_linked_additional_salaries(adjustment, docstatus=1)
 	for name in references:
 		doc = frappe.get_doc("Additional Salary", name)
 		doc.flags.ignore_permissions = True
@@ -185,18 +198,18 @@ def cancel_cash_settlement(adjustment):
 
 def prevent_direct_overtime_salary_cancel(additional_salary, method=None):
 	"""Keep the adjustment as the authoritative rollback entry point."""
-	if additional_salary.ref_doctype != "Retroactive Overtime Adjustment":
+	if additional_salary.ref_doctype not in OVERTIME_SETTLEMENT_SOURCES:
 		return
 	if not additional_salary.ref_docname:
 		return
 	if frappe.db.get_value(
-		"Retroactive Overtime Adjustment",
+		additional_salary.ref_doctype,
 		additional_salary.ref_docname,
 		"docstatus",
 	) == 1:
 		frappe.throw(
-			_("Cancel the linked Retroactive Overtime Adjustment instead."),
-			title=_("Overtime settlement is controlled by its adjustment"),
+			_("Cancel the linked {0} instead.").format(additional_salary.ref_doctype),
+			title=_("Overtime settlement is controlled by its source"),
 		)
 
 
@@ -213,20 +226,26 @@ def sync_adjustments_from_salary_slip(salary_slip, *, paid):
 		"Additional Salary",
 		filters={
 			"name": ["in", list(additional_salary_names)],
-			"ref_doctype": "Retroactive Overtime Adjustment",
+			"ref_doctype": ["in", list(OVERTIME_SETTLEMENT_SOURCES)],
 			"docstatus": 1,
 		},
-		fields=["name", "ref_docname"],
+		fields=["name", "ref_doctype", "ref_docname"],
 	)
-	for adjustment_name in {row.ref_docname for row in links if row.ref_docname}:
+	for source_doctype, source_name in {
+		(row.ref_doctype, row.ref_docname)
+		for row in links
+		if row.ref_doctype and row.ref_docname
+	}:
 		active_references = set(
-			_get_linked_additional_salaries(adjustment_name, docstatus=1)
+			_get_linked_additional_salaries(
+				source_name, source_doctype=source_doctype, docstatus=1
+			)
 		)
 		if paid and not active_references.issubset(additional_salary_names):
 			continue
 		frappe.db.set_value(
-			"Retroactive Overtime Adjustment",
-			adjustment_name,
+			source_doctype,
+			source_name,
 			{
 				"settlement_status": SETTLEMENT_PAID if paid else SETTLEMENT_CREATED,
 				"settlement_salary_slip": salary_slip.name if paid else None,
@@ -238,7 +257,7 @@ def _create_additional_salaries(adjustment, settlement):
 	# Serialize retries and simultaneous requests on the source adjustment. The
 	# reference lookup below then serves as the idempotency check.
 	frappe.db.get_value(adjustment.doctype, adjustment.name, "name", for_update=True)
-	existing = _get_linked_additional_salaries(adjustment.name, docstatus=["<", 2])
+	existing = _get_linked_additional_salaries(adjustment, docstatus=["<", 2])
 	if existing:
 		frappe.throw(
 			_("Additional Salary already exists for this adjustment: {0}").format(
@@ -354,10 +373,18 @@ def _validate_salary_component(component):
 		)
 
 
-def _get_linked_additional_salaries(adjustment, *, docstatus=None):
+def _get_linked_additional_salaries(
+	source, *, source_doctype=None, docstatus=None
+):
+	if hasattr(source, "doctype"):
+		source_doctype = source.doctype
+		source_name = source.name
+	else:
+		source_doctype = source_doctype or "Retroactive Overtime Adjustment"
+		source_name = source
 	filters = {
-		"ref_doctype": "Retroactive Overtime Adjustment",
-		"ref_docname": adjustment,
+		"ref_doctype": source_doctype,
+		"ref_docname": source_name,
 	}
 	if docstatus is not None:
 		filters["docstatus"] = docstatus

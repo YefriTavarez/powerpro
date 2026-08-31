@@ -126,6 +126,7 @@ class OvertimeCashSettlementControllerTest(unittest.TestCase):
 		links = [
 			frappe._dict({
 				"name": "SALADIC-26-08-00001",
+				"ref_doctype": "Retroactive Overtime Adjustment",
 				"ref_docname": "OT-ADJ-2026-00001",
 			})
 		]
@@ -159,6 +160,7 @@ class OvertimeCashSettlementControllerTest(unittest.TestCase):
 		links = [
 			frappe._dict({
 				"name": "SALADIC-26-08-00001",
+				"ref_doctype": "Retroactive Overtime Adjustment",
 				"ref_docname": "OT-ADJ-2026-00001",
 			})
 		]
@@ -188,6 +190,7 @@ class OvertimeCashSettlementControllerTest(unittest.TestCase):
 		links = [
 			frappe._dict({
 				"name": "SALADIC-26-08-00001",
+				"ref_doctype": "Retroactive Overtime Adjustment",
 				"ref_docname": "OT-ADJ-2026-00001",
 			})
 		]

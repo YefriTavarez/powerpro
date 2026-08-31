@@ -109,11 +109,14 @@ jobs:
           bench --site test_site set-config allow_tests true
           bench --site test_site run-tests --app powerpro --module powerpro.controllers.test_payroll_preflight
           bench --site test_site run-tests --app powerpro --module powerpro.controllers.test_overtime_cash_settlement
+          bench --site test_site run-tests --app powerpro --module powerpro.controllers.test_overtime_settlement
+          bench --site test_site run-tests --app powerpro --module powerpro.controllers.test_overtime_compensatory_settlement
           bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_dominican_republic
           bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_employer_contributions
           bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_banco_popular
           bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_overtime
           bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_overtime_work_call
+          bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_overtime_compensatory
           bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_overtime_candidates
           bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_overtime_cash_settlement
           bench --site test_site run-tests --app powerpro --module powerpro.controllers.test_overtime_candidate_refresh

@@ -70,8 +70,21 @@ class OvertimeAuthorization(Document):
 		self.approved_by = approved_by
 		self.approved_on = now_datetime()
 		self.reconciliation_status = "Scheduled"
+		self.settlement_status = "Pending"
+
+	def before_cancel(self):
+		from powerpro.controllers.overtime_settlement import (
+			before_cancel_authorization_settlement,
+		)
+
+		before_cancel_authorization_settlement(self)
 
 	def on_cancel(self):
+		from powerpro.controllers.overtime_settlement import (
+			cancel_authorization_settlement,
+		)
+
+		cancel_authorization_settlement(self)
 		self.db_set("status", "Cancelled", update_modified=False)
 
 	def _validate_feature_flag(self):

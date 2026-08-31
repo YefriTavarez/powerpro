@@ -1,13 +1,14 @@
 # Copyright (c) 2026, PowerPro contributors
 # For license information, please see license.txt
 
-"""Read-only reconciliation for approved overtime records."""
+"""Reconciliation for approved overtime records."""
 
+import json
 from datetime import datetime, time, timedelta
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt, get_datetime, getdate
+from frappe.utils import cint, flt, get_datetime, getdate, now_datetime
 
 from powerpro.payroll_rules.overtime import (
 	REGULAR_DAY,
@@ -21,6 +22,7 @@ from powerpro.payroll_rules.overtime import (
 from powerpro.payroll_rules.retroactive_overtime import (
 	select_last_valid_out_checkin,
 )
+from powerpro.payroll_rules.overtime_work_call import derive_reconciliation_snapshot
 
 
 WEEKDAY_FIELDS = {
@@ -47,12 +49,80 @@ def get_reconciliation_preview(authorization):
 		frappe.throw(_("Only an approved Overtime Authorization can be reconciled."))
 
 	result = _reconcile(doc, include_weekly_context=True)
+	result.update(
+		derive_reconciliation_snapshot(
+			authorization_start=doc.authorization_start,
+			authorization_end=doc.authorization_end,
+			maximum_hours=doc.maximum_hours,
+			reconciliation=result,
+			evaluation_time=now_datetime(),
+		)
+	)
 	result.update({
 		"authorization": doc.name,
 		"read_only": True,
 		"saved_documents": 0,
 		"payroll_connected": False,
 	})
+	return result
+
+
+@frappe.whitelist()
+def save_authorization_reconciliation(authorization):
+	"""Persist one standalone authorization after its read-only preview."""
+	doc = frappe.get_doc("Overtime Authorization", authorization)
+	if not frappe.has_permission("Overtime Authorization", "write", doc=doc):
+		frappe.throw(
+			_("Not permitted to update this Overtime Authorization."),
+			frappe.PermissionError,
+		)
+	if doc.docstatus != 1:
+		frappe.throw(_("Only an approved Overtime Authorization can be reconciled."))
+	if doc.overtime_work_call:
+		frappe.throw(
+			_("Refresh attendance from the linked Overtime Work Call to keep team totals synchronized.")
+		)
+	if doc.get("settlement_status") in {"Created", "Paid", "Credited"}:
+		frappe.throw(
+			_("A settled authorization's reconciliation snapshot cannot be replaced."),
+			title=_("Settlement snapshot is immutable"),
+		)
+	result = get_reconciliation_preview(doc.name)
+	if result["reconciliation_status"] == "Scheduled":
+		frappe.throw(_("The authorized overtime window has not ended yet."))
+	doc.db_set({
+		fieldname: result.get(fieldname)
+		for fieldname in (
+			"actual_start",
+			"actual_end",
+			"verified_hours",
+			"regular_35_hours",
+			"regular_100_hours",
+			"holiday_100_hours",
+			"weekly_rest_hours",
+			"night_hours",
+			"missing_hours",
+			"unapproved_hours",
+			"adherence_percent",
+			"late_minutes",
+			"early_departure_minutes",
+			"reconciliation_status",
+		)
+	})
+	doc.db_set({
+		"reconciliation_warnings": "\n".join(result.get("warnings") or []),
+		"reconciliation_intervals": json.dumps(result.get("intervals") or [], indent=2),
+		"unapproved_intervals": json.dumps(result.get("unapproved_intervals") or [], indent=2),
+		"source_checkins": json.dumps(result.get("source_checkins") or [], indent=2),
+		"reconciled_by": frappe.session.user,
+		"reconciled_on": now_datetime(),
+	})
+	doc.add_comment(
+		"Info",
+		_("Attendance snapshot saved with {0} verified overtime hours.").format(
+			result["verified_hours"]
+		),
+	)
 	return result
 
 

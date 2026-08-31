@@ -47,7 +47,7 @@ frappe.query_reports["Resumen de Horas Extras"] = {
             fieldname: "settlement_status",
             label: __("Settlement Status"),
             fieldtype: "Select",
-            options: ["", "Created", "Paid", "Pending"],
+            options: ["", "Created", "Paid"],
         },
     ],
 };

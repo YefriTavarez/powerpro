@@ -28,6 +28,13 @@ frappe.ui.form.on("Overtime Work Call", {
 					overtime_work_call: frm.doc.name,
 				});
 			}, __("Overtime"));
+			frm.add_custom_button(__("Preview and Settle Team"), () => {
+				if (frm.doc.planned_settlement === "Cash") {
+					show_team_payroll_date_dialog(frm);
+					return;
+				}
+				preview_team_settlement(frm, null);
+			}, __("Settlement"));
 		}
 	},
 
@@ -209,6 +216,73 @@ function save_reconciliation(frm) {
 			indicator: message.work_call_status === "Completed" ? "green" : "orange",
 		});
 		frm.reload_doc();
+	});
+}
+
+function show_team_payroll_date_dialog(frm) {
+	const dialog = new frappe.ui.Dialog({
+		title: __("Team Cash Settlement Payroll Date"),
+		fields: [{
+			fieldname: "payroll_date",
+			fieldtype: "Date",
+			label: __("Payroll Date"),
+			reqd: 1,
+			default: frappe.datetime.get_today(),
+		}],
+		primary_action_label: __("Preview"),
+		primary_action(values) {
+			dialog.hide();
+			preview_team_settlement(frm, values.payroll_date);
+		},
+	});
+	dialog.show();
+}
+
+function preview_team_settlement(frm, payroll_date) {
+	frappe.call({
+		method: "powerpro.controllers.overtime_settlement.preview_overtime_work_call_settlement",
+		args: { work_call: frm.doc.name, payroll_date },
+		freeze: true,
+		freeze_message: __("Calculating every employee settlement..."),
+	}).then(({ message }) => show_team_settlement_preview(frm, message, payroll_date));
+}
+
+function show_team_settlement_preview(frm, result, payroll_date) {
+	const is_cash = result.method === "Cash";
+	const rows = (result.rows || []).map((row) => `
+		<tr>
+			<td>${escape_html(row.employee_name || row.employee)}</td>
+			<td>${escape_html(row.work_date)}</td>
+			<td class="text-right">${format_number(row.verified_hours || row.current_hours)}</td>
+			<td class="text-right">${is_cash
+				? escape_html(format_currency(row.total_amount, row.currency))
+				: format_number(row.days_to_credit)}</td>
+		</tr>`).join("");
+	const summary_value = is_cash
+		? format_currency(result.total_amount, result.currency)
+		: format_number(result.leave_days_to_credit);
+	let dialog;
+	dialog = frappe.msgprint({
+		title: __("Team Overtime Settlement Preview"),
+		message: `<p><strong>${__("Authorizations")}:</strong> ${result.authorization_count} &nbsp;
+			<strong>${is_cash ? __("Total Amount") : __("Leave Days Added")}:</strong> ${escape_html(summary_value)}</p>
+			<div class="table-responsive"><table class="table table-bordered">
+			<thead><tr><th>${__("Employee")}</th><th>${__("Work Date")}</th><th>${__("Hours")}</th><th>${is_cash ? __("Amount") : __("Leave Days")}</th></tr></thead>
+			<tbody>${rows}</tbody></table></div>
+			<p class="text-muted">${__("Nothing has been created yet. The confirmation is atomic for the complete team.")}</p>`,
+		wide: true,
+		primary_action: {
+			label: is_cash ? __("Create Team Additional Salaries") : __("Credit Team Compensatory Rest"),
+			action() {
+				dialog.hide();
+				frappe.call({
+					method: "powerpro.controllers.overtime_settlement.settle_overtime_work_call",
+					args: { work_call: frm.doc.name, payroll_date },
+					freeze: true,
+					freeze_message: __("Creating the audited team settlement..."),
+				}).then(() => frm.reload_doc());
+			},
+		},
 	});
 }
 
