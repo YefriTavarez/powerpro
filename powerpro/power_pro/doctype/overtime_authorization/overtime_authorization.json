@@ -27,8 +27,26 @@
   "reason",
   "planned_settlement",
   "authorization_column",
+  "overtime_work_call",
   "requested_by",
   "approver",
+  "reconciliation_section",
+  "reconciliation_status",
+  "actual_start",
+  "actual_end",
+  "verified_hours",
+  "missing_hours",
+  "unapproved_hours",
+  "reconciliation_column",
+  "adherence_percent",
+  "late_minutes",
+  "early_departure_minutes",
+  "reconciliation_warnings",
+  "reconciliation_intervals",
+  "unapproved_intervals",
+  "source_checkins",
+  "reconciled_by",
+  "reconciled_on",
   "approval_section",
   "status",
   "approved_by",
@@ -187,6 +205,16 @@
    "fieldtype": "Column Break"
   },
   {
+   "fieldname": "overtime_work_call",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Overtime Work Call",
+   "no_copy": 1,
+   "options": "Overtime Work Call",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
    "fieldname": "requested_by",
    "fieldtype": "Link",
    "label": "Requested By",
@@ -198,6 +226,148 @@
    "fieldtype": "Link",
    "label": "Approver",
    "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reconciliation_section",
+   "fieldtype": "Section Break",
+   "label": "Attendance and Adherence"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Scheduled",
+   "fieldname": "reconciliation_status",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Reconciliation Status",
+   "no_copy": 1,
+   "options": "Scheduled\nCompleted\nPartial\nAbsent\nOverrun\nCheck-in Issue",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "actual_start",
+   "fieldtype": "Datetime",
+   "label": "Actual Overtime Start",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "actual_end",
+   "fieldtype": "Datetime",
+   "label": "Actual Overtime End",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "verified_hours",
+   "fieldtype": "Float",
+   "label": "Verified Hours",
+   "no_copy": 1,
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "missing_hours",
+   "fieldtype": "Float",
+   "label": "Missing Hours",
+   "no_copy": 1,
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "unapproved_hours",
+   "fieldtype": "Float",
+   "label": "Hours Outside Authorized Window",
+   "no_copy": 1,
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reconciliation_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "adherence_percent",
+   "fieldtype": "Percent",
+   "label": "Adherence",
+   "no_copy": 1,
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "late_minutes",
+   "fieldtype": "Float",
+   "label": "Late Arrival Minutes",
+   "no_copy": 1,
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "early_departure_minutes",
+   "fieldtype": "Float",
+   "label": "Early Departure Minutes",
+   "no_copy": 1,
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "reconciliation_warnings",
+   "fieldtype": "Small Text",
+   "label": "Reconciliation Warnings",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "reconciliation_intervals",
+   "fieldtype": "Code",
+   "label": "Verified Intervals",
+   "no_copy": 1,
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "unapproved_intervals",
+   "fieldtype": "Code",
+   "label": "Unapproved Intervals",
+   "no_copy": 1,
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "source_checkins",
+   "fieldtype": "Code",
+   "label": "Source Employee Checkins",
+   "no_copy": 1,
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "reconciled_by",
+   "fieldtype": "Link",
+   "label": "Reconciled By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "reconciled_on",
+   "fieldtype": "Datetime",
+   "label": "Reconciled On",
+   "no_copy": 1,
    "read_only": 1
   },
   {
@@ -306,6 +476,15 @@
    "share": 1,
    "submit": 1,
    "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1
   }
  ],
  "search_fields": "employee,employee_name,reason",

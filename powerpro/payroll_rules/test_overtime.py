@@ -104,6 +104,45 @@ class OvertimeRulesTest(unittest.TestCase):
         )
         self.assertEqual(result["verified_hours"], 2)
         self.assertEqual(result["regular_35_hours"], 2)
+        self.assertEqual(result["worked_in_authorized_window_hours"], 2.5)
+
+    def test_continuous_work_after_authorized_end_is_visible_but_not_payable(self):
+        result = reconcile_authorized_overtime(
+            authorization_start=dt("2026-08-19T18:00:00"),
+            authorization_end=dt("2026-08-19T20:00:00"),
+            maximum_hours=2,
+            checkins=[
+                {"time": "2026-08-19T08:00:00", "log_type": "IN"},
+                {"time": "2026-08-19T21:00:00", "log_type": "OUT"},
+            ],
+            day_classification=REGULAR_DAY,
+            shift_start=dt("2026-08-19T08:00:00"),
+            shift_end=dt("2026-08-19T18:00:00"),
+        )
+        self.assertEqual(result["verified_hours"], 2)
+        self.assertEqual(result["unapproved_hours"], 1)
+        self.assertEqual(
+            result["unapproved_intervals"],
+            [{"start": "2026-08-19T20:00:00", "end": "2026-08-19T21:00:00"}],
+        )
+
+    def test_disconnected_later_shift_is_not_attributed_to_the_work_call(self):
+        result = reconcile_authorized_overtime(
+            authorization_start=dt("2026-08-19T18:00:00"),
+            authorization_end=dt("2026-08-19T20:00:00"),
+            maximum_hours=2,
+            checkins=[
+                {"time": "2026-08-19T18:00:00", "log_type": "IN"},
+                {"time": "2026-08-19T20:00:00", "log_type": "OUT"},
+                {"time": "2026-08-20T08:00:00", "log_type": "IN"},
+                {"time": "2026-08-20T17:00:00", "log_type": "OUT"},
+            ],
+            day_classification=REGULAR_DAY,
+            shift_start=dt("2026-08-19T08:00:00"),
+            shift_end=dt("2026-08-19T18:00:00"),
+        )
+        self.assertEqual(result["verified_hours"], 2)
+        self.assertEqual(result["unapproved_hours"], 0)
 
     def test_break_time_is_not_counted(self):
         result = reconcile_authorized_overtime(

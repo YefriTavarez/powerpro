@@ -134,16 +134,19 @@ def reconcile_authorized_overtime(
         raise ValueError("Maximum authorized hours must be greater than zero")
 
     intervals, warnings = build_work_intervals(checkins)
-    intervals = _intersections(
-        intervals,
-        WorkInterval(authorization_start, authorization_end),
-    )
 
     if day_classification == REGULAR_DAY:
         if not shift_start or not shift_end:
             raise ValueError("A regular workday requires scheduled shift times")
         scheduled = WorkInterval(_as_datetime(shift_start), _as_datetime(shift_end))
         intervals = _subtract_interval(intervals, scheduled)
+
+    authorization_window = WorkInterval(authorization_start, authorization_end)
+    unapproved_intervals = _outside_adjacent_portions(intervals, authorization_window)
+    intervals = _intersections(intervals, authorization_window)
+    worked_in_authorized_window_hours = _round_hours(
+        sum(interval.hours for interval in intervals)
+    )
 
     intervals = _cap_intervals(intervals, maximum_hours)
     verified_hours = _round_hours(sum(interval.hours for interval in intervals))
@@ -159,6 +162,14 @@ def reconcile_authorized_overtime(
         "holiday_100_hours": 0.0,
         "weekly_rest_hours": 0.0,
         "night_hours": night_hours,
+        "worked_in_authorized_window_hours": worked_in_authorized_window_hours,
+        "unapproved_hours": _round_hours(
+            sum(interval.hours for interval in unapproved_intervals)
+        ),
+        "unapproved_intervals": [
+            {"start": interval.start.isoformat(), "end": interval.end.isoformat()}
+            for interval in unapproved_intervals
+        ],
         "warnings": warnings,
         "intervals": [
             {"start": interval.start.isoformat(), "end": interval.end.isoformat()}
@@ -255,6 +266,16 @@ def _subtract_interval(intervals, excluded):
             result.append(WorkInterval(interval.start, excluded.start))
         if interval.end > excluded.end:
             result.append(WorkInterval(excluded.end, interval.end))
+    return result
+
+
+def _outside_adjacent_portions(intervals, included):
+    """Return unapproved portions only for work intervals crossing the window."""
+    result = []
+    for interval in intervals:
+        if interval.end <= included.start or interval.start >= included.end:
+            continue
+        result.extend(_subtract_interval([interval], included))
     return result
 
 

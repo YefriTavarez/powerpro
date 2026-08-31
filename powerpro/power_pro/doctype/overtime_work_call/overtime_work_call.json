@@ -1,0 +1,380 @@
+{
+ "actions": [],
+ "autoname": "OT-CALL-.YYYY.-.#####",
+ "creation": "2026-08-31 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "request_section",
+  "company",
+  "department",
+  "reason",
+  "request_column",
+  "planned_settlement",
+  "requested_by",
+  "status",
+  "schedule_section",
+  "from_date",
+  "to_date",
+  "schedule_column",
+  "default_start_time",
+  "default_end_time",
+  "dates",
+  "employees_section",
+  "employees",
+  "summary_section",
+  "employee_count",
+  "date_count",
+  "authorization_count",
+  "summary_column",
+  "requested_employee_hours",
+  "verified_hours",
+  "adherence_percent",
+  "audit_section",
+  "authorized_by",
+  "authorized_on",
+  "audit_column",
+  "last_reconciled_by",
+  "last_reconciled_on",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "request_section",
+   "fieldtype": "Section Break",
+   "label": "Company Overtime Call"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Department / Production Area",
+   "options": "Department"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Business Reason",
+   "reqd": 1
+  },
+  {
+   "fieldname": "request_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Cash",
+   "description": "Operational preference only. This work call never creates payroll, leave, or accounting records by itself.",
+   "fieldname": "planned_settlement",
+   "fieldtype": "Select",
+   "label": "Planned Settlement",
+   "options": "Cash\nCompensatory Rest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Draft\nAuthorized\nIn Progress\nNeeds Review\nCompleted\nCancelled",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "schedule_section",
+   "fieldtype": "Section Break",
+   "label": "Requested Team Schedule"
+  },
+  {
+   "description": "Helper range used to generate explicit date rows.",
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "From Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "schedule_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_start_time",
+   "fieldtype": "Time",
+   "label": "Team Start Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "default_end_time",
+   "fieldtype": "Time",
+   "label": "Team End Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "dates",
+   "fieldtype": "Table",
+   "label": "Requested Dates",
+   "options": "Overtime Work Call Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employees_section",
+   "fieldtype": "Section Break",
+   "label": "Called Employees"
+  },
+  {
+   "fieldname": "employees",
+   "fieldtype": "Table",
+   "label": "Employees",
+   "options": "Overtime Work Call Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "summary_section",
+   "fieldtype": "Section Break",
+   "label": "Summary"
+  },
+  {
+   "fieldname": "employee_count",
+   "fieldtype": "Int",
+   "label": "Employees",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "date_count",
+   "fieldtype": "Int",
+   "label": "Dates",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "authorization_count",
+   "fieldtype": "Int",
+   "label": "Individual Authorizations",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "summary_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "requested_employee_hours",
+   "fieldtype": "Float",
+   "label": "Requested Employee-Hours",
+   "no_copy": 1,
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "verified_hours",
+   "fieldtype": "Float",
+   "label": "Verified Hours",
+   "no_copy": 1,
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "adherence_percent",
+   "fieldtype": "Percent",
+   "label": "Adherence",
+   "no_copy": 1,
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "audit_section",
+   "fieldtype": "Section Break",
+   "label": "Authorization and Reconciliation Audit"
+  },
+  {
+   "fieldname": "authorized_by",
+   "fieldtype": "Link",
+   "label": "Authorized By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "authorized_on",
+   "fieldtype": "Datetime",
+   "label": "Authorized On",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "audit_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "last_reconciled_by",
+   "fieldtype": "Link",
+   "label": "Last Reconciled By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "last_reconciled_on",
+   "fieldtype": "Datetime",
+   "label": "Last Reconciled On",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Overtime Work Call",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [
+  {
+   "link_doctype": "Overtime Authorization",
+   "link_fieldname": "overtime_work_call"
+  }
+ ],
+ "modified": "2026-08-31 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Power Pro",
+ "name": "Overtime Work Call",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Manufacturing Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "company,department,reason,status",
+ "show_name_in_global_search": 1,
+ "sort_field": "from_date",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Orange",
+   "title": "Draft"
+  },
+  {
+   "color": "Blue",
+   "title": "Authorized"
+  },
+  {
+   "color": "Yellow",
+   "title": "In Progress"
+  },
+  {
+   "color": "Red",
+   "title": "Needs Review"
+  },
+  {
+   "color": "Green",
+   "title": "Completed"
+  },
+  {
+   "color": "Gray",
+   "title": "Cancelled"
+  }
+ ],
+ "title_field": "reason",
+ "track_changes": 1
+}
