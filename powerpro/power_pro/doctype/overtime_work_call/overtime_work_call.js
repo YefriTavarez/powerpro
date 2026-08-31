@@ -12,12 +12,12 @@ frappe.ui.form.on("Overtime Work Call", {
 	},
 
 	refresh(frm) {
+		update_schedule_description(frm);
 		if (frm.doc.docstatus === 0) {
 			frm.dashboard.set_headline_alert(
 				__("Submitting this call immediately authorizes the generated employee/date overtime windows."),
 				"blue"
 			);
-			frm.add_custom_button(__("Generate Dates"), () => generate_dates(frm), __("Schedule"));
 			frm.add_custom_button(__("Add Eligible Employees"), () => add_employees(frm), __("Employees"));
 		}
 
@@ -40,14 +40,23 @@ frappe.ui.form.on("Overtime Work Call", {
 
 	from_date(frm) {
 		if (!frm.doc.to_date) frm.set_value("to_date", frm.doc.from_date);
+		mark_schedule_changed(frm);
+	},
+
+	to_date(frm) {
+		mark_schedule_changed(frm);
 	},
 
 	default_start_time(frm) {
-		apply_default_times(frm);
+		mark_schedule_changed(frm);
 	},
 
 	default_end_time(frm) {
-		apply_default_times(frm);
+		mark_schedule_changed(frm);
+	},
+
+	generate_dates(frm) {
+		generate_requested_dates(frm);
 	},
 });
 
@@ -63,7 +72,7 @@ frappe.ui.form.on("Overtime Work Call Date", {
 	},
 });
 
-function generate_dates(frm) {
+function generate_requested_dates(frm) {
 	if (!frm.doc.from_date || !frm.doc.to_date || !frm.doc.default_start_time || !frm.doc.default_end_time) {
 		frappe.msgprint(__("Enter From Date, To Date, Team Start Time, and Team End Time first."));
 		return;
@@ -90,6 +99,12 @@ function generate_dates(frm) {
 			work_date = frappe.datetime.add_days(work_date, 1);
 		}
 		frm.refresh_field("dates");
+		frm.__schedule_rows_stale = false;
+		update_schedule_description(frm);
+		frappe.show_alert({
+			message: __("Generated {0} requested date rows.", [frm.doc.dates.length]),
+			indicator: "green",
+		});
 	};
 
 	if (frm.doc.dates?.length) {
@@ -99,13 +114,17 @@ function generate_dates(frm) {
 	}
 }
 
-function apply_default_times(frm) {
-	(frm.doc.dates || []).forEach((row) => {
-		if (frm.doc.default_start_time) row.start_time = frm.doc.default_start_time;
-		if (frm.doc.default_end_time) row.end_time = frm.doc.default_end_time;
-		row.requested_hours = hours_between(row.start_time, row.end_time);
-	});
-	frm.refresh_field("dates");
+function mark_schedule_changed(frm) {
+	if (!frm.doc.dates?.length) return;
+	frm.__schedule_rows_stale = true;
+	update_schedule_description(frm);
+}
+
+function update_schedule_description(frm) {
+	const description = frm.__schedule_rows_stale
+		? __("Schedule fields changed. Generate the requested dates again before saving.")
+		: __("Generated from the four schedule fields. Rows can then be adjusted for date-specific exceptions.");
+	frm.set_df_property("dates", "description", description);
 }
 
 function add_employees(frm) {
