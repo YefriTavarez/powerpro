@@ -33,6 +33,27 @@ def requested_hours(work_date, start_time, end_time):
 	return round((end - start).total_seconds() / 3600, 4)
 
 
+def validate_requested_date_range(from_date, to_date, work_dates):
+	"""Keep the helper range authoritative while allowing date-specific rows."""
+	if not from_date or not to_date:
+		raise ValueError("From Date and To Date are required")
+	start = _as_date(from_date)
+	end = _as_date(to_date)
+	if end < start:
+		raise ValueError("To Date must be on or after From Date")
+
+	dates = [_as_date(value) for value in work_dates]
+	if not dates:
+		raise ValueError("Generate or add at least one requested date")
+	if min(dates) < start or max(dates) > end:
+		raise ValueError("Requested date rows must stay inside From Date and To Date")
+	if min(dates) != start or max(dates) != end:
+		raise ValueError(
+			"Requested date rows must include both From Date and To Date. "
+			"Generate the table again after changing the schedule range"
+		)
+
+
 def derive_reconciliation_snapshot(
 	*,
 	authorization_start,

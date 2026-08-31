@@ -15,6 +15,7 @@ from powerpro.payroll_rules.overtime_work_call import (
 	build_authorization_window,
 	derive_reconciliation_snapshot,
 	requested_hours,
+	validate_requested_date_range,
 )
 
 
@@ -159,8 +160,14 @@ class OvertimeWorkCall(Document):
 				frappe.throw(str(exc))
 			if flt(row.requested_hours) <= 0:
 				frappe.throw(_("Requested hours must be greater than zero."))
-		self.from_date = min(getdate(row.work_date) for row in self.dates)
-		self.to_date = max(getdate(row.work_date) for row in self.dates)
+		try:
+			validate_requested_date_range(
+				self.from_date,
+				self.to_date,
+				[row.work_date for row in self.dates],
+			)
+		except ValueError as exc:
+			frappe.throw(_(str(exc)))
 
 	def _set_totals(self):
 		self.employee_count = len(self.employees)

@@ -15,6 +15,44 @@ SPEC.loader.exec_module(rules)
 
 
 class OvertimeWorkCallRulesTest(unittest.TestCase):
+	def test_requested_rows_must_match_range_endpoints(self):
+		rules.validate_requested_date_range(
+			"2026-08-09",
+			"2026-08-11",
+			["2026-08-09", "2026-08-11"],
+		)
+
+	def test_requested_rows_may_skip_middle_dates(self):
+		rules.validate_requested_date_range(
+			"2026-08-09",
+			"2026-08-12",
+			["2026-08-09", "2026-08-11", "2026-08-12"],
+		)
+
+	def test_requested_rows_cannot_silently_replace_range(self):
+		with self.assertRaisesRegex(ValueError, "include both From Date and To Date"):
+			rules.validate_requested_date_range(
+				"2026-08-09",
+				"2026-08-11",
+				["2026-08-10"],
+			)
+
+	def test_requested_rows_cannot_extend_outside_range(self):
+		with self.assertRaisesRegex(ValueError, "stay inside"):
+			rules.validate_requested_date_range(
+				"2026-08-09",
+				"2026-08-11",
+				["2026-08-08", "2026-08-11"],
+			)
+
+	def test_requested_range_cannot_run_backwards(self):
+		with self.assertRaisesRegex(ValueError, "on or after"):
+			rules.validate_requested_date_range(
+				"2026-08-11",
+				"2026-08-09",
+				["2026-08-09", "2026-08-11"],
+			)
+
 	def test_builds_same_day_team_window(self):
 		start, end = rules.build_authorization_window(
 			"2026-08-16", "08:00:00", "14:00:00"

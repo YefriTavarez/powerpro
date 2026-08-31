@@ -19,6 +19,7 @@
   "schedule_column",
   "default_start_time",
   "default_end_time",
+  "generate_dates",
   "dates",
   "employees_section",
   "employees",
@@ -105,7 +106,7 @@
    "label": "Requested Team Schedule"
   },
   {
-   "description": "Helper range used to generate explicit date rows.",
+   "description": "Defines the requested range. Use Generate Requested Dates to populate the table.",
    "fieldname": "from_date",
    "fieldtype": "Date",
    "label": "From Date",
@@ -134,6 +135,13 @@
    "reqd": 1
   },
   {
+   "depends_on": "eval:doc.docstatus == 0",
+   "fieldname": "generate_dates",
+   "fieldtype": "Button",
+   "label": "Generate Requested Dates"
+  },
+  {
+   "description": "Generated from the four schedule fields. Rows can then be adjusted for date-specific exceptions.",
    "fieldname": "dates",
    "fieldtype": "Table",
    "label": "Requested Dates",
