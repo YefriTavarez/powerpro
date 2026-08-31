@@ -34,11 +34,15 @@ class OvertimeWorkCallRulesTest(unittest.TestCase):
 	def test_completed_snapshot_tracks_full_adherence(self):
 		snapshot = self.snapshot(
 			verified_hours=6,
+			regular_35_hours=4,
+			regular_100_hours=2,
 			intervals=[{"start": "2026-08-16T08:00:00", "end": "2026-08-16T14:00:00"}],
 		)
 		self.assertEqual(snapshot["reconciliation_status"], "Completed")
 		self.assertEqual(snapshot["adherence_percent"], 100)
 		self.assertEqual(snapshot["missing_hours"], 0)
+		self.assertEqual(snapshot["regular_35_hours"], 4)
+		self.assertEqual(snapshot["regular_100_hours"], 2)
 
 	def test_partial_snapshot_tracks_late_arrival_and_missing_hours(self):
 		snapshot = self.snapshot(
@@ -80,6 +84,11 @@ class OvertimeWorkCallRulesTest(unittest.TestCase):
 		verified_hours,
 		intervals,
 		unapproved_hours=0,
+		regular_35_hours=0,
+		regular_100_hours=0,
+		holiday_100_hours=0,
+		weekly_rest_hours=0,
+		night_hours=0,
 		warnings=None,
 		evaluation_time="2026-08-16T15:00:00",
 	):
@@ -91,6 +100,11 @@ class OvertimeWorkCallRulesTest(unittest.TestCase):
 			reconciliation={
 				"verified_hours": verified_hours,
 				"unapproved_hours": unapproved_hours,
+				"regular_35_hours": regular_35_hours,
+				"regular_100_hours": regular_100_hours,
+				"holiday_100_hours": holiday_100_hours,
+				"weekly_rest_hours": weekly_rest_hours,
+				"night_hours": night_hours,
 				"intervals": intervals,
 				"warnings": warnings or [],
 				"source_checkins": [

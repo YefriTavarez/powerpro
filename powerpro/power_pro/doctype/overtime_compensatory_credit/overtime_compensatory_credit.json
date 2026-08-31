@@ -1,0 +1,335 @@
+{
+ "actions": [],
+ "autoname": "OT-CREDIT-.YYYY.-.#####",
+ "creation": "2026-08-31 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "source_section",
+  "overtime_authorization",
+  "employee",
+  "employee_name",
+  "source_column",
+  "company",
+  "work_date",
+  "leave_section",
+  "leave_period",
+  "leave_type",
+  "leave_allocation",
+  "conversion_column",
+  "hours_per_day",
+  "leave_increment",
+  "credit_section",
+  "banked_hours",
+  "prior_bank_hours",
+  "credited_days",
+  "residual_hours_after",
+  "audit_section",
+  "status",
+  "credited_by",
+  "credited_on",
+  "reversal_column",
+  "reversed_hours",
+  "reversed_days",
+  "reversed_by",
+  "reversed_on",
+  "reversal_reason",
+  "settlement_snapshot",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "source_section",
+   "fieldtype": "Section Break",
+   "label": "Overtime Source"
+  },
+  {
+   "fieldname": "overtime_authorization",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Overtime Authorization",
+   "options": "Overtime Authorization",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "work_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Work Date",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "leave_section",
+   "fieldtype": "Section Break",
+   "label": "Consolidated Leave Allocation"
+  },
+  {
+   "fieldname": "leave_period",
+   "fieldtype": "Link",
+   "label": "Leave Period",
+   "options": "Leave Period",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "leave_type",
+   "fieldtype": "Link",
+   "label": "Leave Type",
+   "options": "Leave Type",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "leave_allocation",
+   "fieldtype": "Link",
+   "label": "Leave Allocation",
+   "options": "Leave Allocation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "conversion_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "hours_per_day",
+   "fieldtype": "Float",
+   "label": "Hours per Leave Day",
+   "precision": "2",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "leave_increment",
+   "fieldtype": "Float",
+   "label": "Leave Credit Increment",
+   "precision": "2",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "credit_section",
+   "fieldtype": "Section Break",
+   "label": "Credit Snapshot"
+  },
+  {
+   "fieldname": "banked_hours",
+   "fieldtype": "Float",
+   "label": "Banked Hours",
+   "precision": "4",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "prior_bank_hours",
+   "fieldtype": "Float",
+   "label": "Prior Residual Hours",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "credited_days",
+   "fieldtype": "Float",
+   "label": "Leave Days Credited by This Event",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "residual_hours_after",
+   "fieldtype": "Float",
+   "label": "Residual Hours After Credit",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "audit_section",
+   "fieldtype": "Section Break",
+   "label": "Audit"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Draft\nCredited\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "credited_by",
+   "fieldtype": "Link",
+   "label": "Credited By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "credited_on",
+   "fieldtype": "Datetime",
+   "label": "Credited On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reversal_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "reversed_hours",
+   "fieldtype": "Float",
+   "label": "Reversed Hours",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "reversed_days",
+   "fieldtype": "Float",
+   "label": "Reversed Leave Days",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "reversed_by",
+   "fieldtype": "Link",
+   "label": "Reversed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "reversed_on",
+   "fieldtype": "Datetime",
+   "label": "Reversed On",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "reversal_reason",
+   "fieldtype": "Small Text",
+   "label": "Reversal Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "settlement_snapshot",
+   "fieldtype": "Code",
+   "label": "Settlement Snapshot",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Overtime Compensatory Credit",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "index_web_pages": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-08-31 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Power Pro",
+ "name": "Overtime Compensatory Credit",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Manufacturing Manager",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1
+  }
+ ],
+ "sort_field": "work_date",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Green",
+   "title": "Credited"
+  },
+  {
+   "color": "Gray",
+   "title": "Cancelled"
+  }
+ ],
+ "track_changes": 1
+}

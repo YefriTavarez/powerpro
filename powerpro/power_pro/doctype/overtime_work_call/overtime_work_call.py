@@ -227,6 +227,17 @@ def reconcile_overtime_work_call(work_call, dry_run=1):
 		order_by="work_date asc, employee_name asc",
 	):
 		authorization = frappe.get_doc("Overtime Authorization", name)
+		if not dry_run and authorization.get("settlement_status") in {
+			"Created",
+			"Paid",
+			"Credited",
+		}:
+			frappe.throw(
+				_(
+					"Authorization {0} is already settled; its saved reconciliation cannot be replaced."
+				).format(frappe.bold(authorization.name)),
+				title=_("Settlement snapshot is immutable"),
+			)
 		result = reconcile_overtime_document(authorization, include_weekly_context=True)
 		result["source_checkins"] = result.get("source_checkins") or []
 		snapshot = derive_reconciliation_snapshot(

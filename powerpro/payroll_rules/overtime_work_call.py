@@ -90,6 +90,21 @@ def derive_reconciliation_snapshot(
 		"actual_start": actual_start,
 		"actual_end": actual_end,
 		"verified_hours": round(verified, 4),
+		"regular_35_hours": round(
+			max(float(reconciliation.get("regular_35_hours") or 0), 0), 4
+		),
+		"regular_100_hours": round(
+			max(float(reconciliation.get("regular_100_hours") or 0), 0), 4
+		),
+		"holiday_100_hours": round(
+			max(float(reconciliation.get("holiday_100_hours") or 0), 0), 4
+		),
+		"weekly_rest_hours": round(
+			max(float(reconciliation.get("weekly_rest_hours") or 0), 0), 4
+		),
+		"night_hours": round(
+			max(float(reconciliation.get("night_hours") or 0), 0), 4
+		),
 		"missing_hours": round(missing, 4),
 		"unapproved_hours": round(unapproved, 4),
 		"adherence_percent": round(adherence, 2),

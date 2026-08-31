@@ -227,6 +227,14 @@ doc_events = {
     "Additional Salary": {
         "before_cancel": "powerpro.controllers.overtime_cash_settlement.prevent_direct_overtime_salary_cancel",
     },
+	"Leave Allocation": {
+		"validate": "powerpro.controllers.overtime_compensatory_settlement.protect_managed_leave_allocation",
+		"before_cancel": "powerpro.controllers.overtime_compensatory_settlement.protect_managed_leave_allocation",
+	},
+	"Compensatory Leave Request": {
+		"before_submit": "powerpro.controllers.overtime_compensatory_settlement.protect_overtime_leave_type_from_standard_request",
+		"before_cancel": "powerpro.controllers.overtime_compensatory_settlement.protect_overtime_leave_type_from_standard_request",
+	},
     "Salary Slip": {
         "validate": [
             "powerpro.controllers.salary_slip.helper.set_dgii_payroll_settings",

@@ -32,11 +32,16 @@
   "approver",
   "reconciliation_section",
   "reconciliation_status",
-  "actual_start",
-  "actual_end",
-  "verified_hours",
-  "missing_hours",
-  "unapproved_hours",
+    "actual_start",
+    "actual_end",
+    "verified_hours",
+    "regular_35_hours",
+    "regular_100_hours",
+    "holiday_100_hours",
+    "weekly_rest_hours",
+    "night_hours",
+    "missing_hours",
+    "unapproved_hours",
   "reconciliation_column",
   "adherence_percent",
   "late_minutes",
@@ -44,10 +49,28 @@
   "reconciliation_warnings",
   "reconciliation_intervals",
   "unapproved_intervals",
-  "source_checkins",
-  "reconciled_by",
-  "reconciled_on",
-  "approval_section",
+    "source_checkins",
+    "reconciled_by",
+    "reconciled_on",
+    "settlement_section",
+    "settlement_status",
+    "settlement_method",
+    "settlement_payroll_date",
+    "settlement_hourly_rate",
+    "settlement_amount",
+    "settlement_currency",
+    "settlement_column",
+    "settlement_salary_slip",
+    "compensatory_credit",
+    "leave_allocation",
+    "compensatory_hours",
+    "compensatory_days",
+    "compensatory_residual_hours",
+    "settlement_created_by",
+    "settlement_created_on",
+    "settlement_breakdown",
+    "settlement_references",
+    "approval_section",
   "status",
   "approved_by",
   "approved_on",
@@ -193,7 +216,7 @@
   },
   {
    "default": "Cash",
-   "description": "Operational preference only. Payroll or compensatory leave is not created by this Phase 1 record.",
+   "description": "Settlement is created only through the explicit preview-and-confirm action after attendance reconciliation.",
    "fieldname": "planned_settlement",
    "fieldtype": "Select",
    "label": "Planned Settlement",
@@ -265,6 +288,51 @@
    "fieldname": "verified_hours",
    "fieldtype": "Float",
    "label": "Verified Hours",
+   "no_copy": 1,
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "regular_35_hours",
+   "fieldtype": "Float",
+   "label": "Regular Overtime 35% Hours",
+   "no_copy": 1,
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "regular_100_hours",
+   "fieldtype": "Float",
+   "label": "Extraordinary Overtime 100% Hours",
+   "no_copy": 1,
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "holiday_100_hours",
+   "fieldtype": "Float",
+   "label": "Holiday 100% Hours",
+   "no_copy": 1,
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "weekly_rest_hours",
+   "fieldtype": "Float",
+   "label": "Weekly Rest Hours",
+   "no_copy": 1,
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "night_hours",
+   "fieldtype": "Float",
+   "label": "Night Hours",
    "no_copy": 1,
    "precision": "4",
    "read_only": 1
@@ -368,6 +436,161 @@
    "fieldtype": "Datetime",
    "label": "Reconciled On",
    "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "settlement_section",
+   "fieldtype": "Section Break",
+   "label": "Overtime Settlement"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Pending",
+   "fieldname": "settlement_status",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Settlement Status",
+   "no_copy": 1,
+   "options": "Pending\nCreated\nPaid\nCredited\nCancelled",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_method",
+   "fieldtype": "Select",
+   "label": "Settlement Method",
+   "no_copy": 1,
+   "options": "Cash\nCompensatory Rest",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_payroll_date",
+   "fieldtype": "Date",
+   "label": "Settlement Payroll Date",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_hourly_rate",
+   "fieldtype": "Currency",
+   "label": "Hourly Rate",
+   "no_copy": 1,
+   "options": "settlement_currency",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_amount",
+   "fieldtype": "Currency",
+   "label": "Cash Settlement Amount",
+   "no_copy": 1,
+   "options": "settlement_currency",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_currency",
+   "fieldtype": "Link",
+   "label": "Settlement Currency",
+   "no_copy": 1,
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "settlement_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_salary_slip",
+   "fieldtype": "Link",
+   "label": "Salary Slip",
+   "no_copy": 1,
+   "options": "Salary Slip",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "compensatory_credit",
+   "fieldtype": "Link",
+   "label": "Compensatory Credit",
+   "no_copy": 1,
+   "options": "Overtime Compensatory Credit",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "leave_allocation",
+   "fieldtype": "Link",
+   "label": "Consolidated Leave Allocation",
+   "no_copy": 1,
+   "options": "Leave Allocation",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "compensatory_hours",
+   "fieldtype": "Float",
+   "label": "Compensatory Hours Banked",
+   "no_copy": 1,
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "compensatory_days",
+   "fieldtype": "Float",
+   "label": "Leave Days Credited",
+   "no_copy": 1,
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "compensatory_residual_hours",
+   "fieldtype": "Float",
+   "label": "Residual Bank Hours",
+   "no_copy": 1,
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_created_by",
+   "fieldtype": "Link",
+   "label": "Settled By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_created_on",
+   "fieldtype": "Datetime",
+   "label": "Settled On",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_breakdown",
+   "fieldtype": "Code",
+   "label": "Settlement Snapshot",
+   "no_copy": 1,
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_references",
+   "fieldtype": "Code",
+   "label": "Settlement References",
+   "no_copy": 1,
+   "options": "JSON",
    "read_only": 1
   },
   {

@@ -28,6 +28,11 @@ def get_columns():
 		{"fieldname": "unapproved_hours", "label": _("Unapproved Hours"), "fieldtype": "Float", "precision": 2, "width": 115},
 		{"fieldname": "adherence_percent", "label": _("Adherence"), "fieldtype": "Percent", "precision": 2, "width": 95},
 		{"fieldname": "reconciliation_status", "label": _("Status"), "fieldtype": "Data", "width": 120},
+		{"fieldname": "settlement_method", "label": _("Settlement Method"), "fieldtype": "Data", "width": 145},
+		{"fieldname": "settlement_status", "label": _("Settlement Status"), "fieldtype": "Data", "width": 120},
+		{"fieldname": "settlement_amount", "label": _("Cash Amount"), "fieldtype": "Currency", "options": "settlement_currency", "width": 120},
+		{"fieldname": "compensatory_days", "label": _("Leave Days Credited"), "fieldtype": "Float", "precision": 2, "width": 115},
+		{"fieldname": "compensatory_residual_hours", "label": _("Residual Hours"), "fieldtype": "Float", "precision": 2, "width": 105},
 		{"fieldname": "day_classification", "label": _("Day Classification"), "fieldtype": "Data", "width": 150},
 		{"fieldname": "name", "label": _("Authorization"), "fieldtype": "Link", "options": "Overtime Authorization", "width": 150},
 	]
@@ -47,7 +52,7 @@ def _get_data(filters):
 		"docstatus": 1,
 		"overtime_work_call": ["is", "set"],
 	}
-	for fieldname in ("employee", "department", "reconciliation_status"):
+	for fieldname in ("employee", "department", "reconciliation_status", "settlement_status"):
 		if filters.get(fieldname):
 			conditions[fieldname] = filters[fieldname]
 	return frappe.get_list(
@@ -70,6 +75,12 @@ def _get_data(filters):
 			"unapproved_hours",
 			"adherence_percent",
 			"reconciliation_status",
+			"settlement_method",
+			"settlement_status",
+			"settlement_amount",
+			"settlement_currency",
+			"compensatory_days",
+			"compensatory_residual_hours",
 			"day_classification",
 		],
 		order_by="work_date asc, employee_name asc, name asc",
