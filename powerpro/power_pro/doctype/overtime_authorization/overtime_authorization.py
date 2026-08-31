@@ -34,6 +34,7 @@ class OvertimeAuthorization(Document):
 		self._set_holiday_list()
 		self._set_schedule_classification()
 		self._validate_window()
+		self._validate_work_call_source()
 		self._validate_no_overlap()
 		if self.docstatus == 0:
 			self.status = "Draft"
@@ -45,20 +46,33 @@ class OvertimeAuthorization(Document):
 				title=_("Retroactive approval is not allowed"),
 			)
 
-		if not is_assigned_approver(self.approver, frappe.session.user):
+		if self.overtime_work_call:
+			if not self.flags.get("generated_from_overtime_work_call"):
+				frappe.throw(
+					_("Work-call authorizations can only be submitted by their source work call."),
+					frappe.PermissionError,
+				)
+			work_call = frappe.get_doc("Overtime Work Call", self.overtime_work_call)
+			if work_call.docstatus != 1:
+				frappe.throw(_("The source overtime work call must be submitted."))
+			approved_by = work_call.authorized_by or frappe.session.user
+		elif not is_assigned_approver(self.approver, frappe.session.user):
 			frappe.throw(
 				_("Only the assigned approver {0} may submit this authorization.").format(
 					frappe.bold(self.approver)
 				),
 				frappe.PermissionError,
 			)
+		else:
+			approved_by = frappe.session.user
 
 		self.status = "Approved"
-		self.approved_by = frappe.session.user
+		self.approved_by = approved_by
 		self.approved_on = now_datetime()
+		self.reconciliation_status = "Scheduled"
 
 	def on_cancel(self):
-		self.status = "Cancelled"
+		self.db_set("status", "Cancelled", update_modified=False)
 
 	def _validate_feature_flag(self):
 		if not frappe.db.get_single_value(
@@ -190,6 +204,45 @@ class OvertimeAuthorization(Document):
 				_("Maximum Authorized Hours cannot exceed the approved time window ({0} hours).").format(
 					frappe.bold(round(window_hours, 2))
 				)
+			)
+
+	def _validate_work_call_source(self):
+		if not self.overtime_work_call:
+			return
+		if not self.flags.get("generated_from_overtime_work_call") and self.is_new():
+			frappe.throw(
+				_("Overtime Work Call is assigned automatically and cannot be supplied manually."),
+				frappe.PermissionError,
+			)
+		work_call = frappe.get_doc("Overtime Work Call", self.overtime_work_call)
+		if work_call.docstatus != 1:
+			frappe.throw(_("The source overtime work call must be submitted."))
+		if self.employee not in {row.employee for row in work_call.employees}:
+			frappe.throw(_("Employee is not included in the source overtime work call."))
+		matching_date = next(
+			(
+				row
+				for row in work_call.dates
+				if getdate(row.work_date) == getdate(self.work_date)
+			),
+			None,
+		)
+		if not matching_date:
+			frappe.throw(_("Work Date is not included in the source overtime work call."))
+		from powerpro.payroll_rules.overtime_work_call import build_authorization_window
+
+		expected_start, expected_end = build_authorization_window(
+			matching_date.work_date,
+			matching_date.start_time,
+			matching_date.end_time,
+		)
+		if (
+			get_datetime(self.authorization_start) != expected_start
+			or get_datetime(self.authorization_end) != expected_end
+			or abs(flt(self.maximum_hours) - flt(matching_date.requested_hours)) > 0.0001
+		):
+			frappe.throw(
+				_("Authorization window does not match the submitted overtime work call.")
 			)
 
 	def _validate_no_overlap(self):
