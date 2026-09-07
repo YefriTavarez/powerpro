@@ -17,10 +17,37 @@ from powerpro.controllers.overtime_cash_settlement import (
 	sync_adjustments_from_salary_slip,
 )
 
-from . import helper
+from . import helper, monthly
 
 
 class SalarySlip(SalarySlip):
+    def validate(self):
+        if self.docstatus == 1 and monthly.settings_for(self):
+            monthly.lock_employee(self)
+        super().validate()
+
+    def before_submit(self):
+        monthly.before_submit(self)
+
+    def before_cancel(self):
+        monthly.before_cancel(self)
+
+    def calculate_component_amounts(self, component_type):
+        if component_type == "deductions":
+            monthly.prepare(self)
+            self.whitelisted_globals["pp_isr"] = lambda dp: monthly.evaluate_isr(self, dp)
+            self.whitelisted_globals["max"] = max
+        super().calculate_component_amounts(component_type)
+        if component_type == "deductions":
+            monthly.finish(self)
+
+    def get_data_for_eval(self):
+        data, default_data = super().get_data_for_eval()
+        variables = monthly.formula_data(self)
+        data.update(variables)
+        default_data.update(variables)
+        return data, default_data
+
     def on_submit(self):
         super().on_submit()
         sync_adjustments_from_salary_slip(self, paid=True)
@@ -51,6 +78,7 @@ class SalarySlip(SalarySlip):
         make_salary_slip(self._salary_structure_doc.name, self)
 
     def calculate_net_pay(self, skip_tax_breakup_computation: bool = False):
+        self._pp_monthly = None
         super().calculate_net_pay(skip_tax_breakup_computation=skip_tax_breakup_computation)
         helper.populate_employer_contributions(self)
 

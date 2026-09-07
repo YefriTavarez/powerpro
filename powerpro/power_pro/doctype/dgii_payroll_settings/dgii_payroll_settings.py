@@ -47,6 +47,12 @@ class DGIIPayrollSettings(Document):
 	# end: auto-generated types
 
 	def validate(self):
+		if self.get("enable_monthly_settlement"):
+			from frappe.utils import getdate
+			if not self.get("monthly_settlement_from_date") or getdate(self.monthly_settlement_from_date).day != 1:
+				frappe.throw(_("Monthly settlement requires an effective date on the first day of a month."))
+			if not self.get("monthly_settlement_backup") or self.employer_contribution_mode != "Dedicated Journal Entries":
+				frappe.throw(_("Install monthly settlement and enable dedicated employer contributions first."))
 		if self.enable_overtime_candidate_generation:
 			if cint(self.overtime_candidate_threshold_minutes) <= 0:
 				self.overtime_candidate_threshold_minutes = 15
