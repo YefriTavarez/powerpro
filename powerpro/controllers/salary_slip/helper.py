@@ -81,6 +81,10 @@ def populate_employer_contributions(doc):
 	"""Snapshot employer-only obligations without affecting employee totals."""
 	if not doc.meta.has_field("employer_contributions"):
 		return
+	from .monthly import populate_employer
+	if populate_employer(doc):
+		validate_employer_contributions(doc)
+		return
 
 	doc.set("employer_contributions", [])
 	if doc.get("employer_contribution_mode") != DEDICATED_MODE or not _is_monthly_settlement(doc):
@@ -144,7 +148,8 @@ def validate_employer_contributions(doc, _event=None):
 
 
 def _is_monthly_settlement(doc):
-	return bool(doc.get("mid_month_start") or doc.payroll_frequency == "Monthly")
+	from .monthly import is_close
+	return is_close(doc)
 
 
 def _get_monthly_salary(doc):

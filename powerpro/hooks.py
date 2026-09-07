@@ -58,6 +58,7 @@ app_include_js = [
 
 # include js in doctype views
 doctype_js = {
+    "Salary Slip": "public/js/salary_slip_monthly.js",
     "Item" : "public/js/item.js",
     "Salary Structure": "public/js/salary_structure.js",
     "Purchase Invoice": "public/js/purchase_invoice.js",

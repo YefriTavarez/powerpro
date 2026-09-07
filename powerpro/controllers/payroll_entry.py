@@ -102,9 +102,8 @@ class PayrollEntry(payroll_entry.PayrollEntry):
                     )
                 )
             contribution_count = len(slip.get("employer_contributions", []))
-            monthly_settlement = bool(
-                slip.get("mid_month_start") or slip.payroll_frequency == "Monthly"
-            )
+            from powerpro.controllers.salary_slip.monthly import is_close
+            monthly_settlement = is_close(slip)
             if monthly_settlement and contribution_count != 4:
                 frappe.throw(
                     _("Salary Slip {0} does not contain four employer contribution snapshots.").format(

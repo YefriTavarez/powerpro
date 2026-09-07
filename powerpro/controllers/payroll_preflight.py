@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import re
+import json
 from collections import Counter
 
 import frappe
@@ -117,6 +118,14 @@ def get_payroll_preview(payroll_entry):
                 if detail.salary_component in ("AFP Empleador", "ARS Empleador"):
                     employer_afp_ars += float(detail.amount or 0)
 
+            if slip.get("employer_contribution_mode") == "Dedicated Journal Entries":
+                employer_total = sum(float(r.amount or 0) for r in slip.get("employer_contributions", []))
+                employer_afp_ars = sum(float(r.amount or 0) for r in slip.get("employer_contributions", []) if r.contribution_code in ("AFP", "ARS"))
+            snapshot = json.loads(slip.get("monthly_settlement_snapshot") or "null")
+            legacy = _calculate_salary_slip_in_memory(entry, employee, legacy=True) if snapshot else None
+            if snapshot and snapshot["issues"]:
+                errors.append({"employee": employee, "message": "; ".join(snapshot["issues"])})
+
             stored = existing.get(employee)
             calculated_totals["gross_pay"] += float(slip.gross_pay or 0)
             calculated_totals["total_deduction"] += float(slip.total_deduction or 0)
@@ -137,6 +146,9 @@ def get_payroll_preview(payroll_entry):
                 "existing_salary_slip": stored.name if stored else None,
                 "stored_net_pay": _money(stored.net_pay) if stored else None,
                 "net_pay_delta": _money(float(slip.net_pay or 0) - float(stored.net_pay or 0)) if stored else None,
+                "monthly_settlement": snapshot,
+                "legacy_net_pay": _money(legacy.net_pay) if legacy else None,
+                "legacy_comparison": _comparison(legacy, slip) if legacy else None,
             })
         except Exception as exc:
             errors.append({"employee": employee, "message": str(exc)})
@@ -175,7 +187,7 @@ def get_payroll_preview(payroll_entry):
     }
 
 
-def _calculate_salary_slip_in_memory(entry, employee):
+def _calculate_salary_slip_in_memory(entry, employee, legacy=False):
     slip = frappe.get_doc({
         "doctype": "Salary Slip",
         "employee": employee,
@@ -191,12 +203,27 @@ def _calculate_salary_slip_in_memory(entry, employee):
         "exchange_rate": entry.exchange_rate,
         "currency": entry.currency,
     })
+    slip._pp_force_legacy = legacy
     slip.get_emp_and_working_day_details()
     if not slip.salary_structure:
         frappe.throw(_("No active Salary Structure found for employee {0}.").format(employee))
     slip.set_salary_structure_assignment()
     slip.calculate_net_pay()
     return slip
+
+
+def _comparison(before, after):
+    def amounts(doc):
+        values = Counter()
+        for row in doc.deductions:
+            if row.abbr in ("AFP", "ARS", "ISRM"):
+                values[row.abbr] += float(row.amount or 0)
+        for row in doc.get("employer_contributions", []):
+            values["employer_" + row.contribution_code] += float(row.amount or 0)
+        return values
+    old, new = amounts(before), amounts(after)
+    return {key: {"before": _money(old[key]), "after": _money(new[key]), "delta": _money(new[key] - old[key])}
+            for key in sorted(set(old) | set(new))}
 
 
 def _money(value):
@@ -514,6 +541,9 @@ def _check_payroll_rules(entry, issues):
     )
     for structure_name in structures:
         structure = frappe.get_doc("Salary Structure", structure_name)
+        from powerpro.controllers.salary_slip.monthly import settings_for
+        probe = frappe._dict(salary_structure=structure_name, end_date=entry.end_date)
+        monthly_active = bool(settings_for(probe))
         formulas = {row.salary_component: row.formula or "" for row in structure.deductions}
         expected_formulas = {
             "AFP Empleador": "base*0.0710",
@@ -548,7 +578,7 @@ def _check_payroll_rules(entry, issues):
             for component in ("AFP", "ARS", "AFP Empleador", "ARS Empleador")
             if component in formulas and not _formula_has_cap(formulas[component])
         ]
-        if uncapped:
+        if uncapped and not monthly_active:
             _add_issue(
                 issues,
                 "warning",
@@ -569,7 +599,7 @@ def _check_payroll_rules(entry, issues):
             )
 
         isr_formula = formulas.get("ISR", "")
-        if re.search(r"\d{6}(?:\.\d+)?", isr_formula):
+        if re.search(r"\d{6}(?:\.\d+)?", isr_formula) and not monthly_active:
             _add_issue(
                 issues,
                 "warning",

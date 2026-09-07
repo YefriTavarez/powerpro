@@ -166,6 +166,12 @@ function show_payroll_preview_dialog(report) {
         <tbody>${rows}</tbody>
     </table></div>`;
 
+    const comparisons = report.rows.filter(row => row.legacy_comparison).map(row => {
+        const cells = Object.entries(row.legacy_comparison).map(([code, values]) =>
+            `<tr><td>${frappe.utils.escape_html(code)}</td><td>${money(values.before)}</td><td>${money(values.after)}</td><td>${money(values.delta)}</td></tr>`).join("");
+        return `<details><summary>${frappe.utils.escape_html(row.employee_name || row.employee)}: comparación del acumulado</summary>
+            <table class="table table-bordered"><thead><tr><th>Concepto</th><th>Cálculo anterior</th><th>Acumulado mensual</th><th>Diferencia</th></tr></thead><tbody>${cells}</tbody></table></details>`;
+    }).join("");
     const errors = report.errors.length
         ? `<hr><p class="text-danger"><strong>${__("Errores")}</strong></p>${report.errors.map((error) =>
             `<p>${frappe.utils.escape_html(error.employee)}: ${frappe.utils.escape_html(error.message)}</p>`
@@ -175,7 +181,7 @@ function show_payroll_preview_dialog(report) {
     frappe.msgprint({
         title: __("Previsualización de nómina"),
         indicator: report.errors.length || totals.changed_existing_slips ? "orange" : "green",
-        message: summary + reconciliation + table + errors,
+        message: summary + reconciliation + table + comparisons + errors,
         wide: true,
     });
 }

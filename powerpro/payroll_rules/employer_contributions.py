@@ -39,6 +39,7 @@ def calculate_employer_contributions(
 	statutory_vacation=0,
 	infotep_rate_percent=Decimal("1"),
 	srl_rate_percent=Decimal("1.2"),
+	actual_monthly_base=False,
 ):
 	"""Return the four monthly employer obligations as immutable snapshots."""
 	rule = get_tss_rule(on_date)
@@ -50,10 +51,12 @@ def calculate_employer_contributions(
 	infotep_base = salary + commission
 	srl_uncapped_base = salary + commission + vacation
 	srl_base = min(srl_uncapped_base, rule.srl_ceiling)
+	afp_base = min(srl_uncapped_base, rule.pension_ceiling) if actual_monthly_base else salary
+	ars_base = min(srl_uncapped_base, rule.sfs_ceiling) if actual_monthly_base else salary
 
 	return (
-		_build("AFP", "AFP Empleador", salary, AFP_RATE, 0, TSS_EXPENSE, TSS_PAYABLE, rule.effective_from),
-		_build("ARS", "ARS Empleador", salary, ARS_RATE, 0, TSS_EXPENSE, TSS_PAYABLE, rule.effective_from),
+		_build("AFP", "AFP Empleador", afp_base, AFP_RATE, rule.pension_ceiling if actual_monthly_base else 0, TSS_EXPENSE, TSS_PAYABLE, rule.effective_from),
+		_build("ARS", "ARS Empleador", ars_base, ARS_RATE, rule.sfs_ceiling if actual_monthly_base else 0, TSS_EXPENSE, TSS_PAYABLE, rule.effective_from),
 		_build(
 			"INFOTEP",
 			"INFOTEP Empleador",
