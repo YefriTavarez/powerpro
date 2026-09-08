@@ -8,7 +8,7 @@ import frappe
 from frappe.utils import getdate
 
 from powerpro.payroll_rules.monthly_settlement import (
-    MANAGED, TAXABLE, calculate, money, month_bounds, period_issues,
+    MANAGED, calculate, money, month_bounds, period_issues, taxable_amounts,
 )
 from powerpro.payroll_rules.employer_contributions import DEDICATED_MODE
 
@@ -103,12 +103,10 @@ def prepare(doc):
         if row.do_not_include_in_total:
             continue
         current[row.abbr] += money(row.amount)
-        if row.is_tax_applicable and row.abbr not in TAXABLE and money(row.amount):
-            issues.append("Ingreso gravado sin clasificación mensual: " + row.salary_component)
-    for source in sources:
-        for row in source["rows"]:
-            if row["parentfield"] == "earnings" and not row["do_not_include_in_total"] and row["is_tax_applicable"] and row["abbr"] not in TAXABLE and money(row["amount"]):
-                issues.append("Ingreso previo sin clasificación mensual: " + row["salary_component"])
+    current_taxable = taxable_amounts(doc.earnings)
+    previous_taxable = taxable_amounts(
+        row for source in sources for row in source["rows"] if row["parentfield"] == "earnings"
+    )
     for slip in history:
         if slip.docstatus == 1 and slip.employer_contribution_mode != DEDICATED_MODE:
             issues.append("El mes contiene aportes patronales en modo anterior: " + slip.name)
@@ -125,6 +123,7 @@ def prepare(doc):
     doc.set("deductions", [row for row in doc.deductions if row.abbr not in ("AFP", "ARS", "ISRM")])
     doc._pp_monthly = {
         "current": dict(current), "previous": previous, "previous_deductions": deductions,
+        "current_taxable": current_taxable, "previous_taxable": previous_taxable,
         "previous_employer": employer, "sources": sources, "close": close,
         "period": {"from": str(first), "to": str(last)}, "issues": issues,
         "rates": {"employee_afp_rate": settings.pension_fund_provider,
@@ -137,7 +136,9 @@ def prepare(doc):
 def compute(doc, dependents=0):
     ctx = doc._pp_monthly
     return calculate(ctx["current"], ctx["previous"], ctx["previous_deductions"],
-                     ctx["previous_employer"], str(doc.end_date), dependents, **ctx["rates"])
+                     ctx["previous_employer"], str(doc.end_date), dependents,
+                     current_taxable=ctx["current_taxable"], previous_taxable=ctx["previous_taxable"],
+                     **ctx["rates"])
 
 
 def formula_data(doc):

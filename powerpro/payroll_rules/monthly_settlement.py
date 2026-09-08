@@ -7,13 +7,31 @@ from decimal import Decimal, ROUND_HALF_UP
 from .dominican_republic import calculate_monthly_isr, get_isr_scale, get_tss_rule
 from .employer_contributions import calculate_employer_contributions
 
-VERSION = 1
+VERSION = 2
+# Preserve the existing classification of historical rows, which may lack tax flags.
 TAXABLE = frozenset(("B", "COM", "VAC", "BVA", "INC", "BNF", "HRE", "HN", "HE"))
 MANAGED = frozenset(("BAM", "AFP", "ARS", "MIMP", "BIMP", "ABIMP", "ISRM"))
 
 
 def money(value=0):
     return Decimal(str(value or 0)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+def taxable_amounts(rows):
+    """Use each effective earning row's tax flag, retaining legacy classifications.
+
+    Read the flag stored on the slip, not today's component master. Multiple
+    payments of one component are accumulated once, including mixed tax flags.
+    Callers supply only earning rows; statistical rows never represent paid income.
+    """
+    amounts = {}
+    for row in rows:
+        abbr = row.get("abbr")
+        if row.get("do_not_include_in_total"):
+            continue
+        if abbr in TAXABLE or row.get("is_tax_applicable"):
+            amounts[abbr] = amounts.get(abbr, money()) + money(row.get("amount"))
+    return amounts
 
 
 def as_date(value):
@@ -70,7 +88,7 @@ def period_issues(current, history, joining_date=None, relieving_date=None):
 
 def calculate(current, previous, previous_deductions, previous_employer, on_date,
               dependents=0, employee_afp_rate=2.87, employee_ars_rate=3.04,
-              infotep_rate=1, srl_rate=1.2):
+              infotep_rate=1, srl_rate=1.2, *, current_taxable=None, previous_taxable=None):
     """Amounts are already prorated. Returns monthly obligations and remaining balances."""
     totals = {key: money(current.get(key)) + money(previous.get(key)) for key in current.keys() | previous.keys()}
     salary, commission, vacation = (totals.get(key, money()) for key in ("B", "COM", "VAC"))
@@ -82,7 +100,15 @@ def calculate(current, previous, previous_deductions, previous_employer, on_date
     afp_base, ars_base = min(cotizable, tss.pension_ceiling), min(cotizable, tss.sfs_ceiling)
     afp = money(afp_base * Decimal(str(employee_afp_rate)) / 100)
     ars = money(ars_base * Decimal(str(employee_ars_rate)) / 100)
-    taxable = sum((totals.get(key, money()) for key in TAXABLE), money())
+    # Optional row-derived inputs let new taxable components participate without
+    # changing contribution bases or the legacy pure-calculator calling contract.
+    current_taxable = {key: money(value) for key, value in
+                       (current_taxable if current_taxable is not None else
+                        {k: v for k, v in current.items() if k in TAXABLE}).items()}
+    previous_taxable = {key: money(value) for key, value in
+                        (previous_taxable if previous_taxable is not None else
+                         {k: v for k, v in previous.items() if k in TAXABLE}).items()}
+    taxable = sum(current_taxable.values(), money()) + sum(previous_taxable.values(), money())
     dp = money(dependents) + money(previous_deductions.get("DP"))
     income_base = max(taxable - afp - ars - dp, money())
     obligations = {"AFP": afp, "ARS": ars, "ISRM": calculate_monthly_isr(income_base, on_date)}
@@ -108,6 +134,7 @@ def calculate(current, previous, previous_deductions, previous_employer, on_date
                               "balance": balance, "amount": max(balance, money())})
     return {
         "version": VERSION, "on_date": str(on_date), "current": current, "previous": previous,
+        "current_taxable": current_taxable, "previous_taxable": previous_taxable,
         "totals": totals, "salary": salary, "taxable_earnings": taxable,
         "cotizable": cotizable, "afp_base": afp_base, "ars_base": ars_base,
         "dependents": dp, "income_tax_base": income_base,
