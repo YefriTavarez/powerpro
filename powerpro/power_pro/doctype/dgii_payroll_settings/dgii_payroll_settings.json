@@ -5,6 +5,8 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "payroll_automation_section",
+  "include_monthly_in_second_quincena",
   "timesheet_section",
   "weekly_expected_hours",
   "max_weekly_extra_hours",
@@ -51,6 +53,18 @@
   "retroactive_overtime_submission_deadline"
  ],
  "fields": [
+  {
+   "fieldname": "payroll_automation_section",
+   "fieldtype": "Section Break",
+   "label": "Payroll Automation"
+  },
+  {
+   "fieldname": "include_monthly_in_second_quincena",
+   "fieldtype": "Check",
+   "default": "0",
+   "label": "Include Monthly Employees in Second-Quincena Payroll",
+   "description": "Get Employees includes Monthly and Bimonthly assignments in a Bimonthly payroll from the 15th or 16th through month end. Monthly employees receive full-calendar-month Salary Slips in the same Payroll Entry. First-quincena and timesheet payrolls are unchanged."
+  },
   {
    "fieldname": "extra_hours_rate",
    "fieldtype": "Percent",

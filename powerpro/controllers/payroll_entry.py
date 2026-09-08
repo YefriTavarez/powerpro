@@ -12,9 +12,63 @@ from hrms.payroll.doctype.payroll_entry import payroll_entry
 
 from powerpro.controllers.salary_slip.helper import LEGACY_EMPLOYER_COMPONENTS
 from powerpro.payroll_rules.employer_contributions import DEDICATED_MODE
+from powerpro.controllers import mixed_frequency_payroll as mixed
 
 
 class PayrollEntry(payroll_entry.PayrollEntry):
+    @frappe.whitelist()
+    def create_salary_slips(self):
+        if not mixed.enabled(self):
+            return super().create_salary_slips()
+        self.check_permission("write")
+        if self.docstatus != 1:
+            frappe.throw(_("Submit the Payroll Entry before generating mixed-frequency Salary Slips."))
+        employees = [row.employee for row in self.employees]
+        if not employees:
+            return
+        args = {key: self.get(key) for key in (
+            "salary_slip_based_on_timesheet", "payroll_frequency", "start_date", "end_date",
+            "company", "posting_date", "deduct_tax_for_unclaimed_employee_benefits",
+            "deduct_tax_for_unsubmitted_tax_exemption_proof", "exchange_rate", "currency",
+        )}
+        args["payroll_entry"] = self.name
+        if len(employees) > 30 or frappe.flags.enqueue_payroll_entry:
+            self.db_set("status", "Queued")
+            frappe.enqueue(mixed.create_slips, timeout=3000, employees=employees, args=args,
+                           publish_progress=False, enqueue_after_commit=True)
+            frappe.msgprint(_("Salary Slip creation is queued. It may take a few minutes"), alert=True)
+        else:
+            mixed.create_slips(employees, args)
+            self.reload()
+
+    def validate_existing_salary_slips(self):
+        if not mixed.enabled(self):
+            return super().validate_existing_salary_slips()
+        for row in self.employees:
+            period = mixed.require_assignment(self, row.employee)
+            if mixed.overlaps(self, row.employee, period):
+                frappe.throw(_("Employee {0} already has an overlapping Salary Slip.").format(row.employee))
+
+    def get_sal_slip_list(self, ss_status, as_dict=False):
+        return super(PayrollEntry, mixed.read_scope(self)).get_sal_slip_list(ss_status, as_dict)
+
+    def get_salary_slip_details(self, for_withheld_salaries=False):
+        return super(PayrollEntry, mixed.read_scope(self)).get_salary_slip_details(for_withheld_salaries)
+
+    @frappe.whitelist()
+    def get_employees_with_unmarked_attendance(self):
+        return mixed.attendance(self, lambda entry: super(PayrollEntry, entry))
+
+    def update_employees_with_withheld_salaries(self):
+        if not mixed.enabled(self):
+            return super().update_employees_with_withheld_salaries()
+        resolved = mixed.assignments(self, [row.employee for row in self.employees])
+        for row in self.employees:
+            period = resolved.get(row.employee)
+            if period:
+                held = payroll_entry.get_salary_withholdings(period.start_date, period.end_date, pluck="employee")
+                row.is_salary_withheld = int(row.employee in held)
+
     def get_payable_amount_for_earnings_and_deductions(
         self,
         accounts,
@@ -193,6 +247,9 @@ def get_employee_list(
     offset=None,
     ignore_match_conditions=False,
 ) -> list:
+    if mixed.enabled(filters):
+        return mixed.employee_list(filters, searchfield, search_string, fields, as_dict,
+                                   limit, offset, ignore_match_conditions)
     sal_struct = get_salary_structure(
         filters.company,
         filters.currency,

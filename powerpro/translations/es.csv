@@ -421,3 +421,6 @@
 "Reconciled {0} individual authorizations.","Se conciliaron {0} autorizaciones individuales."
 "Attendance snapshot refreshed: {0} authorizations, {1} verified hours, {2}% adherence, status {3}.","Evidencia de asistencia actualizada: {0} autorizaciones, {1} horas verificadas, {2}% de cumplimiento, estado {3}."
 "Convocatoria","Convocatoria"
+
+Payroll Automation,Automatización de nómina,
+Include Monthly Employees in Second-Quincena Payroll,Incluir empleados mensuales en la nómina de segunda quincena,
