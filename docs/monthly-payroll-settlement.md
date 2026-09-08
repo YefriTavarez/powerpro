@@ -24,11 +24,18 @@ informational accumulation and apply no AFP, ARS, ISR or employer monthly amount
 Dependents, transport, loans and their existing timing rules are unchanged.
 
 Employee and employer AFP/ARS use B + COM + VAC, with their respective date-effective
-ceilings. ISR uses B + COM + VAC + BVA + INC + BNF + HRE + HN + HE, less monthly employee
-AFP/ARS and dependents. INFOTEP uses B + COM; SRL uses B + COM + VAC with its ceiling.
+ceilings. ISR retains B + COM + VAC + BVA + INC + BNF + HRE + HN + HE and also includes
+new earning components marked **Is Tax Applicable** (for example ORC), less monthly
+employee AFP/ARS and dependents. The flag and amount come from each current or prior
+submitted Salary Detail row, not the current component master. Statistical rows are
+excluded; multiple Additional Salary rows are counted once each. Original known
+abbreviations retain their classification for compatibility with historical rows.
+INFOTEP uses B + COM; SRL uses B + COM + VAC with its ceiling. Marking a new component
+taxable adds it to ISR only; it does not classify it as salary, commission or vacation
+for contributions. Such a change requires a separate business rule.
 Each obligation subtracts previously recorded amounts. Negative differences block
-submission rather than creating an automatic refund. Unclassified taxable earnings,
-mixed currencies or employer accounting modes also block. ISR must have a verified
+submission rather than creating an automatic refund. Mixed currencies or employer
+accounting modes also block. ISR must have a verified
 scale for the closing year; the current version supports the existing 2025/2026 scales.
 
 ## Integrity and visible evidence
@@ -49,6 +56,14 @@ new calculation against the legacy calculation in memory, without saving slips.
 
 The existing salary-to-ledger integration consumes the persisted employer amounts,
 with balanced expense/payable entries and no employer deduction from employee net.
+
+Snapshot version 2 also records `current_taxable` and `previous_taxable` amounts by
+abbreviation. New-component support uses the existing activation and effective date;
+it requires only a code deployment, not an installer rerun or formula rewrite. If a
+user edited a guarded formula after installation (for example adding ORC to the legacy
+branch), preserve that edit. The original installer's drift checks intentionally reject
+reinstall/rollback over changed formulas; reconcile such edits explicitly before using
+those operations. Submitted evidence and existing slips are never rewritten by this change.
 
 ## Explicit DEV installation
 

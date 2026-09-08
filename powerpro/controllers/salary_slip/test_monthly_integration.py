@@ -15,6 +15,7 @@ import frappe
 from powerpro.controllers.salary_slip import monthly
 from powerpro.controllers.payroll_preflight import _comparison
 from powerpro.payroll_rules.monthly_settlement import money
+from powerpro.payroll_rules.dominican_republic import calculate_monthly_isr
 
 
 @unittest.skipUnless(os.environ.get("POWERPRO_MONTHLY_DEV_INTEGRATION") == "1", "Explicit authorized DEV integration run only")
@@ -127,6 +128,65 @@ class MonthlyIntegrationTest(unittest.TestCase):
         with self.assertRaises(frappe.ValidationError):
             close.submit()
         self.assertEqual(frappe.db.get_value("Salary Slip", first.name, "docstatus"), 0)
+
+    def new_taxable_component(self):
+        return frappe.get_doc({"doctype": "Salary Component",
+            "salary_component": self.token + "-New taxable income",
+            "salary_component_abbr": "ORC" + uuid.uuid4().hex[:6], "type": "Earning",
+            "is_tax_applicable": 1, "depends_on_payment_days": 0}).insert()
+
+    def additional_income(self, component, amount, day):
+        return frappe.get_doc({"doctype": "Additional Salary", "employee": self.employee.name,
+            "salary_component": component.name, "amount": amount, "payroll_date": day,
+            "company": self.company, "currency": "DOP", "overwrite_salary_structure_amount": 0}).insert().submit()
+
+    def test_new_component_current_prior_multiple_payments_and_submission(self):
+        component = self.new_taxable_component()
+        abbr = component.salary_component_abbr
+        self.additional_income(component, 50000, "2026-09-15")
+        first = self.slip("2026-09-01", "2026-09-15").submit()
+        first_snapshot = json.loads(first.monthly_settlement_snapshot)
+        self.assertEqual(first_snapshot["issues"], [])
+        self.assertEqual(money(first_snapshot["taxable_earnings"]), money(70000))
+        self.assertEqual(first_snapshot["employee_applied"], {"AFP": 0, "ARS": 0, "ISRM": 0})
+        self.additional_income(component, 12000, "2026-09-30")
+        self.additional_income(component, 3000, "2026-09-30")
+        close = self.slip("2026-09-16", "2026-09-30")
+        snapshot = json.loads(close.monthly_settlement_snapshot)
+        self.assertEqual(snapshot["issues"], [])
+        self.assertEqual(money(snapshot["taxable_earnings"]), money(105000))
+        self.assertEqual(money(snapshot["current_taxable"][abbr]), money(15000))
+        self.assertEqual(money(snapshot["previous_taxable"][abbr]), money(50000))
+        self.assertEqual(money(snapshot["cotizable"]), money(40000))
+        self.assertEqual(money(snapshot["employee"]["AFP"]["amount"]), money(1148))
+        self.assertEqual(money(snapshot["employee"]["ARS"]["amount"]), money(1216))
+        self.assertEqual(money(snapshot["income_tax_base"]), money(102636))
+        self.assertEqual(money(next(r.amount for r in close.deductions if r.abbr == "ISRM")),
+                         calculate_monthly_isr(102636, "2026-09-30"))
+        amounts = {r.contribution_code: money(r.amount) for r in close.employer_contributions}
+        self.assertEqual(amounts, {"AFP": money(2840), "ARS": money(2836), "INFOTEP": money(400), "SRL": money(480)})
+        before = (close.net_pay, close.monthly_settlement_snapshot)
+        close.calculate_net_pay()
+        self.assertEqual((close.net_pay, close.monthly_settlement_snapshot), before)
+        close.submit()
+        self.assertEqual(close.docstatus, 1)
+
+    def test_prior_tax_flag_preserved_when_component_master_changes(self):
+        component = self.new_taxable_component()
+        abbr = component.salary_component_abbr
+        self.additional_income(component, 50000, "2026-09-15")
+        self.slip("2026-09-01", "2026-09-15").submit()
+        component.is_tax_applicable = 0
+        component.save()
+        # HRMS caches get_salary_component_data for a request. A real later
+        # request starts with a fresh DB value cache after editing the master.
+        frappe.db.value_cache.clear()
+        self.additional_income(component, 10000, "2026-09-30")
+        close = self.slip("2026-09-16", "2026-09-30").submit()
+        snapshot = json.loads(close.monthly_settlement_snapshot)
+        self.assertEqual(money(snapshot["previous_taxable"][abbr]), money(50000))
+        self.assertNotIn(abbr, snapshot["current_taxable"])
+        self.assertEqual(money(snapshot["taxable_earnings"]), money(90000))
 
     def test_new_employee_needs_no_first_half(self):
         other = self.make_employee("2026-09-16")

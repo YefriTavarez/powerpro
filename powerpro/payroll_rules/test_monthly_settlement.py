@@ -2,7 +2,7 @@ from copy import deepcopy
 from decimal import Decimal
 from unittest import TestCase
 
-from .monthly_settlement import calculate, money, month_bounds, period_issues
+from .monthly_settlement import calculate, money, month_bounds, period_issues, taxable_amounts
 from .dominican_republic import calculate_monthly_isr
 
 
@@ -80,6 +80,46 @@ class MonthlyArithmeticTest(TestCase):
     def test_future_year_requires_verified_scale(self):
         with self.assertRaises(ValueError):
             calculate({"B": 50000}, {}, {}, {}, "2027-01-31")
+
+
+class MonthlyTaxableComponentsTest(TestCase):
+    def test_new_taxable_component_from_both_halves_changes_only_isr(self):
+        current = {"B": 25000, "ORC": 7000}
+        previous = {"B": 25000, "ORC": 50000}
+        result = calculate(current, previous, {}, {}, "2026-08-31",
+                           current_taxable=current, previous_taxable=previous)
+        baseline = calculate(current, previous, {}, {}, "2026-08-31")
+        self.assertEqual(result["taxable_earnings"], money(107000))
+        self.assertEqual(result["cotizable"], money(50000))
+        self.assertEqual(result["employee"]["AFP"], baseline["employee"]["AFP"])
+        self.assertEqual(result["employee"]["ARS"], baseline["employee"]["ARS"])
+        self.assertEqual(result["employer"], baseline["employer"])
+        self.assertEqual(result["income_tax_base"], money(104045))
+        self.assertEqual(result["employee"]["ISRM"]["total"],
+                         calculate_monthly_isr(104045, "2026-08-31"))
+
+    def test_row_flags_duplicates_statistical_and_legacy_rows(self):
+        rows = [
+            {"abbr": "B", "amount": 25000},  # historical flag absent
+            {"abbr": "ORC", "amount": 5000, "is_tax_applicable": 1},
+            {"abbr": "ORC", "amount": 7000, "is_tax_applicable": 1},
+            {"abbr": "ORC", "amount": 9000, "is_tax_applicable": 0},
+            {"abbr": "NEW", "amount": 2000, "is_tax_applicable": 1},
+            {"abbr": "REIMBURSE", "amount": 8000, "is_tax_applicable": 0},
+            {"abbr": "STAT", "amount": 99999, "is_tax_applicable": 1,
+             "do_not_include_in_total": 1},
+        ]
+        original = deepcopy(rows)
+        self.assertEqual(taxable_amounts(rows), {"B": money(25000), "ORC": money(12000), "NEW": money(2000)})
+        self.assertEqual(taxable_amounts(rows), taxable_amounts(rows))
+        self.assertEqual(rows, original)
+
+    def test_explicit_empty_taxable_map_and_prior_only_custom_payment(self):
+        result = calculate({"ORC": 9000}, {"ORC": 50000}, {"ISRM": 100}, {}, "2026-08-31",
+                           current_taxable={}, previous_taxable={"ORC": 50000})
+        self.assertEqual(result["taxable_earnings"], money(50000))
+        self.assertEqual(result["current_taxable"], {})
+        self.assertEqual(result["employee"]["ISRM"]["amount"], calculate_monthly_isr(50000, "2026-08-31") - 100)
 
 
 class MonthlyPeriodTest(TestCase):
