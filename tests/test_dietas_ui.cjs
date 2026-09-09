@@ -1,0 +1,96 @@
+/* Run with NODE_PATH pointing at test-only jsdom/jquery dependencies. */
+const {test} = require('node:test');
+const assert = require('node:assert/strict');
+const {JSDOM} = require('jsdom');
+const fs = require('node:fs');
+const source = fs.readFileSync(require('node:path').join(__dirname,'../powerpro/public/js/dietas.js'),'utf8');
+const flush = () => new Promise(resolve => setImmediate(resolve));
+
+function harness() {
+    const dom = new JSDOM('<div id="dashboard"></div>', {url:'https://example.test/app/overtime-work-call/CALL',runScripts:'outside-only'});
+    const w=dom.window;const $=require('jquery')(w);w.$=$;
+    let paid=false,failConfirm=false;const dialogs=[],calls=[],buttons=[];
+    const rows=[{employee:'E1',employee_name:'Employee One',amount:300,version:'v1',approval_status:'None',payment_status:'Unpaid',source_work_call:'CALL',audit:[]},
+        {employee:'E2',employee_name:'Employee Two',amount:300,version:'v2',approval_status:'Approved',payment_status:'Paid',source_work_call:'CALL',audit:[]}];
+    class Dialog {
+        constructor(opts) {
+            Object.assign(this,opts);this.fields_dict={};this.values={};dialogs.push(this);
+            for (const f of opts.fields||[]) {
+                this.fields_dict[f.fieldname]={df:f,$wrapper:$('<div>')};
+                this.values[f.fieldname]=f.default||'';
+            }
+            // Frappe controls may invoke onchange while initial values are loaded.
+            for(const f of opts.fields||[]) if(f.onchange)f.onchange();
+        }
+        get_value(name){return this.values[name];}
+        set_value(name,value){this.values[name]=value;this.fields_dict[name].df.onchange?.();}
+        show(){this.shown=true;} hide(){this.shown=false;}
+        disable_primary_action(){this.disabled=true;} enable_primary_action(){this.disabled=false;}
+        add_custom_action(label,fn){this.custom=fn;}
+    }
+    w.frappe={provide:()=>{w.powerpro={dietas:{}};},utils:{escape_html:x=>$('<span>').text(x).html()},
+        datetime:{get_today:()=> '2026-09-09'},user:{has_role:()=>true},ui:{Dialog,form:{on:()=>{}}},
+        msgprint:()=>{},show_alert:()=>{},prompt:()=>{},
+        call:async ({method,args})=>{
+            calls.push({method,args:structuredClone(args)});
+            if(method.endsWith('work_call_context'))return {message:{enabled:true,active:true,work_call:'CALL',dates:['2026-09-09'],currency:'DOP',methods:['Cash'],
+                summary:{pending:paid?0:1,approved_unpaid:0,paid:paid?300:0,accounting_attention:0},rows:rows.map((r,i)=>({...r,payment_status:i===0&&paid?'Paid':r.payment_status}))}};
+            if(method.endsWith('preview_payout'))return {message:{token:'preview-token',rows:args.rows.map(r=>({...r,employee_name:'Employee One'})),total:args.rows.reduce((s,r)=>s+r.amount,0),currency:'DOP',payment:{payment_date:args.payment_date,mode_of_payment:args.mode_of_payment}}};
+            if(method.endsWith('confirm_payout')){if(failConfirm){failConfirm=false;throw Error('network');}paid=true;return {message:{batch:'BATCH-1',accounting_status:'Pending'}};}
+            if(method.endsWith('payment_history'))return {message:[{name:'BATCH-1',status:'Confirmed',payment_date:'2026-09-09',work_date:'2026-09-09',total:300,accounting_status:'Error',rows:[{employee_name:'Employee One',amount:300}],audit:[]}]};
+            return {message:{updated:1}};
+        }};
+    w.format_currency=(value,currency)=>currency+' '+value;
+    w.eval(source);
+    const frm={doc:{name:'CALL',docstatus:1},dashboard:{wrapper:$('#dashboard')},add_custom_button:(label,fn)=>buttons.push({label,fn})};
+    return {w,dialogs,calls,buttons,frm,failNext:()=>{failConfirm=true;},close:()=>w.close()};
+}
+
+test('Work Call buttons open modals without route changes',async()=>{
+    const h=harness();await h.w.powerpro.dietas.refresh(h.frm);
+    assert.deepEqual(h.buttons.map(b=>b.label),['Pagar dietas','Gestionar solicitudes','Ver pagos']);
+    h.buttons[0].fn();await flush();
+    assert.equal(h.dialogs[0].title,'Pagar dietas');assert.equal(h.dialogs[0].get_value('work_date'),'2026-09-09');
+    assert.equal(h.w.location.pathname,'/app/overtime-work-call/CALL');h.close();
+});
+
+test('select workers, bulk amount, review and confirm; paid rows cannot be selected',async()=>{
+    const h=harness();await h.w.powerpro.dietas.refresh(h.frm);h.buttons[0].fn();await flush();
+    const d=h.dialogs[0];const wrapper=d.fields_dict.workers.$wrapper;
+    assert.equal(wrapper.find('.pick:disabled').length,1);
+    wrapper.find('.select-all').prop('checked',true).trigger('change');
+    d.values.bulk_amount=450;d.values.reason='Extra meal';d.fields_dict.apply_amount.df.click();
+    assert.match(wrapper.find('.dieta-total').text(),/1 seleccionados/);
+    d.values.mode_of_payment='Cash';await d.primary_action(d.values);
+    const preview=h.dialogs[1];assert.equal(preview.title,'Confirmar pagos realizados');
+    assert.match(preview.fields_dict.preview.$wrapper.text(),/450/);
+    await preview.primary_action();await flush();
+    assert.equal(d.shown,true);assert.equal(d.fields_dict.workers.$wrapper.find('.pick:disabled').length,2);
+    const confirmed=h.calls.find(c=>c.method.endsWith('confirm_payout'));
+    assert.equal(confirmed.args.rows.length,1);assert.equal(confirmed.args.rows[0].amount,450);
+    assert.match(d.fields_dict.result.$wrapper.text(),/BATCH-1/);assert.equal(h.w.location.pathname,'/app/overtime-work-call/CALL');h.close();
+});
+
+test('transport retry preserves exact payment idempotency key',async()=>{
+    const h=harness();await h.w.powerpro.dietas.refresh(h.frm);h.buttons[0].fn();await flush();const d=h.dialogs[0];
+    d.fields_dict.workers.$wrapper.find('.pick').first().prop('checked',true).trigger('change');d.values.mode_of_payment='Cash';
+    await d.primary_action(d.values);const confirm=h.dialogs[1];h.failNext();
+    await assert.rejects(()=>confirm.primary_action(),/network/);assert.equal(confirm.shown,true);assert.equal(confirm.disabled,false);
+    await confirm.primary_action();const calls=h.calls.filter(c=>c.method.endsWith('confirm_payout'));
+    assert.equal(calls.length,2);assert.deepEqual(calls[0].args,calls[1].args);h.close();
+});
+
+test('history expands and accounting retry never routes to a Journal Entry',async()=>{
+    const h=harness();await h.w.powerpro.dietas.openHistory(h.frm);const d=h.dialogs[0];
+    assert.equal(d.fields_dict.history.$wrapper.find('details').length,1);
+    d.fields_dict.history.$wrapper.find('.retry').trigger('click');await flush();
+    assert.ok(h.calls.some(c=>c.method.endsWith('retry_accounting')));
+    assert.equal(h.w.location.pathname,'/app/overtime-work-call/CALL');h.close();
+});
+
+test('employee names and audit content are escaped',async()=>{
+    const h=harness();const original=h.w.frappe.call;
+    h.w.frappe.call=async args=>{const r=await original(args);if(r.message.rows)r.message.rows[0].employee_name='<img src=x onerror=alert(1)>';return r;};
+    await h.w.powerpro.dietas.refresh(h.frm);h.buttons[0].fn();await flush();
+    assert.equal(h.dialogs[0].fields_dict.workers.$wrapper.find('img').length,0);h.close();
+});
