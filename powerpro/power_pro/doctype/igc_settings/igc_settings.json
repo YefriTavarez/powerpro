@@ -7,7 +7,10 @@
  "field_order": [
   "hide_informal_customers",
   "projects_tab",
-  "project_template_manager"
+  "project_template_manager",
+  "dietas_tab",
+  "dieta_companies",
+  "dieta_payment_methods"
  ],
  "fields": [
   {
@@ -27,6 +30,23 @@
    "fieldtype": "Link",
    "label": "Project Template Manager",
    "options": "Role"
+  },
+  {
+   "fieldname": "dietas_tab",
+   "fieldtype": "Tab Break",
+   "label": "Dietas"
+  },
+  {
+   "fieldname": "dieta_companies",
+   "fieldtype": "Table",
+   "label": "Dieta por compañía",
+   "options": "Dieta Company Settings"
+  },
+  {
+   "fieldname": "dieta_payment_methods",
+   "fieldtype": "Table",
+   "label": "Métodos de pago de dietas",
+   "options": "Dieta Payment Method"
   }
  ],
  "index_web_pages_for_search": 1,

@@ -8,7 +8,8 @@
   "work_date",
   "start_time",
   "end_time",
-  "requested_hours"
+  "requested_hours",
+  "allows_dieta"
  ],
  "fields": [
   {
@@ -39,6 +40,13 @@
    "label": "Requested Hours",
    "precision": "2",
    "read_only": 1
+  },
+  {
+   "fieldname": "allows_dieta",
+   "fieldtype": "Check",
+   "label": "Permite dieta",
+   "default": "0",
+   "in_list_view": 1
   }
  ],
  "index_web_pages_for_search": 0,

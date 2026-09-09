@@ -2,13 +2,20 @@
 
 frappe.ui.form.on("Overtime Work Call", {
 	setup(frm) {
-		frm.set_query("employee", "employees", () => ({
-			filters: {
-				company: frm.doc.company,
+		frm.set_query("employee", "employees", (doc, cdt, cdn) => {
+			const filters = {
+				company: doc.company,
 				status: "Active",
 				overtime_eligible: 1,
-			},
-		}));
+			};
+			const selected_employees = (doc.employees || [])
+				.filter((row) => row.name !== cdn && row.employee)
+				.map((row) => row.employee);
+			if (selected_employees.length) {
+				filters.name = ["not in", selected_employees];
+			}
+			return { filters };
+		});
 	},
 
 	refresh(frm) {
@@ -60,6 +67,27 @@ frappe.ui.form.on("Overtime Work Call", {
 	},
 });
 
+frappe.ui.form.on("Overtime Work Call Employee", {
+	employee(frm, cdt, cdn) {
+		return populate_employee_details(frm, cdt, cdn);
+	},
+});
+
+async function populate_employee_details(frm, cdt, cdn) {
+	const doc = frm.doc;
+	const row = (doc.employees || []).find((item) => item.name === cdn);
+	if (!row) return;
+	const employee = row.employee;
+	const fields = ["employee_name", "department", "designation", "default_shift"];
+	await frappe.model.set_value(cdt, cdn, Object.fromEntries(fields.map((field) => [field, ""])));
+	if (!employee) return;
+	const { message } = await frappe.db.get_value("Employee", employee, fields);
+	if (frm.doc !== doc || !(doc.employees || []).includes(row) || row.employee !== employee) return;
+	return frappe.model.set_value(cdt, cdn,
+		Object.fromEntries(fields.map((field) => [field, message?.[field] || ""]))
+	);
+}
+
 frappe.ui.form.on("Overtime Work Call Date", {
 	work_date(frm, cdt, cdn) {
 		set_requested_hours(cdt, cdn);
@@ -107,15 +135,22 @@ function generate_requested_dates(frm) {
 		});
 	};
 
-	if (frm.doc.dates?.length) {
+	if (has_requested_dates(frm)) {
 		frappe.confirm(__("Replace the existing requested date rows with this range?"), add_rows);
 	} else {
 		add_rows();
 	}
 }
 
+function has_requested_dates(frm) {
+	return (frm.doc.dates || []).some((row) =>
+		row.work_date || row.start_time || row.end_time ||
+		Number(row.requested_hours) || Number(row.allows_dieta)
+	);
+}
+
 function mark_schedule_changed(frm) {
-	if (!frm.doc.dates?.length) return;
+	if (!has_requested_dates(frm)) return;
 	frm.__schedule_rows_stale = true;
 	update_schedule_description(frm);
 }
@@ -151,16 +186,18 @@ function add_employees(frm) {
 				filters,
 			};
 		},
-		action(selections) {
+		async action(selections) {
 			const existing = new Set((frm.doc.employees || []).map((row) => row.employee));
+			const added_rows = [];
 			(selections || []).forEach((employee) => {
 				if (!existing.has(employee)) {
-					frm.add_child("employees", { employee });
+					added_rows.push(frm.add_child("employees", { employee }));
 					existing.add(employee);
 				}
 			});
 			frm.refresh_field("employees");
 			dialog.dialog.hide();
+			await Promise.all(added_rows.map((row) => populate_employee_details(frm, row.doctype, row.name)));
 		},
 	});
 }

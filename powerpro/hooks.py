@@ -58,6 +58,7 @@ app_include_js = [
 
 # include js in doctype views
 doctype_js = {
+    "Overtime Work Call": "public/js/dietas.js",
     "Salary Slip": "public/js/salary_slip_monthly.js",
     "Item" : "public/js/item.js",
     "Salary Structure": "public/js/salary_structure.js",
@@ -154,6 +155,8 @@ app_include_icons = "powerpro/icons/igcaribe/icons.svg"
 # Permissions evaluated in scripted ways
 
 permission_query_conditions = {
+    "Solicitud de Dieta": "powerpro.dietas.permissions.request_query",
+    "Lote de Pago de Dietas": "powerpro.dietas.permissions.batch_query",
     "Customer": "powerpro.utils.query.customer_query_conditions",
     "Quotation": "powerpro.utils.query.quotation_query_conditions",
     "Sales Order": "powerpro.utils.query.sales_order_query_conditions",
@@ -166,6 +169,11 @@ permission_query_conditions = {
     "PrintCard": "powerpro.controllers.printcard.perms.printcard_query_conditions",
 }
 #
+has_permission = {
+    "Solicitud de Dieta": "powerpro.dietas.permissions.request_permission",
+    "Lote de Pago de Dietas": "powerpro.dietas.permissions.batch_permission",
+}
+
 # has_permission = {
 # 	"Event": "frappe.desk.doctype.event.event.has_permission",
 # }
@@ -203,6 +211,19 @@ override_doctype_class = {
 # Hook on document methods and events
 
 doc_events = {
+    "IGC Settings": {"validate": "powerpro.dietas.hooks.validate_settings"},
+    "Overtime Work Call": {"before_cancel": "powerpro.dietas.hooks.lock_work_call", "validate": "powerpro.dietas.hooks.validate_work_call", "before_update_after_submit": "powerpro.dietas.hooks.validate_work_call"},
+    "Overtime Authorization": {
+        "before_cancel": "powerpro.dietas.hooks.lock_authorization",
+        "on_cancel": "powerpro.dietas.hooks.authorization_cancelled",
+        "on_change": "powerpro.dietas.hooks.flag_attendance_review",
+    },
+    "Journal Entry": {
+        "validate": "powerpro.dietas.accounting.validate_managed_journal",
+        "on_submit": "powerpro.dietas.accounting.journal_status",
+        "on_cancel": "powerpro.dietas.accounting.journal_status",
+        "on_trash": "powerpro.dietas.accounting.protect_journal",
+    },
     "Customer": {
         "on_update": "powerpro.controllers.customer.on_update",
     },
@@ -347,3 +368,8 @@ export_python_type_annotations = True
 # Boot Info into Session
 # ----------------------
 boot_session = "powerpro.boot.boot_session"
+
+# Employee self-service; dieta operations remain independent of payroll.
+portal_menu_items = [
+    {"title": "Mis solicitudes de dieta", "route": "/dietas", "role": "Employee"},
+]

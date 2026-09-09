@@ -1,0 +1,325 @@
+{
+ "doctype": "DocType",
+ "name": "Solicitud de Dieta",
+ "module": "Power Pro",
+ "engine": "InnoDB",
+ "field_order": [
+  "details_tab",
+  "summary",
+  "day_key",
+  "request_section",
+  "employee",
+  "employee_name",
+  "company",
+  "request_column",
+  "work_date",
+  "overtime_work_call",
+  "authorization",
+  "amount_section",
+  "amount",
+  "amount_column",
+  "default_amount",
+  "currency_column",
+  "currency",
+  "notes_section",
+  "notes",
+  "review_required",
+  "review_reason",
+  "tracking_tab",
+  "approval_section",
+  "approval_status",
+  "approved_by",
+  "approved_on",
+  "payment_column",
+  "payment_status",
+  "paid_by",
+  "paid_on",
+  "payout_batch",
+  "origin_section",
+  "origin",
+  "origin_column",
+  "initiated_by",
+  "history_tab",
+  "history_section",
+  "audit_timeline",
+  "technical_section",
+  "audit_log"
+ ],
+ "fields": [
+  {
+   "fieldname": "details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Detalle"
+  },
+  {
+   "fieldname": "summary",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "day_key",
+   "fieldtype": "Data",
+   "label": "Day Key",
+   "unique": 1,
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "request_section",
+   "fieldtype": "Section Break",
+   "label": "Datos de la solicitud"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Empleado",
+   "options": "Employee",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Nombre del empleado",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Empresa",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "request_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "work_date",
+   "fieldtype": "Date",
+   "label": "Fecha de trabajo",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "overtime_work_call",
+   "fieldtype": "Link",
+   "label": "Convocatoria de Horas Extras",
+   "options": "Overtime Work Call",
+   "reqd": 1
+  },
+  {
+   "fieldname": "authorization",
+   "fieldtype": "Link",
+   "label": "Autorización",
+   "options": "Overtime Authorization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amount_section",
+   "fieldtype": "Section Break",
+   "label": "Importe de la dieta"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Monto",
+   "reqd": 1,
+   "in_list_view": 1,
+   "options": "currency",
+   "bold": 1
+  },
+  {
+   "fieldname": "amount_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_amount",
+   "fieldtype": "Currency",
+   "label": "Importe por defecto",
+   "read_only": 1,
+   "options": "currency"
+  },
+  {
+   "fieldname": "currency_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Moneda",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Observaciones"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notas"
+  },
+  {
+   "fieldname": "review_required",
+   "fieldtype": "Check",
+   "label": "Revisión requerida",
+   "read_only": 1,
+   "depends_on": "eval:doc.review_required"
+  },
+  {
+   "fieldname": "review_reason",
+   "fieldtype": "Small Text",
+   "label": "Motivo de revisión",
+   "read_only": 1,
+   "depends_on": "eval:doc.review_required || doc.review_reason"
+  },
+  {
+   "fieldname": "tracking_tab",
+   "fieldtype": "Tab Break",
+   "label": "Seguimiento"
+  },
+  {
+   "fieldname": "approval_section",
+   "fieldtype": "Section Break",
+   "label": "Aprobación"
+  },
+  {
+   "fieldname": "approval_status",
+   "fieldtype": "Select",
+   "label": "Estado de aprobación",
+   "options": "Pending\nApproved\nRejected\nCancelled",
+   "default": "Pending",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Aprobado por",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_on",
+   "fieldtype": "Datetime",
+   "label": "Fecha de aprobación",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_column",
+   "fieldtype": "Column Break",
+   "label": "Pago"
+  },
+  {
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "label": "Estado del pago",
+   "options": "Unpaid\nPaid",
+   "default": "Unpaid",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "paid_by",
+   "fieldtype": "Link",
+   "label": "Pagado por",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "paid_on",
+   "fieldtype": "Datetime",
+   "label": "Fecha de pago",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payout_batch",
+   "fieldtype": "Link",
+   "label": "Lote de pago de dietas",
+   "options": "Lote de Pago de Dietas",
+   "read_only": 1
+  },
+  {
+   "fieldname": "origin_section",
+   "fieldtype": "Section Break",
+   "label": "Origen de la solicitud"
+  },
+  {
+   "fieldname": "origin",
+   "fieldtype": "Select",
+   "label": "Origen",
+   "options": "Employee\nManager",
+   "read_only": 1
+  },
+  {
+   "fieldname": "origin_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "initiated_by",
+   "fieldtype": "Link",
+   "label": "Solicitado por",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "history_tab",
+   "fieldtype": "Tab Break",
+   "label": "Historial"
+  },
+  {
+   "fieldname": "history_section",
+   "fieldtype": "Section Break",
+   "label": "Actividad de la solicitud"
+  },
+  {
+   "fieldname": "audit_timeline",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "technical_section",
+   "fieldtype": "Section Break",
+   "label": "Registro técnico",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "audit_log",
+   "fieldtype": "Long Text",
+   "label": "Registro de auditoría",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "report": 1,
+   "print": 1
+  },
+  {
+   "role": "Expense Approver",
+   "read": 1,
+   "report": 1,
+   "print": 1
+  },
+  {
+   "role": "Employee",
+   "read": 1,
+   "report": 1,
+   "print": 1
+  }
+ ],
+ "istable": 0,
+ "track_changes": 1,
+ "autoname": "field:day_key",
+ "allow_rename": 0,
+ "creation": "2026-09-09 00:00:00.000000",
+ "modified": "2026-09-09 00:00:00.000000",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "index_web_pages_for_search": 0,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "employee_name"
+}

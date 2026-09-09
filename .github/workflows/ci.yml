@@ -22,6 +22,22 @@ jobs:
       - name: Mixed-frequency payroll unit and controller contract tests
         run: python scripts/test_mixed_frequency_unit.py
 
+  dietas-isolated:
+    name: Dieta service and modal regressions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python tests/test_dietas.py
+      - run: npm ci --prefix tests
+      - run: node --test tests/test_dietas_ui.cjs
+      - run: node --check powerpro/public/js/dietas.js
+
   tests:
     runs-on: ubuntu-latest
     strategy:
@@ -112,6 +128,10 @@ jobs:
           bench build
         env:
           CI: 'Yes'
+
+      - name: Run Dieta Database Tests (isolated development fixture)
+        working-directory: /home/runner/frappe-bench
+        run: env/bin/python apps/powerpro/scripts/test_dietas_dev.py --site test_site --sites-path /home/runner/frappe-bench/sites --confirm-development
 
       - name: Run Payroll Tests
         working-directory: /home/runner/frappe-bench

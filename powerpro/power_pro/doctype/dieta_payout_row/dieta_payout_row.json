@@ -1,0 +1,61 @@
+{
+ "doctype": "DocType",
+ "name": "Dieta Payout Row",
+ "module": "Power Pro",
+ "engine": "InnoDB",
+ "field_order": [
+  "request",
+  "employee",
+  "employee_name",
+  "amount",
+  "cost_center"
+ ],
+ "fields": [
+  {
+   "fieldname": "request",
+   "fieldtype": "Link",
+   "label": "Request",
+   "options": "Solicitud de Dieta",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Centro de costo",
+   "options": "Cost Center",
+   "read_only": 1,
+   "in_list_view": 1
+  }
+ ],
+ "permissions": [],
+ "istable": 1,
+ "track_changes": 0,
+ "creation": "2026-09-09 00:00:00.000000",
+ "modified": "2026-09-09 00:00:00.000000",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "index_web_pages_for_search": 0,
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
