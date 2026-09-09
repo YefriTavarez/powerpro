@@ -1,5 +1,5 @@
 from powerpro.dietas.documents import ManagedDietaDocument
 
 
-class SolicitudDeDieta(ManagedDietaDocument):
+class SolicituddeDieta(ManagedDietaDocument):
 	pass

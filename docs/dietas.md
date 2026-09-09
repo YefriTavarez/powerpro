@@ -66,6 +66,48 @@ Use Node 22.22.2+ for the jsdom test dependency. The Python adapter exercises re
 service functions, persistence failure rollback, stale previews and accounting
 retry paths. It is not proof of MariaDB isolation or live Frappe rendering.
 
+## Verified development results — 2026-09-09
+
+User-authorized tests ran on `igcaribe.fortabs.com`, bench
+`/opt/erpnext/igcaribe-bench`, SSH host `nubef.local`. The site has developer mode
+on; the bench default is `igcaribe.local`. Frappe 15.103.2, ERPNext 15.102.0,
+HRMS 15.58.5 and PowerPro 1.0.1 were verified live. Installed order:
+frappe, erpnext, print_designer, hrms, wiki, powerpro, drive, survey_pro, nubef,
+quality_traceability. Relevant metadata, scripts, permissions, controller
+overrides and resolved hooks were inspected before temporary schema changes.
+
+Eight rollback-only database tests passed against real Frappe controllers and
+MariaDB: full payout/idempotency, atomic failure rollback, uniqueness/write
+protection, employee request reuse, source cancellation before and after payment,
+balanced draft JE generation, and accounting failure/retry. Company-aware test
+fixtures reuse an enabled Cash payment method, respecting the site's mandatory
+DGII fields. Testing caught and fixed controller class capitalization for the
+Spanish DocType names (`SolicituddeDieta`, `LotedePagodeDietas`).
+
+Two additional tests used simultaneous independent DB sessions: same Work Call,
+and different Work Calls sharing one employee/date. Each produced one winner,
+one stale-selection rejection, one request and one payout batch. The opt-in
+`scripts/test_dietas_concurrency_dev.py` runner briefly commits synthetic fixtures
+and removes them afterward. Run it only on a verified, explicitly authorized DEV
+site without existing dieta configuration for the chosen company:
+
+```sh
+# ⚠️ DEV only: commits synthetic fixtures; never run on production.
+env/bin/python apps/powerpro/scripts/test_dietas_concurrency_dev.py --site VERIFIED_DEV_SITE --sites-path /VERIFIED_DEV_BENCH/sites --company "EXISTING DEVELOPMENT COMPANY" --confirm-development-committed-fixtures
+```
+
+Tests loaded an isolated application copy; the shared DEV checkout remained clean
+at `2242f87`. Temporary schemas and configuration were removed and original
+metadata restored. Counts and SHA-256 hashes of ordered `(name, modified,
+docstatus)` rows matched the pre-test baseline for Employee, Overtime Work Call,
+Overtime Authorization, Salary Slip, Additional Salary, Journal Entry, Journal
+Entry Account, GL Entry and Email Queue. This verifies record identity/status/
+modification timestamps, not every business column. No test payout or JE remains.
+
+The five modal tests still use jsdom and a Dialog adapter. Live browser rendering,
+attachments/mobile behavior, actual queue delivery and Finance submission remain
+pilot checks. DEV test success does not establish production compatibility.
+
 ## Production preflight and release gates
 
 Implementation was based on upstream develop `08ef054`. Read-only UI inspection
@@ -99,11 +141,11 @@ no production allowance amount or account IDs are hardcoded by this change.
 PowerPro. Use the guarded rollback-only runner (replace paths with the verified development bench):
 
 ```sh
-env/bin/python apps/powerpro/scripts/test_dietas_dev.py --site VERIFIED_DEV_SITE --sites-path /VERIFIED_DEV_BENCH/sites --confirm-development
+env/bin/python apps/powerpro/scripts/test_dietas_dev.py --site VERIFIED_DEV_SITE --sites-path /VERIFIED_DEV_BENCH/sites --company "EXISTING DEVELOPMENT COMPANY" --confirm-development
 ```
 
 It refuses the known production site/hostname and prohibits commits and email.
-These three DB tests are also wired into the existing CI disposable `test_site`;
+These eight DB tests are also wired into the existing CI disposable `test_site`;
 that CI run has not been executed from this local task.
 ⚠️ Run a staging pilot only after explicit staging authorization.
 🚨 Production schema synchronization and migration remain user-run, after a
@@ -131,7 +173,7 @@ When accounting is enabled, verify batch total = JE debit = JE credit, draft
 status, worker details, Finance submission and ledger readback. Daily review:
 unpaid requests, confirmed payout totals, accounting errors and HR review flags.
 
-### Staging acceptance still required
+### Remaining pilot checks and concurrency regression
 
 - Two DB sessions paying the same employee/date; one winner, no duplicate record.
 - Two sessions with different Work Calls and a common employee/date.
