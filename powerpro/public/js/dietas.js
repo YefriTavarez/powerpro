@@ -23,25 +23,27 @@ frappe.provide('powerpro.dietas');
     const selectedDate = dates => dates.includes(frappe.datetime.get_today()) ? frappe.datetime.get_today() : dates.length === 1 ? dates[0] : '';
 
     function summary(frm, data) {
-        frm.dashboard.wrapper.find('.dieta-summary').remove();
+        frm.dashboard.parent.find('.dieta-summary').remove();
         if (!data?.enabled) return;
         const s = data.summary;
-        $('<div class="dieta-summary alert alert-info"></div>').html(
+        frm.dashboard.add_section(
             `<strong>Dietas</strong> · ${s.pending} pendientes · Aprobadas sin pagar: ${amount(s.approved_unpaid, data.currency)} · ` +
-            `Pagado: ${amount(s.paid, data.currency)} · Contabilidad por revisar: ${s.accounting_attention}`
-        ).appendTo(frm.dashboard.wrapper);
+            `Pagado: ${amount(s.paid, data.currency)} · Contabilidad por revisar: ${s.accounting_attention}`,
+            null, 'custom dieta-summary'
+        );
+        frm.dashboard.show();
     }
     async function refresh(frm) {
         if (frm.doc.docstatus === 0) return;
         const data = await call(api + 'work_call_context', {work_call: frm.doc.name});
         if (frm.doc.name !== data?.work_call && data?.work_call) return;
-        summary(frm, data);
-        if (!data?.enabled) return;
+        if (!data?.enabled) { summary(frm, data); return; }
         if (data.active) {
             frm.add_custom_button('Pagar dietas', () => openWorkers(frm, data, true), 'Dietas');
             frm.add_custom_button('Gestionar solicitudes', () => openWorkers(frm, data, false), 'Dietas');
         }
         frm.add_custom_button('Ver pagos', () => openHistory(frm), 'Dietas');
+        summary(frm, data);
     }
 
     function openWorkers(frm, context, paying) {
@@ -181,5 +183,8 @@ frappe.provide('powerpro.dietas');
     powerpro.dietas.refresh = refresh;
     powerpro.dietas.openWorkers = openWorkers;
     powerpro.dietas.openHistory = openHistory;
-    frappe.ui.form.on('Overtime Work Call', {refresh: frm => refresh(frm).catch(() => {})});
+    frappe.ui.form.on('Overtime Work Call', {refresh: frm => refresh(frm).catch(error => {
+        console.error('No se pudo cargar Dietas:', error);
+        frappe.show_alert({message: 'No se pudo cargar Dietas. Recargue la convocatoria; si persiste, contacte a soporte.', indicator: 'red'});
+    })});
 })();
