@@ -9,7 +9,7 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
 function harness() {
     const dom = new JSDOM('<div id="dashboard"></div>', {url:'https://example.test/app/overtime-work-call/CALL',runScripts:'outside-only'});
     const w=dom.window;const $=require('jquery')(w);w.$=$;
-    let paid=false,failConfirm=false;const dialogs=[],calls=[],buttons=[];
+    let paid=false,failConfirm=false;const dialogs=[],calls=[],buttons=[],alerts=[],handlers={};
     const rows=[{employee:'E1',employee_name:'Employee One',amount:300,version:'v1',approval_status:'None',payment_status:'Unpaid',source_work_call:'CALL',audit:[]},
         {employee:'E2',employee_name:'Employee Two',amount:300,version:'v2',approval_status:'Approved',payment_status:'Paid',source_work_call:'CALL',audit:[]}];
     class Dialog {
@@ -29,8 +29,8 @@ function harness() {
         add_custom_action(label,fn){this.custom=fn;}
     }
     w.frappe={provide:()=>{w.powerpro={dietas:{}};},utils:{escape_html:x=>$('<span>').text(x).html()},
-        datetime:{get_today:()=> '2026-09-09'},user:{has_role:()=>true},ui:{Dialog,form:{on:()=>{}}},
-        msgprint:()=>{},show_alert:()=>{},prompt:()=>{},
+        datetime:{get_today:()=> '2026-09-09'},user:{has_role:()=>true},ui:{Dialog,form:{on:(dt,events)=>{handlers[dt]=events;}}},
+        msgprint:()=>{},show_alert:value=>alerts.push(value),prompt:()=>{},
         call:async ({method,args})=>{
             calls.push({method,args:structuredClone(args)});
             if(method.endsWith('work_call_context'))return {message:{enabled:true,active:true,work_call:'CALL',dates:['2026-09-09'],currency:'DOP',methods:['Cash'],
@@ -42,9 +42,37 @@ function harness() {
         }};
     w.format_currency=(value,currency)=>currency+' '+value;
     w.eval(source);
-    const frm={doc:{name:'CALL',docstatus:1},dashboard:{wrapper:$('#dashboard')},add_custom_button:(label,fn)=>buttons.push({label,fn})};
-    return {w,dialogs,calls,buttons,frm,failNext:()=>{failConfirm=true;},close:()=>w.close()};
+    // Frappe v15 exposes parent/add_section/show; it has no dashboard.wrapper.
+    const dashboard={parent:$('#dashboard'),
+        add_section(html,label=null,cssClass='custom') {
+            return $('<div>').addClass(cssClass).html(html).appendTo(this.parent);
+        },
+        show(){this.parent.addClass('visible-section');},
+    };
+    const frm={doc:{name:'CALL',docstatus:1},dashboard,add_custom_button:(label,fn)=>buttons.push({label,fn})};
+    return {w,dialogs,calls,buttons,alerts,handlers,frm,failNext:()=>{failConfirm=true;},close:()=>w.close()};
 }
+
+test('registered refresh renders menu and one summary with Frappe v15 dashboard API',async()=>{
+    const h=harness();
+    assert.equal(h.frm.dashboard.wrapper,undefined);
+    await h.handlers['Overtime Work Call'].refresh(h.frm);
+    assert.deepEqual(h.buttons.map(b=>b.label),['Pagar dietas','Gestionar solicitudes','Ver pagos']);
+    assert.match(h.frm.dashboard.parent.text(),/Dietas.*1 pendientes/);
+    assert.ok(h.frm.dashboard.parent.hasClass('visible-section'));
+    await h.handlers['Overtime Work Call'].refresh(h.frm);
+    assert.equal(h.frm.dashboard.parent.find('.dieta-summary').length,1);
+    assert.equal(h.alerts.length,0);
+    h.close();
+});
+
+test('registered refresh reports failures instead of silently hiding Dietas',async()=>{
+    const h=harness();const errors=[];h.w.console.error=(...args)=>errors.push(args);
+    h.w.frappe.call=async()=>{throw Error('Service unavailable');};
+    await h.handlers['Overtime Work Call'].refresh(h.frm);
+    assert.equal(h.alerts.length,1);assert.match(h.alerts[0].message,/No se pudo cargar Dietas/);
+    assert.equal(errors.length,1);h.close();
+});
 
 test('Work Call buttons open modals without route changes',async()=>{
     const h=harness();await h.w.powerpro.dietas.refresh(h.frm);
