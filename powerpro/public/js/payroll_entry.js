@@ -152,6 +152,8 @@ function show_payroll_preview_dialog(report) {
 
     const rows = report.rows.map((row) => `<tr>
         <td>${frappe.utils.escape_html(row.employee_name || row.employee)}</td>
+        <td>${frappe.utils.escape_html(__(row.payroll_frequency || ""))}<br>
+            ${frappe.utils.escape_html(row.start_date || "")} – ${frappe.utils.escape_html(row.end_date || "")}</td>
         <td class="text-right">${money(row.gross_pay)}</td>
         <td class="text-right">${money(row.total_deduction)}</td>
         <td class="text-right">${money(row.net_pay)}</td>
@@ -160,7 +162,7 @@ function show_payroll_preview_dialog(report) {
         <td class="text-right">${money(row.employer_afp_ars)}</td>
     </tr>`).join("");
     const table = `<div class="table-responsive"><table class="table table-bordered table-sm">
-        <thead><tr><th>${__("Empleado")}</th><th>${__("Bruto")}</th><th>${__("Deducciones")}</th>
+        <thead><tr><th>${__("Empleado")}</th><th>${__("Período")}</th><th>${__("Bruto")}</th><th>${__("Deducciones")}</th>
         <th>${__("Neto previsto")}</th><th>${__("Neto guardado")}</th><th>${__("Diferencia")}</th>
         <th>${__("AFP/ARS empleador")}</th></tr></thead>
         <tbody>${rows}</tbody>

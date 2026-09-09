@@ -18,13 +18,28 @@ from powerpro.controllers.overtime_cash_settlement import (
 )
 
 from . import helper, monthly
+from powerpro.controllers import mixed_frequency_payroll as mixed
 
 
 class SalarySlip(SalarySlip):
     def validate(self):
+        mixed.prepare_slip(self)
+        mixed.validate_slip(self)
         if self.docstatus == 1 and monthly.settings_for(self):
             monthly.lock_employee(self)
         super().validate()
+
+    @frappe.whitelist()
+    def get_emp_and_working_day_details(self):
+        mixed.prepare_slip(self)
+        return super().get_emp_and_working_day_details()
+
+    def check_sal_struct(self):
+        assignment = getattr(self, "_pp_mixed_assignment", None)
+        if assignment:
+            self.salary_structure = assignment.salary_structure
+            return self.salary_structure
+        return super().check_sal_struct()
 
     def before_submit(self):
         monthly.before_submit(self)

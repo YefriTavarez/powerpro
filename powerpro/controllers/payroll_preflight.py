@@ -10,6 +10,7 @@ from frappe import _
 from frappe.utils import getdate
 
 from powerpro.payroll_rules.dominican_republic import get_isr_scale, get_tss_rule
+from powerpro.controllers import mixed_frequency_payroll as mixed
 
 
 EXPECTED_RATES = {
@@ -138,6 +139,9 @@ def get_payroll_preview(payroll_entry):
                 "employee": employee,
                 "employee_name": slip.employee_name,
                 "salary_structure": slip.salary_structure,
+                "payroll_frequency": slip.payroll_frequency,
+                "start_date": str(slip.start_date),
+                "end_date": str(slip.end_date),
                 "gross_pay": _money(slip.gross_pay),
                 "total_deduction": _money(slip.total_deduction),
                 "net_pay": _money(slip.net_pay),
@@ -286,6 +290,22 @@ def _check_assignments(entry, employees, issues):
     if not employees or not all((entry.company, entry.currency, entry.payroll_frequency, entry.end_date)):
         return
 
+    if mixed.enabled(entry):
+        resolved = mixed.assignments(entry, employees)
+        missing = sorted(set(employees) - set(resolved))
+        if missing:
+            _add_issue(issues, "blocker", "PE_MISSING_ASSIGNMENTS",
+                       _("Employees lack an eligible Salary Structure Assignment"),
+                       _("The current submitted assignment must match this payroll's company, currency, payable account and eligible frequency."), missing)
+        monthly = [employee for employee, row in resolved.items() if row.payroll_frequency == "Monthly"]
+        if monthly:
+            period = resolved[monthly[0]]
+            _add_issue(issues, "info", "PE_MONTHLY_EMPLOYEES",
+                       _("Monthly employees included"),
+                       _("{0} monthly employee(s) will receive full-month slips from {1} to {2} in this Payroll Entry.").format(
+                           len(monthly), period.start_date, period.end_date), monthly)
+        return
+
     structures = frappe.get_all(
         "Salary Structure",
         filters={
@@ -293,7 +313,7 @@ def _check_assignments(entry, employees, issues):
             "is_active": "Yes",
             "company": entry.company,
             "currency": entry.currency,
-            "payroll_frequency": entry.payroll_frequency,
+            "payroll_frequency": ["in", mixed.frequencies(entry)],
             "salary_slip_based_on_timesheet": entry.salary_slip_based_on_timesheet,
         },
         pluck="name",
@@ -336,17 +356,22 @@ def _check_period_conflicts(entry, employees, issues):
     if not employees or not entry.start_date or not entry.end_date:
         return
 
-    slips = frappe.get_all(
-        "Salary Slip",
-        filters={
-            "employee": ["in", employees],
-            "start_date": entry.start_date,
-            "end_date": entry.end_date,
-            "docstatus": ["<", 2],
-        },
-        fields=["name", "employee", "payroll_entry", "docstatus"],
-        order_by="employee, name",
-    )
+    if mixed.enabled(entry):
+        resolved = mixed.assignments(entry, employees)
+        slips = [slip for employee, period in resolved.items()
+                 for slip in mixed.overlaps(entry, employee, period)]
+    else:
+        slips = frappe.get_all(
+            "Salary Slip",
+            filters={
+                "employee": ["in", employees],
+                "start_date": entry.start_date,
+                "end_date": entry.end_date,
+                "docstatus": ["<", 2],
+            },
+            fields=["name", "employee", "payroll_entry", "docstatus"],
+            order_by="employee, name",
+        )
     conflicts = [row for row in slips if row.payroll_entry != entry.name]
     current = [row for row in slips if row.payroll_entry == entry.name]
 
@@ -357,7 +382,7 @@ def _check_period_conflicts(entry, employees, issues):
             "blocker",
             "PE_CONFLICTING_SLIPS",
             _("Conflicting Salary Slips already exist"),
-            _("{0} non-cancelled slip(s) exist for the same employees and exact period outside this Payroll Entry.").format(len(conflicts)),
+            _("{0} non-cancelled slip(s) conflict with the selected employees' payroll periods outside this Payroll Entry.").format(len(conflicts)),
             labels,
         )
 
@@ -534,7 +559,7 @@ def _check_payroll_rules(entry, issues):
             "is_active": "Yes",
             "company": entry.company,
             "currency": entry.currency,
-            "payroll_frequency": entry.payroll_frequency,
+            "payroll_frequency": ["in", mixed.frequencies(entry)],
             "salary_slip_based_on_timesheet": entry.salary_slip_based_on_timesheet,
         },
         pluck="name",
@@ -615,16 +640,21 @@ def _check_payroll_rules(entry, issues):
 def _check_additional_salary(entry, employees, issues):
     if not employees or not entry.start_date or not entry.end_date:
         return
+    periods = mixed.assignments(entry, employees) if mixed.enabled(entry) else {}
+    earliest = min((row.start_date for row in periods.values()), default=getdate(entry.start_date))
     rows = frappe.get_all(
         "Additional Salary",
         filters={
             "employee": ["in", employees],
-            "payroll_date": ["between", [entry.start_date, entry.end_date]],
+            "payroll_date": ["between", [earliest, entry.end_date]],
             "docstatus": ["<", 2],
         },
-        fields=["name", "employee", "salary_component", "docstatus"],
+        fields=["name", "employee", "salary_component", "docstatus", "payroll_date"],
         order_by="employee, name",
     )
+    if periods:
+        rows = [row for row in rows if row.employee in periods
+                and getdate(row.payroll_date) >= periods[row.employee].start_date]
     drafts = [f"{row.employee}: {row.salary_component} ({row.name})" for row in rows if row.docstatus == 0]
     submitted = [row for row in rows if row.docstatus == 1]
     if drafts:
