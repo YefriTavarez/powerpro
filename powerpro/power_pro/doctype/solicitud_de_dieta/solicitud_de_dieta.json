@@ -4,31 +4,57 @@
  "module": "Power Pro",
  "engine": "InnoDB",
  "field_order": [
+  "details_tab",
+  "summary",
   "day_key",
+  "request_section",
   "employee",
   "employee_name",
   "company",
+  "request_column",
   "work_date",
   "overtime_work_call",
   "authorization",
-  "currency",
-  "default_amount",
+  "amount_section",
   "amount",
+  "amount_column",
+  "default_amount",
+  "currency_column",
+  "currency",
+  "notes_section",
+  "notes",
+  "review_required",
+  "review_reason",
+  "tracking_tab",
+  "approval_section",
   "approval_status",
-  "payment_status",
-  "origin",
-  "initiated_by",
   "approved_by",
   "approved_on",
+  "payment_column",
+  "payment_status",
   "paid_by",
   "paid_on",
   "payout_batch",
-  "review_required",
-  "review_reason",
-  "notes",
+  "origin_section",
+  "origin",
+  "origin_column",
+  "initiated_by",
+  "history_tab",
+  "history_section",
+  "audit_timeline",
+  "technical_section",
   "audit_log"
  ],
  "fields": [
+  {
+   "fieldname": "details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Detalle"
+  },
+  {
+   "fieldname": "summary",
+   "fieldtype": "HTML"
+  },
   {
    "fieldname": "day_key",
    "fieldtype": "Data",
@@ -38,9 +64,14 @@
    "hidden": 1
   },
   {
+   "fieldname": "request_section",
+   "fieldtype": "Section Break",
+   "label": "Datos de la solicitud"
+  },
+  {
    "fieldname": "employee",
    "fieldtype": "Link",
-   "label": "Employee",
+   "label": "Empleado",
    "options": "Employee",
    "reqd": 1,
    "in_list_view": 1
@@ -48,143 +79,214 @@
   {
    "fieldname": "employee_name",
    "fieldtype": "Data",
-   "label": "Employee Name",
+   "label": "Nombre del empleado",
    "read_only": 1
   },
   {
    "fieldname": "company",
    "fieldtype": "Link",
-   "label": "Company",
+   "label": "Empresa",
    "options": "Company",
    "reqd": 1
   },
   {
+   "fieldname": "request_column",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "work_date",
    "fieldtype": "Date",
-   "label": "Work Date",
+   "label": "Fecha de trabajo",
    "reqd": 1,
    "in_list_view": 1
   },
   {
    "fieldname": "overtime_work_call",
    "fieldtype": "Link",
-   "label": "Overtime Work Call",
+   "label": "Convocatoria de Horas Extras",
    "options": "Overtime Work Call",
    "reqd": 1
   },
   {
    "fieldname": "authorization",
    "fieldtype": "Link",
-   "label": "Authorization",
+   "label": "Autorización",
    "options": "Overtime Authorization",
    "reqd": 1
   },
   {
-   "fieldname": "currency",
-   "fieldtype": "Link",
-   "label": "Currency",
-   "options": "Currency",
-   "reqd": 1
-  },
-  {
-   "fieldname": "default_amount",
-   "fieldtype": "Currency",
-   "label": "Default Amount",
-   "read_only": 1
+   "fieldname": "amount_section",
+   "fieldtype": "Section Break",
+   "label": "Importe de la dieta"
   },
   {
    "fieldname": "amount",
    "fieldtype": "Currency",
-   "label": "Amount",
+   "label": "Monto",
    "reqd": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "options": "currency",
+   "bold": 1
+  },
+  {
+   "fieldname": "amount_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_amount",
+   "fieldtype": "Currency",
+   "label": "Importe por defecto",
+   "read_only": 1,
+   "options": "currency"
+  },
+  {
+   "fieldname": "currency_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Moneda",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Observaciones"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notas"
+  },
+  {
+   "fieldname": "review_required",
+   "fieldtype": "Check",
+   "label": "Revisión requerida",
+   "read_only": 1,
+   "depends_on": "eval:doc.review_required"
+  },
+  {
+   "fieldname": "review_reason",
+   "fieldtype": "Small Text",
+   "label": "Motivo de revisión",
+   "read_only": 1,
+   "depends_on": "eval:doc.review_required || doc.review_reason"
+  },
+  {
+   "fieldname": "tracking_tab",
+   "fieldtype": "Tab Break",
+   "label": "Seguimiento"
+  },
+  {
+   "fieldname": "approval_section",
+   "fieldtype": "Section Break",
+   "label": "Aprobación"
   },
   {
    "fieldname": "approval_status",
    "fieldtype": "Select",
-   "label": "Approval Status",
+   "label": "Estado de aprobación",
    "options": "Pending\nApproved\nRejected\nCancelled",
    "default": "Pending",
    "read_only": 1,
    "in_list_view": 1
   },
   {
-   "fieldname": "payment_status",
-   "fieldtype": "Select",
-   "label": "Payment Status",
-   "options": "Unpaid\nPaid",
-   "default": "Unpaid",
-   "read_only": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "origin",
-   "fieldtype": "Select",
-   "label": "Origin",
-   "options": "Employee\nManager",
-   "read_only": 1
-  },
-  {
-   "fieldname": "initiated_by",
-   "fieldtype": "Link",
-   "label": "Initiated By",
-   "options": "User",
-   "read_only": 1
-  },
-  {
    "fieldname": "approved_by",
    "fieldtype": "Link",
-   "label": "Approved By",
+   "label": "Aprobado por",
    "options": "User",
    "read_only": 1
   },
   {
    "fieldname": "approved_on",
    "fieldtype": "Datetime",
-   "label": "Approved On",
+   "label": "Fecha de aprobación",
    "read_only": 1
+  },
+  {
+   "fieldname": "payment_column",
+   "fieldtype": "Column Break",
+   "label": "Pago"
+  },
+  {
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "label": "Estado del pago",
+   "options": "Unpaid\nPaid",
+   "default": "Unpaid",
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "paid_by",
    "fieldtype": "Link",
-   "label": "Paid By",
+   "label": "Pagado por",
    "options": "User",
    "read_only": 1
   },
   {
    "fieldname": "paid_on",
    "fieldtype": "Datetime",
-   "label": "Paid On",
+   "label": "Fecha de pago",
    "read_only": 1
   },
   {
    "fieldname": "payout_batch",
    "fieldtype": "Link",
-   "label": "Payout Batch",
+   "label": "Lote de pago de dietas",
    "options": "Lote de Pago de Dietas",
    "read_only": 1
   },
   {
-   "fieldname": "review_required",
-   "fieldtype": "Check",
-   "label": "Review Required",
+   "fieldname": "origin_section",
+   "fieldtype": "Section Break",
+   "label": "Origen de la solicitud"
+  },
+  {
+   "fieldname": "origin",
+   "fieldtype": "Select",
+   "label": "Origen",
+   "options": "Employee\nManager",
    "read_only": 1
   },
   {
-   "fieldname": "review_reason",
-   "fieldtype": "Small Text",
-   "label": "Review Reason",
+   "fieldname": "origin_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "initiated_by",
+   "fieldtype": "Link",
+   "label": "Solicitado por",
+   "options": "User",
    "read_only": 1
   },
   {
-   "fieldname": "notes",
-   "fieldtype": "Small Text",
-   "label": "Notes"
+   "fieldname": "history_tab",
+   "fieldtype": "Tab Break",
+   "label": "Historial"
+  },
+  {
+   "fieldname": "history_section",
+   "fieldtype": "Section Break",
+   "label": "Actividad de la solicitud"
+  },
+  {
+   "fieldname": "audit_timeline",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "technical_section",
+   "fieldtype": "Section Break",
+   "label": "Registro técnico",
+   "collapsible": 1
   },
   {
    "fieldname": "audit_log",
    "fieldtype": "Long Text",
-   "label": "Audit Log",
+   "label": "Registro de auditoría",
    "read_only": 1
   }
  ],
@@ -218,5 +320,6 @@
  "modified_by": "Administrator",
  "index_web_pages_for_search": 0,
  "sort_field": "modified",
- "sort_order": "DESC"
+ "sort_order": "DESC",
+ "title_field": "employee_name"
 }

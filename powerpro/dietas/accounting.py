@@ -3,6 +3,7 @@ import frappe
 from frappe.utils import now_datetime
 
 from . import permissions as access
+from . import cost_centers
 from .service import BATCH, REQUEST, _save, audit, atomic
 
 
@@ -39,13 +40,7 @@ def _validate_account(name, company, kind, currency):
 
 
 def _validate_cost_center(name, company):
-    if not name:
-        frappe.throw('Configure un centro de costo para las dietas.')
-    center = frappe.get_doc('Cost Center', name)
-    if center.is_group:
-        frappe.throw(f'El centro de costo {name} es un grupo. Seleccione un centro de costo de movimiento.')
-    if center.company != company:
-        frappe.throw('El centro de costo debe pertenecer a la compañía de la dieta.')
+    return cost_centers.validate(name, company)
 
 
 def generate_journal(batch_name):
@@ -66,7 +61,17 @@ def generate_journal(batch_name):
     try:
         _validate_account(batch.expense_account, batch.company, 'expense', batch.currency)
         _validate_account(batch.payment_account, batch.company, 'payment', batch.currency)
-        _validate_cost_center(batch.cost_center, batch.company)
+        distribution = batch.get('cost_center_distribution') or 'Legacy'
+        if distribution == 'Per Employee':
+            for row in batch.rows:
+                if not row.get('cost_center'):
+                    frappe.throw(f'Seleccione un centro de costo para {row.employee_name}.')
+            for name in sorted({row.cost_center for row in batch.rows}):
+                cost_centers.validate(name, batch.company, lock=True)
+        elif distribution == 'Legacy':
+            _validate_cost_center(batch.cost_center, batch.company)
+        else:
+            frappe.throw('Distribución de centros de costo no reconocida.')
         je = frappe.new_doc('Journal Entry')
         je.update(dict(voucher_type='Journal Entry', company=batch.company,
                        posting_date=batch.payment_date, cheque_no=batch.reference,
@@ -76,7 +81,7 @@ def generate_journal(batch_name):
         # using an unrelated payable/receivable party or settlement reference.
         for row in batch.rows:
             je.append('accounts', dict(account=batch.expense_account,
-                debit_in_account_currency=row.amount, cost_center=batch.cost_center,
+                debit_in_account_currency=row.amount, cost_center=row.cost_center if distribution == 'Per Employee' else batch.cost_center,
                 user_remark=f'{row.employee_name} / {row.request}'))
         je.append('accounts', dict(account=batch.payment_account, credit_in_account_currency=batch.total))
         je.insert(ignore_permissions=True)
@@ -85,11 +90,11 @@ def generate_journal(batch_name):
         batch.accounting_error = ''
         audit(batch, 'journal_draft', journal_entry=je.name)
         _save(batch, historical=True)
-    except Exception:
+    except Exception as error:
         frappe.db.rollback(save_point='dieta_accounting')
         batch.reload()
         batch.accounting_status = 'Error'
-        batch.accounting_error = 'No se pudo generar el asiento. Finanzas debe revisar las cuentas y dimensiones configuradas.'
+        batch.accounting_error = ('No se pudo generar el asiento. ' + str(error))[:1000] if isinstance(error, frappe.ValidationError) else 'No se pudo generar el asiento. Finanzas debe revisar las cuentas y dimensiones configuradas.'
         _save(batch, historical=True)
         frappe.log_error(title='Dieta Journal Entry failed')
 

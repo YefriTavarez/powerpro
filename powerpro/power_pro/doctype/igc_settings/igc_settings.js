@@ -13,8 +13,5 @@ frappe.ui.form.on("IGC Settings", {
 				account_type: ["in", ["Cash", "Bank"]],
 			},
 		}));
-		frm.set_query("cost_center", "dieta_companies", (doc, cdt, cdn) => ({
-			filters: { company: company(cdt, cdn), is_group: 0 },
-		}));
 	},
 });

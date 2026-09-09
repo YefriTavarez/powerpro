@@ -34,7 +34,8 @@ def prohibited(*args, **kwargs):
 try:
     namespace = runpy.run_path(str(Path(__file__).resolve().parents[1] / 'tests/test_dietas_db.py'), run_name='dieta_db_suite')
     suite = unittest.defaultTestLoader.loadTestsFromTestCase(namespace['DietaDatabaseTest'])
-    with patch.object(frappe.db, 'commit', prohibited), patch.object(frappe, 'sendmail', prohibited), patch.object(frappe, 'enqueue', return_value=None):
+    # Error Log uses deferred writes outside the transaction on Frappe v15.
+    with patch.object(frappe.db, 'commit', prohibited), patch.object(frappe, 'sendmail', prohibited), patch.object(frappe, 'enqueue', return_value=None), patch.object(frappe, 'log_error', return_value=None):
         result = unittest.TextTestRunner(verbosity=2).run(suite)
 finally:
     frappe.db.rollback()

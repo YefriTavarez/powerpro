@@ -70,7 +70,7 @@ class DietaDatabaseTest(unittest.TestCase):
         context=service.work_call_context(self.call_name,self.date)
         row=context['rows'][0]
         args=dict(work_call=self.call_name,work_date=self.date,
-            rows=[dict(employee=self.employee,amount=row['amount'],version=row['version'],reason='')],
+            rows=[dict(employee=self.employee,amount=row['amount'],version=row['version'],cost_center=row.get('cost_center'),reason='')],
             payment_date=self.date,mode_of_payment=self.payment_method)
         preview=service.preview_payout(**args)
         return dict(**args,token=preview['token'],idempotency_key=str(uuid.uuid4()))
@@ -96,10 +96,12 @@ class DietaDatabaseTest(unittest.TestCase):
         currency=frappe.db.get_value('Company',self.company,'default_currency')
         expense=frappe.db.get_value('Account',{'company':self.company,'is_group':0,'disabled':0,'root_type':'Expense','account_currency':currency},'name')
         cash=frappe.db.get_value('Account',{'company':self.company,'is_group':0,'disabled':0,'account_type':'Cash','account_currency':currency},'name')
-        center=frappe.db.get_value('Cost Center',{'company':self.company,'is_group':0},'name')
+        center=frappe.db.get_value('Cost Center',{'company':self.company,'is_group':0,'disabled':0},'name')
         self.assertTrue(expense and cash and center,'Development accounting fixtures are required')
         frappe.db.set_value('Dieta Company Settings','DIETA-CFG-'+self.suffix,dict(generate_journal_entry=1,expense_account=expense,cost_center=center))
         frappe.db.set_value('Dieta Payment Method','DIETA-METHOD-'+self.suffix,'payment_account',cash)
+        frappe.db.set_value('Employee',self.employee,'payroll_cost_center',center)
+        return center
 
     def test_real_draft_journal_and_repeat_generation(self):
         self.enable_accounting()
@@ -162,5 +164,69 @@ class DietaDatabaseTest(unittest.TestCase):
         duplicate=frappe.get_doc(req.as_dict());duplicate.name='DIETA-DUP-'+self.suffix
         with self.assertRaises((frappe.UniqueValidationError,frappe.DuplicateEntryError)):
             duplicate.db_insert()
+
+    def test_three_employees_two_centers_one_draft_1050(self):
+        center=self.enable_accounting()
+        other=frappe.db.get_value('Cost Center',{'company':self.company,'is_group':0,'disabled':0,'name':['!=',center]},'name')
+        self.assertTrue(other,'Two valid development cost centers required')
+        call=frappe.get_doc('Overtime Work Call',self.call_name)
+        for index in (2,3):
+            employee=self.employee+'-'+str(index)
+            self.raw('Employee',employee,employee_name='Dieta Test '+str(index),first_name='Dieta',
+                     company=self.company,status='Active',payroll_cost_center=center)
+            row=call.append('employees',dict(employee=employee,employee_name='Dieta Test '+str(index)));row.db_insert()
+            self.raw('Overtime Authorization',self.auth_name+'-'+str(index),docstatus=1,employee=employee,
+                     employee_name='Dieta Test '+str(index),company=self.company,work_date=self.date,
+                     overtime_work_call=self.call_name,authorization_start=self.date+' 20:00:00',
+                     authorization_end=str(getdate()+timedelta(days=1))+' 04:00:00')
+        context=service.work_call_context(self.call_name,self.date)
+        rows=[dict(employee=r['employee'],amount=350,version=r['version'],reason='Meal',
+                   cost_center=center if r['employee']==self.employee else other) for r in context['rows']]
+        args=dict(work_call=self.call_name,work_date=self.date,rows=rows,payment_date=self.date,mode_of_payment=self.payment_method)
+        preview=service.preview_payout(**args)
+        payload=dict(**args,token=preview['token'],idempotency_key=str(uuid.uuid4()))
+        before=frappe.db.count('GL Entry')
+        result=service.confirm_payout(**payload)
+        self.assertEqual(service.confirm_payout(**payload),result)
+        # Employee transfers and settings edits must not rewrite the saved choice.
+        frappe.db.set_value('Employee',self.employee,'payroll_cost_center',other)
+        frappe.db.set_value('Dieta Company Settings','DIETA-CFG-'+self.suffix,'cost_center',other)
+        accounting.generate_journal(result['batch']);accounting.generate_journal(result['batch'])
+        batch=frappe.get_doc(service.BATCH,result['batch'])
+        self.assertEqual(batch.cost_center_distribution,'Per Employee')
+        self.assertEqual(batch.accounting_status,'Draft',batch.accounting_error)
+        je=frappe.get_doc('Journal Entry',batch.journal_entry)
+        self.assertEqual((je.docstatus,je.total_debit,je.total_credit),(0,1050,1050))
+        debits=[r for r in je.accounts if r.debit_in_account_currency]
+        self.assertEqual(len(debits),3)
+        totals={}
+        for row in debits:totals[row.cost_center]=totals.get(row.cost_center,0)+row.debit_in_account_currency
+        self.assertEqual(totals,{center:350,other:700})
+        self.assertEqual(frappe.db.count('GL Entry'),before)
+        self.assertEqual(frappe.db.count('Journal Entry',{'user_remark':'Pago de dietas: '+batch.name}),1)
+        self.assertEqual([r['cost_center'] for r in service.payment_history(self.call_name)[0]['rows']], [r.cost_center for r in batch.rows])
+
+    def test_center_disabled_between_preview_and_confirmation_has_no_payment(self):
+        center=self.enable_accounting();args=self.payload()
+        frappe.db.set_value('Cost Center',center,'disabled',1)
+        with self.assertRaisesRegex(frappe.ValidationError,'deshabilitado'):service.confirm_payout(**args)
+        self.assertIsNone(service._request(self.company,self.employee,self.date))
+        self.assertFalse(frappe.db.exists(service.BATCH,{'overtime_work_call':self.call_name}))
+
+    def test_direct_api_missing_center_rejected_without_employee_fallback(self):
+        self.enable_accounting();args=self.payload();args['rows'][0].pop('cost_center')
+        with self.assertRaisesRegex(frappe.ValidationError,'Dieta Test'):service.confirm_payout(**args)
+        self.assertIsNone(service._request(self.company,self.employee,self.date))
+
+    def test_legacy_generation_retains_batch_center(self):
+        center=self.enable_accounting();result=service.confirm_payout(**self.payload())
+        batch=frappe.get_doc(service.BATCH,result['batch'])
+        batch.cost_center_distribution='Legacy';batch.cost_center=center
+        for row in batch.rows:row.cost_center=None
+        service._save(batch)
+        accounting.generate_journal(batch.name)
+        batch.reload();self.assertEqual(batch.accounting_status,'Draft',batch.accounting_error)
+        je=frappe.get_doc('Journal Entry',batch.journal_entry)
+        self.assertEqual(je.accounts[0].cost_center,center)
 
 if __name__=='__main__':unittest.main()

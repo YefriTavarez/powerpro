@@ -108,6 +108,7 @@ class DB:
 
 fake = types.ModuleType('frappe')
 fake.PermissionError = PermissionError
+fake.ValidationError = ValueError
 fake.throw = lambda msg, exc=ValueError, **kw: (_ for _ in ()).throw(exc(msg))
 fake.whitelist = lambda *a, **k: lambda fn: fn
 fake.parse_json = json.loads
@@ -149,16 +150,16 @@ class DietasTest(unittest.TestCase):
         put('Dieta Payment Method','cash',parent='IGC Settings',company='IGC',mode_of_payment='Cash',payment_account='Cash')
         put('Account','Meals',company='IGC',is_group=0,disabled=0,root_type='Expense',account_currency='DOP')
         put('Account','Cash',company='IGC',is_group=0,disabled=0,account_type='Cash',account_currency='DOP')
-        put('Cost Center','Main',company='IGC')
+        put('Cost Center','Main',company='IGC',is_group=0,disabled=0)
         call=put('Overtime Work Call','CALL',company='IGC',dates=[{'work_date':'2026-09-09','allows_dieta':1}],employees=[{'employee':'E1'},{'employee':'E2'}])
         call.docstatus=1;store[('Overtime Work Call','CALL')]=call
         for emp in ('E1','E2'):
-            put('Employee',emp,employee_name=emp,company='IGC',department='Production',status='Active',expense_approver='approver',user_id=emp+'@example.com')
+            put('Employee',emp,employee_name=emp,company='IGC',department='Production',payroll_cost_center='Main',status='Active',expense_approver='approver',user_id=emp+'@example.com')
             auth=put('Overtime Authorization','AUTH-'+emp,employee=emp,work_date='2026-09-09',overtime_work_call='CALL',authorization_start='2026-09-09 20:00',authorization_end='2026-09-10 04:00')
             auth.docstatus=1;store[('Overtime Authorization',auth.name)]=auth
     def selected(self, employees=('E1','E2')):
         rows=service.work_call_context('CALL','2026-09-09')['rows']
-        return [dict(employee=r['employee'],amount=r['amount'],version=r['version'],reason='') for r in rows if r['employee'] in employees]
+        return [dict(employee=r['employee'],amount=r['amount'],version=r['version'],cost_center=r.get('cost_center'),reason='') for r in rows if r['employee'] in employees]
     def payload(self, employees=('E1','E2'), **override):
         args=dict(work_call='CALL',work_date='2026-09-09',rows=self.selected(employees),payment_date='2026-09-09',mode_of_payment='Cash')
         args.update(override)
@@ -174,12 +175,11 @@ class DietasTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'es un grupo'):
                 accounting._validate_account(name,'IGC',kind,'DOP')
 
-    def test_group_cost_center_rejected_at_settings_and_generation(self):
+    def test_legacy_setting_ignored_but_invalid_snapshot_rejected_at_generation(self):
         cfg=get_doc('Dieta Company Settings','cfg');cfg.generate_journal_entry=1
         doc=Record(dieta_companies=[cfg],dieta_payment_methods=[get_doc('Dieta Payment Method','cash')])
         store[('Cost Center','Main')]['is_group']=1
-        with self.assertRaisesRegex(ValueError,'es un grupo'):
-            hooks.validate_settings(doc)
+        hooks.validate_settings(doc)  # historical global center no longer constrains new payments
         store[('Cost Center','Main')]['is_group']=0
         hooks.validate_settings(doc)
         store[('Dieta Company Settings','cfg')]['generate_journal_entry']=1
@@ -346,5 +346,121 @@ class DietasTest(unittest.TestCase):
         result=self.pay();accounting.reverse_erroneous_payout(result['batch'],'Clerical mistake')
         self.assertEqual(get_doc(service.BATCH,result['batch']).status,'Reversed')
         self.assertTrue(all(r.payment_status=='Unpaid' and 'reverse_erroneous_payment' in r.audit_log for r in get_all(service.REQUEST)))
+
+    def enable_centers(self):
+        store[('Dieta Company Settings','cfg')]['generate_journal_entry'] = 1
+        put('Cost Center','Other',company='IGC',is_group=0,disabled=0)
+
+    def test_manual_distribution_is_immutable_and_balanced(self):
+        self.enable_centers()
+        rows=self.selected()
+        rows[0].update(amount=350,reason='Meal',cost_center='Main')
+        rows[1].update(amount=700,reason='Meal',cost_center='Other')
+        before=copy.deepcopy(get_all('Employee'))
+        payload=self.payload(rows=rows)
+        result=service.confirm_payout(**payload)
+        self.assertEqual(service.confirm_payout(**payload),result)
+        self.assertEqual(get_all('Employee'),before)
+        batch=get_doc(service.BATCH,result['batch'])
+        self.assertEqual(batch.cost_center_distribution,'Per Employee')
+        self.assertFalse(batch.cost_center)
+        self.assertEqual([r.cost_center for r in batch.rows],['Main','Other'])
+        store[('Employee','E1')]['payroll_cost_center']='Other'
+        store[('Dieta Company Settings','cfg')]['cost_center']='Invalid'
+        accounting.generate_journal(batch.name);accounting.generate_journal(batch.name)
+        je=get_all('Journal Entry')[0]
+        self.assertEqual([(r.cost_center,r.debit_in_account_currency) for r in je.accounts[:-1]], [('Main',350),('Other',700)])
+        self.assertEqual(je.accounts[-1].credit_in_account_currency,1050)
+        self.assertEqual(len(get_all('Journal Entry')),1)
+        self.assertEqual([r['cost_center'] for r in service.payment_history('CALL')[0]['rows']],['Main','Other'])
+
+    def test_missing_centers_lists_employees_without_fallback_or_writes(self):
+        self.enable_centers()
+        rows=self.selected()
+        for r in rows:r.pop('cost_center')
+        with self.assertRaisesRegex(ValueError,'E1, E2'):self.payload(rows=rows)
+        self.assertFalse(get_all(service.REQUEST));self.assertFalse(get_all(service.BATCH))
+
+    def test_bad_or_inaccessible_center_rejected_by_both_apis(self):
+        self.enable_centers()
+        for change in ({'is_group':1},{'disabled':1},{'company':'OTHER'}):
+            payload=self.payload()
+            original=copy.deepcopy(store[('Cost Center','Main')])
+            store[('Cost Center','Main')].update(change)
+            with self.assertRaises(ValueError):service.confirm_payout(**payload)
+            rows=self.selected()
+            rows[0]['cost_center']='Main';rows[1]['cost_center']='Other'
+            with self.assertRaises(ValueError):self.payload(rows=rows)
+            store[('Cost Center','Main')]=original
+            self.assertFalse(get_all(service.REQUEST));self.assertFalse(get_all(service.BATCH))
+        payload=self.payload()
+        with patch.object(fake,'has_permission',return_value=False):
+            with self.assertRaises(PermissionError):service.confirm_payout(**payload)
+            with self.assertRaises(PermissionError):self.payload(rows=payload['rows'])
+        rows=self.selected();rows[0]['cost_center']='Missing'
+        with self.assertRaisesRegex(ValueError,'no existe'):self.payload(rows=rows)
+
+    def test_suggestion_only_uses_valid_permitted_employee_center(self):
+        self.enable_centers()
+        self.assertEqual(self.selected()[0]['cost_center'],'Main')
+        for name in (None,'Missing'):
+            store[('Employee','E1')]['payroll_cost_center']=name
+            self.assertIsNone(self.selected()[0]['cost_center'])
+        store[('Employee','E1')]['payroll_cost_center']='Main'
+        for field,value in [('is_group',1),('disabled',1),('company','OTHER')]:
+            old=store[('Cost Center','Main')].get(field)
+            store[('Cost Center','Main')][field]=value
+            self.assertIsNone(self.selected()[0]['cost_center'])
+            store[('Cost Center','Main')][field]=old
+        with patch.object(fake,'has_permission',return_value=False):
+            self.assertIsNone(self.selected()[0]['cost_center'])
+
+    def test_center_change_after_preview_invalidates_token(self):
+        self.enable_centers();payload=self.payload()
+        payload['rows'][0]['cost_center']='Other'
+        with self.assertRaisesRegex(ValueError,'vista previa'):service.confirm_payout(**payload)
+        self.assertFalse(get_all(service.BATCH));self.assertFalse(get_all(service.REQUEST))
+
+    def test_center_change_cannot_reuse_paid_idempotency_key(self):
+        self.enable_centers();payload=self.payload();service.confirm_payout(**payload)
+        payload['rows'][0]['cost_center']='Other'
+        with self.assertRaisesRegex(ValueError,'otro pago'):service.confirm_payout(**payload)
+        self.assertEqual(len(get_all(service.BATCH)),1)
+
+    def test_centers_locked_once_in_sorted_order_after_employees(self):
+        self.enable_centers();rows=self.selected()
+        rows[0]['cost_center']='Other'
+        service.confirm_payout(**self.payload(rows=rows))
+        centers=[x for x in locks if x[0]=='Cost Center']
+        self.assertEqual(centers,[('Cost Center','Main'),('Cost Center','Other')])
+        self.assertLess(max(i for i,x in enumerate(locks) if x[0]=='Employee'),min(i for i,x in enumerate(locks) if x[0]=='Cost Center'))
+
+    def test_new_batch_missing_snapshot_never_falls_back(self):
+        self.enable_centers();result=self.pay()
+        batch=store[(service.BATCH,result['batch'])];batch['rows'][0]['cost_center']=None;batch['cost_center']='Main'
+        accounting.generate_journal(result['batch'])
+        self.assertEqual(get_doc(service.BATCH,result['batch']).accounting_status,'Error')
+        self.assertIn('E1',get_doc(service.BATCH,result['batch']).accounting_error)
+        self.assertFalse(get_all('Journal Entry'))
+
+    def test_legacy_batch_uses_saved_global_center(self):
+        self.enable_centers();result=self.pay()
+        batch=store[(service.BATCH,result['batch'])];batch.pop('cost_center_distribution');batch['cost_center']='Other'
+        for r in batch['rows']:r.pop('cost_center')
+        accounting.generate_journal(result['batch'])
+        self.assertEqual([r.cost_center for r in get_all('Journal Entry')[0].accounts[:-1]],['Other','Other'])
+
+    def test_disabled_accounting_does_not_require_or_store_centers(self):
+        rows=self.selected()
+        for r in rows:r['cost_center']='Invalid'
+        result=service.confirm_payout(**self.payload(rows=rows))
+        self.assertTrue(all(not r.cost_center for r in get_doc(service.BATCH,result['batch']).rows))
+        self.assertFalse(callbacks)
+
+    def test_approval_without_payout_does_not_require_centers(self):
+        self.enable_centers();store[('Employee','E1')]['payroll_cost_center']=None
+        fake.session.user='E1@example.com';service.request_dieta('AUTH-E1');fake.session.user='manager'
+        service.manage_requests('CALL','2026-09-09',self.selected(('E1',)),'approve')
+        self.assertEqual(service._request('IGC','E1','2026-09-09').approval_status,'Approved')
 
 if __name__=='__main__': unittest.main()

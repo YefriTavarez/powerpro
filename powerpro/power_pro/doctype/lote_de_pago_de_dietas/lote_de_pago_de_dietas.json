@@ -21,6 +21,7 @@
   "status",
   "generate_journal_entry",
   "expense_account",
+  "cost_center_distribution",
   "cost_center",
   "payment_account",
   "journal_entry",
@@ -146,9 +147,10 @@
   {
    "fieldname": "cost_center",
    "fieldtype": "Link",
-   "label": "Cost Center",
+   "label": "Centro de costo histórico",
    "options": "Cost Center",
-   "read_only": 1
+   "read_only": 1,
+   "depends_on": "eval:!doc.cost_center_distribution || doc.cost_center_distribution === \"Legacy\""
   },
   {
    "fieldname": "payment_account",
@@ -182,6 +184,14 @@
    "fieldname": "audit_log",
    "fieldtype": "Long Text",
    "label": "Audit Log",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cost_center_distribution",
+   "fieldtype": "Select",
+   "label": "Distribución de centros de costo",
+   "options": "Legacy\nPer Employee",
+   "default": "Legacy",
    "read_only": 1
   }
  ],

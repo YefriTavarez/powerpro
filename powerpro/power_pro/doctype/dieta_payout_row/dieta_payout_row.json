@@ -7,7 +7,8 @@
   "request",
   "employee",
   "employee_name",
-  "amount"
+  "amount",
+  "cost_center"
  ],
  "fields": [
   {
@@ -36,6 +37,14 @@
    "fieldtype": "Currency",
    "label": "Amount",
    "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Centro de costo",
+   "options": "Cost Center",
+   "read_only": 1,
    "in_list_view": 1
   }
  ],

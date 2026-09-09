@@ -274,6 +274,10 @@
   {
    "link_doctype": "Overtime Authorization",
    "link_fieldname": "overtime_work_call"
+  },
+  {
+   "link_doctype": "Solicitud de Dieta",
+   "link_fieldname": "overtime_work_call"
   }
  ],
  "modified": "2026-08-31 00:00:00.000000",

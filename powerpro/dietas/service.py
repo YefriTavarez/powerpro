@@ -7,6 +7,7 @@ import frappe
 from frappe.utils import cint, getdate, now_datetime
 
 from . import permissions as access
+from . import cost_centers
 from .rules import check_payable, check_transition, day_key, digest, money, override_required
 
 REQUEST = access.REQUEST
@@ -131,6 +132,7 @@ def _row(call, auth, emp, cfg, req):
     return dict(employee=emp.name, employee_name=emp.employee_name,
         authorization=auth.name, start=str(auth.authorization_start), end=str(auth.authorization_end),
         request=req.name if req else None, amount=amount,
+        cost_center=cost_centers.suggested(emp) if cint(cfg.generate_journal_entry) else None,
         approval_status=req.approval_status if req else 'None',
         payment_status=req.payment_status if req else 'Unpaid',
         review_required=req.review_required if req else 0,
@@ -162,6 +164,7 @@ def work_call_context(work_call, work_date=None):
         paid=sum(b['total'] for b in batches if b['status'] == 'Confirmed'),
         accounting_attention=sum(b['accounting_status'] in ('Pending', 'Error', 'Cancelled') for b in batches if b['status'] == 'Confirmed'))
     result = dict(enabled=True, work_call=call.name, dates=dates, currency=cfg.currency, default_amount=cfg.default_amount,
+                  company=call.company, generate_journal_entry=cint(cfg.generate_journal_entry),
                   methods=[r.mode_of_payment for r in cfg.methods], summary=summary, rows=[], active=call.docstatus == 1 and bool(cint(cfg.enabled)))
     if work_date and call.docstatus == 1 and cint(cfg.enabled):
         date = _eligible_date(call, work_date)
@@ -237,9 +240,10 @@ def _payment(cfg, payment_date, mode_of_payment, reference, evidence):
 
 def _preview(call, date, cfg, prepared, payment):
     rows = [dict(employee=p['emp'].name, employee_name=p['emp'].employee_name,
-        amount=p['amount'], reason=p['reason'], version=_version(call, p['auth'], p['emp'], cfg, p['req'])) for p in prepared]
+        amount=p['amount'], reason=p['reason'], cost_center=p['cost_center'], version=_version(call, p['auth'], p['emp'], cfg, p['req'])) for p in prepared]
     result = dict(work_call=call.name, work_date=str(date), company=call.company, currency=cfg.currency,
-        rows=rows, total=round(sum(r['amount'] for r in rows), 2), payment=payment)
+        rows=rows, generate_journal_entry=cint(cfg.generate_journal_entry),
+        total=round(sum(r['amount'] for r in rows), 2), payment=payment)
     result['token'] = digest(result)
     return result
 
@@ -247,6 +251,7 @@ def _preview(call, date, cfg, prepared, payment):
 @frappe.whitelist()
 def preview_payout(work_call, work_date, rows, payment_date, mode_of_payment, reference=None, evidence=None):
     call, date, cfg, prepared = _prepare(work_call, work_date, rows)
+    cost_centers.prepare(prepared, _selections(rows), cfg)
     payment = _payment(cfg, payment_date, mode_of_payment, reference, evidence)
     return _preview(call, date, cfg, prepared, payment)
 
@@ -280,6 +285,7 @@ def confirm_payout(work_call, work_date, rows, payment_date, mode_of_payment, to
             _fail('El identificador corresponde a otro pago o selección.')
         return _batch_result(batch)
     call, date, cfg, prepared = _prepare(work_call, work_date, rows, lock=True)
+    cost_centers.prepare(prepared, _selections(rows), cfg, lock=True)
     payment = _payment(cfg, payment_date, mode_of_payment, reference, evidence)
     preview = _preview(call, date, cfg, prepared, payment)
     if token != preview['token']:
@@ -289,7 +295,7 @@ def confirm_payout(work_call, work_date, rows, payment_date, mode_of_payment, to
         overtime_work_call=call.name, work_date=date, currency=cfg.currency,
         **payment, total=preview['total'], paid_by=frappe.session.user, paid_on=now_datetime(),
         status='Confirmed', generate_journal_entry=cint(cfg.generate_journal_entry),
-        expense_account=cfg.expense_account, cost_center=cfg.cost_center,
+        expense_account=cfg.expense_account, cost_center_distribution='Per Employee',
         accounting_status='Pending' if cfg.generate_journal_entry else 'Disabled'))
     requests = []
     for p in prepared:
@@ -300,7 +306,7 @@ def confirm_payout(work_call, work_date, rows, payment_date, mode_of_payment, to
                         approved_on=now_datetime()))
         _save(req)
         requests.append(req)
-        batch.append('rows', dict(request=req.name, employee=req.employee, employee_name=req.employee_name, amount=req.amount))
+        batch.append('rows', dict(request=req.name, employee=req.employee, employee_name=req.employee_name, amount=req.amount, cost_center=p['cost_center']))
     audit(batch, 'confirm_payment', total=batch.total)
     _save(batch)
     for req in requests:
@@ -359,7 +365,10 @@ def _history(call):
             payment_date=str(batch.payment_date), mode_of_payment=batch.mode_of_payment, reference=batch.reference,
             evidence=batch.evidence, currency=batch.currency, total=batch.total, paid_by=batch.paid_by, paid_on=str(batch.paid_on),
             accounting_status=batch.accounting_status, accounting_error=batch.accounting_error,
-            rows=[dict(employee=r.employee, employee_name=r.employee_name, amount=r.amount) for r in batch.rows],
+            cost_center_distribution=batch.get('cost_center_distribution') or 'Legacy',
+            rows=[dict(employee=r.employee, employee_name=r.employee_name, amount=r.amount,
+                       cost_center=r.get('cost_center') if batch.get('cost_center_distribution') == 'Per Employee'
+                       else batch.cost_center) for r in batch.rows],
             audit=json.loads(batch.audit_log or '[]')))
     return result
 

@@ -20,6 +20,7 @@ frappe.provide('powerpro.dietas');
     };
     const call = (method, args) => frappe.call({method, args, type: 'POST'}).then(r => r.message);
     const amount = (value, currency) => format_currency(value, currency);
+    const batchLink = name => `<a href="/app/lote-de-pago-de-dietas/${encodeURIComponent(name)}">${esc(name)}</a>`;
     const selectedDate = dates => dates.includes(frappe.datetime.get_today()) ? frappe.datetime.get_today() : dates.length === 1 ? dates[0] : '';
 
     function summary(frm, data) {
@@ -28,9 +29,11 @@ frappe.provide('powerpro.dietas');
         const s = data.summary;
         frm.dashboard.add_section(
             `<strong>Dietas</strong> · ${s.pending} pendientes · Aprobadas sin pagar: ${amount(s.approved_unpaid, data.currency)} · ` +
-            `Pagado: ${amount(s.paid, data.currency)} · Contabilidad por revisar: ${s.accounting_attention}`,
+            `Pagado: ${amount(s.paid, data.currency)} · Contabilidad por revisar: ${s.accounting_attention}` +
+            '<div class="mt-3"><button type="button" class="btn btn-sm btn-default dieta-view-payments">Ver pagos de dietas</button></div>',
             null, 'custom dieta-summary'
         );
+        frm.dashboard.parent.find('.dieta-view-payments').on('click', () => openHistory(frm));
         frm.dashboard.show();
     }
     async function refresh(frm) {
@@ -48,6 +51,8 @@ frappe.provide('powerpro.dietas');
 
     function openWorkers(frm, context, paying) {
         let rows = [], generation = 0, dialog;
+        let requiresCenters = paying && Boolean(context.generate_journal_entry);
+        let company = context.company;
         const fields = [
             {fieldname: 'work_date', fieldtype: 'Select', label: 'Fecha de trabajo', options: [''].concat(context.dates),
                 default: selectedDate(context.dates), reqd: 1, onchange: () => load()},
@@ -73,8 +78,10 @@ frappe.provide('powerpro.dietas');
         dialog = new frappe.ui.Dialog({title: paying ? 'Pagar dietas' : 'Gestionar solicitudes de dieta',
             size: 'extra-large', fields, primary_action_label: paying ? 'Revisar pagos' : 'Aplicar acción',
             primary_action: async values => {
-                const selection = chosen().map(r => ({employee: r.employee, amount: r.amount, version: r.version, reason: values.reason || ''}));
+                const selection = chosen().map(r => ({employee: r.employee, amount: r.amount, version: r.version, cost_center: requiresCenters ? r.cost_center || '' : null, reason: values.reason || ''}));
                 if (!selection.length) return frappe.msgprint('Seleccione al menos un empleado.');
+                const missing = requiresCenters ? chosen().filter(r => !r.cost_center) : [];
+                if (missing.length) return frappe.msgprint('Seleccione un centro de costo para: ' + missing.map(r => esc(r.employee_name)).join(', '));
                 dialog.disable_primary_action();
                 try {
                     const args = {work_call: frm.doc.name, work_date: values.work_date, rows: selection};
@@ -82,15 +89,35 @@ frappe.provide('powerpro.dietas');
                         Object.assign(args, {payment_date: values.payment_date, mode_of_payment: values.mode_of_payment,
                             reference: values.reference || '', evidence: values.evidence || ''});
                         const preview = await call(api + 'preview_payout', args);
-                        confirmPayment(preview, args, async result => {
-                            dialog.fields_dict.result.$wrapper.text(`Pago registrado: ${result.batch}. Contabilidad: ${label(result.accounting_status)}.`);
-                            await load(); await refreshSummary(frm);
+                        const result = await confirmPayment(preview, args);
+                        if (!result) return; // User returned to the selection without confirming.
+                        dialog.hide();
+                        const accountingMessage = {
+                            Pending: 'El pago quedó registrado. La contabilidad está pendiente de procesamiento.',
+                            Error: 'El pago quedó registrado, pero la contabilidad requiere revisión. No vuelva a registrar el pago.',
+                            Disabled: 'La generación del asiento contable está deshabilitada.',
+                            Draft: 'Se generó un borrador contable; está pendiente de envío.',
+                            Posted: 'El asiento contable está enviado.',
+                            Cancelled: 'El asiento contable está cancelado; revise el lote.',
+                        }[result.accounting_status] || `Contabilidad: ${label(result.accounting_status)}.`;
+                        frappe.msgprint({
+                            title: result.status === 'Confirmed' ? 'Pago registrado correctamente' : 'Registro de pago recuperado',
+                            indicator: result.status === 'Confirmed' ? 'green' : 'orange',
+                            message: `<p>Lote: ${batchLink(result.batch)}</p><p>Estado del pago: ${esc(label(result.status))}.</p><p>${esc(accountingMessage)}</p>`,
                         });
+                        try { await refreshSummary(frm); }
+                        catch (error) {
+                            console.error('Pago registrado; no se pudo actualizar el resumen:', error);
+                            frappe.show_alert({message: 'El pago ya está registrado. Recargue la convocatoria para actualizar el resumen.', indicator: 'orange'});
+                        }
                     } else {
                         await call(api + 'manage_requests', {...args, action: values.action, reason: values.reason || ''});
                         dialog.fields_dict.result.$wrapper.text('Solicitudes actualizadas.');
                         await load(); await refreshSummary(frm);
                     }
+                } catch (error) {
+                    console.error('No se pudo completar la acción de Dietas:', error);
+                    dialog.fields_dict.result.$wrapper.html('<p class="text-danger" role="alert">No se pudo completar la acción. Revise el mensaje de error y los datos antes de volver a intentar.</p>');
                 } finally { dialog.enable_primary_action(); }
             }});
         const chosen = () => rows.filter(r => r.selected && !r.disabled);
@@ -100,13 +127,24 @@ frappe.provide('powerpro.dietas');
             const wrapper = dialog.fields_dict.workers.$wrapper;
             wrapper.html(`<div class="table-responsive"><table class="table table-bordered"><thead><tr>
                 <th><input type="checkbox" class="select-all" aria-label="Seleccionar empleados elegibles"></th>
-                <th>Empleado</th><th>Monto</th><th>Solicitud</th><th>Pago</th><th>Detalle</th></tr></thead><tbody>` +
+                <th>Empleado</th><th>Monto</th>${requiresCenters ? '<th>Centro de costo</th>' : ''}<th>Solicitud</th><th>Pago</th><th>Detalle</th></tr></thead><tbody>` +
                 rows.map((r, i) => `<tr><td><input type="checkbox" data-index="${i}" class="pick" aria-label="Seleccionar ${esc(r.employee_name)}" ${r.selected ? 'checked' : ''} ${r.disabled ? 'disabled' : ''}></td>
                     <td>${esc(r.employee_name)}<br><small>${esc(r.employee)}</small></td>
                     <td><input type="number" min="0.01" step="0.01" class="form-control dieta-amount" data-index="${i}" aria-label="Monto ${esc(r.employee_name)}" value="${esc(r.amount)}" ${r.disabled ? 'disabled' : ''}></td>
+                    ${requiresCenters ? `<td><div class="dieta-cost-center" data-index="${i}"></div></td>` : ''}
                     <td>${esc(label(r.approval_status))}${r.review_required ? '<br><span class="text-danger">Requiere revisión</span>' : ''}</td>
                     <td>${esc(label(r.payment_status))}</td><td><button type="button" class="btn btn-xs btn-default detail" data-index="${i}">Ver detalle</button></td></tr>`).join('') +
                 `</tbody></table></div><p class="dieta-total"></p><p class="text-muted">${paying ? 'La confirmación aprueba los montos e indica que el dinero ya fue entregado o transferido.' : 'Para modificar una dieta aprobada, vuelva a pendiente y apruébela nuevamente.'}</p>`);
+            if (requiresCenters) wrapper.find('.dieta-cost-center').each(function () {
+                const r = rows[Number(this.dataset.index)];
+                const control = frappe.ui.form.make_control({parent: this, render_input: true,
+                    df: {fieldname: 'cost_center', fieldtype: 'Link', options: 'Cost Center',
+                        label: `Centro de costo: ${r.employee_name}`, only_select: true,
+                        read_only: r.disabled ? 1 : 0,
+                        get_query: () => ({filters: {company, is_group: 0, disabled: 0}}),
+                        onchange: () => { r.cost_center = control.get_value() || ''; }}});
+                control.set_value(r.cost_center || '');
+            });
             wrapper.find('.pick').on('change', function () { rows[Number(this.dataset.index)].selected = this.checked; total(); });
             wrapper.find('.select-all').on('change', function () { rows.forEach(r => { r.selected = !r.disabled && this.checked; }); render(); });
             wrapper.find('.dieta-amount').on('input', function () { rows[Number(this.dataset.index)].amount = Number(this.value); total(); });
@@ -126,6 +164,8 @@ frappe.provide('powerpro.dietas');
             if (!date) return;
             const result = await call(api + 'work_call_context', {work_call: frm.doc.name, work_date: date});
             if (current !== generation) return;
+            requiresCenters = paying && Boolean(result.generate_journal_entry);
+            company = result.company;
             rows = (result.rows || []).filter(r => paying || r.request).map(r => ({...r, selected: false,
                 disabled: r.payment_status === 'Paid' || (paying && (['Rejected', 'Cancelled'].includes(r.approval_status) || r.source_work_call !== frm.doc.name))}));
             render();
@@ -133,22 +173,49 @@ frappe.provide('powerpro.dietas');
         dialog.show(); load();
     }
 
-    function confirmPayment(preview, args, done) {
-        // Keep this exact key and payload on transport failure so retry is safe.
-        const key = crypto.randomUUID();
-        const confirm = new frappe.ui.Dialog({title: 'Confirmar pagos realizados', fields: [{fieldname: 'preview', fieldtype: 'HTML'}],
-            primary_action_label: 'Confirmar pagos realizados', primary_action: async () => {
-                confirm.disable_primary_action();
-                try {
-                    const result = await call(api + 'confirm_payout', {...args, token: preview.token, idempotency_key: key});
-                    confirm.hide(); await done(result);
-                } finally { confirm.enable_primary_action(); }
-            }});
-        confirm.fields_dict.preview.$wrapper.html(`<p>Se aprobarán estos montos y se registrará el dinero como entregado. Esta acción no realiza transferencias bancarias.</p>
-            <ul>${preview.rows.map(r => `<li>${esc(r.employee_name)}: ${amount(r.amount, preview.currency)}</li>`).join('')}</ul>
-            <p><strong>${preview.rows.length} empleados · ${amount(preview.total, preview.currency)}</strong></p>
-            <p>${esc(preview.payment.payment_date)} · ${esc(preview.payment.mode_of_payment)}</p>`);
-        confirm.show();
+    function confirmPayment(preview, args) {
+        // Reuse the exact key and payload after an uncertain response; never create a second payment.
+        const payload = {...args, token: preview.token, idempotency_key: crypto.randomUUID()};
+        return new Promise(resolve => {
+            let submitting = false, result = null;
+            const confirm = new frappe.ui.Dialog({title: 'Confirmar pagos realizados', static: true,
+                fields: [{fieldname: 'preview', fieldtype: 'HTML'}, {fieldname: 'feedback', fieldtype: 'HTML'}],
+                primary_action_label: 'Confirmar pagos realizados',
+                secondary_action_label: 'Volver',
+                secondary_action: () => { if (!submitting) confirm.hide(); },
+                onhide: () => resolve(result),
+                primary_action: async () => {
+                    if (submitting) return;
+                    submitting = true;
+                    confirm.disable_primary_action();
+                    confirm.get_primary_btn().text('Registrando pago…');
+                    confirm.fields_dict.feedback.$wrapper.html('<p role="status">Registrando el pago. Espere la confirmación…</p>');
+                    try {
+                        const response = await call(api + 'confirm_payout', payload);
+                        if (!response?.batch) throw new Error('No se recibió la confirmación del lote.');
+                        result = response;
+                        confirm.hide();
+                    } catch (error) {
+                        console.error('No se pudo confirmar el resultado del pago:', error);
+                        confirm.fields_dict.feedback.$wrapper.html('<p class="text-danger" role="alert">No se pudo confirmar el resultado. Si hubo un error de conexión, reintente desde este mismo diálogo: se verificará el mismo pago para evitar duplicados. Si el servidor indicó un error de validación, pulse Volver y corrija los datos.</p>');
+                    } finally {
+                        submitting = false;
+                        confirm.enable_primary_action();
+                        confirm.get_primary_btn().text('Confirmar pagos realizados');
+                    }
+                }});
+            const subtotals = new Map();
+            if (preview.generate_journal_entry) preview.rows.forEach(r => {
+                subtotals.set(r.cost_center, (subtotals.get(r.cost_center) || 0) + Number(r.amount));
+            });
+            const distribution = subtotals.size ? `<p><strong>Distribución por centro de costo</strong></p><ul>${
+                [...subtotals].map(([center, total]) => `<li>${esc(center)}: ${amount(total, preview.currency)}</li>`).join('')}</ul>` : '';
+            confirm.fields_dict.preview.$wrapper.html(`<p>Se aprobarán estos montos y se registrará el dinero como entregado. Esta acción no realiza transferencias bancarias.</p>
+                <ul>${preview.rows.map(r => `<li>${esc(r.employee_name)}: ${amount(r.amount, preview.currency)}${preview.generate_journal_entry ? ` · ${esc(r.cost_center)}` : ''}</li>`).join('')}</ul>
+                ${distribution}<p><strong>${preview.rows.length} empleados · ${amount(preview.total, preview.currency)}</strong></p>
+                <p>${esc(preview.payment.payment_date)} · ${esc(preview.payment.mode_of_payment)}</p>`);
+            confirm.show();
+        });
     }
     async function refreshSummary(frm) {
         summary(frm, await call(api + 'work_call_context', {work_call: frm.doc.name}));
@@ -159,9 +226,9 @@ frappe.provide('powerpro.dietas');
             const batches = await call(api + 'payment_history', {work_call: frm.doc.name});
             const wrapper = dialog.fields_dict.history.$wrapper;
             wrapper.html(batches.length ? batches.map((b, i) => `<details class="well"><summary><strong>${esc(b.name)}</strong> · ${esc(b.payment_date)} · ${esc(b.mode_of_payment)} · ${amount(b.total, b.currency)} · ${esc(label(b.status))}</summary>
-                <p>Fecha de trabajo: ${esc(b.work_date)} · Registrado por: ${esc(b.paid_by)} · ${esc(b.paid_on)}</p>
+                <p>Abrir lote: ${batchLink(b.name)}</p><p>Fecha de trabajo: ${esc(b.work_date)} · Registrado por: ${esc(b.paid_by)} · ${esc(b.paid_on)}</p>
                 <p>Referencia: ${esc(b.reference)} · Contabilidad: ${esc(label(b.accounting_status))}</p>
-                <p>${esc(b.accounting_error)}</p><p>Comprobante: ${esc(b.evidence || "Sin adjunto")}</p><ul>${b.rows.map(r => `<li>${esc(r.employee_name)}: ${esc(r.amount)}</li>`).join('')}</ul>
+                <p>${esc(b.accounting_error)}</p><p>Comprobante: ${esc(b.evidence || "Sin adjunto")}</p><ul>${b.rows.map(r => `<li>${esc(r.employee_name)}: ${esc(r.amount)}${r.cost_center ? ` · ${esc(r.cost_center)}` : ''}</li>`).join('')}</ul>
                 ${['Pending', 'Error'].includes(b.accounting_status) && b.status === 'Confirmed' ? `<button class="btn btn-sm btn-default retry" data-index="${i}">Reintentar contabilidad</button>` : ''}
                 ${frappe.user.has_role('HR Manager') && b.status === 'Confirmed' ? `<button class="btn btn-sm btn-default reverse" data-index="${i}">Corregir registro erróneo</button>` : ''}
                 ${auditHtml(b.audit)}</details>`).join('') : '<p>No hay pagos registrados.</p>');

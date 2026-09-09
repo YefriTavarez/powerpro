@@ -17,10 +17,9 @@ def validate_settings(doc, method=None):
             except ValueError as exc:
                 frappe.throw(str(exc))
         if row.generate_journal_entry:
-            from .accounting import _validate_account, _validate_cost_center
+            from .accounting import _validate_account
             currency = frappe.db.get_value('Company', row.company, 'default_currency')
             _validate_account(row.expense_account, row.company, 'expense', currency)
-            _validate_cost_center(row.cost_center, row.company)
     for row in doc.get('dieta_payment_methods') or []:
         key = (row.company, row.mode_of_payment)
         if key in methods or row.company not in companies:

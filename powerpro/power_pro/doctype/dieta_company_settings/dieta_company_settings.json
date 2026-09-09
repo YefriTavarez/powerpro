@@ -39,7 +39,8 @@
    "fieldtype": "Check",
    "label": "Generate Journal Entry",
    "default": "0",
-   "in_list_view": 1
+   "in_list_view": 1,
+   "description": "Al pagar, seleccione un centro de costo de movimiento por empleado."
   },
   {
    "fieldname": "expense_account",
@@ -50,8 +51,10 @@
   {
    "fieldname": "cost_center",
    "fieldtype": "Link",
-   "label": "Cost Center",
-   "options": "Cost Center"
+   "label": "Centro de costo histórico",
+   "options": "Cost Center",
+   "hidden": 1,
+   "read_only": 1
   }
  ],
  "permissions": [],

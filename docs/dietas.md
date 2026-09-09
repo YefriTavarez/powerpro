@@ -194,3 +194,43 @@ batches' accounting using their original snapshots; changing configuration does
 not rewrite them. Do not delete schemas, payout rows, requests or audit logs.
 Finance handles any JE corrections through normal cancellation/reversal rules.
 Reverting the application commit alone is not a financial rollback.
+
+## Centros de costo por empleado
+
+Los pagos nuevos guardan `cost_center_distribution = "Per Employee"` y un
+`cost_center` en cada `Dieta Payout Row`. Cuando se genera Journal Entry, quien
+confirma el pago debe seleccionar un centro activo, de movimiento, de la compañía
+y permitido por sus permisos de lectura/selección. Payroll Cost Center del empleado
+es únicamente una sugerencia editable; no se modifica el maestro del empleado ni
+se usa el antiguo centro global como respaldo.
+
+`work_call_context` devuelve `company`, `generate_journal_entry` y el centro sugerido
+en cada fila. `preview_payout` y `confirm_payout` reciben `rows[].cost_center`; la
+vista previa devuelve la distribución y la incluye en el token. Cambiarla exige
+una nueva vista previa. La confirmación bloquea y revalida los centros antes de
+registrar solicitudes pagadas. Un cliente antiguo debe recargar: con contabilidad
+activa no puede omitir los centros. Aprobar solicitudes sin pagar no los exige.
+
+El generador crea un débito por empleado con el centro guardado y un crédito por
+el total, siempre en borrador. Los reintentos conservan la distribución aun si el
+empleado cambia de departamento. Una invalidación posterior del centro produce
+un error contable y conserva el pago. Sin asiento, los centros no son obligatorios.
+
+Los registros anteriores conservan `Legacy` (o vacío), con `batch.cost_center`.
+No se rellenan filas históricas ni se reprocesan pagos durante el despliegue. El
+centro global se conserva oculto, como dato histórico, sin validarlo para nuevos
+ajustes. En particular, DIETA-PAY-2026-00001 queda fuera de esta actualización.
+
+### Publicación y reversión
+
+Recargar de forma dirigida Dieta Payout Row, Lote de Pago de Dietas y Dieta Company
+Settings, actualizar los procesos Python del bench y limpiar la caché del sitio.
+Dietas se carga mediante `doctype_js`; comprobar el contenido servido por
+`frappe.desk.form.load.getdoctype`, además de la metadata, antes de habilitar pagos.
+Preservar los cambios locales previos a la publicación.
+
+Antes del primer lote Per Employee puede restaurarse el código respaldado sin
+eliminar columnas. Después de existir tales lotes, conservar el lector/generador
+por fila: volver al generador antiguo podría cargar todo a un único centro. Una
+reversión debe suspender nuevas confirmaciones y corregir hacia adelante, sin
+reescribir ni eliminar pagos, solicitudes o asientos históricos.
