@@ -212,7 +212,9 @@ class OvertimeAuthorization(Document):
 		window_hours = (end - start).total_seconds() / 3600
 		if flt(self.maximum_hours) <= 0:
 			frappe.throw(_("Maximum Authorized Hours must be greater than zero."))
-		if flt(self.maximum_hours) > window_hours:
+		# Hours are persisted at field precision; compare both sides the same way.
+		hours_precision = self.precision("maximum_hours")
+		if flt(self.maximum_hours, hours_precision) > flt(window_hours, hours_precision):
 			frappe.throw(
 				_("Maximum Authorized Hours cannot exceed the approved time window ({0} hours).").format(
 					frappe.bold(round(window_hours, 2))
@@ -252,7 +254,8 @@ class OvertimeAuthorization(Document):
 		if (
 			get_datetime(self.authorization_start) != expected_start
 			or get_datetime(self.authorization_end) != expected_end
-			or abs(flt(self.maximum_hours) - flt(matching_date.requested_hours)) > 0.0001
+			or flt(self.maximum_hours, self.precision("maximum_hours"))
+			!= flt(matching_date.requested_hours, self.precision("maximum_hours"))
 		):
 			frappe.throw(
 				_("Authorization window does not match the submitted overtime work call.")
