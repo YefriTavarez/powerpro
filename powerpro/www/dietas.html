@@ -1,0 +1,35 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+<h2>Mis solicitudes de dieta</h2>
+<p>Solicite su dieta para una fecha autorizada de trabajo.</p>
+<button type="button" class="btn btn-default" id="dieta-reload">Actualizar</button>
+<div id="dieta-error" role="alert"></div>
+<div id="dieta-eligible"></div>
+<div id="dieta-requests"></div>
+{% endblock %}
+{% block script %}
+<script>
+frappe.ready(() => {
+    const api = 'powerpro.dietas.service.';
+    const esc = value => frappe.utils.escape_html(String(value ?? ''));
+    const labels = {Pending:'Pendiente', Approved:'Aprobada', Rejected:'Rechazada', Cancelled:'Cancelada', Paid:'Pagada', Unpaid:'Pendiente de pago'};
+    const call = (method, args = {}) => frappe.call({method: api + method, args, type:'POST'}).then(r => r.message);
+    async function load() {
+        const data = await call('my_dietas');
+        $('#dieta-eligible').html('<h3>Fechas disponibles</h3>' + data.eligible.map((r,i) =>
+            `<div class="well"><strong>${esc(r.work_date)}</strong> · ${esc(r.employee_name)} · ${esc(r.amount)} ${esc(r.currency)}
+            <textarea class="form-control" id="dieta-note-${i}" placeholder="Nota opcional" aria-label="Nota para la solicitud"></textarea>
+            <button type="button" class="btn btn-primary request-dieta" data-index="${i}">Solicitar dieta</button></div>`).join(''));
+        $('#dieta-requests').html('<h3>Historial</h3>' + data.requests.map(r =>
+            `<details class="well"><summary>${esc(r.work_date)} · ${esc(r.amount)} ${esc(r.currency)} · ${esc(labels[r.approval_status])} · ${esc(labels[r.payment_status])}</summary>
+            <ul>${(r.audit || []).map(e => `<li>${esc(e.at)} · ${esc(e.user)} · ${esc(({request:'Solicitud creada',approve:'Aprobada',reject:'Rechazada',amount:'Monto ajustado',reconsider:'Devuelta a pendiente',approve_and_pay:'Aprobada y pagada',authorization_cancelled:'Autorización cancelada',attendance_review:'Revisión de asistencia',reverse_erroneous_payment:'Pago corregido'})[e.action] || e.action)}${e.reason ? ' — '+esc(e.reason) : ''}</li>`).join('')}</ul></details>`).join(''));
+        $('.request-dieta').on('click', async function () {
+            const i = Number(this.dataset.index); this.disabled = true;
+            try { await call('request_dieta', {authorization:data.eligible[i].authorization, notes:$('#dieta-note-'+i).val()}); await load(); }
+            finally { this.disabled = false; }
+        });
+    }
+    $('#dieta-reload').on('click', load); load();
+});
+</script>
+{% endblock %}

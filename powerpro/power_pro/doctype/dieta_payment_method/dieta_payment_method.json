@@ -1,0 +1,46 @@
+{
+ "doctype": "DocType",
+ "name": "Dieta Payment Method",
+ "module": "Power Pro",
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "mode_of_payment",
+  "payment_account"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "mode_of_payment",
+   "fieldtype": "Link",
+   "label": "Mode Of Payment",
+   "options": "Mode of Payment",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "payment_account",
+   "fieldtype": "Link",
+   "label": "Payment Account",
+   "options": "Account",
+   "in_list_view": 1
+  }
+ ],
+ "permissions": [],
+ "istable": 1,
+ "track_changes": 0,
+ "creation": "2026-09-09 00:00:00.000000",
+ "modified": "2026-09-09 00:00:00.000000",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "index_web_pages_for_search": 0,
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
