@@ -26,7 +26,9 @@ def _validate_account(name, company, kind, currency):
     if not name:
         frappe.throw('Falta configurar la cuenta de dietas o de pago.')
     account = frappe.get_doc('Account', name)
-    if account.company != company or account.is_group or account.disabled:
+    if account.is_group:
+        frappe.throw(f'La cuenta {name} es un grupo. Seleccione una cuenta de movimiento (sin "Es un grupo").')
+    if account.company != company or account.disabled:
         frappe.throw('La cuenta debe estar activa, ser de movimiento y pertenecer a la compañía.')
     if kind == 'expense' and account.root_type != 'Expense':
         frappe.throw('Configure una cuenta de gastos para las dietas.')
@@ -34,6 +36,16 @@ def _validate_account(name, company, kind, currency):
         frappe.throw('Configure una cuenta de caja o banco para el pago.')
     if account.account_currency and account.account_currency != currency:
         frappe.throw('Las dietas requieren cuentas en la moneda de la compañía.')
+
+
+def _validate_cost_center(name, company):
+    if not name:
+        frappe.throw('Configure un centro de costo para las dietas.')
+    center = frappe.get_doc('Cost Center', name)
+    if center.is_group:
+        frappe.throw(f'El centro de costo {name} es un grupo. Seleccione un centro de costo de movimiento.')
+    if center.company != company:
+        frappe.throw('El centro de costo debe pertenecer a la compañía de la dieta.')
 
 
 def generate_journal(batch_name):
@@ -54,8 +66,7 @@ def generate_journal(batch_name):
     try:
         _validate_account(batch.expense_account, batch.company, 'expense', batch.currency)
         _validate_account(batch.payment_account, batch.company, 'payment', batch.currency)
-        if not batch.cost_center or frappe.db.get_value('Cost Center', batch.cost_center, 'company') != batch.company:
-            frappe.throw('Configure un centro de costo de la misma compañía.')
+        _validate_cost_center(batch.cost_center, batch.company)
         je = frappe.new_doc('Journal Entry')
         je.update(dict(voucher_type='Journal Entry', company=batch.company,
                        posting_date=batch.payment_date, cheque_no=batch.reference,

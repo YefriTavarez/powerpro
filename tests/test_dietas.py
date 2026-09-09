@@ -166,6 +166,31 @@ class DietasTest(unittest.TestCase):
         return dict(**args,token=preview['token'],idempotency_key=str(uuid.uuid4()))
     def pay(self,employees=('E1','E2')):
         return service.confirm_payout(**self.payload(employees))
+    def test_group_accounts_rejected_but_indirect_expense_leaf_accepted(self):
+        store[('Account','Meals')]['account_type']='Indirect Expense'
+        accounting._validate_account('Meals','IGC','expense','DOP')
+        for name,kind in (('Meals','expense'),('Cash','payment')):
+            store[('Account',name)]['is_group']=1
+            with self.assertRaisesRegex(ValueError,'es un grupo'):
+                accounting._validate_account(name,'IGC',kind,'DOP')
+
+    def test_group_cost_center_rejected_at_settings_and_generation(self):
+        cfg=get_doc('Dieta Company Settings','cfg');cfg.generate_journal_entry=1
+        doc=Record(dieta_companies=[cfg],dieta_payment_methods=[get_doc('Dieta Payment Method','cash')])
+        store[('Cost Center','Main')]['is_group']=1
+        with self.assertRaisesRegex(ValueError,'es un grupo'):
+            hooks.validate_settings(doc)
+        store[('Cost Center','Main')]['is_group']=0
+        hooks.validate_settings(doc)
+        store[('Dieta Company Settings','cfg')]['generate_journal_entry']=1
+        result=self.pay()
+        # A center may become unsuitable after payout confirmation.
+        store[('Cost Center','Main')]['is_group']=1
+        accounting.generate_journal(result['batch'])
+        self.assertEqual(get_doc(service.BATCH,result['batch']).accounting_status,'Error')
+        self.assertFalse(get_all('Journal Entry'))
+        self.assertTrue(all(r.payment_status=='Paid' for r in get_all(service.REQUEST)))
+
     def test_roster_without_request_creates_approved_paid_requests(self):
         result=self.pay();self.assertEqual(result['total'],600)
         self.assertEqual(len(get_all(service.REQUEST)),2)
