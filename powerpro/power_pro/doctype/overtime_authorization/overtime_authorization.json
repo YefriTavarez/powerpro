@@ -460,7 +460,7 @@
    "fieldtype": "Select",
    "label": "Settlement Method",
    "no_copy": 1,
-   "options": "Cash\nCompensatory Rest",
+   "options": "\nCash\nCompensatory Rest",
    "read_only": 1
   },
   {

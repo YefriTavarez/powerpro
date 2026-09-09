@@ -1,4 +1,6 @@
+import json
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
 
 from powerpro.power_pro.doctype.overtime_authorization.overtime_authorization import (
@@ -9,6 +11,20 @@ from powerpro.power_pro.doctype.overtime_authorization.overtime_authorization im
 
 
 class OvertimeAuthorizationSecurityTest(unittest.TestCase):
+	def test_pending_settlement_method_has_blank_select_option(self):
+		doctype_path = Path(__file__).with_name("overtime_authorization.json")
+		metadata = json.loads(doctype_path.read_text())
+		settlement_method = next(
+			field
+			for field in metadata["fields"]
+			if field.get("fieldname") == "settlement_method"
+		)
+
+		self.assertEqual(
+			settlement_method["options"].split("\n"),
+			["", "Cash", "Compensatory Rest"],
+		)
+
 	def test_employee_approver_overwrites_client_supplied_value(self):
 		authorization = SimpleNamespace(approver="attacker@example.com")
 		employee = SimpleNamespace(overtime_approver="assigned@example.com")
