@@ -17,11 +17,10 @@ def validate_settings(doc, method=None):
             except ValueError as exc:
                 frappe.throw(str(exc))
         if row.generate_journal_entry:
-            from .accounting import _validate_account
+            from .accounting import _validate_account, _validate_cost_center
             currency = frappe.db.get_value('Company', row.company, 'default_currency')
             _validate_account(row.expense_account, row.company, 'expense', currency)
-            if not row.cost_center or frappe.db.get_value('Cost Center', row.cost_center, 'company') != row.company:
-                frappe.throw('El centro de costo debe pertenecer a la compañía de la dieta.')
+            _validate_cost_center(row.cost_center, row.company)
     for row in doc.get('dieta_payment_methods') or []:
         key = (row.company, row.mode_of_payment)
         if key in methods or row.company not in companies:

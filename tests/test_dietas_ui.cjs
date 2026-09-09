@@ -94,3 +94,42 @@ test('employee names and audit content are escaped',async()=>{
     await h.w.powerpro.dietas.refresh(h.frm);h.buttons[0].fn();await flush();
     assert.equal(h.dialogs[0].fields_dict.workers.$wrapper.find('img').length,0);h.close();
 });
+
+test('Dieta settings selectors exclude groups and respect each row company', () => {
+    const vm = require('node:vm');
+    const queries = {};
+    let handlers;
+    const row = {company: 'IGC'};
+    const context = {
+        locals: {Row: {one: row}},
+        frappe: {ui: {form: {on: (doctype, events) => { handlers = events; }}}},
+    };
+    vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,
+        '../powerpro/power_pro/doctype/igc_settings/igc_settings.js'), 'utf8'), context);
+    handlers.setup({set_query: (field, table, query) => { queries[table + '.' + field] = query; }});
+    const candidates = [
+        {name: 'Expense group', company: 'IGC', is_group: 1, disabled: 0, root_type: 'Expense'},
+        {name: 'Meals', company: 'IGC', is_group: 0, disabled: 0, root_type: 'Expense', account_type: 'Indirect Expense'},
+        {name: 'Disabled', company: 'IGC', is_group: 0, disabled: 1, root_type: 'Expense'},
+        {name: 'Other company', company: 'OTHER', is_group: 0, disabled: 0, root_type: 'Expense'},
+        {name: 'Cash group', company: 'IGC', is_group: 1, disabled: 0, account_type: 'Cash'},
+        {name: 'Cash', company: 'IGC', is_group: 0, disabled: 0, account_type: 'Cash'},
+        {name: 'Bank', company: 'IGC', is_group: 0, disabled: 0, account_type: 'Bank'},
+    ];
+    const matches = (items, query) => {
+        const filters = query({}, 'Row', 'one').filters;
+        return items.filter(item => Object.entries(filters).every(([key, value]) =>
+            Array.isArray(value) ? value[1].includes(item[key]) : item[key] === value)).map(item => item.name);
+    };
+    assert.deepEqual(matches(candidates, queries['dieta_companies.expense_account']), ['Meals']);
+    assert.deepEqual(matches(candidates, queries['dieta_payment_methods.payment_account']), ['Cash', 'Bank']);
+    assert.deepEqual(matches([
+        {name: 'Group', company: 'IGC', is_group: 1},
+        {name: 'Leaf', company: 'IGC', is_group: 0},
+        {name: 'Other', company: 'OTHER', is_group: 0},
+    ], queries['dieta_companies.cost_center']), ['Leaf']);
+    row.company = 'OTHER';
+    assert.deepEqual(matches(candidates, queries['dieta_companies.expense_account']), ['Other company']);
+    row.company = '';
+    assert.deepEqual(matches(candidates, queries['dieta_companies.expense_account']), []);
+});
