@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "OT-CALL-.YYYY.-.#####",
+ "autoname": "CONV-HE-.YYYY.-.#####",
  "creation": "2026-08-31 00:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",

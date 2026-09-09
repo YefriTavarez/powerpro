@@ -4,77 +4,88 @@
  "module": "Power Pro",
  "engine": "InnoDB",
  "field_order": [
-  "idempotency_key",
-  "payload_hash",
+  "summary",
+  "payment_section",
   "company",
   "overtime_work_call",
   "work_date",
+  "payment_column",
   "payment_date",
   "mode_of_payment",
   "currency",
   "reference",
   "evidence",
+  "rows_section",
   "rows",
   "total",
-  "paid_by",
-  "paid_on",
-  "status",
+  "accounting_tab",
+  "accounting_section",
   "generate_journal_entry",
+  "accounting_status",
+  "accounting_error",
+  "accounts_section",
   "expense_account",
   "cost_center_distribution",
   "cost_center",
+  "accounts_column",
   "payment_account",
   "journal_entry",
-  "accounting_status",
-  "accounting_error",
+  "history_tab",
+  "execution_section",
+  "paid_by",
+  "paid_on",
+  "status",
+  "audit_timeline",
+  "technical_column",
+  "idempotency_key",
+  "payload_hash",
   "audit_log"
  ],
  "fields": [
   {
-   "fieldname": "idempotency_key",
-   "fieldtype": "Data",
-   "label": "Idempotency Key",
-   "unique": 1,
-   "read_only": 1
+   "fieldname": "summary",
+   "fieldtype": "HTML"
   },
   {
-   "fieldname": "payload_hash",
-   "fieldtype": "Data",
-   "label": "Payload Hash",
-   "read_only": 1,
-   "hidden": 1
+   "fieldname": "payment_section",
+   "fieldtype": "Section Break",
+   "label": "Pago"
   },
   {
    "fieldname": "company",
    "fieldtype": "Link",
-   "label": "Company",
+   "label": "Compañía",
    "options": "Company",
    "reqd": 1
   },
   {
    "fieldname": "overtime_work_call",
    "fieldtype": "Link",
-   "label": "Overtime Work Call",
+   "label": "Convocatoria de horas extras",
    "options": "Overtime Work Call",
    "reqd": 1
   },
   {
    "fieldname": "work_date",
    "fieldtype": "Date",
-   "label": "Work Date",
+   "label": "Fecha de trabajo",
    "reqd": 1
+  },
+  {
+   "fieldname": "payment_column",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "payment_date",
    "fieldtype": "Date",
-   "label": "Payment Date",
+   "label": "Fecha de pago",
    "reqd": 1,
    "in_list_view": 1
   },
   {
    "fieldname": "mode_of_payment",
    "fieldtype": "Link",
-   "label": "Mode Of Payment",
+   "label": "Forma de pago",
    "options": "Mode of Payment",
    "reqd": 1,
    "in_list_view": 1
@@ -82,24 +93,29 @@
   {
    "fieldname": "currency",
    "fieldtype": "Link",
-   "label": "Currency",
+   "label": "Moneda",
    "options": "Currency",
    "reqd": 1
   },
   {
    "fieldname": "reference",
    "fieldtype": "Data",
-   "label": "Reference"
+   "label": "Referencia"
   },
   {
    "fieldname": "evidence",
    "fieldtype": "Attach",
-   "label": "Evidence"
+   "label": "Comprobante"
+  },
+  {
+   "fieldname": "rows_section",
+   "fieldtype": "Section Break",
+   "label": "Empleados pagados"
   },
   {
    "fieldname": "rows",
    "fieldtype": "Table",
-   "label": "Rows",
+   "label": "Empleados",
    "options": "Dieta Payout Row",
    "reqd": 1
   },
@@ -111,37 +127,53 @@
    "in_list_view": 1
   },
   {
-   "fieldname": "paid_by",
-   "fieldtype": "Link",
-   "label": "Paid By",
-   "options": "User",
-   "read_only": 1
+   "fieldname": "accounting_tab",
+   "fieldtype": "Tab Break",
+   "label": "Contabilidad"
   },
   {
-   "fieldname": "paid_on",
-   "fieldtype": "Datetime",
-   "label": "Paid On",
-   "read_only": 1
-  },
-  {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "Confirmed\nReversed",
-   "default": "Confirmed",
-   "read_only": 1
+   "fieldname": "accounting_section",
+   "fieldtype": "Section Break",
+   "label": "Estado contable"
   },
   {
    "fieldname": "generate_journal_entry",
    "fieldtype": "Check",
-   "label": "Generate Journal Entry",
+   "label": "Generar asiento contable",
    "read_only": 1
+  },
+  {
+   "fieldname": "accounting_status",
+   "fieldtype": "Select",
+   "label": "Estado contable",
+   "options": "Disabled\nPending\nDraft\nPosted\nCancelled\nError",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "accounting_error",
+   "fieldtype": "Small Text",
+   "label": "Error contable",
+   "read_only": 1
+  },
+  {
+   "fieldname": "accounts_section",
+   "fieldtype": "Section Break",
+   "label": "Cuentas"
   },
   {
    "fieldname": "expense_account",
    "fieldtype": "Link",
-   "label": "Expense Account",
+   "label": "Cuenta de gasto",
    "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cost_center_distribution",
+   "fieldtype": "Select",
+   "label": "Distribución de centros de costo",
+   "options": "Legacy\nPer Employee",
+   "default": "Legacy",
    "read_only": 1
   },
   {
@@ -153,45 +185,80 @@
    "depends_on": "eval:!doc.cost_center_distribution || doc.cost_center_distribution === \"Legacy\""
   },
   {
+   "fieldname": "accounts_column",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "payment_account",
    "fieldtype": "Link",
-   "label": "Payment Account",
+   "label": "Cuenta de pago",
    "options": "Account",
    "read_only": 1
   },
   {
    "fieldname": "journal_entry",
    "fieldtype": "Link",
-   "label": "Journal Entry",
+   "label": "Asiento contable",
    "options": "Journal Entry",
    "read_only": 1
   },
   {
-   "fieldname": "accounting_status",
-   "fieldtype": "Select",
-   "label": "Accounting Status",
-   "options": "Disabled\nPending\nDraft\nPosted\nCancelled\nError",
-   "read_only": 1,
-   "in_list_view": 1
+   "fieldname": "history_tab",
+   "fieldtype": "Tab Break",
+   "label": "Historial"
   },
   {
-   "fieldname": "accounting_error",
-   "fieldtype": "Small Text",
-   "label": "Accounting Error",
+   "fieldname": "execution_section",
+   "fieldtype": "Section Break",
+   "label": "Registro del pago"
+  },
+  {
+   "fieldname": "paid_by",
+   "fieldtype": "Link",
+   "label": "Pagado por",
+   "options": "User",
    "read_only": 1
+  },
+  {
+   "fieldname": "paid_on",
+   "fieldtype": "Datetime",
+   "label": "Pagado el",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Estado",
+   "options": "Confirmed\nReversed",
+   "default": "Confirmed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "audit_timeline",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "technical_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Clave de idempotencia",
+   "unique": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "payload_hash",
+   "fieldtype": "Data",
+   "label": "Huella del pago",
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "fieldname": "audit_log",
    "fieldtype": "Long Text",
-   "label": "Audit Log",
-   "read_only": 1
-  },
-  {
-   "fieldname": "cost_center_distribution",
-   "fieldtype": "Select",
-   "label": "Distribución de centros de costo",
-   "options": "Legacy\nPer Employee",
-   "default": "Legacy",
+   "label": "Registro técnico de auditoría",
    "read_only": 1
   }
  ],
@@ -217,7 +284,7 @@
  ],
  "istable": 0,
  "track_changes": 1,
- "autoname": "DIETA-PAY-.YYYY.-.#####",
+ "autoname": "PAGO-DIETA-.YYYY.-.#####",
  "allow_rename": 0,
  "creation": "2026-09-09 00:00:00.000000",
  "modified": "2026-09-09 00:00:00.000000",

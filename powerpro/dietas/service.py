@@ -118,8 +118,8 @@ def _authorization(call, emp, date, lock=False):
 
 def _request(company, employee, date, lock=False):
     key = day_key(company, employee, date)
-    exists = frappe.db.get_value(REQUEST, key, 'name', for_update=lock)
-    return frappe.get_doc(REQUEST, key, for_update=lock) if exists else None
+    name = frappe.db.get_value(REQUEST, {'day_key': key}, 'name', for_update=lock)
+    return frappe.get_doc(REQUEST, name, for_update=lock) if name else None
 
 
 def _version(call, auth, emp, cfg, req):

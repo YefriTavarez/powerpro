@@ -14,15 +14,14 @@
   {
    "fieldname": "request",
    "fieldtype": "Link",
-   "label": "Request",
+   "label": "Solicitud",
    "options": "Solicitud de Dieta",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
    "fieldname": "employee",
    "fieldtype": "Link",
-   "label": "Employee",
+   "label": "Empleado",
    "options": "Employee",
    "reqd": 1,
    "in_list_view": 1
@@ -30,12 +29,12 @@
   {
    "fieldname": "employee_name",
    "fieldtype": "Data",
-   "label": "Employee Name"
+   "label": "Nombre del empleado"
   },
   {
    "fieldname": "amount",
    "fieldtype": "Currency",
-   "label": "Amount",
+   "label": "Monto",
    "reqd": 1,
    "in_list_view": 1
   },
