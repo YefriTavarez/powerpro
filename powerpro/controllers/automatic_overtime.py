@@ -467,3 +467,15 @@ def approved_leave_days(employee, leave_type, start, end, exclude=None):
         'from_date': ['<=', end], 'to_date': ['>=', start]}, fields=['name', 'total_leave_days'])
     return sum(flt(row.total_leave_days) for row in rows if row.name != exclude)
 
+
+
+@frappe.whitelist()
+def get_attendance_exception(authorization):
+    doc = frappe.get_doc(AUTH, authorization)
+    doc.check_permission('read')
+    if not doc.get('attendance_exception'):
+        return None
+    event = frappe.get_doc(EXCEPTION, doc.attendance_exception)
+    return {key: event.get(key) for key in ('name', 'action', 'reason', 'status',
+        'recorded_by', 'recorded_on', 'resolved_by', 'resolved_on', 'blockers',
+        'before_snapshot', 'after_snapshot')}

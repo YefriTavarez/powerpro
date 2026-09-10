@@ -11,7 +11,7 @@ frappe.provide("powerpro.automatic_overtime");
         const d = new frappe.ui.Dialog({ title: __("Attendance and Automatic Settlement"), size: "extra-large", fields: [
             {fieldname:"notice", fieldtype:"HTML"},
             {fieldname:"records", fieldtype:"HTML"},
-            {fieldname:"authorization", label:__("Employee / Date"), fieldtype:"Select", options: state.rows.filter(r => r.can_correct).map(r => ({value:r.name,label:`${r.employee_name} · ${r.work_date} · ${r.name}`}))},
+            {fieldname:"authorization", label:__("Employee / Date"), fieldtype:"Select", onchange: () => { d.set_value("reason", ""); d.fields_dict.intervals.df.data = []; d.fields_dict.intervals.grid.refresh(); }, options: state.rows.filter(r => r.can_correct).map(r => ({value:r.name,label:`${r.employee_name} · ${r.work_date} · ${r.name}`}))},
             {fieldname:"action", label:__("Action"), fieldtype:"Select", options:["Mark Absent","Correct Worked Hours","Cancel Participation"], reqd:1},
             {fieldname:"reason", label:__("Reason"), fieldtype:"Small Text", reqd:1},
             {fieldname:"intervals", label:__("Worked Intervals (excluding breaks)"), fieldtype:"Table", depends_on:"eval:doc.action === 'Correct Worked Hours'", in_place_edit:true, fields:[
@@ -28,7 +28,14 @@ frappe.provide("powerpro.automatic_overtime");
             });
         }});
         d.fields_dict.notice.$wrapper.html(`<p>${esc(__(state.enrolled ? "Attendance is presumed unless an authorized person records an exception. Each employee/date settles after its window ends." : "This Work Call is not enrolled. Enabling the setting does not process existing Work Calls."))}</p>`);
-        d.fields_dict.records.$wrapper.html(`<div style="overflow:auto"><table class="table table-bordered"><thead><tr>${["Employee / Date","Attendance","Verified Hours","Presumed Hours","Processing","Settlement","Details"].map(x=>`<th>${esc(__(x))}</th>`).join("")}</tr></thead><tbody>${state.rows.map(r=>`<tr><td>${esc(r.employee_name)}<br>${esc(r.work_date)}</td><td>${esc(__(r.attendance_state || "Pending"))}</td><td>${esc(r.verified_hours)}</td><td>${esc(r.presumed_hours)}</td><td>${esc(__(r.auto_status || "Not enrolled"))}</td><td>${esc(__(r.settlement_status))}</td><td>${esc(r.auto_error)}${r.attendance_exception ? `<br><a href="/app/overtime-attendance-exception/${encodeURIComponent(r.attendance_exception)}">${esc(__("View Exception"))}</a>` : ""}</td></tr>`).join("")}</tbody></table></div>`);
+        d.fields_dict.records.$wrapper.html(`<div style="overflow:auto"><table class="table table-bordered"><thead><tr>${["Employee / Date","Attendance","Verified Hours","Presumed Hours","Processing","Settlement","Details"].map(x=>`<th>${esc(__(x))}</th>`).join("")}</tr></thead><tbody>${state.rows.map(r=>`<tr><td>${esc(r.employee_name)}<br>${esc(r.work_date)}</td><td>${esc(__(r.attendance_state || "Pending"))}</td><td>${esc(r.verified_hours)}</td><td>${esc(r.presumed_hours)}</td><td>${esc(__(r.auto_status || "Not enrolled"))}</td><td>${esc(__(r.settlement_status))}</td><td>${esc(r.auto_error)}${r.attendance_exception ? `<br><a href="#" data-overtime-audit="${esc(r.name)}">${esc(__("View Exception"))}</a>` : ""}</td></tr>`).join("")}</tbody></table></div>`);
+        d.fields_dict.records.$wrapper.on("click", "[data-overtime-audit]", async (event) => {
+            event.preventDefault();
+            const item = await rpc("get_attendance_exception", {authorization:event.currentTarget.dataset.overtimeAudit});
+            if (!item) return;
+            const b = item.blockers ? JSON.parse(item.blockers) : null;
+            frappe.msgprint({title:__(item.status),message:`<p><b>${esc(__(item.action))}</b><br>${esc(item.reason)}</p><p>${esc(item.recorded_by)} · ${esc(item.recorded_on)}</p>${b ? `<p>${esc(b.reason)}</p>` + (b.documents || []).map(r=>`<a href="/app/${frappe.router.slug(r.doctype)}/${encodeURIComponent(r.name)}">${esc(r.doctype)}: ${esc(r.name)}</a>`).join("<br>") : ""}<details><summary>${esc(__("Original Evidence"))}</summary><pre>${esc(item.before_snapshot)}</pre></details><details><summary>${esc(__("Resulting Evidence"))}</summary><pre>${esc(item.after_snapshot)}</pre></details>`});
+        });
         if (!state.enrolled || !state.rows.some(r=>r.can_correct)) d.get_primary_btn().hide();
         if (!state.enrolled && state.enabled && state.can_enroll) {
             d.set_secondary_action_label(__("Enroll This Work Call"));

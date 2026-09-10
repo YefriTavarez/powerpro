@@ -94,6 +94,17 @@ try:
  frappe.set_user('Administrator')
  out=exception(future,'Cancel Participation');assert out['status']=='Applied'
  checks.append('future windows queue; unauthorized user denied; participation can be cancelled')
+ # Exercise normal Document insert/submit, including generation and enrollment.
+ newcall=frappe.copy_doc(frappe.get_doc(auto.CALL,'CONV-HE-2026-00004-1'))
+ newcall.docstatus=0;newcall.name=None;newcall.company=employee.company
+ newcall.from_date='2026-09-20';newcall.to_date='2026-09-20';newcall.planned_settlement='Compensatory Rest'
+ newcall.automation_mode='Follow Settings';newcall.set('employees',[]);newcall.append('employees',{'employee':employee.name})
+ newcall.set('dates',[]);newcall.append('dates',{'work_date':'2026-09-20','start_time':'07:00:00','end_time':'12:00:00','requested_hours':5})
+ newcall.insert(ignore_permissions=True);newcall.flags.ignore_permissions=True;newcall.submit()
+ assert newcall.automatic_settlement_enabled==1
+ generated=frappe.get_all(auto.AUTH,filters={'overtime_work_call':newcall.name},fields=['name','auto_enrolled','auto_status'])
+ assert len(generated)==1 and generated[0].auto_enrolled==1 and generated[0].auto_status=='Queued'
+ checks.append('normal Work Call submit generates and enrolls future employee/date authorization')
  print('DEV_AUTOMATIC_CHECKS',json.dumps(checks))
 finally:
  frappe.db.rollback();frappe.db.commit=commit;frappe.sendmail=sendmail;frappe.enqueue=enqueue

@@ -98,6 +98,9 @@ class OvertimeAuthorization(Document):
 		self.db_set("status", "Cancelled", update_modified=False)
 		if self.get("auto_enrolled"):
 			self.db_set("auto_status", "Cancelled", update_modified=False)
+			if self.overtime_work_call and frappe.db.get_value("Overtime Work Call", self.overtime_work_call, "docstatus", for_update=True) == 1:
+				from powerpro.controllers.automatic_overtime import _sync
+				_sync(frappe.get_doc("Overtime Work Call", self.overtime_work_call, for_update=True))
 
 	def _validate_feature_flag(self):
 		if not frappe.db.get_single_value(

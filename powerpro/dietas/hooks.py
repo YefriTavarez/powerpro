@@ -70,11 +70,11 @@ def authorization_cancelled(doc, method=None):
 def flag_attendance_review(doc, method=None):
     if not frappe.db.exists('DocType', REQUEST):
         return
-    if doc.get('reconciliation_status') not in ('Absent', 'Partial', 'Check-in Issue', 'Overrun'):
+    if doc.get('auto_status') != 'Correction Pending' and doc.get('reconciliation_status') not in ('Absent', 'Partial', 'Check-in Issue', 'Overrun'):
         return
     for name in frappe.get_all(REQUEST, filters={'authorization': doc.name, 'payment_status': 'Paid'}, pluck='name'):
         req = frappe.get_doc(REQUEST, name)
-        reason = 'Revisar asistencia: ' + doc.reconciliation_status
+        reason = 'Revisar asistencia: ' + (doc.get('attendance_state') if doc.get('auto_status') == 'Correction Pending' else doc.reconciliation_status)
         if req.review_reason == reason:
             continue
         req.review_required = 1

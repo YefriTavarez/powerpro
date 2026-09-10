@@ -476,3 +476,39 @@ Include Monthly Employees in Second-Quincena Payroll,Incluir empleados mensuales
 "Each worked interval must overlap this authorization's window.","Cada intervalo trabajado debe coincidir al menos parcialmente con el horario de esta autorización."
 "Worked intervals must not overlap.","Los intervalos trabajados no deben superponerse."
 "Enter times in the site's local timezone without a timezone suffix.","Ingrese las horas en la zona horaria local del sitio, sin sufijo de zona horaria."
+Automatic Work Call Settlement,Liquidación automática de convocatorias
+Enable Automatic Work Call Settlement,Habilitar liquidación automática de convocatorias
+Overtime Attendance Exception Roles,Roles para corregir asistencia de horas extras
+Automatic Cash Payroll Date Policy,Política de fecha de nómina para liquidación automática
+Automatic Settlement and Attendance Exceptions,Liquidación automática y excepciones de asistencia
+Attendance and Automatic Settlement,Asistencia y liquidación automática
+Attendance Decision,Decisión de asistencia
+Presumed Present,Presente por presunción
+Presumed Attendance,Asistencia presumida
+Presumed Eligible Hours,Horas elegibles presumidas
+Presumed Hours,Horas presumidas
+Correction Pending,Corrección pendiente
+Corrections Pending,Correcciones pendientes
+Mark Absent,Marcar ausente
+Correct Worked Hours,Corregir horas trabajadas
+Cancel Participation,Cancelar participación
+Employee / Date,Empleado / Fecha
+Review Exception,Revisar excepción
+Enroll This Work Call,Habilitar esta convocatoria
+Retry Selected Pending Correction,Reintentar corrección pendiente seleccionada
+View Exception,Ver excepción
+Original Evidence,Evidencia original
+Resulting Evidence,Evidencia resultante
+Attendance exception recorded.,Excepción de asistencia registrada.
+Enrolled for Automatic Settlement,Habilitado para liquidación automática
+Automatic Processing Status,Estado del procesamiento automático
+Automatically Settled Records,Registros liquidados automáticamente
+Blocked Records,Registros bloqueados
+Automatic Cash Payroll Date,Fecha de nómina para liquidación automática
+Overtime Attendance Exception,Excepción de asistencia de horas extras
+Presumed,Presumida
+HR Exception,Excepción registrada por RR. HH.
+Follow Settings,Según configuración
+Applied,Aplicada
+Queued,En cola
+Excluded,Excluido
