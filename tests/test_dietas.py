@@ -430,6 +430,42 @@ class DietasTest(unittest.TestCase):
         req.flags.dieta_service=True
         req.validate()
 
+    def test_business_roles_create_read_own_without_payment_privileges(self):
+        for role in ('Gerente Finanzas','Encargado Gestión Humana'):
+            with self.subTest(role=role):
+                roles['creator']=[role,'Employee'];fake.session.user='creator'
+                req=self.direct_request()
+                self.assertTrue(access.request_permission(req,ptype='create'))
+                service.validate_direct_request(req)
+                self.assertEqual(req.initiated_by,'creator')
+                self.assertEqual((req.approval_status,req.payment_status),('Pending','Unpaid'))
+                self.assertTrue(access.request_permission(req,ptype='read'))
+                self.assertFalse(access.request_permission(req,ptype='write'))
+                self.assertFalse(access.can_manage(get_doc('Employee','E1')))
+                self.assertEqual(access.visible_employees(own=False),[])
+                self.assertEqual(access.batch_query(),'1=0')
+                self.assertIn("initiated_by = 'creator'",access.request_query())
+                req.initiated_by='another'
+                self.assertFalse(access.request_permission(req,ptype='read'))
+                with self.assertRaises(PermissionError):service._employee('E1')
+
+    def test_business_roles_creation_and_read_honor_company_employee_department_scope(self):
+        for role in ('Gerente Finanzas','Encargado Gestión Humana'):
+            roles['creator']=[role];fake.session.user='creator'
+            for dt in ('Company','Employee','Department'):
+                restrictions['creator']={dt:[{'doc':'OUTSIDE'}]}
+                req=self.direct_request(initiated_by='creator')
+                self.assertFalse(access.request_permission(req,ptype='create'))
+                self.assertFalse(access.request_permission(req,ptype='read'))
+                with self.assertRaises(PermissionError):service.validate_direct_request(req)
+                self.assertEqual(access.request_query(),'1=0')
+            restrictions.clear()
+
+    def test_other_business_roles_do_not_gain_direct_creation(self):
+        for role in ('Auxiliar Contabilidad','System Manager','Employee','Expense Approver'):
+            roles['unrelated']=[role];fake.session.user='unrelated'
+            with self.assertRaises(PermissionError):service.validate_direct_request(self.direct_request())
+
     def enable_centers(self):
         store[('Dieta Company Settings','cfg')]['generate_journal_entry'] = 1
         put('Cost Center','Other',company='IGC',is_group=0,disabled=0)

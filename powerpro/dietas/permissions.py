@@ -3,6 +3,7 @@ from frappe.permissions import get_user_permissions
 
 REQUEST = 'Solicitud de Dieta'
 BATCH = 'Lote de Pago de Dietas'
+DIRECT_REQUEST_ROLES = frozenset({'HR Manager', 'Gerente Finanzas', 'Encargado Gestión Humana'})
 
 
 def employee(employee, lock=False):
@@ -32,14 +33,25 @@ def can_manage(emp, user=None):
 def can_read_request(doc, user=None):
     user = user or frappe.session.user
     emp = employee(doc.employee)
-    return bool((user != 'Guest' and emp.user_id == user and in_scope(emp, user)) or can_manage(emp, user))
+    return bool((user != 'Guest' and emp.user_id == user and in_scope(emp, user))
+                or can_manage(emp, user)
+                or (doc.get('initiated_by') == user and can_create_for_employee(emp, user)))
+
+
+def has_direct_request_role(user=None):
+    user = user or frappe.session.user
+    return user != 'Guest' and bool(DIRECT_REQUEST_ROLES.intersection(frappe.get_roles(user)))
+
+
+def can_create_for_employee(emp, user=None):
+    user = user or frappe.session.user
+    return bool(has_direct_request_role(user) and emp.user_id != user and in_scope(emp, user))
 
 
 def can_create_request(doc, user=None):
     user = user or frappe.session.user
-    if user == 'Guest' or 'HR Manager' not in frappe.get_roles(user):
-        return False
-    return not doc.get('employee') or can_manage(employee(doc.employee), user)
+    return bool(has_direct_request_role(user) and (
+        not doc.get('employee') or can_create_for_employee(employee(doc.employee), user)))
 
 
 def request_permission(doc, user=None, ptype=None, permission_type=None):
@@ -72,8 +84,21 @@ def visible_employees(user=None, own=True):
 
 
 def request_query(user=None):
+    user = user or frappe.session.user
     names = visible_employees(user)
-    return ('`tabSolicitud de Dieta`.employee in (' + ','.join(frappe.db.escape(n) for n in names) + ')') if names else '1=0'
+    conditions = []
+    if names:
+        conditions.append('`tabSolicitud de Dieta`.employee in (' + ','.join(frappe.db.escape(n) for n in names) + ')')
+    # Creation grants visibility only to the creator's own requests; payout scope
+    # and visibility of other managers' requests remain unchanged.
+    if has_direct_request_role(user):
+        employees = frappe.get_all('Employee', fields=['name', 'company', 'department', 'user_id'])
+        created_scope = [emp.name for emp in employees if can_create_for_employee(emp, user)]
+        if created_scope:
+            quoted = ','.join(frappe.db.escape(n) for n in created_scope)
+            conditions.append(f"(`tabSolicitud de Dieta`.initiated_by = {frappe.db.escape(user)} "
+                              f"AND `tabSolicitud de Dieta`.employee in ({quoted}))")
+    return '(' + ' OR '.join(conditions) + ')' if conditions else '1=0'
 
 
 def batch_query(user=None):

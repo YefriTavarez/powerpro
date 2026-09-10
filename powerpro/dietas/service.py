@@ -135,7 +135,9 @@ def validate_direct_request(doc):
         _fail('Indique empleado, empresa y fecha de trabajo.')
     date = getdate(doc.work_date)
     call = _call(doc.overtime_work_call, lock=True) if doc.overtime_work_call else None
-    emp = _employee(doc.employee, lock=True)
+    emp = access.employee(doc.employee, lock=True)
+    if not access.can_create_for_employee(emp):
+        frappe.throw('No tiene permiso para crear esta solicitud de dieta.', frappe.PermissionError)
     if emp.status != 'Active' or emp.company != doc.company:
         _fail('El empleado debe estar activo y pertenecer a la empresa de la dieta.')
     cfg = settings(emp.company, lock=True)
