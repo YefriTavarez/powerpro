@@ -25,7 +25,7 @@ AUDIT_FIELDS = (
 
 def _enabled_for_user(*, for_update=False):
     # Read current settings on every request; no privileged-role bypass or cached client decision.
-    settings = (frappe.get_doc("DGII Payroll Settings", for_update=True)
+    settings = (frappe.get_doc("DGII Payroll Settings", "DGII Payroll Settings", for_update=True)
                 if for_update else frappe.get_single("DGII Payroll Settings"))
     return bool(
         cint(settings.get("enable_overtime_authorization"))

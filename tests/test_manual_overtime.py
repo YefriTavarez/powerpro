@@ -291,7 +291,7 @@ class ManualOvertimeTest(unittest.TestCase):
         with patch.object(service, '_reconcile', wraps=service._reconcile) as calculate:
             self.approve(p)
         self.assertTrue(all(call.kwargs['for_update'] for call in calculate.call_args_list))
-        self.assertIn(('DGII Payroll Settings', None), LOCKS)
+        self.assertIn(('DGII Payroll Settings', 'DGII Payroll Settings'), LOCKS)
         self.assertIn(('Overtime Authorization', 'rows'), LOCKS)
 
     def test_current_read_bypasses_repeatable_read_snapshot(self):

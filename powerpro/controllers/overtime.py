@@ -233,7 +233,7 @@ def _reconcile(doc, *, include_weekly_context, manual_intervals=None, for_update
 	regular_before = (
 		_get_verified_regular_overtime_before(doc, for_update=for_update) if include_weekly_context else 0
 	)
-	settings = (frappe.get_doc("DGII Payroll Settings", for_update=True)
+	settings = (frappe.get_doc("DGII Payroll Settings", "DGII Payroll Settings", for_update=True)
 		if for_update else frappe.get_single("DGII Payroll Settings"))
 	expected_hours = flt(settings.weekly_expected_hours)
 	weekly_total_threshold = flt(settings.max_weekly_extra_hours)
