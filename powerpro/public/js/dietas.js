@@ -76,7 +76,7 @@ frappe.provide('powerpro.dietas');
                 {value: 'amount', label: 'Cambiar monto'}, {value: 'reconsider', label: 'Reconsiderar / volver a pendiente'}], reqd: 1});
         fields.push({fieldname: 'result', fieldtype: 'HTML'});
         dialog = new frappe.ui.Dialog({title: paying ? 'Pagar dietas' : 'Gestionar solicitudes de dieta',
-            size: 'extra-large', fields, primary_action_label: paying ? 'Revisar pagos' : 'Aplicar acción',
+            size: 'extra-large', fields, primary_action_label: paying ? 'Procesar pagos' : 'Aplicar acción',
             primary_action: async values => {
                 const selection = chosen().map(r => ({employee: r.employee, amount: r.amount, version: r.version, cost_center: requiresCenters ? r.cost_center || '' : null, reason: values.reason || ''}));
                 if (!selection.length) return frappe.msgprint('Seleccione al menos un empleado.');
@@ -178,7 +178,7 @@ frappe.provide('powerpro.dietas');
         const payload = {...args, token: preview.token, idempotency_key: crypto.randomUUID()};
         return new Promise(resolve => {
             let submitting = false, result = null;
-            const confirm = new frappe.ui.Dialog({title: 'Confirmar pagos realizados', static: true,
+            const confirm = new frappe.ui.Dialog({title: 'Confirmar pagos realizados', size: 'large', static: true,
                 fields: [{fieldname: 'preview', fieldtype: 'HTML'}, {fieldname: 'feedback', fieldtype: 'HTML'}],
                 primary_action_label: 'Confirmar pagos realizados',
                 secondary_action_label: 'Volver',
@@ -204,18 +204,63 @@ frappe.provide('powerpro.dietas');
                         confirm.get_primary_btn().text('Confirmar pagos realizados');
                     }
                 }});
-            const subtotals = new Map();
-            if (preview.generate_journal_entry) preview.rows.forEach(r => {
-                subtotals.set(r.cost_center, (subtotals.get(r.cost_center) || 0) + Number(r.amount));
-            });
-            const distribution = subtotals.size ? `<p><strong>Distribución por centro de costo</strong></p><ul>${
-                [...subtotals].map(([center, total]) => `<li>${esc(center)}: ${amount(total, preview.currency)}</li>`).join('')}</ul>` : '';
-            confirm.fields_dict.preview.$wrapper.html(`<p>Se aprobarán estos montos y se registrará el dinero como entregado. Esta acción no realiza transferencias bancarias.</p>
-                <ul>${preview.rows.map(r => `<li>${esc(r.employee_name)}: ${amount(r.amount, preview.currency)}${preview.generate_journal_entry ? ` · ${esc(r.cost_center)}` : ''}</li>`).join('')}</ul>
-                ${distribution}<p><strong>${preview.rows.length} empleados · ${amount(preview.total, preview.currency)}</strong></p>
-                <p>${esc(preview.payment.payment_date)} · ${esc(preview.payment.mode_of_payment)}</p>`);
+            confirm.fields_dict.preview.$wrapper.html(paymentPreviewHtml(preview));
             confirm.show();
         });
+    }
+    function paymentPreviewHtml(preview) {
+        const showCenters = Boolean(preview.generate_journal_entry);
+        const money = value => amount(value, preview.currency);
+        const subtotals = new Map();
+        if (showCenters) preview.rows.forEach(row => {
+            subtotals.set(row.cost_center, (subtotals.get(row.cost_center) || 0) + Number(row.amount));
+        });
+        const distribution = showCenters && subtotals.size ? `
+            <h5 class="mt-4 mb-3">Distribución por centro de costo</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm">
+                    <caption class="sr-only">Resumen de importes por centro de costo</caption>
+                    <thead><tr><th scope="col">Centro de costo</th><th scope="col" class="text-right">Subtotal</th></tr></thead>
+                    <tbody>${[...subtotals].map(([center, total]) => `
+                        <tr><th scope="row" class="dieta-preview-name">${esc(center)}</th>
+                            <td class="dieta-preview-money text-right">${money(total)}</td></tr>`).join('')}</tbody>
+                </table>
+            </div>` : '';
+        return `<div class="dieta-payment-preview">
+            <style>
+                .dieta-payment-preview .dieta-preview-money { white-space: nowrap; font-variant-numeric: tabular-nums; }
+                .dieta-payment-preview .dieta-preview-name { font-weight: normal; }
+                .dieta-payment-preview th, .dieta-payment-preview td { vertical-align: middle; padding: 10px 12px; }
+                .dieta-payment-preview thead, .dieta-payment-preview tfoot { background: var(--subtle-fg, #f5f7fa); }
+                .dieta-payment-preview .dieta-preview-meta { background: var(--subtle-fg, #f5f7fa); border-radius: 8px; padding: 12px 16px; }
+                .dieta-payment-preview .dieta-preview-meta strong { display: block; overflow-wrap: anywhere; }
+            </style>
+            <div class="dieta-preview-meta mb-4">
+                <div class="row">
+                    <div class="col-sm-6 mb-2"><span class="text-muted">Fecha real del pago</span>
+                        <strong>${esc(frappe.datetime.str_to_user(preview.payment.payment_date))}</strong></div>
+                    <div class="col-sm-6 mb-2"><span class="text-muted">Método de pago</span>
+                        <strong>${esc(preview.payment.mode_of_payment)}</strong></div>
+                </div>
+            </div>
+            <h5 class="mb-3">Detalle de pagos <span class="text-muted">· ${preview.rows.length} empleados</span></h5>
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm">
+                    <caption class="sr-only">Dietas por empleado</caption>
+                    <thead><tr><th scope="col">Empleado</th>${showCenters ? '<th scope="col">Centro de costo</th>' : ''}
+                        <th scope="col" class="text-right">Monto</th></tr></thead>
+                    <tbody>${preview.rows.map(row => `
+                        <tr><th scope="row" class="dieta-preview-name">${esc(row.employee_name)}</th>
+                            ${showCenters ? `<td>${esc(row.cost_center)}</td>` : ''}
+                            <td class="dieta-preview-money text-right">${money(row.amount)}</td></tr>`).join('')}</tbody>
+                    <tfoot><tr><th scope="row" colspan="${showCenters ? 2 : 1}">Total a registrar</th>
+                        <td class="dieta-preview-money text-right"><strong>${money(preview.total)}</strong></td></tr></tfoot>
+                </table>
+            </div>
+            ${distribution}
+            <p class="text-muted mt-3 mb-0">Al confirmar, se aprobarán estos montos y se registrará el dinero como entregado.
+                Esta acción no realiza transferencias bancarias.</p>
+        </div>`;
     }
     async function refreshSummary(frm) {
         summary(frm, await call(api + 'work_call_context', {work_call: frm.doc.name}));

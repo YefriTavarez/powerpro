@@ -170,6 +170,7 @@ function add_employees(frm) {
 	const dialog = new frappe.ui.form.MultiSelectDialog({
 		doctype: "Employee",
 		target: frm,
+		primary_action_label: __("Add Employees"),
 		setters: {
 			company: frm.doc.company,
 			department: frm.doc.department || null,
@@ -187,6 +188,10 @@ function add_employees(frm) {
 			};
 		},
 		async action(selections) {
+			if (!selections?.length) return;
+			const empty_rows = (frm.doc.employees || []).filter((row) => !row.employee);
+			empty_rows.forEach((row) => frappe.model.clear_doc(row.doctype, row.name));
+			if (empty_rows.length) frm.dirty();
 			const existing = new Set((frm.doc.employees || []).map((row) => row.employee));
 			const added_rows = [];
 			(selections || []).forEach((employee) => {
