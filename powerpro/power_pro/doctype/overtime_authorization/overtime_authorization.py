@@ -96,6 +96,8 @@ class OvertimeAuthorization(Document):
 
 		cancel_authorization_settlement(self)
 		self.db_set("status", "Cancelled", update_modified=False)
+		if self.get("auto_enrolled"):
+			self.db_set("auto_status", "Cancelled", update_modified=False)
 
 	def _validate_feature_flag(self):
 		if not frappe.db.get_single_value(

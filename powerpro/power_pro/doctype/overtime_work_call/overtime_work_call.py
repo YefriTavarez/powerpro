@@ -76,6 +76,8 @@ class OvertimeWorkCall(Document):
 			authorization.flags.ignore_permissions = True
 			authorization.cancel()
 		self.db_set("status", "Cancelled", update_modified=False)
+		if self.get("automatic_settlement_enabled"):
+			self.db_set("automatic_status", "Cancelled", update_modified=False)
 
 	def _validate_feature_flag(self):
 		if not frappe.db.get_single_value(

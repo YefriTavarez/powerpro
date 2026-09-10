@@ -212,7 +212,7 @@ def _check_weekly_dependencies(doc, *, correction=False):
             continue
         if not correction and row.auto_enrolled and get_datetime(row.authorization_start) < get_datetime(doc.authorization_start) and row.auto_status not in {'Settled', 'Excluded', 'Cancelled'}:
             blockers.append(row.name)
-        if correction and get_datetime(row.authorization_start) > get_datetime(doc.authorization_start) and flt(row.regular_35_hours) + flt(row.regular_100_hours) > 0:
+        if (correction or not doc.get('reconciled_on')) and get_datetime(row.authorization_start) > get_datetime(doc.authorization_start) and flt(row.regular_35_hours) + flt(row.regular_100_hours) > 0:
             blockers.append(row.name)
     if blockers:
         frappe.throw(_('Review dependent overtime authorizations first: {0}').format(', '.join(blockers)))

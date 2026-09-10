@@ -17,7 +17,7 @@ def local_settings():
 def forbidden(*a,**kw):raise AssertionError('Outbound effects forbidden')
 frappe.sendmail=forbidden;frappe.enqueue=forbidden
 if len(sys.argv)>1:
- name,barrier=sys.argv[1:]
+ name,barrier,action=sys.argv[1:]
  auto._settings=local_settings
  # Deliberately establish an old REPEATABLE READ snapshot before the race.
  frappe.db.count('Overtime Authorization')
@@ -27,7 +27,14 @@ if len(sys.argv)>1:
   assert time.monotonic()<deadline
   time.sleep(.02)
  try:
-  result=auto.process_authorization(name);frappe.db.commit();print(result)
+  if action == 'cancel':
+   doc,call=auto._lock(name);doc.flags.ignore_permissions=True;doc.cancel();result='Cancelled'
+  else:
+   try:result=auto.process_authorization(name)
+   except frappe.ValidationError:
+    if frappe.db.get_value(auto.AUTH,name,'docstatus',for_update=True)==2:result='Cancelled'
+    else:raise
+  frappe.db.commit();print(result)
  finally:frappe.db.rollback();frappe.destroy()
  raise SystemExit()
 assert not frappe.db.get_single_value('DGII Payroll Settings','enable_automatic_overtime_settlement')
@@ -44,15 +51,18 @@ try:
   period=frappe.get_doc(dict(doctype='Leave Period',company=emp.company,from_date='2026-01-01',to_date='2026-12-31',is_active=1));period.insert(ignore_permissions=True);created.append((period.doctype,period.name))
  def source(key,method,date,start,end):
   call=frappe.copy_doc(frappe.get_doc(auto.CALL,'CONV-HE-2026-00004-1'));call.name=prefix+'-'+key+'-CALL';call.docstatus=1;call.status='Authorized';call.authorization_count=1;call.planned_settlement=method;call.automatic_settlement_enabled=0;call.db_insert();created.append((call.doctype,call.name))
-  doc=frappe.copy_doc(base);doc.name=prefix+'-'+key;doc.employee=empname;doc.employee_name=emp.employee_name;doc.docstatus=1;doc.status='Approved';doc.overtime_work_call=call.name;doc.work_date=date;doc.authorization_start=date+' '+start;doc.authorization_end=date+' '+end;doc.maximum_hours=2;doc.planned_settlement=method;doc.settlement_status='Pending';doc.reconciliation_status='Scheduled';doc.verified_hours=0;doc.db_insert();created.append((doc.doctype,doc.name))
+  doc=frappe.copy_doc(base);doc.name=prefix+'-'+key;doc.employee=empname;doc.employee_name=emp.employee_name;doc.docstatus=1;doc.status='Approved';doc.overtime_work_call=call.name;doc.work_date=date;doc.day_classification='Weekly Rest' if frappe.utils.getdate(date).weekday()==6 else 'Regular Workday';doc.authorization_start=date+' '+start;doc.authorization_end=date+' '+end;doc.maximum_hours=2;doc.planned_settlement=method;doc.settlement_status='Pending';doc.reconciliation_status='Scheduled';doc.verified_hours=0;doc.db_insert();created.append((doc.doctype,doc.name))
   auto._enroll(call,local_settings());return doc.name
  cash=source('CASH','Cash','2026-09-08','18:00:00','20:00:00')
  comp1=source('COMP1','Compensatory Rest','2026-09-06','07:00:00','09:00:00')
  comp2=source('COMP2','Compensatory Rest','2026-09-06','09:00:00','11:00:00')
+ cancelled=source('CANCEL','Cash','2026-09-09','18:00:00','20:00:00')
+ broken=source('BROKEN','Cash','2026-08-31','18:00:00','20:00:00')
+ retry=source('RETRY','Cash','2026-09-10','08:00:00','10:00:00')
  frappe.db.commit()
- def race(names):
+ def race(names,actions=None):
   barrier='/tmp/'+prefix+'-'+uuid.uuid4().hex[:6]
-  procs=[subprocess.Popen([sys.executable,__file__,n,barrier],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True) for n in names]
+  procs=[subprocess.Popen([sys.executable,__file__,n,barrier,a],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True) for n,a in zip(names,actions or ['settle']*len(names))]
   deadline=time.monotonic()+15
   while len(list(Path('/tmp').glob(Path(barrier).name+'.*')))<len(procs):
    assert time.monotonic()<deadline,'workers did not reach barrier'
@@ -75,6 +85,36 @@ try:
  allocations=frappe.get_all('Leave Allocation',filters={'employee':empname,'docstatus':1},fields=['name','new_leaves_allocated']);assert len(allocations)==1 and allocations[0].new_leaves_allocated==1,allocations
  entries=frappe.get_all('Leave Ledger Entry',filters={'employee':empname,'transaction_type':'Leave Allocation','docstatus':1},fields=['leaves']);assert sum(r.leaves for r in entries)==1,entries
  checks.append('concurrent credits share one allocation with correct bank and leave ledger')
+ results=race([cancelled,cancelled],['settle','cancel'])
+ assert 'Cancelled' in results
+ assert frappe.db.get_value(auto.AUTH,cancelled,'docstatus')==2
+ assert not frappe.db.exists('Additional Salary',{'ref_docname':cancelled,'docstatus':1})
+ checks.append('cancellation race leaves no active earning on cancelled source')
+ # Fault after creating real Additional Salary must rollback that entire source;
+ # the scheduler can still settle another source and retry the failed one later.
+ import powerpro.controllers.overtime_settlement as settlement
+ original=settlement._settle_authorization
+ def fail_after_create(doc,**kwargs):
+  result=original(doc,**kwargs)
+  if doc.name==broken:raise RuntimeError('Injected DEV failure after financial creation')
+  return result
+ auto._settings=local_settings
+ # Make RETRY a valid completed regular overtime interval, independent of clock.
+ frappe.db.set_value(auto.AUTH,retry,{'work_date':'2026-09-01','authorization_start':'2026-09-01 18:00:00','authorization_end':'2026-09-01 20:00:00'})
+ frappe.db.commit()
+ settlement._settle_authorization=fail_after_create
+ auto.scheduled_process_due()
+ settlement._settle_authorization=original
+ assert frappe.db.get_value(auto.AUTH,broken,'auto_status')=='Blocked'
+ assert not frappe.db.exists('Additional Salary',{'ref_docname':broken,'docstatus':1})
+ # Same employee/week deliberately blocks later dependent regular work.
+ assert frappe.db.get_value(auto.AUTH,retry,'auto_status')=='Blocked'
+ frappe.db.set_value(auto.AUTH,broken,'auto_retry_after','2026-01-01')
+ frappe.db.set_value(auto.AUTH,retry,'auto_retry_after','2026-01-01');frappe.db.commit()
+ auto.scheduled_process_due()
+ assert frappe.db.get_value(auto.AUTH,broken,'auto_status')=='Settled'
+ assert frappe.db.get_value(auto.AUTH,retry,'auto_status')=='Settled'
+ checks.append('partial failure rolls back financial output, blocks dependent work and recovers on retry')
  print('DEV_RACE_CHECKS',json.dumps(checks))
 finally:
  frappe.db.rollback()
