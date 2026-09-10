@@ -21,7 +21,10 @@ pkg = types.ModuleType("powerpro"); pkg.__path__ = [str(ROOT / "powerpro")]
 sys.modules["powerpro"] = pkg
 
 class Record(dict):
-    def __getattr__(self, name): return self.get(name)
+    def __getattr__(self, name):
+        if name.startswith("__"):
+            raise AttributeError(name)
+        return self.get(name)
     def __setattr__(self, name, value): self[name] = value
     def check_permission(self, action):
         if action in self.get("denied", []): raise PermissionError(action)
