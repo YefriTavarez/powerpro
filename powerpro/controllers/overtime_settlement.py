@@ -27,7 +27,7 @@ from powerpro.controllers.overtime_compensatory_settlement import (
 )
 
 
-ELIGIBLE_RECONCILIATION_STATUSES = {"Completed", "Partial", "Overrun"}
+ELIGIBLE_RECONCILIATION_STATUSES = {"Completed", "Partial", "Overrun", "Presumed"}
 FINAL_SETTLEMENT_STATUSES = {"Created", "Paid", "Credited"}
 
 
@@ -130,7 +130,7 @@ def cancel_authorization_settlement(authorization):
 def _settle_authorization(doc, *, payroll_date=None, settings=None, preview=None):
 	settings = settings or _validate_settlement_role()
 	frappe.db.get_value(doc.doctype, doc.name, "name", for_update=True)
-	doc.reload()
+	doc = frappe.get_doc(doc.doctype, doc.name, for_update=True)
 	_validate_ready(doc)
 	preview = preview or _build_preview(
 		doc,
@@ -301,7 +301,9 @@ def _validate_ready(doc):
 				frappe.bold(doc.reconciliation_status)
 			)
 		)
-	if not doc.reconciled_on or flt(doc.verified_hours) <= 0:
+	if doc.get("auto_status") in {"Excluded", "Correction Pending"}:
+		frappe.throw(_("Resolve the attendance exception before settlement."))
+	if not doc.reconciled_on or settlement_hours(doc) <= 0:
 		frappe.throw(_("Save a reconciliation snapshot with verified hours first."))
 	if doc.planned_settlement not in {"Cash", "Compensatory Rest"}:
 		frappe.throw(_("Choose Cash or Compensatory Rest as Planned Settlement."))
@@ -379,3 +381,10 @@ def _summarize_work_call_preview(work_call, rows):
 			sum(flt(row.get("days_to_credit")) for row in rows), 4
 		)
 	return result
+
+
+def settlement_hours(doc):
+	"""Presumed hours are eligible by explicit policy, never labelled verified."""
+	if doc.get("reconciliation_source") == "Presumed Attendance" and doc.get("auto_enrolled"):
+		return flt(doc.get("presumed_hours"))
+	return flt(doc.get("verified_hours"))

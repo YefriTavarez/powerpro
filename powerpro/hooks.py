@@ -257,7 +257,13 @@ doc_events = {
 		"before_submit": "powerpro.controllers.overtime_compensatory_settlement.protect_overtime_leave_type_from_standard_request",
 		"before_cancel": "powerpro.controllers.overtime_compensatory_settlement.protect_overtime_leave_type_from_standard_request",
 	},
+    "Leave Application": {
+        "before_submit": "powerpro.controllers.automatic_overtime.lock_leave_balance",
+        "before_cancel": "powerpro.controllers.automatic_overtime.lock_leave_balance",
+    },
     "Salary Slip": {
+        "before_submit": "powerpro.controllers.automatic_overtime.lock_payroll_inputs",
+        "before_cancel": "powerpro.controllers.automatic_overtime.lock_payroll_inputs",
         "validate": [
             "powerpro.controllers.salary_slip.helper.set_dgii_payroll_settings",
             "powerpro.controllers.salary_slip.helper.set_mid_month_start",
@@ -281,6 +287,7 @@ doc_events = {
 # ---------------
 
 scheduler_events = {
+    "cron": {"* * * * *": ["powerpro.controllers.automatic_overtime.scheduled_process_due"]},
 	"hourly": [
 		"powerpro.controllers.overtime_candidates.scheduled_generate_overtime_candidates",
 	],

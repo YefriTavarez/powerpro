@@ -90,7 +90,7 @@ def save_authorization_reconciliation(authorization):
 			_("A settled authorization's reconciliation snapshot cannot be replaced."),
 			title=_("Settlement snapshot is immutable"),
 		)
-	if doc.get("reconciliation_source") == "Manual Verification":
+	if doc.get("reconciliation_source") in {"Manual Verification", "Presumed Attendance", "HR Exception"}:
 		frappe.throw(_("This attendance was manually verified. Use Manual Attendance Verification to amend it."))
 	result = get_reconciliation_preview(doc.name)
 	if result["reconciliation_status"] == "Scheduled":
@@ -413,7 +413,7 @@ def _get_verified_regular_overtime_before(doc, *, for_update=False):
 				if previous.day_classification == REGULAR_DAY:
 					total += flt(previous.verified_hours)
 				continue
-			if previous.get("reconciliation_source") == "Manual Verification":
+			if previous.get("reconciliation_source") in {"Manual Verification", "Presumed Attendance", "HR Exception"}:
 				# Preserve certified hours when classifying later work in this week.
 				total += flt(previous.regular_35_hours) + flt(previous.regular_100_hours)
 				continue

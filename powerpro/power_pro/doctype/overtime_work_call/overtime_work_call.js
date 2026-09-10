@@ -34,6 +34,7 @@ frappe.ui.form.on("Overtime Work Call", {
 		}
 
 		if (frm.doc.docstatus === 1) {
+			frappe.require("/assets/powerpro/js/automatic_overtime.js", () => powerpro.automatic_overtime.add_button(frm));
 			frappe.require("/assets/powerpro/js/manual_overtime.js", () => {
 				powerpro.manual_overtime.add_button(frm);
 			});

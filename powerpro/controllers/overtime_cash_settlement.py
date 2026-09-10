@@ -163,7 +163,7 @@ def create_cash_settlement(adjustment):
 
 def before_cancel_adjustment(adjustment):
 	references = _get_linked_additional_salaries(adjustment, docstatus=1)
-	paid_slips = _get_submitted_salary_slips(references)
+	paid_slips = _get_submitted_salary_slips(references, for_update=True)
 	if not paid_slips and adjustment.get("settlement_status") != SETTLEMENT_PAID:
 		return
 	salary_slip = paid_slips[0] if paid_slips else adjustment.get("settlement_salary_slip")
@@ -201,6 +201,8 @@ def prevent_direct_overtime_salary_cancel(additional_salary, method=None):
 	if additional_salary.ref_doctype not in OVERTIME_SETTLEMENT_SOURCES:
 		return
 	if not additional_salary.ref_docname:
+		return
+	if additional_salary.ref_doctype == "Overtime Authorization" and frappe.flags.get("overtime_exception_reversal") == additional_salary.ref_docname:
 		return
 	if frappe.db.get_value(
 		additional_salary.ref_doctype,
@@ -257,7 +259,7 @@ def _create_additional_salaries(adjustment, settlement):
 	# Serialize retries and simultaneous requests on the source adjustment. The
 	# reference lookup below then serves as the idempotency check.
 	frappe.db.get_value(adjustment.doctype, adjustment.name, "name", for_update=True)
-	existing = _get_linked_additional_salaries(adjustment, docstatus=["<", 2])
+	existing = _get_linked_additional_salaries(adjustment, docstatus=["<", 2], for_update=True)
 	if existing:
 		frappe.throw(
 			_("Additional Salary already exists for this adjustment: {0}").format(
@@ -374,7 +376,7 @@ def _validate_salary_component(component):
 
 
 def _get_linked_additional_salaries(
-	source, *, source_doctype=None, docstatus=None
+	source, *, source_doctype=None, docstatus=None, for_update=False
 ):
 	if hasattr(source, "doctype"):
 		source_doctype = source.doctype
@@ -388,17 +390,18 @@ def _get_linked_additional_salaries(
 	}
 	if docstatus is not None:
 		filters["docstatus"] = docstatus
-	return frappe.get_all(
-		"Additional Salary", filters=filters, pluck="name", order_by="creation asc"
+	from powerpro.controllers.overtime import _reconciliation_rows
+	return _reconciliation_rows(
+		"Additional Salary", filters=filters, pluck="name", order_by="creation asc", for_update=for_update
 	)
 
 
-def _get_submitted_salary_slips(additional_salaries):
+def _get_submitted_salary_slips(additional_salaries, *, for_update=False):
 	if not additional_salaries:
 		return []
 	salary_slip = frappe.qb.DocType("Salary Slip")
 	salary_detail = frappe.qb.DocType("Salary Detail")
-	return (
+	query = (
 		frappe.qb.from_(salary_slip)
 		.inner_join(salary_detail)
 		.on(
@@ -409,4 +412,7 @@ def _get_submitted_salary_slips(additional_salaries):
 		.where(salary_slip.docstatus == 1)
 		.where(salary_detail.additional_salary.isin(additional_salaries))
 		.distinct()
-	).run(pluck=True)
+	)
+	if for_update:
+		query = query.for_update()
+	return query.run(pluck=True)

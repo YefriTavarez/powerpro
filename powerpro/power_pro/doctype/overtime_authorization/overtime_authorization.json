@@ -78,7 +78,19 @@
   "status",
   "approved_by",
   "approved_on",
-  "amended_from"
+  "amended_from",
+  "automatic_settlement_section",
+  "auto_enrolled",
+  "auto_status",
+  "auto_payroll_date",
+  "auto_attempts",
+  "auto_last_attempt",
+  "auto_retry_after",
+  "auto_error",
+  "attendance_state",
+  "presumed_hours",
+  "presumed_on",
+  "attendance_exception"
  ],
  "fields": [
   {
@@ -220,7 +232,7 @@
   },
   {
    "default": "Cash",
-   "description": "Settlement is created only through the explicit preview-and-confirm action after attendance reconciliation.",
+   "description": "Settlement uses explicit preview and confirmation unless the source Work Call is enrolled for automatic settlement.",
    "fieldname": "planned_settlement",
    "fieldtype": "Select",
    "label": "Planned Settlement",
@@ -268,7 +280,7 @@
    "in_standard_filter": 1,
    "label": "Reconciliation Status",
    "no_copy": 1,
-   "options": "Scheduled\nCompleted\nPartial\nAbsent\nOverrun\nCheck-in Issue",
+   "options": "Scheduled\nCompleted\nPartial\nAbsent\nOverrun\nCheck-in Issue\nPresumed",
    "read_only": 1
   },
   {
@@ -640,7 +652,7 @@
    "fieldname": "reconciliation_source",
    "fieldtype": "Select",
    "label": "Attendance Verification Source",
-   "options": "\nEmployee Checkin\nManual Verification",
+   "options": "\nEmployee Checkin\nManual Verification\nPresumed Attendance\nHR Exception",
    "read_only": 1,
    "allow_on_submit": 1
   },
@@ -669,6 +681,102 @@
    "read_only": 1,
    "allow_on_submit": 1,
    "depends_on": "eval:doc.reconciliation_source === \"Manual Verification\""
+  },
+  {
+   "fieldname": "automatic_settlement_section",
+   "fieldtype": "Section Break",
+   "label": "Automatic Settlement Audit"
+  },
+  {
+   "fieldname": "auto_enrolled",
+   "fieldtype": "Check",
+   "label": "Enrolled for Automatic Settlement",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "auto_status",
+   "fieldtype": "Select",
+   "label": "Automatic Processing Status",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1,
+   "options": "\nQueued\nSettled\nExcluded\nBlocked\nCorrection Pending\nCancelled"
+  },
+  {
+   "fieldname": "auto_payroll_date",
+   "fieldtype": "Date",
+   "label": "Automatic Cash Payroll Date",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "auto_attempts",
+   "fieldtype": "Int",
+   "label": "Processing Attempts",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "auto_last_attempt",
+   "fieldtype": "Datetime",
+   "label": "Last Processing Attempt",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "auto_retry_after",
+   "fieldtype": "Datetime",
+   "label": "Retry After",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "auto_error",
+   "fieldtype": "Small Text",
+   "label": "Processing Details",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "attendance_state",
+   "fieldtype": "Select",
+   "label": "Attendance Decision",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1,
+   "options": "\nPresumed Present\nMark Absent\nCorrect Worked Hours\nCancel Participation"
+  },
+  {
+   "fieldname": "presumed_hours",
+   "fieldtype": "Float",
+   "label": "Presumed Eligible Hours",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "presumed_on",
+   "fieldtype": "Datetime",
+   "label": "Attendance Presumed On",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "attendance_exception",
+   "fieldtype": "Link",
+   "label": "Latest Attendance Exception",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1,
+   "options": "Overtime Attendance Exception"
   }
  ],
  "index_web_pages_for_search": 1,

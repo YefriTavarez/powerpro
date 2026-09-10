@@ -47,6 +47,8 @@ class DGIIPayrollSettings(Document):
 	# end: auto-generated types
 
 	def validate(self):
+		from powerpro.controllers.automatic_overtime import validate_settings
+		validate_settings(self)
 		if self.get("enable_manual_overtime_verification"):
 			from powerpro.payroll_rules.manual_overtime import verification_roles
 			roles = verification_roles(self.get("overtime_manual_verification_roles"))

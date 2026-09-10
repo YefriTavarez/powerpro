@@ -28,6 +28,8 @@ class OvertimeAuthorization(Document):
 	def validate(self):
 		from powerpro.controllers.manual_overtime import protect_manual_snapshot
 		protect_manual_snapshot(self)
+		from powerpro.controllers.automatic_overtime import protect_fields
+		protect_fields(self)
 		self._validate_feature_flag()
 		apply_requester_snapshot(self, frappe.session.user)
 		if not self.employee or not self.work_date:
@@ -77,6 +79,8 @@ class OvertimeAuthorization(Document):
 	def before_update_after_submit(self):
 		from powerpro.controllers.manual_overtime import protect_manual_snapshot
 		protect_manual_snapshot(self)
+		from powerpro.controllers.automatic_overtime import protect_fields
+		protect_fields(self)
 
 	def before_cancel(self):
 		from powerpro.controllers.overtime_settlement import (

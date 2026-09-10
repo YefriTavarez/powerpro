@@ -42,6 +42,8 @@ def _require_role(*, for_update=False):
 
 
 def _check_document(doc):
+    if doc.get("auto_enrolled"):
+        frappe.throw(_("Use Attendance Exceptions on the enrolled Work Call."))
     doc.check_permission("read")
     doc.check_permission("write")
     if doc.docstatus != 1 or doc.status != "Approved":

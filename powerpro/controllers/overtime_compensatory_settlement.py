@@ -63,7 +63,8 @@ def protect_overtime_leave_type_from_standard_request(request, method=None):
 	)
 
 
-def build_compensatory_preview(authorization, settings=None, bank_state=None):
+def build_compensatory_preview(authorization, settings=None, bank_state=None, *, for_update=False):
+	from powerpro.controllers.overtime_settlement import settlement_hours
 	settings = settings or frappe.get_single("DGII Payroll Settings")
 	_validate_configuration(settings)
 	leave_period = _get_leave_period(authorization.work_date, authorization.company)
@@ -75,11 +76,11 @@ def build_compensatory_preview(authorization, settings=None, bank_state=None):
 	)
 	bank = (bank_state or {}).get(bank_key)
 	if bank is None:
-		bank = _get_bank_totals(*bank_key)
+		bank = _get_bank_totals(*bank_key, for_update=for_update)
 	try:
 		conversion = calculate_compensatory_credit(
 			active_hours_before=bank["active_hours"],
-			current_hours=authorization.verified_hours,
+			current_hours=settlement_hours(authorization),
 			effective_days_before=bank["effective_days"],
 			hours_per_day=settings.overtime_hours_per_leave_day,
 			leave_increment=settings.overtime_leave_increment,
@@ -91,6 +92,7 @@ def build_compensatory_preview(authorization, settings=None, bank_state=None):
 		authorization.employee,
 		settings.overtime_compensatory_leave_type,
 		leave_period,
+		for_update=for_update,
 	)
 	if bank_state is not None:
 		bank_state[bank_key] = {
@@ -131,7 +133,7 @@ def create_compensatory_credit(authorization):
 		)
 	# Recalculate after the shared Employee lock. The confirmation preview is
 	# read-only and may have been produced before another request completed.
-	preview = build_compensatory_preview(authorization)
+	preview = build_compensatory_preview(authorization, for_update=True)
 	allocation = None
 	if flt(preview["days_to_credit"]) > 0:
 		allocation = _apply_allocation_credit(authorization, preview)
@@ -168,7 +170,7 @@ def create_compensatory_credit(authorization):
 	return credit, allocation, preview
 
 
-def reverse_compensatory_credit(authorization):
+def reverse_compensatory_credit(authorization, reason=None):
 	credit_name = authorization.get("compensatory_credit") or frappe.db.get_value(
 		"Overtime Compensatory Credit",
 		{"overtime_authorization": authorization.name, "docstatus": 1},
@@ -176,7 +178,9 @@ def reverse_compensatory_credit(authorization):
 	)
 	if not credit_name:
 		return None
-	credit = frappe.get_doc("Overtime Compensatory Credit", credit_name)
+	credit = frappe.get_doc("Overtime Compensatory Credit", credit_name, for_update=True)
+	if credit.docstatus != 1:
+		return None
 	frappe.db.get_value(credit.doctype, credit.name, "name", for_update=True)
 	frappe.db.get_value("Employee", credit.employee, "name", for_update=True)
 	bank = _get_bank_totals(
@@ -184,6 +188,7 @@ def reverse_compensatory_credit(authorization):
 		credit.company,
 		credit.leave_type,
 		credit.leave_period,
+		for_update=True,
 	)
 	try:
 		reversal = calculate_compensatory_reversal(
@@ -213,7 +218,7 @@ def reverse_compensatory_credit(authorization):
 			allocation_name = allocation_row.name if allocation_row else None
 		if not allocation_name:
 			frappe.throw(_("No managed Leave Allocation is available for reversal."))
-		allocation = frappe.get_doc("Leave Allocation", allocation_name)
+		allocation = frappe.get_doc("Leave Allocation", allocation_name, for_update=True)
 		if not allocation.get("powerpro_overtime_managed"):
 			frappe.throw(_("The linked Leave Allocation is no longer system-managed."))
 		if abs(
@@ -228,6 +233,10 @@ def reverse_compensatory_credit(authorization):
 		)
 		if new_total < -0.0001:
 			frappe.throw(_("The consolidated Leave Allocation is below the required reversal."))
+		from powerpro.controllers.automatic_overtime import approved_leave_days
+		used = approved_leave_days(credit.employee, credit.leave_type, allocation.from_date, allocation.to_date)
+		if used > max(new_total, 0) + flt(allocation.unused_leaves) + 0.0001:
+			frappe.throw(_("Approved Leave Applications have consumed this overtime balance. Correct those leave records before reversing the credit."))
 		allocation.new_leaves_allocated = max(new_total, 0)
 		allocation.flags.ignore_permissions = True
 		allocation.flags.powerpro_overtime_update = True
@@ -240,7 +249,7 @@ def reverse_compensatory_credit(authorization):
 		"reversed_days": reversal["days_to_reverse"],
 		"reversed_by": frappe.session.user,
 		"reversed_on": now_datetime(),
-		"reversal_reason": _("Linked Overtime Authorization was cancelled."),
+		"reversal_reason": reason or _("Linked Overtime Authorization was cancelled."),
 	}
 	frappe.db.set_value(credit.doctype, credit.name, values, update_modified=False)
 	for fieldname, value in values.items():
@@ -288,9 +297,11 @@ def _get_leave_period(work_date, company):
 	return periods[0]
 
 
-def _get_bank_totals(employee, company, leave_type, leave_period):
-	rows = frappe.get_all(
+def _get_bank_totals(employee, company, leave_type, leave_period, *, for_update=False):
+	from powerpro.controllers.overtime import _reconciliation_rows
+	rows = _reconciliation_rows(
 		"Overtime Compensatory Credit",
+		for_update=for_update,
 		filters={
 			"employee": employee,
 			"company": company,
@@ -315,9 +326,11 @@ def _get_bank_totals(employee, company, leave_type, leave_period):
 	}
 
 
-def _find_managed_allocation(employee, leave_type, leave_period):
-	rows = frappe.get_all(
+def _find_managed_allocation(employee, leave_type, leave_period, *, for_update=False):
+	from powerpro.controllers.overtime import _reconciliation_rows
+	rows = _reconciliation_rows(
 		"Leave Allocation",
+		for_update=for_update,
 		filters={
 			"employee": employee,
 			"leave_type": leave_type,
@@ -361,9 +374,10 @@ def _apply_allocation_credit(authorization, preview):
 		authorization.employee,
 		preview["leave_type"],
 		leave_period,
+		for_update=True,
 	)
 	if allocation_row:
-		allocation = frappe.get_doc("Leave Allocation", allocation_row.name)
+		allocation = frappe.get_doc("Leave Allocation", allocation_row.name, for_update=True)
 		frappe.db.get_value(allocation.doctype, allocation.name, "name", for_update=True)
 		if abs(
 			flt(allocation.new_leaves_allocated)

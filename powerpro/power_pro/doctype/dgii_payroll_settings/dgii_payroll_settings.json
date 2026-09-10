@@ -53,7 +53,11 @@
   "retroactive_overtime_from_date",
   "retroactive_overtime_column",
   "retroactive_overtime_to_date",
-  "retroactive_overtime_submission_deadline"
+  "retroactive_overtime_submission_deadline",
+  "automatic_overtime_section",
+  "enable_automatic_overtime_settlement",
+  "overtime_exception_roles",
+  "overtime_auto_payroll_date_policy"
  ],
  "fields": [
   {
@@ -365,6 +369,32 @@
    "depends_on": "enable_manual_overtime_verification",
    "mandatory_depends_on": "enable_manual_overtime_verification",
    "description": "One existing Desk role per line. Users also need write permission on the authorization and its Work Call. No role, including System Manager, bypasses this list."
+  },
+  {
+   "fieldname": "automatic_overtime_section",
+   "fieldtype": "Section Break",
+   "label": "Automatic Work Call Settlement"
+  },
+  {
+   "fieldname": "enable_automatic_overtime_settlement",
+   "fieldtype": "Check",
+   "label": "Enable Automatic Work Call Settlement",
+   "default": "0",
+   "description": "New Work Calls using Follow Settings are enrolled on submission. Existing calls require explicit enrollment. Attendance is presumed; no Employee Checkins are required. Both settlement methods run after each authorized window ends."
+  },
+  {
+   "fieldname": "overtime_exception_roles",
+   "fieldtype": "Small Text",
+   "label": "Overtime Attendance Exception Roles",
+   "description": "One enabled Desk role per line. Assigned employee approvers can also record exceptions. Corrections remain available when automatic processing is paused."
+  },
+  {
+   "fieldname": "overtime_auto_payroll_date_policy",
+   "fieldtype": "Select",
+   "label": "Automatic Cash Payroll Date Policy",
+   "options": "Work Date\nMonth End\nWork Call Date",
+   "default": "Work Date",
+   "description": "Frozen on enrollment. Work Call Date requires an explicit date on the Work Call, on or after its last work date."
   }
  ],
  "index_web_pages_for_search": 1,

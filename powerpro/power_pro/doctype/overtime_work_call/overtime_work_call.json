@@ -37,7 +37,19 @@
   "audit_column",
   "last_reconciled_by",
   "last_reconciled_on",
-  "amended_from"
+  "amended_from",
+  "automatic_settlement_section",
+  "automation_mode",
+  "automatic_payroll_date",
+  "automatic_settlement_enabled",
+  "auto_payroll_date_policy",
+  "automatic_enrolled_by",
+  "automatic_enrolled_on",
+  "automatic_status",
+  "presumed_hours",
+  "automatic_settled_count",
+  "automatic_blocked_count",
+  "correction_pending_count"
  ],
  "fields": [
   {
@@ -266,6 +278,98 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "automatic_settlement_section",
+   "fieldtype": "Section Break",
+   "label": "Automatic Settlement and Attendance Exceptions"
+  },
+  {
+   "fieldname": "automation_mode",
+   "fieldtype": "Select",
+   "label": "Automatic Settlement",
+   "options": "Follow Settings\nManual",
+   "default": "Follow Settings",
+   "description": "Submission must occur before work begins. Automatic settlement runs after each employee/date window ends using presumed attendance."
+  },
+  {
+   "fieldname": "automatic_payroll_date",
+   "fieldtype": "Date",
+   "label": "Automatic Cash Payroll Date",
+   "description": "Required when DGII Payroll Settings uses Work Call Date."
+  },
+  {
+   "fieldname": "automatic_settlement_enabled",
+   "fieldtype": "Check",
+   "label": "Enrolled for Automatic Settlement",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "auto_payroll_date_policy",
+   "fieldtype": "Data",
+   "label": "Frozen Cash Payroll Date Policy",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "automatic_enrolled_by",
+   "fieldtype": "Link",
+   "label": "Automatically Enrolled By",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "automatic_enrolled_on",
+   "fieldtype": "Datetime",
+   "label": "Automatically Enrolled On",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "automatic_status",
+   "fieldtype": "Data",
+   "label": "Automatic Processing Status",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "presumed_hours",
+   "fieldtype": "Float",
+   "label": "Presumed Eligible Hours",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "automatic_settled_count",
+   "fieldtype": "Int",
+   "label": "Automatically Settled Records",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "automatic_blocked_count",
+   "fieldtype": "Int",
+   "label": "Blocked Records",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "correction_pending_count",
+   "fieldtype": "Int",
+   "label": "Corrections Pending",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
   }
  ],
  "index_web_pages_for_search": 1,

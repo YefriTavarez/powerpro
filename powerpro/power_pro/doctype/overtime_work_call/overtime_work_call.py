@@ -29,6 +29,8 @@ class OvertimeWorkCall(Document):
 		self.requested_by = frappe.session.user
 
 	def validate(self):
+		from powerpro.controllers.automatic_overtime import protect_fields
+		protect_fields(self)
 		self._validate_feature_flag()
 		self.requested_by = self.owner or frappe.session.user
 		self._validate_employees()
@@ -36,6 +38,10 @@ class OvertimeWorkCall(Document):
 		self._set_totals()
 		if self.docstatus == 0:
 			self.status = "Draft"
+
+	def before_update_after_submit(self):
+		from powerpro.controllers.automatic_overtime import protect_fields
+		protect_fields(self)
 
 	def before_submit(self):
 		self.check_permission("submit")
@@ -49,12 +55,16 @@ class OvertimeWorkCall(Document):
 					_("Every overtime work call must be submitted before its first requested window begins."),
 					title=_("Retroactive work calls are not allowed"),
 				)
+		from powerpro.controllers.automatic_overtime import prepare_submission
+		prepare_submission(self)
 		self.status = "Authorized"
 		self.authorized_by = frappe.session.user
 		self.authorized_on = now
 
 	def on_submit(self):
 		self._create_authorizations()
+		from powerpro.controllers.automatic_overtime import enroll_on_submit
+		enroll_on_submit(self)
 
 	def on_cancel(self):
 		for name in frappe.get_all(
@@ -240,7 +250,7 @@ def reconcile_overtime_work_call(work_call, dry_run=1):
 		if not dry_run:
 			frappe.db.get_value("Overtime Authorization", name, "name", for_update=True)
 		authorization = frappe.get_doc("Overtime Authorization", name, for_update=not dry_run)
-		if authorization.get("reconciliation_source") == "Manual Verification":
+		if authorization.get("auto_enrolled") or authorization.get("reconciliation_source") in {"Manual Verification", "Presumed Attendance", "HR Exception"}:
 			# A check-in refresh must never overwrite a manager-certified snapshot.
 			rows.append({
 				"authorization": authorization.name, "employee": authorization.employee,
