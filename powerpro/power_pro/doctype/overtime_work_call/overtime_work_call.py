@@ -67,12 +67,14 @@ class OvertimeWorkCall(Document):
 		enroll_on_submit(self)
 
 	def on_cancel(self):
-		for name in frappe.get_all(
+		from powerpro.controllers.overtime import _reconciliation_rows
+		for name in _reconciliation_rows(
 			"Overtime Authorization",
 			filters={"overtime_work_call": self.name, "docstatus": 1},
+			for_update=True,
 			pluck="name",
 		):
-			authorization = frappe.get_doc("Overtime Authorization", name)
+			authorization = frappe.get_doc("Overtime Authorization", name, for_update=True)
 			authorization.flags.ignore_permissions = True
 			authorization.cancel()
 		self.db_set("status", "Cancelled", update_modified=False)
