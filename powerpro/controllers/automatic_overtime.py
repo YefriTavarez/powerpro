@@ -157,7 +157,8 @@ def get_work_call_status(work_call):
         order_by='work_date asc, employee_name asc')
     for row in rows:
         row['can_correct'] = _allowed(row, settings)
-    return {'rows': rows, 'enabled': cint(settings.get('enable_automatic_overtime_settlement')),
+    return {'rows': rows, 'payroll_date_policy': call.get('auto_payroll_date_policy') or settings.get('overtime_auto_payroll_date_policy'),
+            'payroll_date': call.get('automatic_payroll_date'), 'planned_settlement': call.planned_settlement, 'enabled': cint(settings.get('enable_automatic_overtime_settlement')),
             'enrolled': cint(call.get('automatic_settlement_enabled')),
             'can_enroll': bool(verification_roles(settings.get('overtime_exception_roles')).intersection(frappe.get_roles(frappe.session.user)))}
 
