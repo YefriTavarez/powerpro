@@ -347,6 +347,89 @@ class DietasTest(unittest.TestCase):
         self.assertEqual(get_doc(service.BATCH,result['batch']).status,'Reversed')
         self.assertTrue(all(r.payment_status=='Unpaid' and 'reverse_erroneous_payment' in r.audit_log for r in get_all(service.REQUEST)))
 
+    def direct_request(self, **values):
+        req = Record(doctype=service.REQUEST, employee='E1', company='IGC',
+                     work_date='2026-09-09', amount=300, currency='DOP', flags=Record())
+        req.update(values)
+        return req
+
+    def test_direct_creation_without_overtime_and_trusted_initial_state(self):
+        req = self.direct_request(approval_status='Approved', payment_status='Paid',
+            approved_by='attacker', paid_by='attacker', payout_batch='fake',
+            audit_log='forged', day_key='forged', initiated_by='forged')
+        service.validate_direct_request(req)
+        self.assertEqual((req.approval_status,req.payment_status),('Pending','Unpaid'))
+        self.assertFalse(req.overtime_work_call or req.authorization or req.payout_batch)
+        self.assertFalse(req.approved_by or req.paid_by)
+        self.assertEqual(req.day_key,day_key('IGC','E1','2026-09-09'))
+        self.assertEqual(req.initiated_by,'manager')
+        self.assertEqual(json.loads(req.audit_log)[0]['action'],'request')
+        self.assertFalse(store.get((service.REQUEST,req.name)))
+
+    def test_direct_permission_scope_and_no_self_management(self):
+        req = self.direct_request()
+        self.assertTrue(access.request_permission(req,ptype='create'))
+        restrictions['manager']={'Company':[{'doc':'OTHER'}]}
+        with self.assertRaises(PermissionError):service.validate_direct_request(req)
+        self.assertFalse(access.request_permission(req,ptype='create'))
+        restrictions.clear()
+        for user in ('Guest','E1@example.com','approver'):
+            fake.session.user=user
+            with self.assertRaises(PermissionError):service.validate_direct_request(req)
+        fake.session.user='manager';store[('Employee','E1')]['user_id']='manager'
+        with self.assertRaises(PermissionError):service.validate_direct_request(req)
+
+    def test_direct_duplicate_of_existing_work_call_request_rejected(self):
+        fake.session.user='E1@example.com';service.request_dieta('AUTH-E1');fake.session.user='manager'
+        with self.assertRaisesRegex(ValueError,'Ya existe'):service.validate_direct_request(self.direct_request())
+
+    def test_direct_disabled_inactive_wrong_company_and_currency_rejected(self):
+        cfg=store[('Dieta Company Settings','cfg')];cfg['enabled']=0
+        with self.assertRaisesRegex(ValueError,'deshabilitadas'):service.validate_direct_request(self.direct_request())
+        cfg['enabled']=1
+        emp=store[('Employee','E1')];emp['status']='Left'
+        with self.assertRaises(ValueError):service.validate_direct_request(self.direct_request())
+        emp['status']='Active'
+        for fields in ({'company':'OTHER'},{'currency':'USD'},{'work_date':None},{'employee':None}):
+            with self.assertRaises(ValueError):service.validate_direct_request(self.direct_request(**fields))
+
+    def test_direct_amount_validation_and_reason(self):
+        for value in (0,-1,'NaN','Infinity','invalid'):
+            with self.assertRaises(ValueError):service.validate_direct_request(self.direct_request(amount=value))
+        with self.assertRaisesRegex(ValueError,'Notas'):service.validate_direct_request(self.direct_request(amount=400))
+        req=self.direct_request(amount=400,notes='Viaje a La Vega');service.validate_direct_request(req)
+        self.assertEqual(req.amount,400)
+        self.assertEqual(json.loads(req.audit_log)[0]['reason'],'Viaje a La Vega')
+
+    def test_direct_call_without_authorization_and_authorization_without_call(self):
+        req=self.direct_request(overtime_work_call='CALL');service.validate_direct_request(req)
+        self.assertFalse(req.authorization)
+        store[('Overtime Authorization','AUTH-E1')]['company']='IGC'
+        req=self.direct_request(authorization='AUTH-E1');service.validate_direct_request(req)
+        self.assertFalse(req.overtime_work_call)
+        service.validate_direct_request(self.direct_request(overtime_work_call='CALL',authorization='AUTH-E1'))
+
+    def test_direct_optional_sources_must_match(self):
+        auth=store[('Overtime Authorization','AUTH-E1')];auth['company']='IGC'
+        for field,value in [('docstatus',2),('employee','E2'),('company','OTHER'),('work_date','2026-09-10'),('overtime_work_call','OTHER')]:
+            old=auth[field];auth[field]=value
+            with self.assertRaises(ValueError):service.validate_direct_request(self.direct_request(overtime_work_call='CALL',authorization='AUTH-E1'))
+            auth[field]=old
+        with self.assertRaises(ValueError):service.validate_direct_request(self.direct_request(overtime_work_call='CALL',work_date='2026-09-10'))
+        store[('Overtime Work Call','CALL')]['docstatus']=0
+        with self.assertRaises(ValueError):service.validate_direct_request(self.direct_request(overtime_work_call='CALL'))
+
+    def test_direct_controller_allows_new_and_keeps_existing_protected(self):
+        controller=importlib.import_module('powerpro.power_pro.doctype.solicitud_de_dieta.solicitud_de_dieta')
+        class Request(Record,controller.SolicituddeDieta):
+            pass
+        req=Request(self.direct_request())
+        req.validate()
+        req.save()
+        with self.assertRaises(PermissionError):req.validate()
+        req.flags.dieta_service=True
+        req.validate()
+
     def enable_centers(self):
         store[('Dieta Company Settings','cfg')]['generate_journal_entry'] = 1
         put('Cost Center','Other',company='IGC',is_group=0,disabled=0)

@@ -122,6 +122,53 @@ def _request(company, employee, date, lock=False):
     return frappe.get_doc(REQUEST, name, for_update=lock) if name else None
 
 
+
+def validate_direct_request(doc):
+    """Validate a new Desk request without requiring an overtime source.
+
+    Approval, payment and edits to saved requests still use the managed service.
+    Never trust client-supplied status, audit, origin or payment fields.
+    """
+    if not doc.is_new() or not access.can_create_request(doc):
+        frappe.throw('No tiene permiso para crear esta solicitud de dieta.', frappe.PermissionError)
+    if not doc.employee or not doc.company or not doc.work_date:
+        _fail('Indique empleado, empresa y fecha de trabajo.')
+    date = getdate(doc.work_date)
+    call = _call(doc.overtime_work_call, lock=True) if doc.overtime_work_call else None
+    emp = _employee(doc.employee, lock=True)
+    if emp.status != 'Active' or emp.company != doc.company:
+        _fail('El empleado debe estar activo y pertenecer a la empresa de la dieta.')
+    cfg = settings(emp.company, lock=True)
+    if call:
+        if call.company != emp.company or not any(r.employee == emp.name for r in call.employees):
+            _fail('El empleado no pertenece a esta convocatoria.')
+        _eligible_date(call, date)
+    if doc.authorization:
+        auth = frappe.get_doc('Overtime Authorization', doc.authorization, for_update=True)
+        auth.check_permission('read')
+        if (auth.docstatus != 1 or auth.employee != emp.name or auth.company != emp.company
+                or getdate(auth.work_date) != date
+                or (call and auth.overtime_work_call != call.name)):
+            _fail('La autorización debe estar vigente y corresponder al empleado, empresa, fecha y convocatoria seleccionados.')
+    if _request(emp.company, emp.name, date, lock=True):
+        _fail('Ya existe una solicitud de dieta para este empleado y fecha.')
+    amount = _rule(money, doc.amount)
+    notes = str(doc.notes or '').strip()
+    if override_required(cfg.default_amount, amount) and not notes:
+        _fail('Indique en Notas el motivo del cambio de monto.')
+    if doc.currency and doc.currency != cfg.currency:
+        _fail('La moneda debe coincidir con la moneda de la empresa.')
+    doc.update(dict(docstatus=0, day_key=day_key(emp.company, emp.name, date),
+        employee_name=emp.employee_name, work_date=date, currency=cfg.currency,
+        default_amount=cfg.default_amount, amount=amount, notes=notes,
+        approval_status='Pending', payment_status='Unpaid', origin='Manager',
+        initiated_by=frappe.session.user, approved_by=None, approved_on=None,
+        paid_by=None, paid_on=None, payout_batch=None, review_required=0,
+        review_reason=None, audit_log='[]'))
+    audit(doc, 'request', notes, origin='Manager', default_amount=cfg.default_amount,
+          amount=amount)
+
+
 def _version(call, auth, emp, cfg, req):
     return digest([call.modified, auth.modified, auth.docstatus, emp.modified,
                    cfg.as_dict(), req.as_dict() if req else None])

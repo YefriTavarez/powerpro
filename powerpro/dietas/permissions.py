@@ -35,8 +35,18 @@ def can_read_request(doc, user=None):
     return bool((user != 'Guest' and emp.user_id == user and in_scope(emp, user)) or can_manage(emp, user))
 
 
+def can_create_request(doc, user=None):
+    user = user or frappe.session.user
+    if user == 'Guest' or 'HR Manager' not in frappe.get_roles(user):
+        return False
+    return not doc.get('employee') or can_manage(employee(doc.employee), user)
+
+
 def request_permission(doc, user=None, ptype=None, permission_type=None):
-    return (ptype or permission_type) in (None, 'read', 'print', 'report', 'export') and can_read_request(doc, user)
+    action = ptype or permission_type
+    if action == 'create':
+        return doc.is_new() and can_create_request(doc, user)
+    return action in (None, 'read', 'print', 'report', 'export') and can_read_request(doc, user)
 
 
 def batch_permission(doc, user=None, ptype=None, permission_type=None):

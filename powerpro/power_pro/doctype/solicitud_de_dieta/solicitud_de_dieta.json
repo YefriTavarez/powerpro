@@ -105,14 +105,16 @@
    "fieldtype": "Link",
    "label": "Convocatoria de Horas Extras",
    "options": "Overtime Work Call",
-   "reqd": 1
+   "reqd": 0,
+   "description": "Opcional. Complete solo si la dieta está vinculada a horas extras."
   },
   {
    "fieldname": "authorization",
    "fieldtype": "Link",
    "label": "Autorización",
    "options": "Overtime Authorization",
-   "reqd": 1
+   "reqd": 0,
+   "description": "Opcional. Complete solo si la dieta está vinculada a horas extras."
   },
   {
    "fieldname": "amount_section",
@@ -295,7 +297,8 @@
    "role": "HR Manager",
    "read": 1,
    "report": 1,
-   "print": 1
+   "print": 1,
+   "create": 1
   },
   {
    "role": "Expense Approver",
