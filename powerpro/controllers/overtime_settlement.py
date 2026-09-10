@@ -98,6 +98,7 @@ def settle_overtime_work_call(work_call, payroll_date=None):
 
 
 def before_cancel_authorization_settlement(authorization):
+	authorization = frappe.get_doc(authorization.doctype, authorization.name, for_update=True)
 	if authorization.get("settlement_method") == "Cash" or authorization.get(
 		"settlement_status"
 	) in {SETTLEMENT_CREATED, SETTLEMENT_PAID}:
@@ -105,6 +106,7 @@ def before_cancel_authorization_settlement(authorization):
 
 
 def cancel_authorization_settlement(authorization):
+	authorization = frappe.get_doc(authorization.doctype, authorization.name, for_update=True)
 	method = authorization.get("settlement_method")
 	if method == "Cash" or authorization.get("settlement_status") in {
 		SETTLEMENT_CREATED,

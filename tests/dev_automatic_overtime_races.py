@@ -27,8 +27,10 @@ if len(sys.argv)>1:
   assert time.monotonic()<deadline
   time.sleep(.02)
  try:
-  if action == 'cancel':
-   doc,call=auto._lock(name);doc.flags.ignore_permissions=True;doc.cancel();result='Cancelled'
+  if action in {'cancel', 'cancel_call'}:
+   doc,call=auto._lock(name)
+   target=call if action=='cancel_call' else doc
+   target.flags.ignore_permissions=True;target.cancel();result='Cancelled'
   else:
    try:result=auto.process_authorization(name)
    except frappe.ValidationError:
@@ -37,7 +39,7 @@ if len(sys.argv)>1:
   frappe.db.commit();print(result)
  finally:frappe.db.rollback();frappe.destroy()
  raise SystemExit()
-assert not frappe.db.get_single_value('DGII Payroll Settings','enable_automatic_overtime_settlement')
+assert not frappe.db.count(auto.AUTH, {'auto_enrolled':1}), 'No enrolled business records permitted during DEV race tests'
 counts=['Employee','Salary Structure Assignment','Overtime Authorization','Overtime Work Call','Additional Salary','Leave Allocation','Leave Ledger Entry','Overtime Compensatory Credit','Overtime Attendance Exception','Leave Period']
 baseline={d:frappe.db.count(d) for d in counts}
 prefix='AUTO-RACE-DEV-'+uuid.uuid4().hex[:10];empname=prefix+'-EMP';created=[]
@@ -52,10 +54,11 @@ try:
  def source(key,method,date,start,end):
   call=frappe.copy_doc(frappe.get_doc(auto.CALL,'CONV-HE-2026-00004-1'));call.name=prefix+'-'+key+'-CALL';call.docstatus=1;call.status='Authorized';call.authorization_count=1;call.planned_settlement=method;call.automatic_settlement_enabled=0;call.db_insert();created.append((call.doctype,call.name))
   doc=frappe.copy_doc(base);doc.name=prefix+'-'+key;doc.employee=empname;doc.employee_name=emp.employee_name;doc.docstatus=1;doc.status='Approved';doc.overtime_work_call=call.name;doc.work_date=date;doc.day_classification='Weekly Rest' if frappe.utils.getdate(date).weekday()==6 else 'Regular Workday';doc.authorization_start=date+' '+start;doc.authorization_end=date+' '+end;doc.maximum_hours=2;doc.planned_settlement=method;doc.settlement_status='Pending';doc.reconciliation_status='Scheduled';doc.verified_hours=0;doc.db_insert();created.append((doc.doctype,doc.name))
-  auto._enroll(call,local_settings());return doc.name
+  auto._enroll(call,local_settings());frappe.db.set_value(auto.AUTH,doc.name,'auto_retry_after','2099-01-01');return doc.name
  cash=source('CASH','Cash','2026-09-08','18:00:00','20:00:00')
  comp1=source('COMP1','Compensatory Rest','2026-09-06','07:00:00','09:00:00')
  comp2=source('COMP2','Compensatory Rest','2026-09-06','09:00:00','11:00:00')
+ cancel_call=source('CANCEL-CALL','Compensatory Rest','2026-08-30','07:00:00','09:00:00')
  cancelled=source('CANCEL','Cash','2026-09-09','18:00:00','20:00:00')
  broken=source('BROKEN','Cash','2026-08-31','18:00:00','20:00:00')
  retry=source('RETRY','Cash','2026-09-10','08:00:00','10:00:00')
@@ -90,6 +93,12 @@ try:
  assert frappe.db.get_value(auto.AUTH,cancelled,'docstatus')==2
  assert not frappe.db.exists('Additional Salary',{'ref_docname':cancelled,'docstatus':1})
  checks.append('cancellation race leaves no active earning on cancelled source')
+ results=race([cancel_call,cancel_call],['settle','cancel_call'])
+ assert 'Cancelled' in results
+ assert frappe.db.get_value(auto.AUTH,cancel_call,'docstatus')==2
+ assert not frappe.db.exists('Overtime Compensatory Credit',{'overtime_authorization':cancel_call,'docstatus':1})
+ entries=frappe.get_all('Leave Ledger Entry',filters={'employee':empname,'transaction_type':'Leave Allocation','docstatus':1},fields=['leaves']);assert sum(r.leaves for r in entries)==1,entries
+ checks.append('whole Work Call cancellation race reverses only its compensatory credit and retains correct shared balance')
  # Fault after creating real Additional Salary must rollback that entire source;
  # the scheduler can still settle another source and retry the failed one later.
  import powerpro.controllers.overtime_settlement as settlement
@@ -102,6 +111,7 @@ try:
  # Make RETRY a valid completed regular overtime interval, independent of clock.
  frappe.db.set_value(auto.AUTH,retry,{'work_date':'2026-09-01','authorization_start':'2026-09-01 18:00:00','authorization_end':'2026-09-01 20:00:00'})
  frappe.db.commit()
+ frappe.db.set_value(auto.AUTH,broken,'auto_retry_after','2026-01-01');frappe.db.set_value(auto.AUTH,retry,'auto_retry_after','2026-01-01');frappe.db.commit()
  settlement._settle_authorization=fail_after_create
  auto.scheduled_process_due()
  settlement._settle_authorization=original

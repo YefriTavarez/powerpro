@@ -61,10 +61,12 @@ class OvertimeSettlementControllerTest(unittest.TestCase):
 				"reverse_compensatory_credit",
 				return_value={"days_to_reverse": 0.5},
 			) as reverse,
+			patch.object(settlement.frappe, "get_doc", return_value=doc) as get_doc,
 			patch.object(settlement.frappe.db, "set_value") as set_value,
 		):
 			result = settlement.cancel_authorization_settlement(doc)
 
+		get_doc.assert_called_once_with(doc.doctype, doc.name, for_update=True)
 		reverse.assert_called_once_with(doc)
 		set_value.assert_called_once_with(
 			"Overtime Authorization",
