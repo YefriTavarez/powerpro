@@ -20,9 +20,14 @@ frappe.ui.form.on("Overtime Work Call", {
 
 	refresh(frm) {
 		update_schedule_description(frm);
+		// Replace only our warning; preserve Frappe's submit reminder and other messages.
+		frm.layout.message.find(".overtime-work-call-authorization-warning")
+			.closest(".form-message").remove();
 		if (frm.doc.docstatus === 0) {
 			frm.dashboard.set_headline_alert(
-				__("Submitting this call immediately authorizes the generated employee/date overtime windows."),
+				`<span class="overtime-work-call-authorization-warning">${escape_html(
+					__("Submitting this call immediately authorizes the generated employee/date overtime windows.")
+				)}</span>`,
 				"blue"
 			);
 			frm.add_custom_button(__("Add Eligible Employees"), () => add_employees(frm), __("Employees"));

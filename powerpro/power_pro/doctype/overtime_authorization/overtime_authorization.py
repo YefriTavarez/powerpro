@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, get_datetime, getdate, now_datetime
+from frappe.utils import escape_html, flt, get_datetime, get_link_to_form, getdate, now_datetime
 
 
 def apply_employee_approver_snapshot(authorization, employee):
@@ -273,6 +273,6 @@ class OvertimeAuthorization(Document):
 		if overlaps:
 			frappe.throw(
 				_("This window overlaps Overtime Authorization {0}.").format(
-					frappe.bold(overlaps[0])
+					get_link_to_form("Overtime Authorization", overlaps[0], escape_html(overlaps[0]))
 				)
 			)
