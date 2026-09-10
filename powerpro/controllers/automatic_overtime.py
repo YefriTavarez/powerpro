@@ -393,6 +393,9 @@ def _reverse_outputs(doc, event):
             frappe.flags.overtime_exception_reversal = previous
     elif doc.get('settlement_method') == 'Compensatory Rest':
         from powerpro.controllers.overtime_compensatory_settlement import reverse_compensatory_credit
+        # Detach only this source's forward link inside the reversal savepoint.
+        # The credit keeps its authorization link and immutable original audit.
+        frappe.db.set_value(AUTH, doc.name, 'compensatory_credit', None, update_modified=False)
         reverse_compensatory_credit(doc, reason='Attendance exception ' + event.name + ': ' + event.reason)
 
 

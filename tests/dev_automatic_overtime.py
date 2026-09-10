@@ -12,7 +12,7 @@ from powerpro.controllers import automatic_overtime as auto
 from powerpro.controllers.overtime_cash_settlement import _get_linked_additional_salaries
 from powerpro.controllers.overtime_compensatory_settlement import _get_bank_totals
 from powerpro.controllers.overtime_settlement import settlement_hours
-counts=['Employee','Overtime Authorization','Overtime Work Call','Employee Checkin','Salary Slip','Additional Salary','Leave Allocation','Overtime Compensatory Credit','Leave Application','Leave Ledger Entry','Overtime Attendance Exception']
+counts=['Employee','Overtime Authorization','Overtime Work Call','Employee Checkin','Salary Slip','Additional Salary','Leave Allocation','Overtime Compensatory Credit','Leave Application','Leave Ledger Entry','Overtime Attendance Exception','Leave Period']
 baseline={dt:frappe.db.count(dt) for dt in counts}
 prefix='AUTO-OT-DEV-'+uuid.uuid4().hex[:10]
 checks=[]
@@ -22,7 +22,7 @@ frappe.db.commit=forbidden;frappe.sendmail=forbidden;frappe.enqueue=forbidden
 try:
  frappe.db.set_single_value('DGII Payroll Settings',{'enable_automatic_overtime_settlement':1,'overtime_exception_roles':'System Manager','overtime_auto_payroll_date_policy':'Work Date'})
  base=frappe.get_doc('Overtime Authorization','AUT-HE-2026-00018')
- employee=frappe.copy_doc(frappe.get_doc('Employee',base.employee));employee.name=prefix+'-EMP';employee.employee_name='DEV Overtime Test';employee.user_id=None;employee.company_email=None;employee.personal_email=None;employee.db_insert()
+ employee=frappe.copy_doc(frappe.get_doc('Employee',base.employee));employee.name=prefix+'-EMP';employee.docstatus=0;employee.employee_name='DEV Overtime Test';employee.user_id=None;employee.company_email=None;employee.personal_email=None;employee.db_insert()
  original=frappe.get_all('Salary Structure Assignment',filters={'employee':base.employee,'docstatus':1},pluck='name',order_by='from_date desc',limit=1)
  assert original,'No source salary assignment'
  assignment=frappe.copy_doc(frappe.get_doc('Salary Structure Assignment',original[0]));assignment.name=prefix+'-SSA';assignment.employee=employee.name;assignment.docstatus=1;assignment.from_date='2026-01-01';assignment.db_insert()
@@ -52,15 +52,17 @@ try:
  checks.append('cash correction cancels only original inputs and creates replacement')
  # Submitted financial evidence fixture exercises real lookup and keeps outputs untouched.
  slip=frappe.new_doc('Salary Slip');slip.name=prefix+'-SLIP';slip.employee=employee.name;slip.company=employee.company;slip.docstatus=1;slip.db_insert()
- detail=frappe.new_doc('Salary Detail');detail.name=prefix+'-DETAIL';detail.parent=slip.name;detail.parenttype='Salary Slip';detail.parentfield='earnings';detail.additional_salary=refs[0];detail.db_insert()
+ detail=frappe.new_doc('Salary Detail');detail.name=prefix+'-DETAIL';detail.docstatus=1;detail.parent=slip.name;detail.parenttype='Salary Slip';detail.parentfield='earnings';detail.additional_salary=refs[0];detail.db_insert()
  out=exception(cash,'Mark Absent');assert out['status']=='Correction Pending',out
  assert slip.name in out['blockers']
  assert _get_linked_additional_salaries(cash,docstatus=1)==refs
  assert current(cash).settlement_amount==cash.settlement_amount
  frappe.db.set_value('Salary Slip',slip.name,'docstatus',2)
+ frappe.db.set_value('Salary Detail',detail.name,'docstatus',2)
  out=auto.retry_attendance_exception(cash.name);assert out['status']=='Applied',out
  assert current(cash).auto_status=='Excluded' and not _get_linked_additional_salaries(cash,docstatus=1)
  checks.append('submitted salary blocks reversal; retry after controlled cancellation excludes only source')
+ period=frappe.new_doc('Leave Period');period.name=prefix+'-PERIOD';period.company=employee.company;period.from_date='2026-01-01';period.to_date='2026-12-31';period.is_active=1;period.insert(ignore_permissions=True)
  comp,call=source('COMP','Compensatory Rest','2026-09-06','07:00:00','12:00:00')
  assert auto.process_authorization(comp.name)=='Settled'
  comp=current(comp);assert comp.presumed_hours==5 and comp.verified_hours==0
