@@ -240,6 +240,9 @@ def reverse_compensatory_credit(authorization, reason=None):
 		allocation.new_leaves_allocated = max(new_total, 0)
 		allocation.flags.ignore_permissions = True
 		allocation.flags.powerpro_overtime_update = True
+		# Only new_leaves_allocated changes here. Frappe v15 otherwise re-reads
+		# the document from an older REPEATABLE READ snapshot after our lock.
+		allocation.flags.ignore_validate_update_after_submit = True
 		# HRMS on_update_after_submit creates the negative ledger entry and blocks
 		# the reversal if approved leave has already consumed this balance.
 		allocation.save()
@@ -392,6 +395,9 @@ def _apply_allocation_credit(authorization, preview):
 		)
 		allocation.flags.ignore_permissions = True
 		allocation.flags.powerpro_overtime_update = True
+		# Only new_leaves_allocated changes here. Frappe v15 otherwise re-reads
+		# the document from an older REPEATABLE READ snapshot after our lock.
+		allocation.flags.ignore_validate_update_after_submit = True
 		allocation.save()
 		return allocation
 
