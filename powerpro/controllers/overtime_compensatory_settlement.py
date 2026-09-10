@@ -214,6 +214,7 @@ def reverse_compensatory_credit(authorization, reason=None):
 				credit.employee,
 				credit.leave_type,
 				leave_period,
+				for_update=True,
 			)
 			allocation_name = allocation_row.name if allocation_row else None
 		if not allocation_name:

@@ -162,7 +162,7 @@ def create_cash_settlement(adjustment):
 
 
 def before_cancel_adjustment(adjustment):
-	references = _get_linked_additional_salaries(adjustment, docstatus=1)
+	references = _get_linked_additional_salaries(adjustment, docstatus=1, for_update=True)
 	paid_slips = _get_submitted_salary_slips(references, for_update=True)
 	if not paid_slips and adjustment.get("settlement_status") != SETTLEMENT_PAID:
 		return
@@ -177,9 +177,9 @@ def before_cancel_adjustment(adjustment):
 
 def cancel_cash_settlement(adjustment):
 	"""Cancel linked payroll inputs after the adjustment itself is cancelled."""
-	references = _get_linked_additional_salaries(adjustment, docstatus=1)
+	references = _get_linked_additional_salaries(adjustment, docstatus=1, for_update=True)
 	for name in references:
-		doc = frappe.get_doc("Additional Salary", name)
+		doc = frappe.get_doc("Additional Salary", name, for_update=True)
 		doc.flags.ignore_permissions = True
 		doc.cancel()
 
