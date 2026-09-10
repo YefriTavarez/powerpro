@@ -61,6 +61,7 @@ def derive_reconciliation_snapshot(
 	maximum_hours,
 	reconciliation,
 	evaluation_time,
+	evidence_source="Employee Checkin",
 ):
 	"""Turn a read-only reconciliation result into operational adherence fields."""
 	start = _as_datetime(authorization_start)
@@ -94,9 +95,11 @@ def derive_reconciliation_snapshot(
 
 	if evaluation_time < end:
 		status = "Scheduled"
-	elif any(warning.startswith(CHECKIN_WARNING_PREFIXES) for warning in warnings):
+	elif evidence_source != "Manual Verification" and any(
+		warning.startswith(CHECKIN_WARNING_PREFIXES) for warning in warnings
+	):
 		status = "Check-in Issue"
-	elif not source_checkins:
+	elif evidence_source != "Manual Verification" and not source_checkins:
 		status = "Absent"
 	elif unapproved > 0.0001:
 		status = "Overrun"

@@ -18,6 +18,8 @@ from powerpro.payroll_rules.overtime import (
 	get_shift_window,
 	holiday_list_covers,
 	reconcile_authorized_overtime,
+	reconcile_authorized_intervals,
+	WorkInterval,
 )
 from powerpro.payroll_rules.retroactive_overtime import (
 	select_last_valid_out_checkin,
@@ -70,7 +72,8 @@ def get_reconciliation_preview(authorization):
 @frappe.whitelist()
 def save_authorization_reconciliation(authorization):
 	"""Persist one standalone authorization after its read-only preview."""
-	doc = frappe.get_doc("Overtime Authorization", authorization)
+	frappe.db.get_value("Overtime Authorization", authorization, "name", for_update=True)
+	doc = frappe.get_doc("Overtime Authorization", authorization, for_update=True)
 	if not frappe.has_permission("Overtime Authorization", "write", doc=doc):
 		frappe.throw(
 			_("Not permitted to update this Overtime Authorization."),
@@ -87,6 +90,8 @@ def save_authorization_reconciliation(authorization):
 			_("A settled authorization's reconciliation snapshot cannot be replaced."),
 			title=_("Settlement snapshot is immutable"),
 		)
+	if doc.get("reconciliation_source") == "Manual Verification":
+		frappe.throw(_("This attendance was manually verified. Use Manual Attendance Verification to amend it."))
 	result = get_reconciliation_preview(doc.name)
 	if result["reconciliation_status"] == "Scheduled":
 		frappe.throw(_("The authorized overtime window has not ended yet."))
@@ -223,12 +228,13 @@ def reconcile_overtime_document(doc, *, include_weekly_context=True):
 	return _reconcile(doc, include_weekly_context=include_weekly_context)
 
 
-def _reconcile(doc, *, include_weekly_context):
-	context = _get_context(doc)
+def _reconcile(doc, *, include_weekly_context, manual_intervals=None, for_update=False):
+	context = _get_context(doc, for_update=for_update)
 	regular_before = (
-		_get_verified_regular_overtime_before(doc) if include_weekly_context else 0
+		_get_verified_regular_overtime_before(doc, for_update=for_update) if include_weekly_context else 0
 	)
-	settings = frappe.get_single("DGII Payroll Settings")
+	settings = (frappe.get_doc("DGII Payroll Settings", for_update=True)
+		if for_update else frappe.get_single("DGII Payroll Settings"))
 	expected_hours = flt(settings.weekly_expected_hours)
 	weekly_total_threshold = flt(settings.max_weekly_extra_hours)
 	try:
@@ -243,11 +249,15 @@ def _reconcile(doc, *, include_weekly_context):
 			)
 		)
 
-	result = reconcile_authorized_overtime(
+	reconciler = reconcile_authorized_overtime if manual_intervals is None else reconcile_authorized_intervals
+	evidence = {"checkins": context["checkins"]} if manual_intervals is None else {
+		"intervals": [WorkInterval(get_datetime(row["start"]), get_datetime(row["end"])) for row in manual_intervals]
+	}
+	result = reconciler(
 		authorization_start=doc.authorization_start,
 		authorization_end=doc.authorization_end,
 		maximum_hours=doc.maximum_hours,
-		checkins=context["checkins"],
+		**evidence,
 		day_classification=context["classification"],
 		shift_start=context["shift_start"],
 		shift_end=context["shift_end"],
@@ -278,8 +288,8 @@ def _reconcile(doc, *, include_weekly_context):
 	return result
 
 
-def _get_context(doc):
-	context = get_schedule_context(doc.work_date, doc.shift_type, doc.holiday_list)
+def _get_context(doc, *, for_update=False):
+	context = get_schedule_context(doc.work_date, doc.shift_type, doc.holiday_list, for_update=for_update)
 	if doc.day_classification and doc.day_classification != context["classification"]:
 		context["warnings"].append(
 			"Approved day classification was "
@@ -287,7 +297,7 @@ def _get_context(doc):
 			f"{context['classification']}."
 		)
 	work_date = getdate(doc.work_date)
-	checkins = _get_checkins(doc.employee, work_date)
+	checkins = _get_checkins(doc.employee, work_date, for_update=for_update)
 	if not checkins:
 		context["warnings"].append(
 			"No Employee Checkin evidence was found for this work date."
@@ -296,7 +306,7 @@ def _get_context(doc):
 	return context
 
 
-def get_schedule_context(work_date, shift_type, holiday_list=None):
+def get_schedule_context(work_date, shift_type, holiday_list=None, *, for_update=False):
 	"""Resolve the schedule classification without changing any document."""
 	work_date = getdate(work_date)
 	shift = _get_record_values(
@@ -309,13 +319,14 @@ def get_schedule_context(work_date, shift_type, holiday_list=None):
 			"custom_hora_salida_viernes",
 			*WEEKDAY_FIELDS.values(),
 		],
+		for_update=for_update,
 	)
 	if not shift:
 		frappe.throw(_("Shift Type {0} does not exist.").format(frappe.bold(shift_type)))
 
 	holiday_list = holiday_list or shift.get("holiday_list")
-	holiday_list_coverage = _get_holiday_list_coverage(holiday_list, work_date)
-	holidays = _get_holidays(holiday_list, work_date)
+	holiday_list_coverage = _get_holiday_list_coverage(holiday_list, work_date, for_update=for_update)
+	holidays = _get_holidays(holiday_list, work_date, for_update=for_update)
 	has_legal_holiday = any(not row.get("weekly_off") for row in holidays)
 	has_weekly_off = any(row.get("weekly_off") for row in holidays)
 
@@ -356,11 +367,11 @@ def get_schedule_context(work_date, shift_type, holiday_list=None):
 	}
 
 
-def _get_holiday_list_coverage(holiday_list, work_date):
+def _get_holiday_list_coverage(holiday_list, work_date, *, for_update=False):
 	if not holiday_list:
 		return {"from_date": None, "to_date": None, "covers_work_date": False}
 	values = frappe.db.get_value(
-		"Holiday List", holiday_list, ["from_date", "to_date"], as_dict=True
+		"Holiday List", holiday_list, ["from_date", "to_date"], as_dict=True, for_update=for_update
 	)
 	if not values:
 		return {"from_date": None, "to_date": None, "covers_work_date": False}
@@ -374,7 +385,7 @@ def _get_holiday_list_coverage(holiday_list, work_date):
 	}
 
 
-def _get_verified_regular_overtime_before(doc):
+def _get_verified_regular_overtime_before(doc, *, for_update=False):
 	work_date = getdate(doc.work_date)
 	week_start = work_date - timedelta(days=work_date.weekday())
 	week_end = week_start + timedelta(days=6)
@@ -382,8 +393,9 @@ def _get_verified_regular_overtime_before(doc):
 	for doctype in ("Overtime Authorization", "Retroactive Overtime Adjustment"):
 		if not frappe.db.exists("DocType", doctype):
 			continue
-		names = frappe.get_all(
+		names = _reconciliation_rows(
 			doctype,
+			for_update=for_update,
 			filters={
 				"employee": doc.employee,
 				"docstatus": 1,
@@ -396,38 +408,43 @@ def _get_verified_regular_overtime_before(doc):
 		for name in names:
 			if doctype == doc.doctype and name == doc.name:
 				continue
-			previous = frappe.get_doc(doctype, name)
+			previous = frappe.get_doc(doctype, name, for_update=for_update)
 			if doctype == "Retroactive Overtime Adjustment":
 				if previous.day_classification == REGULAR_DAY:
 					total += flt(previous.verified_hours)
 				continue
-			context = _get_context(previous)
+			if previous.get("reconciliation_source") == "Manual Verification":
+				# Preserve certified hours when classifying later work in this week.
+				total += flt(previous.regular_35_hours) + flt(previous.regular_100_hours)
+				continue
+			context = _get_context(previous, for_update=for_update)
 			if context["classification"] != REGULAR_DAY:
 				continue
-			result = _reconcile(previous, include_weekly_context=False)
+			result = _reconcile(previous, include_weekly_context=False, for_update=for_update)
 			total += flt(result["verified_hours"])
 	return total
 
 
-def _get_record_values(doctype, name, requested_fields):
+def _get_record_values(doctype, name, requested_fields, *, for_update=False):
 	if not name:
 		return None
 	meta = frappe.get_meta(doctype)
 	fields = [fieldname for fieldname in requested_fields if meta.has_field(fieldname)]
 	if not fields:
 		return frappe._dict()
-	return frappe.db.get_value(doctype, name, fields, as_dict=True)
+	return frappe.db.get_value(doctype, name, fields, as_dict=True, for_update=for_update)
 
 
-def _get_holidays(holiday_list, work_date):
+def _get_holidays(holiday_list, work_date, *, for_update=False):
 	if not holiday_list:
 		return []
 	meta = frappe.get_meta("Holiday")
 	fields = ["description"]
 	if meta.has_field("weekly_off"):
 		fields.append("weekly_off")
-	rows = frappe.get_all(
+	rows = _reconciliation_rows(
 		"Holiday",
+		for_update=for_update,
 		filters={"parent": holiday_list, "holiday_date": work_date},
 		fields=fields,
 		order_by="idx asc",
@@ -437,7 +454,7 @@ def _get_holidays(holiday_list, work_date):
 	return rows
 
 
-def _get_checkins(employee, work_date):
+def _get_checkins(employee, work_date, *, for_update=False):
 	meta = frappe.get_meta("Employee Checkin")
 	fields = [
 		fieldname
@@ -446,8 +463,9 @@ def _get_checkins(employee, work_date):
 	]
 	window_start = datetime.combine(work_date, time.min)
 	window_end = datetime.combine(work_date, time.min) + timedelta(days=2)
-	return frappe.get_all(
+	return _reconciliation_rows(
 		"Employee Checkin",
+		for_update=for_update,
 		filters={
 			"employee": employee,
 			"time": ["between", [window_start, window_end]],
@@ -505,3 +523,12 @@ def _get_current_overtime_rates():
 		),
 		"night_hours_percent": round(flt(settings.night_hours_rate), 4),
 	}
+
+
+def _reconciliation_rows(doctype, *, for_update=False, pluck=None, fields=None, **kwargs):
+	"""Confirmations need current reads even on MariaDB REPEATABLE READ."""
+	if not for_update:
+		return frappe.get_all(doctype, fields=fields, pluck=pluck, **kwargs)
+	rows = frappe.db.get_values(doctype, fieldname=[pluck] if pluck else fields,
+		as_dict=True, for_update=True, **kwargs)
+	return [row[pluck] for row in rows] if pluck else rows

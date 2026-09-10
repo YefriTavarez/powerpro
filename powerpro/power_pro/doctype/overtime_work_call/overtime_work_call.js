@@ -34,6 +34,9 @@ frappe.ui.form.on("Overtime Work Call", {
 		}
 
 		if (frm.doc.docstatus === 1) {
+			frappe.require("/assets/powerpro/js/manual_overtime.js", () => {
+				powerpro.manual_overtime.add_button(frm);
+			});
 			frm.add_custom_button(__("Refresh Actual Attendance"), () => preview_reconciliation(frm), __("Overtime"));
 			frm.add_custom_button(__("View Individual Authorizations"), () => {
 				frappe.set_route("List", "Overtime Authorization", {

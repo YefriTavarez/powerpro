@@ -11,6 +11,9 @@ frappe.ui.form.on("Overtime Authorization", {
 		}
 
 		if (frm.doc.docstatus === 1) {
+			frappe.require("/assets/powerpro/js/manual_overtime.js", () => {
+				powerpro.manual_overtime.add_button(frm);
+			});
 			add_settlement_actions(frm);
 			frm.add_custom_button(__("Reconciliation Preview"), () => {
 				frappe.call({

@@ -47,6 +47,15 @@ class DGIIPayrollSettings(Document):
 	# end: auto-generated types
 
 	def validate(self):
+		if self.get("enable_manual_overtime_verification"):
+			from powerpro.payroll_rules.manual_overtime import verification_roles
+			roles = verification_roles(self.get("overtime_manual_verification_roles"))
+			if not self.enable_overtime_authorization or not roles:
+				frappe.throw(_("Enable Overtime Authorization and select at least one Manual Overtime Verification Role."))
+			for role in roles:
+				if role in {"All", "Guest"} or not frappe.db.get_value("Role", role, "desk_access") or frappe.db.get_value("Role", role, "disabled"):
+					frappe.throw(_("Manual verification requires an enabled Desk role: {0}").format(role))
+
 		if self.get("enable_monthly_settlement"):
 			from frappe.utils import getdate
 			if not self.get("monthly_settlement_from_date") or getdate(self.monthly_settlement_from_date).day != 1:

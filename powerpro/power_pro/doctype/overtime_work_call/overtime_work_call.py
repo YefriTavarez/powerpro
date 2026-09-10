@@ -225,6 +225,10 @@ def reconcile_overtime_work_call(work_call, dry_run=1):
 	dry_run = bool(cint(dry_run))
 	if not dry_run:
 		doc.check_permission("write")
+		frappe.db.get_value(doc.doctype, doc.name, "name", for_update=True)
+		doc = frappe.get_doc(doc.doctype, doc.name, for_update=True)
+		if doc.docstatus != 1:
+			frappe.throw(_("The source overtime work call must be submitted."))
 
 	rows = []
 	for name in frappe.get_all(
@@ -233,7 +237,21 @@ def reconcile_overtime_work_call(work_call, dry_run=1):
 		pluck="name",
 		order_by="work_date asc, employee_name asc",
 	):
-		authorization = frappe.get_doc("Overtime Authorization", name)
+		if not dry_run:
+			frappe.db.get_value("Overtime Authorization", name, "name", for_update=True)
+		authorization = frappe.get_doc("Overtime Authorization", name, for_update=not dry_run)
+		if authorization.get("reconciliation_source") == "Manual Verification":
+			# A check-in refresh must never overwrite a manager-certified snapshot.
+			rows.append({
+				"authorization": authorization.name, "employee": authorization.employee,
+				"employee_name": authorization.employee_name, "work_date": str(authorization.work_date),
+				"requested_hours": flt(authorization.maximum_hours),
+				"verified_hours": flt(authorization.verified_hours),
+				"reconciliation_status": authorization.reconciliation_status,
+				"adherence_percent": flt(authorization.adherence_percent),
+				"warnings": [_("Manually verified attendance preserved.")],
+			})
+			continue
 		if not dry_run and authorization.get("settlement_status") in {
 			"Created",
 			"Paid",

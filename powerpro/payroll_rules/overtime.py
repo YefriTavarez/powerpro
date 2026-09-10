@@ -125,6 +125,24 @@ def reconcile_authorized_overtime(
     On legal holidays and weekly rest days, all verified time in the approved
     window counts, but it is kept in a separate category for settlement.
     """
+    intervals, warnings = build_work_intervals(checkins)
+    return reconcile_authorized_intervals(
+        authorization_start=authorization_start, authorization_end=authorization_end,
+        maximum_hours=maximum_hours, intervals=intervals, warnings=warnings,
+        day_classification=day_classification, shift_start=shift_start, shift_end=shift_end,
+        approved_regular_overtime_before=approved_regular_overtime_before,
+        regular_35_percent_cap=regular_35_percent_cap,
+        night_start=night_start, night_end=night_end,
+    )
+
+
+def reconcile_authorized_intervals(
+    *, authorization_start, authorization_end, maximum_hours, intervals,
+    day_classification, shift_start=None, shift_end=None,
+    approved_regular_overtime_before=0, regular_35_percent_cap=24,
+    night_start=time(21, 0), night_end=time(7, 0), warnings=None,
+):
+    """Classify explicit worked intervals using the same rules as check-in evidence."""
     authorization_start = _as_datetime(authorization_start)
     authorization_end = _as_datetime(authorization_end)
     maximum_hours = float(maximum_hours or 0)
@@ -132,8 +150,13 @@ def reconcile_authorized_overtime(
         raise ValueError("Authorization end must be after its start")
     if maximum_hours <= 0:
         raise ValueError("Maximum authorized hours must be greater than zero")
-
-    intervals, warnings = build_work_intervals(checkins)
+    intervals = sorted(intervals, key=lambda row: row.start)
+    for index, interval in enumerate(intervals):
+        if interval.end <= interval.start:
+            raise ValueError("Worked interval end must be after its start")
+        if index and interval.start < intervals[index - 1].end:
+            raise ValueError("Worked intervals must not overlap")
+    warnings = list(warnings or [])
 
     if day_classification == REGULAR_DAY:
         if not shift_start or not shift_end:

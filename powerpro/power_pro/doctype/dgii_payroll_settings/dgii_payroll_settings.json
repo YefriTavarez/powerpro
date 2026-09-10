@@ -31,6 +31,9 @@
   "srl_rate_verified",
   "overtime_authorization_section",
   "enable_overtime_authorization",
+  "manual_overtime_section",
+  "enable_manual_overtime_verification",
+  "overtime_manual_verification_roles",
   "overtime_settlement_section",
   "enable_overtime_settlement",
   "overtime_settlement_roles",
@@ -142,7 +145,7 @@
   },
   {
    "default": "1715.46",
-   "description": "Especifique el monto por cada dependiente inscrito en el seguro para hacer la correcta deducci\u00f3n en la n\u00f3mina.",
+   "description": "Especifique el monto por cada dependiente inscrito en el seguro para hacer la correcta deducción en la nómina.",
    "fieldname": "dependents_rate",
    "fieldtype": "Currency",
    "label": "Monto por Dependiente",
@@ -342,6 +345,26 @@
    "fieldtype": "Date",
    "label": "Retroactive Overtime Submission Deadline",
    "mandatory_depends_on": "eval:doc.enable_retroactive_overtime_adjustment"
+  },
+  {
+   "fieldname": "manual_overtime_section",
+   "fieldtype": "Section Break",
+   "label": "Manual Overtime Attendance Verification"
+  },
+  {
+   "fieldname": "enable_manual_overtime_verification",
+   "fieldtype": "Check",
+   "label": "Enable Manual Overtime Verification",
+   "default": "0",
+   "description": "Allow configured roles to certify completed attendance without requiring Employee Checkins. Settlement remains a separate action."
+  },
+  {
+   "fieldname": "overtime_manual_verification_roles",
+   "fieldtype": "Small Text",
+   "label": "Manual Overtime Verification Roles",
+   "depends_on": "enable_manual_overtime_verification",
+   "mandatory_depends_on": "enable_manual_overtime_verification",
+   "description": "One existing Desk role per line. Users also need write permission on the authorization and its Work Call. No role, including System Manager, bypasses this list."
   }
  ],
  "index_web_pages_for_search": 1,
