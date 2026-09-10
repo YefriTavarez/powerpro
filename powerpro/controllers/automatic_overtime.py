@@ -479,3 +479,16 @@ def get_attendance_exception(authorization):
     return {key: event.get(key) for key in ('name', 'action', 'reason', 'status',
         'recorded_by', 'recorded_on', 'resolved_by', 'resolved_on', 'blockers',
         'before_snapshot', 'after_snapshot')}
+
+
+def run_dedicated_job():
+    """Optional cron entry for a site whose general Frappe scheduler is disabled.
+
+    Run under an OS flock. It executes only this registered job and respects
+    feature disablement, maintenance mode and the job's stopped flag.
+    """
+    if frappe.conf.maintenance_mode or not cint(_settings().get('enable_automatic_overtime_settlement')):
+        return
+    job = frappe.get_doc('Scheduled Job Type', 'automatic_overtime.scheduled_process_due')
+    if not job.stopped and job.get_next_execution() <= now_datetime():
+        job.execute()
