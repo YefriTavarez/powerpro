@@ -122,7 +122,7 @@ def _enroll(call, settings):
 def _allowed(doc, settings=None):
     settings = settings or _settings()
     return (frappe.session.user == doc.get('approver') or bool(
-        verification_roles(settings.get('overtime_exception_roles')).intersection(frappe.get_roles())))
+        verification_roles(settings.get('overtime_exception_roles')).intersection(frappe.get_roles(frappe.session.user))))
 
 
 def _access(doc):
@@ -159,7 +159,7 @@ def get_work_call_status(work_call):
         row['can_correct'] = _allowed(row, settings)
     return {'rows': rows, 'enabled': cint(settings.get('enable_automatic_overtime_settlement')),
             'enrolled': cint(call.get('automatic_settlement_enabled')),
-            'can_enroll': bool(verification_roles(settings.get('overtime_exception_roles')).intersection(frappe.get_roles()))}
+            'can_enroll': bool(verification_roles(settings.get('overtime_exception_roles')).intersection(frappe.get_roles(frappe.session.user)))}
 
 
 @frappe.whitelist(methods=['POST'])
@@ -167,7 +167,7 @@ def enroll_work_call(work_call, modified):
     call = frappe.get_doc(CALL, work_call, for_update=True)
     call.check_permission('read')
     settings = _settings()
-    if not cint(settings.get('enable_automatic_overtime_settlement')) or not verification_roles(settings.get('overtime_exception_roles')).intersection(frappe.get_roles()):
+    if not cint(settings.get('enable_automatic_overtime_settlement')) or not verification_roles(settings.get('overtime_exception_roles')).intersection(frappe.get_roles(frappe.session.user)):
         frappe.throw(_('Automatic settlement is disabled or your role cannot enroll Work Calls.'), frappe.PermissionError)
     if str(call.modified) != modified:
         frappe.throw(_('The Work Call changed. Reload it before enrollment.'))

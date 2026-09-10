@@ -183,6 +183,7 @@ has_permission = {
 # Override standard doctype classes
 
 override_doctype_class = {
+    "Leave Allocation": "powerpro.controllers.overtime_leave_allocation.OvertimeLeaveAllocation",
     "Quality Procedure": "powerpro.controllers.quality_procedure.QualityProcedure",
     "Custom Field": "powerpro.controllers.custom_field.CustomField",
     "Salary Slip": "powerpro.controllers.salary_slip.SalarySlip",
@@ -250,7 +251,7 @@ doc_events = {
         "before_cancel": "powerpro.controllers.overtime_cash_settlement.prevent_direct_overtime_salary_cancel",
     },
 	"Leave Allocation": {
-		"validate": "powerpro.controllers.overtime_compensatory_settlement.protect_managed_leave_allocation",
+        "before_update_after_submit": "powerpro.controllers.overtime_compensatory_settlement.protect_managed_leave_allocation",		"validate": "powerpro.controllers.overtime_compensatory_settlement.protect_managed_leave_allocation",
 		"before_cancel": "powerpro.controllers.overtime_compensatory_settlement.protect_managed_leave_allocation",
 	},
 	"Compensatory Leave Request": {
