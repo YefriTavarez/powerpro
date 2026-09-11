@@ -19,6 +19,7 @@ frappe.ui.form.on("Overtime Work Call", {
 	},
 
 	refresh(frm) {
+		frappe.require("/assets/powerpro/js/overtime_calendar.js", () => powerpro.overtime_calendar.add_button(frm));
 		update_schedule_description(frm);
 		// Replace only our warning; preserve Frappe's submit reminder and other messages.
 		frm.layout.message.find(".overtime-work-call-authorization-warning")
