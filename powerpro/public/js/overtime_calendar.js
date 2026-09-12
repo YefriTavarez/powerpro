@@ -52,11 +52,14 @@ frappe.provide("powerpro.overtime_calendar");
 				html += `<p>${escape(__("Horas extras regulares previas usadas por el cálculo vigente"))}: ${hours(week.legacy_regular_overtime_before)}</p>`;
 				if (week.shift_comparison) {
 					const shifted = week.shift_comparison;
+					const hasShiftIntervals = shifted.sessions.some((row) => row.hours > 0);
+					const hasCorrectedIntervals = hasShiftIntervals || shifted.applied_corrections.length > 0;
+					const eligibleHours = (value, available) => available ? hours(value) : __("Sin evidencia elegible");
 					html += `<h5>${escape(__("Comparación con turno y Gestión Humana"))}</h5>`;
 					html += table(["Lectura", "Total semanal provisional", "Antes de la autorización"], [
 						[__("Pares IN/OUT explícitos"), hours(week.paired_hours), hours(week.hours_before_cutoff)],
-						[__("Según reglas del turno"), hours(shifted.configured.paired_hours), hours(shifted.configured.hours_before_cutoff)],
-						[__("Turno con correcciones aplicadas"), hours(shifted.with_corrections.paired_hours), hours(shifted.with_corrections.hours_before_cutoff)]]);
+						[__("Según reglas del turno"), eligibleHours(shifted.configured.paired_hours, hasShiftIntervals), eligibleHours(shifted.configured.hours_before_cutoff, hasShiftIntervals)],
+						[__("Turno con correcciones aplicadas"), eligibleHours(shifted.with_corrections.paired_hours, hasCorrectedIntervals), eligibleHours(shifted.with_corrections.hours_before_cutoff, hasCorrectedIntervals)]]);
 					html += `<details><summary>${escape(__("Ver turnos, correcciones y advertencias"))}</summary>`;
 					html += table(["Turno guardado", "Inicio del turno", "Horas", "Interpretación", "Cálculo"],
 						shifted.sessions.map((row) => [row.shift, row.shift_start, hours(row.hours), __(row.direction_rule), __(row.hours_rule)]));

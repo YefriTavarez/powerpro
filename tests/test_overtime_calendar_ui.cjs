@@ -70,3 +70,8 @@ assert(shiftedHtml.includes("Correcciones superpuestas"));
 assert(shiftedHtml.includes("<details>"));
 assert(!shiftedHtml.includes("<img"));
 console.log("Shift/correction UI: separate totals, review issues and escaping passed.");
+
+const emptyShiftHtml = api.render({name:"AUTH",evidence_source:"current",baseline:{},difference:{},proposed:{segments:[]},warnings:[],assumptions:[],
+ weekly_evidence:{notes:[],weeks:[{week_start:"2026-09-21",days:[],issues:[],shift_comparison:{configured:{paired_hours:0},with_corrections:{paired_hours:0},sessions:[],applied_corrections:[],issues:[],notes:[]}}]}});
+assert(emptyShiftHtml.includes("Sin evidencia elegible"));
+console.log("Ineligible shift evidence is not displayed as zero worked hours.");
