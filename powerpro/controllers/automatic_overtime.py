@@ -462,6 +462,9 @@ def lock_payroll_inputs(slip, method=None):
         source = frappe.get_doc(AUTH, salary.ref_docname, for_update=True)
         if method == 'before_submit' and (salary.docstatus != 1 or source.docstatus != 1 or source.get('auto_status') == 'Correction Pending'):
             frappe.throw(_('Overtime payroll input {0} was cancelled or has a pending correction. Refresh this Salary Slip.').format(name))
+        if method == 'before_submit' and source.get('evidence_enrolled'):
+            from powerpro.controllers.checkin_overtime import validate_settlement
+            validate_settlement(source,for_update=True,payroll=True)
 
 
 def lock_leave_balance(application, method=None):

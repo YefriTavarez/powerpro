@@ -32,11 +32,12 @@ def accept_result(result, review):
     return result
 
 
-def _access(doc):
+def _access(doc,manual_declaration=None):
     evidence._access(doc)
     if not doc.get('evidence_enrolled'):
         frappe.throw(_('La autorización no está inscrita en el modo por marcaciones.'))
-    if doc.reconciliation_source in {'Manual Verification','HR Exception','Presumed Attendance'}:
+    previous_review=frappe.parse_json(doc.evidence_snapshot or '{}').get('review') or {}
+    if doc.reconciliation_source in {'Manual Verification','HR Exception','Presumed Attendance'} and not (doc.reconciliation_source=='Manual Verification' and previous_review.get('manual_declaration')):
         frappe.throw(_('Esta revisión conserva marcaciones como fuente; la verificación manual requiere su revisión específica.'))
     if not cint(evidence._settings().get('enable_checkin_overtime_reconciliation')):
         frappe.throw(_('La conciliación por marcaciones está desactivada.'))
@@ -63,10 +64,13 @@ def _financial(doc):
     return {key:doc.get(key) for key in keys}
 
 
-def _preview(doc, reason, *, for_update=False):
+def _preview(doc, reason, *, for_update=False,manual_declaration=None):
     if not isinstance(reason,str) or not 1<=len(reason.strip())<=2000:
         frappe.throw(_('Indique un motivo de revisión de 1 a 2000 caracteres.'))
-    raw=evidence.build_result(doc,for_update=for_update,use_saved_review=False)
+    if isinstance(manual_declaration,str):manual_declaration=frappe.parse_json(manual_declaration)
+    if manual_declaration is not None and not cint(evidence._settings().get('enable_manual_overtime_verification')):
+        frappe.throw(_('La verificación manual está desactivada.'))
+    raw=evidence.build_result(doc,for_update=for_update,use_saved_review=False,manual_declaration=manual_declaration)
     accepted=accept_result(raw,{'input_hash':raw['input_hash'],'reason':reason.strip()})
     frozen=frappe.parse_json(doc.evidence_snapshot or '{}')
     if frozen.get('input_hash')==raw['input_hash'] and (raw['state']=='Verified' or frozen.get('review')):
@@ -96,24 +100,25 @@ def _preview(doc, reason, *, for_update=False):
 
 
 @frappe.whitelist()
-def preview_review(authorization, reason):
+def preview_review(authorization, reason, manual_declaration=None):
     doc=frappe.get_doc(evidence.AUTH,authorization);_access(doc)
     if doc.docstatus!=1 or doc.status!='Approved':frappe.throw(_('La autorización debe permanecer aprobada.'))
-    result=_preview(doc,reason)
+    result=_preview(doc,reason,manual_declaration=manual_declaration)
     return {'token':result['token'],'authorization':doc.name,'reason':result['reason'],
             'before':result['before'].get('snapshot',{}),'after':result['after']['snapshot'],
             'financial_before':result['financial_before'],'dependencies':result['dependencies'],
-            'proposed_amount':result['proposed_amount'],
+            'proposed_amount':result['proposed_amount'],'manual_declaration':result['after'].get('manual_declaration'),
+            'checkin_comparison':result['after'].get('checkin_comparison'),
             'settlement_ready':result['after']['settlement_ready'],
             'settlement_blockers':result['after']['settlement_blockers']}
 
 
 @frappe.whitelist(methods=['POST'])
-def apply_review(authorization, reason, token):
+def apply_review(authorization, reason, token, manual_declaration=None):
     doc,call=evidence._lock(authorization);_access(doc)
     existing=frappe.db.get_value('Overtime Reconciliation Run',{'authorization':doc.name,'result_status':APPLIED,'evidence_hash':token},'name',for_update=True)
     if existing:return {'status':'Applied','audit':existing,'idempotent':True}
-    preview=_preview(doc,reason,for_update=True)
+    preview=_preview(doc,reason,for_update=True,manual_declaration=manual_declaration)
     if not token or preview['token']!=token:
         frappe.throw(_('La evidencia o la liquidación cambió. Revise una vista previa nueva.'))
     blocked=[r for r in preview['dependencies'] if r['blocks_reversal']]
@@ -128,9 +133,11 @@ def apply_review(authorization, reason, token):
         result=preview['after']
         review={'input_hash':result['input_hash'],'reason':preview['reason'],'reviewed_by':frappe.session.user,
                 'reviewed_on':str(now_datetime()),'request_token':token}
+        declaration=result.get('manual_declaration')
+        if declaration is not None:review['manual_declaration']=declaration
         result['review']=review
         # Re-evaluate employee choice after reversing the previous obligation.
-        values={**result['snapshot'],'reconciliation_source':'Employee Checkin','reconciled_by':frappe.session.user,
+        values={**result['snapshot'],'reconciliation_source':'Manual Verification' if declaration is not None else 'Employee Checkin','reconciled_by':frappe.session.user,
             'reconciled_on':now_datetime(),'evidence_snapshot':evidence._json(result),'evidence_last_hash':result['input_hash'],
             'evidence_status':'Verified','evidence_settlement_ready':0,'evidence_retry_after':now_datetime(),
             'source_checkins':evidence._json(result['source_checkins']),
@@ -140,6 +147,9 @@ def apply_review(authorization, reason, token):
             'settlement_status':'Pending','settlement_method':None,'settlement_amount':0,
             'settlement_references':None,'settlement_breakdown':None,'settlement_salary_slip':None,
             'compensatory_credit':None,'leave_allocation':None,'compensatory_hours':0,'compensatory_days':0,'compensatory_residual_hours':0}
+        values.update(manual_worked_intervals=evidence._json(declaration['intervals']) if declaration else None,
+            manual_verification_reason=preview['reason'] if declaration else None,
+            manual_checkin_comparison=evidence._json(result.get('checkin_comparison')) if declaration else None)
         doc.db_set(values)
         fresh=evidence.build_result(doc,for_update=True)
         doc.db_set({'evidence_snapshot':evidence._json(fresh),'evidence_settlement_ready':int(fresh['settlement_ready']),

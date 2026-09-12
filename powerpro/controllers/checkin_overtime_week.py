@@ -46,7 +46,7 @@ def load_week(doc,employee,assignments,*,for_update=False):
             context.update(date=str(day),shift=name)
             schedules.append(context)
         day+=timedelta(days=1)
-    historical_intervals=[];historical_checkins=[]
+    historical_intervals=[];historical_checkins=[];certified_sessions=[]
     previous=_reconciliation_rows('Overtime Authorization',for_update=for_update,
         filters=[['employee','=',doc.employee],['docstatus','=',1],['evidence_enrolled','=',1],
                  ['authorization_end','>',start],['authorization_end','<=',doc.authorization_start],['name','!=',doc.name]],
@@ -55,18 +55,27 @@ def load_week(doc,employee,assignments,*,for_update=False):
     from powerpro.controllers.checkin_overtime import _data,_evidence_hash,now_datetime
     from powerpro.payroll_rules.overtime_evidence import evaluate_evidence
     for prior in previous:
-        if prior.reconciliation_source!='Employee Checkin':
-            issues.append({'code':'weekly_previous_verification_requires_review','authorization':prior.name});continue
         saved=frappe.parse_json(prior.evidence_snapshot or '{}')
+        declaration=(saved.get('review') or {}).get('manual_declaration')
+        if prior.reconciliation_source!='Employee Checkin' and not (prior.reconciliation_source=='Manual Verification' and declaration):
+            issues.append({'code':'weekly_previous_verification_requires_review','authorization':prior.name});continue
         current,_settings=_data(frappe.get_doc('Overtime Authorization',prior.name,for_update=for_update),for_update=for_update,include_weekly=False)
         fresh=evaluate_evidence(authorization=current['authorization'],rows=current['rows'],shift=current['shift'],contexts=current['contexts'],
             next_windows=current['next_windows'],now=now_datetime(),competing=current['competing'])
-        if fresh['state']!='Verified' or not saved.get('worked_intervals') or (
+        if declaration:
+            from powerpro.payroll_rules.overtime_manual_session import evaluate_manual_session
+            fresh=evaluate_manual_session(declaration=declaration,authorization=current['authorization'],rows=current['rows'],
+                contexts=current['contexts'],now=now_datetime(),competing=current['competing'])
+        acceptable=fresh['state']=='Verified' or (saved.get('review') and all(i['code']=='worked_authorized_mismatch' or i['severity']=='information' for i in fresh['issues']))
+        if not acceptable or not saved.get('worked_intervals') or (
             _evidence_hash(saved.get('source_checkins'))!=_evidence_hash(fresh.get('source_checkins')) or
             _evidence_hash(saved['worked_intervals'])!=_evidence_hash(fresh.get('worked_intervals'))):
             issues.append({'code':'weekly_previous_snapshot_changed','authorization':prior.name});continue
+        if declaration and (_evidence_hash(saved['input']['shift'])!=_evidence_hash(current['shift']) or _evidence_hash(saved['input']['contexts'])!=_evidence_hash(current['contexts'])):
+            issues.append({'code':'weekly_previous_manual_context_changed','authorization':prior.name});continue
+        certified_sessions.extend(fresh.get('certified_sessions',[]))
         historical_intervals.extend(fresh['worked_intervals'])
         historical_checkins.extend(name for session in fresh['sessions'] for name in session['checkins'])
     return {'start':start,'cutoff':end,'rows':[dict(r) for r in rows],
             'policies':policies,'schedules':schedules,'attendances':[dict(r) for r in attendances],
-            'context_issues':issues,'historical_intervals':historical_intervals,'historical_checkins':historical_checkins}
+            'context_issues':issues,'certified_sessions':certified_sessions,'historical_intervals':historical_intervals,'historical_checkins':historical_checkins}

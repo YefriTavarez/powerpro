@@ -159,13 +159,23 @@ def _data(doc,*,for_update=False,include_weekly=True):
     return data,settings
 
 
-def build_result(doc,*,for_update=False,use_saved_review=True):
+def build_result(doc,*,for_update=False,use_saved_review=True,manual_declaration=None):
     data,settings=_data(doc,for_update=for_update)
     policy=data['pay_policy']
+    saved=frappe.parse_json(doc.get('evidence_snapshot') or '{}')
+    if manual_declaration is None and use_saved_review:
+        manual_declaration=(saved.get('review') or {}).get('manual_declaration')
     result=evaluate_evidence(authorization=data['authorization'],rows=data['rows'],shift=data['shift'],contexts=data['contexts'],
         next_windows=data['next_windows'],now=now_datetime(),competing=data['competing'],
         night_start=time(21) if policy else coerce_time(settings.start_night_hours,time(21)),
         night_end=time(7) if policy else coerce_time(settings.end_night_hours,time(7)))
+    if manual_declaration is not None:
+        from powerpro.payroll_rules.overtime_manual_session import evaluate_manual_session
+        comparison=result
+        result=evaluate_manual_session(declaration=manual_declaration,authorization=data['authorization'],rows=data['rows'],
+            contexts=data['contexts'],now=now_datetime(),competing=data['competing'],night_start=time(21),night_end=time(7))
+        result['checkin_comparison']=comparison
+        data['manual_declaration']=manual_declaration
     blockers=[]
     if not policy:blockers.append('Falta una política de liquidación aprobada que cubra la fecha de trabajo.')
     if doc.planned_settlement=='Cash' and not data['rate_basis']:
@@ -175,7 +185,8 @@ def build_result(doc,*,for_update=False,use_saved_review=True):
         weekly_data=dict(data['weekly'])
         historical_intervals=weekly_data.pop('historical_intervals',[])
         historical_checkins=weekly_data.pop('historical_checkins',[])
-        weekly=collect_weekly_work(**weekly_data,accepted_intervals=historical_intervals+result['worked_intervals'],accepted_checkins=historical_checkins+accepted)
+        certified_sessions=weekly_data.pop('certified_sessions',[])
+        weekly=collect_weekly_work(**weekly_data,accepted_intervals=historical_intervals+result['worked_intervals'],accepted_checkins=historical_checkins+accepted,certified_sessions=certified_sessions+result.get('certified_sessions',[]))
         result['weekly_evidence']=weekly
         result['calculation']=apply_actual_week_bands(result['calculation'],weekly,threshold=policy['weekly_threshold'] if policy else settings.max_weekly_extra_hours)
         for field in ['regular_35_hours','regular_100_hours']:
@@ -294,6 +305,7 @@ def get_status(authorization):
     result={k:doc.get(k) for k in FIELDS}
     result['can_process']=bool(frappe.has_permission(AUTH,'write',doc=doc) and verification_roles(_settings().get('overtime_manual_verification_roles')).intersection(frappe.get_roles(frappe.session.user)))
     result['enabled']=bool(cint(_settings().get('enable_checkin_overtime_reconciliation')))
+    result['manual_review_allowed']=bool(cint(_settings().get('enable_manual_overtime_verification')))
     from powerpro.controllers.overtime_rest import get_election
     election=get_election(doc)
     result['election']=election.name if election else None
@@ -304,15 +316,19 @@ def get_status(authorization):
     return result
 
 
-def validate_settlement(doc,*,for_update=False):
+def validate_settlement(doc,*,for_update=False,payroll=False):
     if not doc.get('evidence_enrolled'):return
-    if doc.get('evidence_status') not in {'Verified','Manual Verification'} or not doc.get('evidence_settlement_ready'):
+    allowed={'Verified','Manual Verification'} | ({'Frozen'} if payroll else set())
+    if doc.get('evidence_status') not in allowed or not doc.get('evidence_settlement_ready'):
         frappe.throw(_('Complete la revisión de evidencia y de su política antes de liquidar.'))
-    if not cint(_settings().get('enable_checkin_overtime_reconciliation')):
+    if not payroll and not cint(_settings().get('enable_checkin_overtime_reconciliation')):
         frappe.throw(_('La liquidación del modo por marcaciones está pausada.'))
-    if doc.get('reconciliation_source')!='Employee Checkin':
-        frappe.throw(_('La verificación manual requiere una revisión de liquidación independiente.'))
     frozen=frappe.parse_json(doc.get('evidence_snapshot') or '{}')
+    manual=(frozen.get('review') or {}).get('manual_declaration')
+    if manual and not payroll and not cint(_settings().get('enable_manual_overtime_verification')):
+        frappe.throw(_('La liquidación de evidencia manual está desactivada.'))
+    if doc.get('reconciliation_source')!='Employee Checkin' and not (doc.reconciliation_source=='Manual Verification' and manual):
+        frappe.throw(_('La verificación manual requiere una revisión de liquidación independiente.'))
     current=build_result(doc,for_update=for_update)
     if not frozen.get('input_hash') or frozen['input_hash']!=current['input_hash'] or current['state']!='Verified':
         frappe.throw(_('La evidencia cambió o está incompleta; concilie y revise antes de liquidar.'))

@@ -148,7 +148,9 @@ try:
   checks.append('weekly-rest cash requires the employee election and pays the approved premium while retaining its real category')
  from hrms.payroll.doctype.salary_structure.salary_structure import make_salary_slip
  slip=make_salary_slip(assignment.salary_structure,employee=employee.name,posting_date='2026-09-15',ignore_permissions=True)
- slip.insert(ignore_permissions=True);slip.flags.ignore_permissions=True;slip.submit()
+ slip.insert(ignore_permissions=True);slip.flags.ignore_permissions=True
+ with patch.object(evidence,'now_datetime',return_value=get_datetime('2026-09-15 20:00:00')):
+  slip.submit()
  cash.reload()
  assert cash.settlement_status=='Payroll Submitted' and cash.settlement_salary_slip==slip.name
  assert not slip.journal_entry

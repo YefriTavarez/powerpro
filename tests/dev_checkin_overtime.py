@@ -219,6 +219,35 @@ try:
   audit=frappe.parse_json(frappe.db.get_value('Overtime Reconciliation Run',outcome['audit'],'evidence'))
   assert audit['before']['snapshot']['verified_hours']==2 and audit['after']['snapshot']['verified_hours']==1
   checks.append('HR review accepts a measured shortfall; stale preview, submitted payroll and later settled week block it; failed replacement preserves original money and evidence; retry applies once with before/after audit')
+ frappe.db.set_single_value('DGII Payroll Settings','enable_manual_overtime_verification',1)
+ with patch.object(evidence,'now_datetime',return_value=get_datetime('2026-09-16 21:00:00')):
+  exit_doc.reload();exit_doc.skip_auto_attendance=1;exit_doc.save(ignore_permissions=True)
+  before_checkins=frappe.db.count('Employee Checkin')
+  declaration={'full_session':True,'reference':'Parte del supervisor: jornada y pausas verificadas',
+   'intervals':[{'start':'2026-09-15T08:00:00','end':'2026-09-15T12:00:00'},{'start':'2026-09-15T13:00:00','end':'2026-09-15T19:30:00'}]}
+  manual=review.preview_review(second_auth,'Ponchada de salida inválida; referencia del supervisor revisada.',manual_declaration=declaration)
+  assert manual['after']['verified_hours']==1.5 and manual['proposed_amount']==210,manual
+  assert manual['checkin_comparison']['state']=='Needs Review'
+  out=review.apply_review(second_auth,manual['reason'],manual['token'],manual_declaration=declaration)
+  second.reload();assert second.reconciliation_source=='Manual Verification' and second.verified_hours==1.5 and second.settlement_amount==210
+  assert frappe.db.count('Employee Checkin')==before_checkins
+  assert evidence.process_authorization(second_auth)=='Frozen'
+  third_call,third_auth=cash_call('2026-09-16')
+  assert evidence.process_authorization(third_auth)=='Frozen'
+  third=frappe.get_doc('Overtime Authorization',third_auth)
+  saved=frappe.parse_json(third.evidence_snapshot)
+  assert saved['weekly_evidence']['complete'] and saved['calculation']['segments'][0]['actual_weekly_hours_before']==30.5,saved['weekly_evidence']
+  assert any(r['state']=='hr_certified_session' for r in saved['weekly_evidence']['coverage'])
+  from powerpro.controllers.automatic_overtime import lock_payroll_inputs
+  payroll_input=frappe._dict(employee=cash_employee.name,earnings=[frappe._dict(additional_salary=_get_linked_additional_salaries(second,docstatus=1)[0])])
+  lock_payroll_inputs(payroll_input,'before_submit')
+  frappe.db.savepoint('test_late_manual_evidence')
+  exit_doc.reload();exit_doc.skip_auto_attendance=0;exit_doc.save(ignore_permissions=True)
+  try:lock_payroll_inputs(payroll_input,'before_submit')
+  except frappe.ValidationError:pass
+  else:raise AssertionError('Payroll accepted newly changed evidence after manual certification')
+  frappe.db.rollback(save_point='test_late_manual_evidence')
+  checks.append('complete-session HR declaration resolves an invalid exit without changing Checkins, replaces cash at 1.5h/210, and supplies actual 10.5-hour day to later weekly bands')
  first_call.reload();first_call.flags.ignore_permissions=True;first_call.cancel()
  assert all(frappe.db.get_value('Additional Salary',ref,'docstatus')==2 for ref in refs)
  checks.append('cancelling the Work Call reverses its generated Additional Salary through document lifecycles')

@@ -57,7 +57,18 @@ def evaluate_evidence(*, authorization, rows, shift, contexts, next_windows, now
     if result['issues'] and any(i['severity']!='information' for i in result['issues']):
         result['state']='Waiting' if any(i['severity']=='wait' for i in result['issues']) else 'Needs Review'
         return result
-    intervals=[WorkInterval(a,b) for a,b in interpreted['intervals']]
+    return calculate_evidenced_intervals(result,authorization,interpreted['intervals'],contexts,now,
+        weekly_before=weekly_before,regular_cap=regular_cap,night_start=night_start,night_end=night_end)
+
+
+def calculate_evidenced_intervals(result, authorization, worked, contexts, now, *, weekly_before=None,
+                                  regular_cap=24, night_start=None, night_end=None):
+    """Shared calendar/snapshot calculation after evidence has been accepted."""
+    start,end=_as_datetime(authorization['start']),_as_datetime(authorization['end'])
+    rows=result['source_checkins']
+    def issue(code):
+        result['issues'].append({'code':code,'severity':'review'})
+    intervals=[WorkInterval(a,b) for a,b in worked]
     kwargs={}
     if night_start is not None:kwargs['night_start']=night_start
     if night_end is not None:kwargs['night_end']=night_end
@@ -76,6 +87,6 @@ def evaluate_evidence(*, authorization, rows, shift, contexts, next_windows, now
     snapshot=derive_reconciliation_snapshot(authorization_start=start,authorization_end=end,
         maximum_hours=authorization['maximum_hours'],reconciliation=calculation,evaluation_time=now)
     if snapshot['reconciliation_status']!='Completed':issue('worked_authorized_mismatch')
-    result.update(calculation=calculation,snapshot=snapshot,worked_intervals=[{'start':a.isoformat(),'end':b.isoformat()} for a,b in interpreted['intervals']])
+    result.update(calculation=calculation,snapshot=snapshot,worked_intervals=[{'start':a.isoformat(),'end':b.isoformat()} for a,b in worked])
     if any(i['severity']=='review' for i in result['issues']):result['state']='Needs Review'
     return result

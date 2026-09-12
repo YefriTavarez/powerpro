@@ -15,7 +15,7 @@ INFORMATIONAL = {'direction_reinterpreted', 'first_last_includes_breaks'}
 
 
 def collect_weekly_work(*, start, cutoff, rows, policies, schedules, attendances,
-                        accepted_intervals=(), accepted_checkins=(), context_issues=()):
+                        accepted_intervals=(), accepted_checkins=(), context_issues=(), certified_sessions=()):
     """Require evidence for every elapsed ordinary shift in the supplied schedule.
 
 The caller supplies schedules from the day before the first week (overnight
@@ -54,8 +54,9 @@ including ordinary time, while keeping original Checkins as dependencies.
         if not schedule.get('holiday_list_covers_work_date'):
             local.append('weekly_calendar_uncovered')
         policy = policies.get(schedule['shift']) or {}
+        certified=any(r.get('shift')==schedule['shift'] and _as_datetime(r['start'])==a and _as_datetime(r['end'])==b for r in certified_sessions)
         synced = policy.get('last_sync_of_checkin')
-        if not synced or _as_datetime(synced) < min(b, cutoff):
+        if not certified and (not synced or _as_datetime(synced) < min(b, cutoff)):
             local.append('weekly_sync_incomplete')
         matching = [r for r in relevant if r.get('shift') == schedule['shift']
                     and r.get('shift_start') and r.get('shift_end')
@@ -69,11 +70,13 @@ including ordinary time, while keeping original Checkins as dependencies.
         has_work = any(lo < min(b,cutoff) and hi > max(a,start) for lo,hi in worked)
         if absence and (matching or has_work):
             local.append('attendance_conflicts_with_checkins')
-        if schedule['classification'] == REGULAR_DAY and not (valid or accepted or absence):
+        if schedule['classification'] == REGULAR_DAY and not (valid or accepted or certified or absence):
             local.append('weekly_day_without_evidence')
         if local:
             item['state'] = 'review'
             issues.extend({'code': code, 'date': day, 'shift': schedule['shift']} for code in local)
+        elif certified:
+            item['state']='hr_certified_session'
         elif absence:
             item.update(state='documented_nonwork', attendances=[r['name'] for r in absence])
         elif schedule['classification'] != REGULAR_DAY and not matching:
