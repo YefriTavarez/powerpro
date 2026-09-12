@@ -11,7 +11,7 @@ frappe.ui.form.on("Retroactive Overtime Adjustment", {
 		if (frm.doc.docstatus === 0) {
 			set_settlement_payroll_date_default(frm);
 			frm.dashboard.set_headline_alert(
-				__("Historical overtime is an audited exception and requires existing Employee Checkin evidence."),
+				__("El ajuste histórico requiere evidencia verificable de la jornada y aprobación de la excepción."),
 				"orange"
 			);
 			if (frm.is_new()) {
@@ -412,6 +412,13 @@ function show_retroactive_reconciliation(result) {
 
 
 function add_evidence_actions(frm) {
+    if (frm.doc.docstatus === 0 && !frm.is_new() && frm.doc.reconciliation_engine === 'Verified Checkins') {
+        return frappe.call({method: 'powerpro.controllers.retroactive_draft_review.get_status', args: {adjustment: frm.doc.name}}).then(({message: state}) => {
+            if (state?.can_review) frm.add_custom_button(__('Declarar jornada inicial de RR. HH.'), () =>
+                frappe.require('/assets/powerpro/js/checkin_overtime.js', () => powerpro.checkin_overtime.review(frm, true)), __('Overtime'));
+            if (state?.audit) frm.add_custom_button(__('Evidencia declarada'), () => frappe.set_route('Form', 'Overtime Reconciliation Run', state.audit), __('Overtime'));
+        });
+    }
     if (frm.doc.docstatus === 2 && frm.doc.reconciliation_engine === 'Verified Checkins') {
         return frappe.require('/assets/powerpro/js/checkin_overtime.js', () => powerpro.checkin_overtime.add_history_actions(frm));
     }

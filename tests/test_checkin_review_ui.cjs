@@ -28,6 +28,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  ctx.powerpro.checkin_overtime.review(frm);requested({reason:'Historical physical correction'});await Promise.resolve();
  assert.equal(calls[6].method,'powerpro.controllers.overtime_history.preview_review');assert(dialogs[3].fields[0].options.includes('Sin cambios'));
  dialogs[3].primary_action();await Promise.resolve();assert.equal(calls[7].method,'powerpro.controllers.overtime_history.apply_review');
+ frm.doc.docstatus=0;preview.historical_only=false;preview.draft_only=true;
+ ctx.powerpro.checkin_overtime.review(frm,true);requested({reason:'Initial declaration',...declaration});await Promise.resolve();
+ assert.equal(calls[8].method,'powerpro.controllers.retroactive_draft_review.preview_review');
+ assert(dialogs[4].fields[0].options.includes('El ajuste sigue en borrador'));
+ dialogs[4].primary_action();await Promise.resolve();assert.equal(calls[9].method,'powerpro.controllers.retroactive_draft_review.apply_review');
+ frm.doc.docstatus=2;
  const historicalButtons=[];frm.add_custom_button=(label,fn)=>historicalButtons.push({label,fn});
  preview.applicable=true;preview.can_review=true;preview.manual_review_allowed=true;
  ctx.powerpro.checkin_overtime.add_history_actions(frm);await Promise.resolve();

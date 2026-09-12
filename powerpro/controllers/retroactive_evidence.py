@@ -13,7 +13,9 @@ def enabled(doc):
 
 def reconcile(doc,*,for_update=False):
     from powerpro.controllers.checkin_overtime import build_result
-    return as_reconciliation(doc,build_result(doc,for_update=for_update))
+    from powerpro.controllers.retroactive_draft_review import reconcile_draft
+    draft=reconcile_draft(doc,for_update=for_update)
+    return as_reconciliation(doc,draft if draft is not None else build_result(doc,for_update=for_update))
 
 
 def as_reconciliation(doc,evidence):
@@ -48,7 +50,8 @@ def prepare_snapshot(doc,result):
     if evidence['state']!='Verified' or not evidence.get('snapshot') or flt(evidence['snapshot'].get('verified_hours'))<=0:
         frappe.throw(_('Complete y revise la evidencia de la jornada antes de aprobar el ajuste: {0}.').format(', '.join(result['warnings'])))
     doc.actual_start=evidence['snapshot']['actual_start'];doc.actual_end=evidence['snapshot']['actual_end']
-    doc.reconciliation_source='Employee Checkin';doc.evidence_status='Verified'
+    doc.reconciliation_source='Manual Verification' if (evidence.get('review') or {}).get('manual_declaration') else 'Employee Checkin'
+    doc.evidence_status='Verified'
     doc.evidence_snapshot=_json(evidence);doc.evidence_settlement_ready=cint(evidence['settlement_ready'])
 
 

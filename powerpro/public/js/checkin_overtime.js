@@ -33,7 +33,8 @@ powerpro.checkin_overtime.add_actions = (frm) => {
 
 powerpro.checkin_overtime.review = (frm, manual = false) => {
     if (frm.is_dirty()) {frappe.msgprint(__("Guarde los cambios antes de revisar.")); return;}
-    const controller = frm.doc.docstatus === 2 ? "overtime_history" : "checkin_overtime_review";
+    const controller = frm.doc.docstatus === 2 ? "overtime_history" :
+        (frm.doc.docstatus === 0 && frm.doc.doctype === "Retroactive Overtime Adjustment" ? "retroactive_draft_review" : "checkin_overtime_review");
     const fields = [{fieldname: "reason", label: __("Motivo y referencia de la corrección"), fieldtype: "Small Text", reqd: 1}];
     if (manual) fields.push(
         {fieldname: "reference", fieldtype: "Small Text", label: __("Documento o referencia de la evidencia alternativa"), reqd: 1},
@@ -56,7 +57,7 @@ powerpro.checkin_overtime.review = (frm, manual = false) => {
                 ${p.manual_declaration ? `<p>${__("Fuente: jornada completa declarada por Gestión Humana. Las marcaciones originales se conservan como comparación.")}</p><p>${e(p.manual_declaration.reference)}</p>
                     <ul>${p.manual_declaration.intervals.map(row => `<li>${e(row.start)} — ${e(row.end)}</li>`).join("")}</ul>
                     <p>${__("Marcaciones originales")}</p><ul>${(p.checkin_comparison?.source_checkins || []).map(row => `<li>${e(row.name)}: ${e(row.time)} (${e(row.log_type)})</li>`).join("") || `<li>${__("Sin marcaciones disponibles")}</li>`}</ul>` : ""}
-                <p>${p.historical_only ? __("Se registra una revisión histórica sin reabrir el documento cancelado ni modificar su liquidación original.") : __("La aceptación conserva la evidencia anterior. Si hay liquidación previa, su reversión debe completarse antes de crear la sustitución.")}</p>
+                <p>${p.draft_only ? __("Se registra la declaración y su evidencia. El ajuste sigue en borrador; su aprobación y liquidación requieren el flujo correspondiente.") : p.historical_only ? __("Se registra una revisión histórica sin reabrir el documento cancelado ni modificar su liquidación original.") : __("La aceptación conserva la evidencia anterior. Si hay liquidación previa, su reversión debe completarse antes de crear la sustitución.")}</p>
                 <ul>${p.settlement_blockers.map(v => `<li>${e(v)}</li>`).join("")}${p.dependencies.map(v => `<li>${e(v.name)}: ${e(v.settlement_status)}</li>`).join("")}</ul>`;
             const dialog = new frappe.ui.Dialog({title: __("Revisión de evidencia"), fields: [{fieldname: "preview", fieldtype: "HTML", options: html}],
                 primary_action_label: __("Aceptar revisión"), primary_action() {
