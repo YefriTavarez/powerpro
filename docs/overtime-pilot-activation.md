@@ -77,3 +77,9 @@ El usuario sustituyó la muestra de julio por cuatro jornadas documentadas del 1
 
 
 Actualización documental: el operador ya aceptó utilizar el PDF como respaldo de los horarios. Tres adjuntos privados quedaron guardados y verificados en el Employee de la muestra; ver `overtime-imported-sample.md`. No repetir la aceptación del PDF. Pausas no especificadas y requisitos de configuración del piloto siguen separados de esa aceptación. No hay nuevos ajustes, declaraciones certificadas ni pagos.
+
+
+Actualización de preparación: período/plazo de Desarrollo y elegibilidad/aprobador del empleado ya fueron configurados; tres ajustes nativos quedaron Draft con respaldo privado y reintento verificado. Estos obstáculos técnicos están resueltos, no volver a pedirlos al operador. Scheduler, evidencia automática y liquidaciones permanecen sin activar. La conciliación completa de pausas/calendario y política continúa pendiente; ver `overtime-imported-sample.md`.
+
+
+Actualización del calendario: horario de viernes y descanso semanal/feriado combinado ya reproducidos en Desarrollo mediante metadata opcional y control explícito del turno. El otro turno mantiene su calendario completo de 2026. Las vistas previas nativas de los tres Draft siguen sin liquidación; faltan evidencia neta/sincronización válida, política publicada y tarifa respaldada por asignación salarial de la muestra.

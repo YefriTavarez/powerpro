@@ -20,6 +20,19 @@ START_ACTIONS = {"IN", "INICIO JORNADA", "FIN BREAK"}
 STOP_ACTIONS = {"OUT", "INICIO BREAK", "FIN JORNADA"}
 
 
+def is_scheduled_workday(shift, weekday_field, *, calendar_weekly_off):
+    """An explicit disabled weekday control preserves the holiday calendar.
+
+    Older sites with weekday fields but no control checkbox retain their
+    existing override behavior. New neutral fields do not reclassify shifts.
+    """
+    control = 'custom_control_dias_laborables'
+    overrides_enabled = control not in shift or bool(int(shift.get(control) or 0))
+    if overrides_enabled and weekday_field in shift:
+        return bool(int(shift.get(weekday_field) or 0))
+    return not calendar_weekly_off
+
+
 @dataclass(frozen=True)
 class WorkInterval:
     start: datetime

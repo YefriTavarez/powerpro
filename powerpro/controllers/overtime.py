@@ -20,6 +20,7 @@ from powerpro.payroll_rules.overtime import (
 	reconcile_authorized_overtime,
 	reconcile_authorized_intervals,
 	WorkInterval,
+	is_scheduled_workday,
 )
 from powerpro.payroll_rules.retroactive_overtime import (
 	select_last_valid_out_checkin,
@@ -321,6 +322,7 @@ def get_schedule_context(work_date, shift_type, holiday_list=None, *, for_update
 			"end_time",
 			"holiday_list",
 			"custom_hora_salida_viernes",
+			"custom_control_dias_laborables",
 			*WEEKDAY_FIELDS.values(),
 		],
 		for_update=for_update,
@@ -335,10 +337,9 @@ def get_schedule_context(work_date, shift_type, holiday_list=None, *, for_update
 	has_weekly_off = any(row.get("weekly_off") for row in holidays)
 
 	workday_field = WEEKDAY_FIELDS[work_date.weekday()]
-	if workday_field in shift:
-		is_shift_workday = bool(cint(shift.get(workday_field)))
-	else:
-		is_shift_workday = not has_weekly_off
+	is_shift_workday = is_scheduled_workday(
+		shift, workday_field, calendar_weekly_off=has_weekly_off
+	)
 
 	classification = classify_workday(
 		is_shift_workday=is_shift_workday,
