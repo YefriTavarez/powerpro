@@ -31,3 +31,6 @@ Actualización de preparación: período/plazo de Desarrollo y elegibilidad/apro
 
 
 Actualización del calendario: horario de viernes y descanso semanal/feriado combinado ya reproducidos en Desarrollo mediante metadata opcional y control explícito del turno. El otro turno mantiene su calendario completo de 2026. Las vistas previas nativas de los tres Draft siguen sin liquidación; faltan evidencia neta/sincronización válida, política publicada y tarifa respaldada por asignación salarial de la muestra.
+
+
+El operador resolvió la pausa del fin de semana: asumir tramos completos, sin deducción de almuerzo. Se guardaron dos revisiones manuales nativas (5h y8.5h) con la suposición explícita y comparación original conservada. Motor habilitado desde2026-08-10 para esta revisión; scheduler apagado. Ajustes siguen Draft y sin liquidación. No repetir la pregunta de pausas para esas fechas.

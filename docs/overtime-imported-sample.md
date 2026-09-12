@@ -89,3 +89,16 @@ La función pura `is_scheduled_workday` y su integración en `get_schedule_conte
 Lectura posterior: viernes Regular Workday con fin 17:00; sábado Weekly Rest; domingo Legal Holiday on Weekly Rest. La vista previa nativa sigue Waiting por sincronización incompleta y las marcas faltantes, coherente con su uso documental pendiente. Para liquidar faltan además política aprobada para la fecha y asignación salarial con tarifa vigente en la muestra de Desarrollo. No se presume que la tarifa de un ajuste previo sea una asignación salarial vigente.
 
 Reversión de calendario: restaurar los valores anteriores del turno desde el recibo y refrescar solo los tres Draft. Si se retira metadata, eliminar por ciclo nativo únicamente los nueve Custom Fields creados por esta entrega, después de verificar usos posteriores. No borrar columnas SQL ni tocar campos existentes ajenos. Mantener el código que respeta el interruptor hasta retirar la metadata, para no interpretar los defaults 0 como descansos en todos los turnos. La copia del código previo está en `logs/obispo-sample-20260912/schedule-code-before.tar`.
+
+
+## Declaración autorizada de fin de semana
+
+El operador indicó asumir íntegros los tramos de sábado/domingo porque no hay registro ni estructura de almuerzo en esos días. Se aceptan 5 y 8.5 horas mediante el servicio nativo `retroactive_draft_review`, no mediante edición de campos calculados. La declaración conserva un objeto `assumption`, deducción de pausa cero, referencia documental y motivo explícito; no afirma verificación por reloj ni crea una regla automática para otros fines de semana.
+
+`scripts/review_documented_overtime_weekend.py` exige un plan privado con hash, dos ventanas exactas de fin de semana, mismo empleado/aprobador, Draft y ausencia de inscripciones activas ajenas. Habilita el motor en Desarrollo con fecha efectiva 2026-08-10 manteniendo scheduler apagado. Usa preview/token/apply nativos, prueba repetición y conserva dos Overtime Reconciliation Run. Los borradores y sus campos económicos permanecen intactos; su vista previa resuelve la declaración manual guardada.
+
+Ensayo con rollback, repetición y aplicación con lectura posterior pasaron: dos revisiones manuales actuales Verified, total13.5h, comparación original Waiting conservada, sin nuevos Checkins, salarios, elecciones ni aprobaciones. No confundir Verified de la declaración manual con marcaciones completas. El viernes no forma parte de la suposición autorizada para fines de semana.
+
+La liquidación sigue separada: la muestra requiere política publicada, tarifa con asignación salarial, evidencia semanal completa y elección expresa del empleado cuando corresponde descanso. No se infiere elección de pago/descanso ni salario a partir de la suposición sobre almuerzo. El tema de las pausas de esas dos fechas está resuelto; no volver a preguntarlo.
+
+Reversión operativa: si se desea detener nueva conciliación, guardar enable_checkin_overtime_reconciliation=0; no borrar los dos historiales auditados. Una corrección de horas requiere nueva revisión trazable con motivo. La fecha efectiva anterior era vacía; conservar el recibo. Un revert de código no elimina auditorías ni revierte configuración.
