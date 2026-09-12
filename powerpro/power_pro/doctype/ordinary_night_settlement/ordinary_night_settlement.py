@@ -5,10 +5,16 @@ from frappe.model.document import Document
 from frappe.utils import cint, getdate, now_datetime
 from powerpro.controllers import ordinary_night as night
 from powerpro.controllers.checkin_overtime import _json
+from powerpro.controllers.overtime import _reconciliation_rows
 from powerpro.controllers.overtime_cash_settlement import _create_additional_salaries, before_cancel_adjustment, cancel_cash_settlement
 
 
 class OrdinaryNightSettlement(Document):
+    def check_if_latest(self):
+        employees = night.lock_employees_before_save(self)
+        super().check_if_latest()
+        night.check_locked_employee(self, employees)
+
     def validate(self):
         if self.docstatus==2:return
         if self.docstatus==0:
@@ -38,7 +44,7 @@ class OrdinaryNightSettlement(Document):
         self.night_hours=current['ordinary_hours'];self.hourly_rate=current['hourly_rate'];self.night_percent=current['night_percent']
         self.settlement_amount=current['amount'];self.currency=current['currency'];self.company=current['input']['company']
         self.active_claim=hashlib.sha256(f'{self.employee}|{getdate(self.work_date)}'.encode()).hexdigest()
-        others=frappe.get_all(self.doctype,filters={'active_claim':self.active_claim,'docstatus':1},pluck='name',limit=1)
+        others=_reconciliation_rows(self.doctype,for_update=True,filters={'active_claim':self.active_claim,'docstatus':1},pluck='name',limit=1)
         if others:frappe.throw(_('Ya existe una liquidación nocturna ordinaria para esta jornada.'))
         self.status='Approved';self.approved_by=frappe.session.user;self.approved_on=now_datetime()
 
@@ -53,7 +59,7 @@ class OrdinaryNightSettlement(Document):
         frappe.db.get_value('Employee',self.employee,'name',for_update=True)
         before_cancel_adjustment(self)
         for source_type in ['Overtime Authorization','Retroactive Overtime Adjustment']:
-            refs=frappe.get_all(source_type,filters={'employee':self.employee,'work_date':self.work_date,'docstatus':1,
+            refs=_reconciliation_rows(source_type,for_update=True,filters={'employee':self.employee,'work_date':self.work_date,'docstatus':1,
                 'settlement_status':['in',list(night.FINAL)]},fields=['name','evidence_snapshot'])
             for ref in refs:
                 snapshot=frappe.parse_json(ref.evidence_snapshot or '{}')

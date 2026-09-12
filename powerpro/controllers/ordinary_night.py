@@ -15,6 +15,21 @@ FINAL = {'Created', 'Payroll Submitted', 'Paid', 'Credited'}
 COVERAGE_PENDING = 'La jornada contiene recargo nocturno fuera de la autorización; complete su liquidación ordinaria independiente.'
 
 
+def lock_employees_before_save(doc):
+    """Acquire the employee mutex before Frappe locks the parent and its children."""
+    stored = frappe.db.get_value(doc.doctype, doc.name, 'employee') if not doc.is_new() else None
+    employees = {name for name in (stored, doc.employee) if name}
+    for name in sorted(employees):
+        frappe.db.get_value('Employee', name, 'name', for_update=True)
+    return employees
+
+
+def check_locked_employee(doc, employees):
+    before = doc.get_doc_before_save()
+    if before and before.employee not in employees:
+        frappe.throw(_('El empleado del documento cambió; recargue antes de continuar.'))
+
+
 def check_role():
     settings = frappe.get_single('DGII Payroll Settings')
     if not verification_roles(settings.get('overtime_manual_verification_roles')).intersection(frappe.get_roles()):

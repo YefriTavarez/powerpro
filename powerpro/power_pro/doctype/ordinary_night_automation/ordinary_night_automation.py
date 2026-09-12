@@ -5,9 +5,15 @@ from frappe import _
 from frappe.utils import getdate,now_datetime,cint
 from frappe.model.document import Document
 from powerpro.controllers import ordinary_night as night
+from powerpro.controllers.overtime import _reconciliation_rows
 
 
 class OrdinaryNightAutomation(Document):
+    def check_if_latest(self):
+        employees = night.lock_employees_before_save(self)
+        super().check_if_latest()
+        night.check_locked_employee(self, employees)
+
     def validate(self):
         if self.docstatus==2:return
         night.check_role()
@@ -37,7 +43,7 @@ class OrdinaryNightAutomation(Document):
 
     def before_submit(self):
         frappe.db.get_value('Employee',self.employee,'name',for_update=True)
-        others=frappe.get_all(self.doctype,filters=[['employee','=',self.employee],['docstatus','=',1],
+        others=_reconciliation_rows(self.doctype,for_update=True,filters=[['employee','=',self.employee],['docstatus','=',1],
             ['from_date','<=',self.to_date],['to_date','>=',self.from_date]],pluck='name',limit=1)
         if others:frappe.throw(_('Ya existe una programación para este empleado y período: {0}.').format(others[0]))
         self.reset_days()
@@ -58,3 +64,8 @@ class OrdinaryNightAutomation(Document):
         night.check_role()
         # A paused/cancelled enrollment does not reverse the underlying earnings.
         frappe.db.get_value('Employee',self.employee,'name',for_update=True)
+        # The worker updates operational children without changing the parent
+        # timestamp. A form loaded before that update must not erase the result
+        # when Frappe saves its children during cancellation.
+        before=self.get_doc_before_save()
+        self.set('days',[row.as_dict() for row in before.days])

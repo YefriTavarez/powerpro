@@ -6,6 +6,7 @@ from frappe import _
 from frappe.utils import cint,getdate,now_datetime
 from powerpro.controllers import ordinary_night as night
 from powerpro.controllers.checkin_overtime import _json
+from powerpro.controllers.overtime import _reconciliation_rows
 
 DT='Ordinary Night Automation'
 DAY='Ordinary Night Automation Day'
@@ -30,18 +31,18 @@ def _as_approver(doc):
 
 def _evaluate(doc,row):
     doc.validate_policy()
-    employee=frappe.get_doc('Employee',doc.employee)
+    employee=frappe.get_doc('Employee',doc.employee,for_update=True)
     if employee.company!=doc.company:frappe.throw(_('La empresa del empleado cambió; revise la programación.'))
     if employee.date_of_joining and getdate(row.work_date)<getdate(employee.date_of_joining):
         frappe.throw(_('La fecha es anterior al ingreso del empleado.'))
     if employee.relieving_date and getdate(row.work_date)>getdate(employee.relieving_date):
         frappe.throw(_('La fecha es posterior a la salida del empleado.'))
-    previous=frappe.get_all(night.DT,filters={'employee':doc.employee,'work_date':row.work_date},fields=['name','docstatus'],limit=101)
+    previous=_reconciliation_rows(night.DT,for_update=True,filters={'employee':doc.employee,'work_date':row.work_date},fields=['name','docstatus'],limit=101)
     if len(previous)>100:frappe.throw(_('Demasiadas revisiones nocturnas para esta jornada.'))
     active=[r for r in previous if r.docstatus==1]
     if len(active)>1:frappe.throw(_('Existen varias liquidaciones activas; requiere revisión.'))
     if active:
-        existing=frappe.get_doc(night.DT,active[0].name);existing.check_permission('read')
+        existing=frappe.get_doc(night.DT,active[0].name,for_update=True);existing.check_permission('read')
         fresh=night.validate_fresh(existing)
         return {'status':'Existing','settlement':existing.name,'night_hours':fresh['ordinary_hours'],'amount':fresh['amount'],
             'input_hash':fresh['input_hash'],'summary':_('Se conserva la liquidación existente.'),'issues':'[]'}
