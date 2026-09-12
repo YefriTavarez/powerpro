@@ -91,6 +91,25 @@ frappe.provide("powerpro.overtime_calendar");
 			}
 			html += `<div class="alert alert-info">${list(weekly.notes || [])}</div>`;
 		}
+		if (result.overnight && result.overnight.applicable) {
+			const night = result.overnight;
+			html += `<h5>${escape(__("Madrugada y autorización"))}</h5>`;
+			if (night.available) {
+				const labels = {"Needs Review":"Requiere revisión", "Previous authorized session":"Posible continuación de la jornada autorizada"};
+				if (night.interpretations.length) html += table(["Marcación", "Hora", "Tipo guardado", "Interpretación propuesta"],
+					night.interpretations.map((r) => [r.checkin, r.time, r.stored_log_type, __(labels[r.interpretation] || r.interpretation)]));
+				if (night.intervals.length) html += table(["Inicio propuesto de trabajo", "Fin propuesto de trabajo"],night.intervals.map((r) => [r.start,r.end]));
+				const reasons = {incomplete_shift_context:"No se pudo confirmar el contexto de turnos",
+					authorization_not_ended:"La autorización todavía no ha terminado",overlapping_authorizations:"Hay autorizaciones superpuestas",
+					missing_shift_policy:"Faltan las reglas del turno",sync_not_confirmed:"La sincronización no cubre el fin autorizado",
+					excluded_checkins:"Hay marcaciones excluidas de Auto Attendance",missing_captured_anchor:"Falta el turno de origen en las marcaciones elegibles",
+					extended_session_over_24h:"La jornada extendida supera el límite de revisión de 24 horas",
+					next_shift_overlap:"Una marcación también cabe en el turno siguiente",punch_sequence_requires_review:"La secuencia de marcaciones requiere revisión",
+					missing_worked_interval:"Faltan intervalos de trabajo calculables"};
+				if (night.coverage_blockers.length) html += `<div class="alert alert-warning">${list(night.coverage_blockers.map((r) => reasons[r] || r))}</div>`;
+			}
+			html += list(night.notes || []);
+		}
 		if (result.pricing) {
 			const price = result.pricing;
 			const money = (value) => `${price.currency} ${Number(value || 0).toFixed(2)}`;

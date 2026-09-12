@@ -148,3 +148,41 @@ Current Shift Type options are not an immutable historical settings snapshot.
 
 Additional tests: `python3 tests/test_overtime_shift_evidence.py` (pure, no site).
 Rollback: revert the v3 commit and clear the explicit Development site's cache.
+
+## Overnight authorization proposal (v4)
+
+Submitted Overtime Authorizations crossing midnight now show a separate overnight
+proposal. It anchors to a captured same-day shift ending no later than the authorized
+start, and extends that session only in memory, up to the authorized end. The full
+extended session has a conservative 24-hour diagnostic boundary. The displayed
+intervals describe work evidence, including ordinary time, not payable OT totals.
+
+Eligible punches after the ordinary shift can join that proposed session if they
+are outside the following shift's reception window. Following windows use current
+active Shift Assignments, Employee default shift when unassigned, and captured
+windows on following-day punches. A competing next-shift window, overlapping
+submitted authorization or incomplete permission-visible context prevents an
+unambiguous proposal. Hidden record IDs are never returned; internal bounded ID
+checks prevent treating a permission-filtered subset as complete evidence.
+
+The interpreter honors the Shift Type's strict/alternating direction rule. An IN
+reinterpreted by alternation remains IN in the database and carries a review warning.
+Strict mode does not silently relabel it. Missing start/exit punches are never
+synthesized. Original skip-auto-attendance flags remain effective. Future windows,
+missing/stale synchronization and invalid sequences are explicit blockers.
+
+The source digest includes visible punches, assignments and policies. No attendance,
+authorization, payment, or scheduling setting is saved. `settlement_eligible` remains
+false even when the proposal has no blockers: synchronization alone does not prove
+attendance, and weekly/legal settlement policy is still a separate gate.
+
+Development readback on 2026-09-11: all 79 punches had skip_auto_attendance=1 and
+were created within one second on 2026-08-19. No Version, Comment, Data Import or
+Server Script supplied an explanation. This is consistent with a batch load but
+its origin and intent are unconfirmed; no flags were cleared based on that inference.
+
+Additional tests: `python3 tests/test_overtime_overnight.py`. The service requires
+read access to the employee, checkins, shift assignments and shift policies. Draft
+authorizations and retroactive adjustments are not treated as prior overnight
+approval. Rollback is code-only: revert the v4 commit and clear the Development
+site's cache. No migration or historical attendance generation is needed.

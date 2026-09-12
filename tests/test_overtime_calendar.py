@@ -133,6 +133,7 @@ sys.modules['frappe'] = frappe
 utils = types.ModuleType('frappe.utils')
 utils.flt = lambda x: float(x or 0)
 utils.get_datetime = dt
+utils.now_datetime = lambda: dt("2026-09-30")
 utils.getdate = lambda x: date.fromisoformat(str(x)[:10])
 sys.modules['frappe.utils'] = utils
 adapter = types.ModuleType('powerpro.controllers.overtime')

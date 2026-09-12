@@ -75,3 +75,11 @@ const emptyShiftHtml = api.render({name:"AUTH",evidence_source:"current",baselin
  weekly_evidence:{notes:[],weeks:[{week_start:"2026-09-21",days:[],issues:[],shift_comparison:{configured:{paired_hours:0},with_corrections:{paired_hours:0},sessions:[],applied_corrections:[],issues:[],notes:[]}}]}});
 assert(emptyShiftHtml.includes("Sin evidencia elegible"));
 console.log("Ineligible shift evidence is not displayed as zero worked hours.");
+const overnightHtml = api.render({name:"AUTH",evidence_source:"current",baseline:{},difference:{},proposed:{segments:[]},warnings:[],assumptions:[],
+ overnight:{applicable:true,available:true,interpretations:[{checkin:xss,time:"2026-09-22T06:00",stored_log_type:"IN",interpretation:"Needs Review"}],
+ intervals:[],coverage_blockers:["next_shift_overlap","sync_not_confirmed"],notes:[xss]}});
+assert(overnightHtml.includes("Madrugada y autorización"));
+assert(overnightHtml.includes("también cabe en el turno siguiente"));
+assert(overnightHtml.includes("Requiere revisión"));
+assert(!overnightHtml.includes("<img"));assert(!overnightHtml.includes("<button"));
+console.log("Overnight UI: ambiguity, coverage and escaping passed.");
