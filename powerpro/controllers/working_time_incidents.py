@@ -121,6 +121,13 @@ def record(source_type,source_name,options,responsible,expected_hash):
     source=monitor._source(source_type,source_name);_access(source);_responsible(source,responsible)
     options=_options(options);result=controls.preview(source_type,source_name,**options)
     if not expected_hash or result['input_hash']!=expected_hash:frappe.throw(_('La evaluación cambió; consulte los controles nuevamente.'))
+    from powerpro.controllers.working_time_reviews import ensure_review
+    review=ensure_review(source,options,responsible)
+    return record_result(source,options,result,responsible,review.name)
+
+
+def record_result(source,options,result,responsible,review_name):
+    source_type,source_name=source.doctype,source.name
     records=[]
     for control in result['controls']:
         key=_evidence_hash(dict(source_type=source_type,source_name=source_name,options=options,code=control['code'],period=_period(control)))
@@ -131,9 +138,15 @@ def record(source_type,source_name,options,responsible,expected_hash):
         if not name:
             doc.update(dict(source_type=source_type,source_name=source_name,employee=source.employee,company=source.company,
                 work_date=source.work_date,control_code=control['code'],period_start=_period(control),
-                incident_key=key,evaluation_options=_json(options),responsible=responsible,status='Open'))
+                incident_key=key,evaluation_options=_json(options),responsible=responsible,status='Open',working_time_review=review_name))
         # Repeating a scenario cannot silently reassign its existing cases.
+        if name and doc.working_time_review and doc.working_time_review!=review_name:
+            frappe.throw(_('La incidencia pertenece a otra evaluación; requiere revisión.'))
         records.append(_update(doc,_proof(result,control,options)))
+        if name and not doc.working_time_review:
+            doc.working_time_review=review_name
+            doc.change_reason=_('Incidencia incorporada a su evaluación vigilada; se conserva la resolución.')
+            with _writing():doc.save(ignore_permissions=True)
     return records
 
 

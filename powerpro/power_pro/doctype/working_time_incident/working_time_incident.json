@@ -225,11 +225,19 @@
    "fieldtype": "Link",
    "read_only": 1,
    "options": "Notification Log"
+  },
+  {
+   "fieldname": "working_time_review",
+   "label": "Evaluación vigilada",
+   "fieldtype": "Link",
+   "options": "Working Time Review",
+   "read_only": 1
   }
  ],
  "field_order": [
   "source_type",
   "source_name",
+  "working_time_review",
   "employee",
   "company",
   "work_date",

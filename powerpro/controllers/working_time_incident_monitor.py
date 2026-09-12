@@ -83,6 +83,10 @@ def process_incident(name):
     """Internal transactional operation; caller must commit or fully rollback."""
     if not enabled():return {'status':'Disabled'}
     doc,source=cases._locked(name)
+    if doc.working_time_review:
+        state=frappe.db.get_value('Working Time Review',doc.working_time_review,'status')
+        if state=='Paused':return {'name':doc.name,'status':'Paused'}
+        if state!='Active':frappe.throw(_('Falta la evaluación inscrita de esta incidencia.'))
     with _as_responsible(doc,source):
         result=cases._refresh(doc,source)
         notices=_notify(doc)
@@ -105,8 +109,9 @@ def _record_failure(name,exc):
 
 
 def _candidates(limit=30):
-    table=frappe.qb.DocType(cases.DT)
-    return (frappe.qb.from_(table).select(table.name).where(table.docstatus==0)
+    table=frappe.qb.DocType(cases.DT);review=frappe.qb.DocType('Working Time Review')
+    return (frappe.qb.from_(table).left_join(review).on(table.working_time_review==review.name)
+        .select(table.name).where(table.docstatus==0).where(review.name.isnull()|(review.status=='Active'))
         .where(table.monitor_checked_on.isnull()|(table.monitor_checked_on<now_datetime()-timedelta(hours=1)))
         .orderby(table.monitor_checked_on).orderby(table.creation).orderby(table.name)
         .limit(max(1,min(cint(limit),100))).run(as_dict=True))
@@ -114,6 +119,8 @@ def _candidates(limit=30):
 
 def scheduled_check():
     if not enabled():return
+    from powerpro.controllers.working_time_reviews import scheduled_scan
+    scheduled_scan()
     for row in _candidates():
         try:
             process_incident(row.name);frappe.db.commit()

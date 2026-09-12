@@ -10,7 +10,7 @@ from powerpro.controllers.overtime import get_retroactive_adjustment_preview
 from powerpro.controllers.overtime_cash_settlement import _get_linked_additional_salaries
 DT=retro.DT
 counts=['Employee','Shift Type','Employee Checkin','Salary Structure Assignment','Overtime Pay Policy',DT,
- 'Working Time Incident','Working Time Evidence Reference','Notification Log','Notification Settings','Version','Error Log','User','Has Role','User Permission','Overtime Work Call','Overtime Authorization','Overtime Reconciliation Run','Ordinary Night Settlement','Additional Salary','Salary Slip']
+ 'Working Time Review','Working Time Incident','Working Time Evidence Reference','Notification Log','Notification Settings','Version','Error Log','User','Has Role','User Permission','Overtime Work Call','Overtime Authorization','Overtime Reconciliation Run','Ordinary Night Settlement','Additional Salary','Salary Slip']
 before={d:frappe.db.count(d) for d in counts}
 settings_before={d:frappe.db.get_singles_dict(d) for d in ['DGII Payroll Settings','Payroll Settings']}
 commit,enqueue,sendmail=frappe.db.commit,frappe.enqueue,frappe.sendmail
@@ -127,7 +127,8 @@ try:
    def rollback(*args,**kw):
     if args or kw:return real_rollback(*args,**kw)
     return real_rollback(save_point='monitor_attempt')
-   patches=[patch.object(monitor,'_candidates',return_value=[frappe._dict(name=name)]),
+   from powerpro.controllers import working_time_reviews as reviews
+   patches=[patch.object(reviews,'scheduled_scan'),patch.object(monitor,'_candidates',return_value=[frappe._dict(name=name)]),
     patch.object(frappe.db,'commit',side_effect=lambda:commits.append(True)),
     patch.object(frappe.db,'rollback',side_effect=rollback),patch.object(frappe,'log_error',side_effect=lambda **kw:logs.append(kw))]
    from contextlib import ExitStack

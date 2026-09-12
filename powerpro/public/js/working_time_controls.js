@@ -28,7 +28,7 @@ powerpro.working_time_controls.add_button = frm => {
                     ${r.controls.map(x=>`<tr><td>${e(labels[x.code]||x.code)}</td><td>${e(states[x.status]||x.status)}</td><td>${e(x.observed)}</td><td>${e(x.limit)} ${e(x.unit==='hours'?'h':x.unit)}</td><td>${x.article ? `Art. ${e(x.article)}. ` : ""}${e(x.message)} ${e(x.start||'')} ${e(x.end||'')}</td></tr>`).join('')}</tbody></table></div>
                     <ul>${r.notes.map(x=>`<li>${e(x)}</li>`).join('')}</ul><p>${__('Problemas de evidencia')}: ${e(r.evidence_issues.length)}</p>`;
                 const dialog=new frappe.ui.Dialog({title:__('Controles de jornada'),size:'extra-large',fields:[{fieldtype:'HTML',fieldname:'result',options:html}],
-                    primary_action_label:__('Guardar incidencias'),primary_action:()=>{
+                    primary_action_label:__('Guardar evaluación e incidencias'),primary_action:()=>{
                         if (frm.is_dirty()) return frappe.msgprint(__('Guarde los cambios antes de registrar incidencias.'));
                         frappe.prompt([{fieldname:'responsible',label:__('Responsable de revisión'),fieldtype:'Link',options:'User',reqd:1}],v=>{
                             if (frm.is_dirty()) return frappe.msgprint(__('Guarde los cambios antes de registrar incidencias.'));
@@ -36,7 +36,10 @@ powerpro.working_time_controls.add_button = frm => {
                                 args:{source_type:dt,source_name:frm.doc.name,options:JSON.stringify(options),responsible:v.responsible,expected_hash:r.input_hash}
                             }).then(({message:rows})=>{
                                 dialog.hide();
-                                if (!rows.length) return frappe.msgprint(__('No hay controles pendientes para registrar.'));
+                                if (!rows.length) {
+                                    frappe.msgprint(__('Evaluación inscrita; actualmente no tiene controles pendientes.'));
+                                    return frappe.set_route('List','Working Time Review',{source_type:dt,source_name:frm.doc.name});
+                                }
                                 frappe.set_route('List','Working Time Incident',{source_type:dt,source_name:frm.doc.name});
                             });
                         },__('Registrar incidencias'),__('Guardar'));

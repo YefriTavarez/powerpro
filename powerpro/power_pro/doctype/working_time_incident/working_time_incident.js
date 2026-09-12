@@ -6,6 +6,7 @@ frappe.ui.form.on('Working Time Incident', {
             return frappe.call({method:'powerpro.controllers.working_time_incidents.'+action,type:'POST',
                 args:{name:frm.doc.name,...args},freeze:true}).then(()=>frm.reload_doc());
         };
+        if (frm.doc.working_time_review) frm.add_custom_button(__('Ver evaluación vigilada'),()=>frappe.set_route('Form','Working Time Review',frm.doc.working_time_review));
         frm.add_custom_button(__('Abrir documento de origen'),()=>frappe.set_route('Form',frm.doc.source_type,frm.doc.source_name));
         frm.add_custom_button(__('Comprobar nuevamente'),()=>call('recheck',{}));
         frm.add_custom_button(__('Asignar responsable'),()=>frappe.prompt([

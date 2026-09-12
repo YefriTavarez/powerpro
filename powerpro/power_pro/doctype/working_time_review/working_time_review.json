@@ -1,0 +1,156 @@
+{
+ "doctype": "DocType",
+ "name": "Working Time Review",
+ "module": "Power Pro",
+ "autoname": "hash",
+ "engine": "InnoDB",
+ "track_changes": 1,
+ "fields": [
+  {
+   "fieldname": "source_type",
+   "label": "Tipo de origen",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_name",
+   "label": "Documento de origen",
+   "fieldtype": "Dynamic Link",
+   "read_only": 1,
+   "options": "source_type",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "employee",
+   "label": "Empleado",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Employee",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "company",
+   "label": "Empresa",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Company"
+  },
+  {
+   "fieldname": "work_date",
+   "label": "Fecha de trabajo",
+   "fieldtype": "Date",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "responsible",
+   "label": "Responsable de la evaluación",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "label": "Estado",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Active\nPaused",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "evaluation_options",
+   "label": "Condiciones elegidas para la evaluación",
+   "fieldtype": "Code",
+   "read_only": 1,
+   "options": "JSON",
+   "reqd": 1
+  },
+  {
+   "fieldname": "registered_by",
+   "label": "Inscrito por",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "registered_on",
+   "label": "Fecha de inscripción",
+   "fieldtype": "Datetime",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "change_reason",
+   "label": "Motivo del último cambio",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "monitor_status",
+   "label": "Resultado de vigilancia",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Pending\nChecked\nAccess Required\nNeeds Review\nError",
+   "default": "Pending",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "monitor_checked_on",
+   "label": "Última comprobación automática",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "monitor_message",
+   "label": "Detalle de vigilancia",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "review_key",
+   "label": "Identidad de evaluación",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "unique": 1,
+   "hidden": 1,
+   "no_copy": 1
+  }
+ ],
+ "field_order": [
+  "source_type",
+  "source_name",
+  "employee",
+  "company",
+  "work_date",
+  "responsible",
+  "status",
+  "evaluation_options",
+  "registered_by",
+  "registered_on",
+  "change_reason",
+  "monitor_status",
+  "monitor_checked_on",
+  "monitor_message",
+  "review_key"
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "report": 1
+  }
+ ]
+}
