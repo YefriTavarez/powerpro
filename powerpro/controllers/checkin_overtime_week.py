@@ -30,6 +30,8 @@ def load_week(doc,employee,assignments,*,for_update=False):
         if name not in shifts:
             shifts[name]=frappe.get_doc('Shift Type',name,for_update=for_update)
             policies[name]={k:shifts[name].get(k) for k in POLICY_FIELDS}
+            if shifts[name].get('custom_hora_salida_viernes'):
+                policies[name]['custom_hora_salida_viernes']=shifts[name].get('custom_hora_salida_viernes')
         return shifts[name]
     for row in rows:
         if row.get('shift'):shift(row.shift)

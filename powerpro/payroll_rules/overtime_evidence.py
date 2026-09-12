@@ -2,7 +2,7 @@
 from copy import deepcopy
 from datetime import timedelta
 from powerpro.payroll_rules.overtime import _as_datetime,WorkInterval,_outside_adjacent_portions,_subtract_interval
-from powerpro.payroll_rules.overtime_shift_evidence import interpret_shift_punches
+from powerpro.payroll_rules.overtime_shift_evidence import interpret_shift_punches, captured_window_kind
 from powerpro.payroll_rules.overtime_calendar import reconcile_calendar_intervals
 from powerpro.payroll_rules.overtime_work_call import derive_reconciliation_snapshot
 
@@ -37,8 +37,7 @@ def evaluate_evidence(*, authorization, rows, shift, contexts, next_windows, now
     group=[]
     for raw in sorted(rows,key=lambda r:(_as_datetime(r['time']),str(r.get('name') or ''))):
         stamp=_as_datetime(raw['time'])
-        captured=(raw.get('shift')==authorization['shift'] and raw.get('shift_start') and raw.get('shift_end')
-                  and _as_datetime(raw['shift_start'])==ordinary_start and _as_datetime(raw['shift_end'])==ordinary_end)
+        captured=captured_window_kind(raw,authorization['shift'],ordinary_start,ordinary_end,shift)
         # Include documented shift attendance and punches in the authorization.
         # The caller also supplies a bounded late-out tolerance for overrun review.
         in_window=session_start<=stamp<=session_end if observation_window else start<=stamp<=end+timedelta(minutes=float(shift.get('allow_check_out_after_shift_end_time') or 0))
@@ -50,6 +49,11 @@ def evaluate_evidence(*, authorization, rows, shift, contexts, next_windows, now
         if overlaps:
             issue('adjacent_shift_overlap' if any(w.get('relation')=='previous' for w in overlaps) else 'next_shift_overlap');continue
         r=deepcopy(raw)
+        if captured=='friday_base':
+            result['interpretations'].append({'checkin':raw.get('name'),'time':stamp.isoformat(),
+                'stored_log_type':raw.get('log_type'),'group':'configured_friday_schedule',
+                'captured_shift_end':_as_datetime(raw['shift_end']).isoformat(),
+                'scheduled_shift_end':ordinary_end.isoformat()})
         if not captured:
             result['interpretations'].append({'checkin':raw.get('name'),'time':stamp.isoformat(),'stored_log_type':raw.get('log_type'),
                 'group':'historical_observation' if observation_window else 'authorized_extension'})

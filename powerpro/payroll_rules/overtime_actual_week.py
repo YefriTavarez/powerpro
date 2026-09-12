@@ -9,7 +9,7 @@ from datetime import datetime, time, timedelta
 from math import isfinite
 
 from powerpro.payroll_rules.overtime import REGULAR_DAY, _as_datetime
-from powerpro.payroll_rules.overtime_shift_evidence import interpret_shift_punches, union_intervals
+from powerpro.payroll_rules.overtime_shift_evidence import interpret_shift_punches, union_intervals, captured_window_kind
 
 INFORMATIONAL = {'direction_reinterpreted', 'first_last_includes_breaks'}
 
@@ -58,12 +58,9 @@ including ordinary time, while keeping original Checkins as dependencies.
         synced = policy.get('last_sync_of_checkin')
         if not certified and (not synced or _as_datetime(synced) < min(b, cutoff)):
             local.append('weekly_sync_incomplete')
-        matching = [r for r in relevant if r.get('shift') == schedule['shift']
-                    and r.get('shift_start') and r.get('shift_end')
-                    and _as_datetime(r['shift_start']) == a and _as_datetime(r['shift_end']) == b]
-        valid = any(session['shift'] == schedule['shift']
-                    and _as_datetime(session['shift_start']) == a
-                    and _as_datetime(session['shift_end']) == b for session in interpreted['sessions'])
+        matching = [r for r in relevant if captured_window_kind(r,schedule['shift'],a,b,policy)]
+        valid = any(captured_window_kind(session,schedule['shift'],a,b,policy)
+                    for session in interpreted['sessions'])
         accepted = any(r.get('name') in accepted_names for r in matching)
         absence = [r for r in attendances if str(r['attendance_date']) == day
                    and r.get('docstatus') == 1 and r.get('status') in {'Absent','On Leave'}]

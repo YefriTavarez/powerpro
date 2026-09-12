@@ -162,6 +162,8 @@ def _data(doc,*,for_update=False,include_weekly=True,observation_window=None):
     weekly=load_week(doc,employee,assignments,for_update=for_update) if include_weekly else {'start':week_start}
     config={k:settings.get(k) for k in ['weekly_expected_hours','max_weekly_extra_hours','start_night_hours','end_night_hours','extra_hours_rate','extraordinary_hours_rate','night_hours_rate']}
     policy={k:shift.get(k) for k in ['name','modified','start_time','end_time','last_sync_of_checkin','determine_check_in_and_check_out','working_hours_calculation_based_on','begin_check_in_before_shift_start_time','allow_check_out_after_shift_end_time']}
+    if shift.get('custom_hora_salida_viernes'):
+        policy['custom_hora_salida_viernes']=shift.get('custom_hora_salida_viernes')
     authorization={'name':doc.name,'start':str(start),'end':str(end),'shift':doc.shift_type,'maximum_hours':flt(doc.maximum_hours)}
     current_context=next(c for c in contexts if c['date']==str(start.date()))
     lower=min(start,get_datetime(current_context['shift_start']))-timedelta(minutes=flt(shift.begin_check_in_before_shift_start_time))

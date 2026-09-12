@@ -18,3 +18,7 @@ Sitio: igcaribe.fortabs.com, Desarrollo. Código funcional local76a5c89 / VPS237
 | Simulación revisada y piloto delimitado | docs/overtime-real-sample.md: tres fechas históricas, 14 marcas reales, cuatro variantes por fecha; script de lectura con hashes y contadores releídos | Muestra preparada, revisión humana y piloto pendientes. Exclusiones/sincronización impiden usarla directamente. Scheduler global apagado; cuatro fuentes legacy fuera del alcance. |
 
 No se declara el objetivo completo. Ya existe una muestra histórica concreta para revisar; falta su revisión por un operador autorizado y delimitar las autorizaciones nuevas del piloto. Los ejemplos y las configuraciones disponibles no sustituyen esa aceptación. El plan original se conserva y se revisarán sus casos de aceptación durante el piloto; esta tabla no redefine su alcance.
+
+## Actualización: muestra seleccionada por el operador
+
+El operador aportó un PDF, seleccionó una persona y confirmó cuatro ventanas del 13 al 16 de agosto. Autorizó descargar sus Checkins desde Producción; diez marcas y el empleado mínimo ya están importados y verificados en Desarrollo. Esto sustituye la selección pendiente de la muestra de julio. Ver `overtime-imported-sample.md` para alcance, recibos, corrección del viernes y validación. Hay diferencias documentales y marcas ausentes; no se aprobaron pagos. Un día ya tiene liquidación en Producción. La semana adicional requiere autorización tras el rechazo de revisión automática, por lo que la evidencia semanal y el piloto completo siguen pendientes.

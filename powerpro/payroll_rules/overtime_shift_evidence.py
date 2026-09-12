@@ -4,13 +4,36 @@ No site access. Current Shift Type options are an interpretation, not an immutab
 historical policy or a certification of attendance.
 """
 from datetime import timedelta
-from powerpro.payroll_rules.overtime import _as_datetime
+from powerpro.payroll_rules.overtime import _as_datetime, get_shift_window
 from powerpro.payroll_rules.overtime_weekly import reconstruct_week
 
 ALTERNATING = 'Alternating entries as IN and OUT during the same shift'
 STRICT = 'Strictly based on Log Type in Employee Checkin'
 FIRST_LAST = 'First Check-in and Last Check-out'
 EVERY_PAIR = 'Every Valid Check-in and Check-out'
+
+
+def captured_window_kind(row, shift_name, start, end, policy):
+    """Match a resolved schedule to raw HRMS capture without rewriting it.
+
+    HRMS captures the base Shift Type end even when the payroll schedule has
+    an explicit Friday end. Only that exact, configured base/special pair is
+    accepted; arbitrary mismatches and another shift remain unmatched.
+    """
+    if row.get('shift') != shift_name or not row.get('shift_start') or not row.get('shift_end'):
+        return None
+    a, b = _as_datetime(start), _as_datetime(end)
+    captured = (_as_datetime(row['shift_start']), _as_datetime(row['shift_end']))
+    if captured == (a, b):
+        return 'exact'
+    friday = policy.get('custom_hora_salida_viernes')
+    if a.weekday() != 4 or not friday or not policy.get('start_time') or not policy.get('end_time'):
+        return None
+    base = get_shift_window(a.date(), policy['start_time'], policy['end_time'])
+    special = get_shift_window(a.date(), policy['start_time'], policy['end_time'], friday)
+    if base != special and special == (a, b) and captured == base:
+        return 'friday_base'
+    return None
 
 
 def union_intervals(intervals):
