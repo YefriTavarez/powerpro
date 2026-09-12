@@ -15,5 +15,9 @@ powerpro.checkin_overtime.add_actions = (frm) => {
                 });
         }, __("Overtime"));
         frm.add_custom_button(__("Historial de conciliación"), () => frappe.set_route("List", "Overtime Reconciliation Run", {authorization: frm.doc.name}), __("Overtime"));
+        if (enrolled) frm.add_custom_button(__("Elección y descanso del empleado"), () => {
+            if (message.election) frappe.set_route("Form", "Overtime Settlement Election", message.election);
+            else frappe.new_doc("Overtime Settlement Election", {authorization: frm.doc.name, choice: frm.doc.planned_settlement});
+        }, __("Overtime"));
     });
 };

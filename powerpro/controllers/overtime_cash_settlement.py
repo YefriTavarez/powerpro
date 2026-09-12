@@ -38,6 +38,13 @@ def build_cash_settlement(adjustment, reconciliation):
 		if basis.get("name") != assignment.name or abs(flt(basis.get("hourly_rate")) - hourly_rate) > .000001:
 			frappe.throw(_("La tarifa salarial cambió desde la conciliación; revise la evidencia antes de liquidar."))
 	rates = reconciliation.get("rates") or _get_overtime_rates()
+	weekly_percent = None
+	policy = reconciliation.get("pay_policy")
+	election = reconciliation.get("settlement_election")
+	if policy and flt(reconciliation.get("weekly_rest_hours")):
+		if not policy.get("weekly_rest_cash") or not election or election.get("choice") != "Cash":
+			frappe.throw(_("El efectivo por descanso semanal requiere la elección expresa del empleado y una política aprobada."))
+		weekly_percent = policy["weekly_rest_percent"]
 	settlement = calculate_cash_settlement(
 		hourly_rate=hourly_rate,
 		regular_35_hours=reconciliation.get("regular_35_hours"),
@@ -48,6 +55,7 @@ def build_cash_settlement(adjustment, reconciliation):
 		regular_overtime_percent=rates.get("regular_overtime_percent"),
 		extraordinary_overtime_percent=rates.get("extraordinary_overtime_percent"),
 		night_hours_percent=rates.get("night_hours_percent"),
+		weekly_rest_overtime_percent=weekly_percent,
 	)
 	settlement.update({
 		"salary_structure_assignment": assignment.name,
@@ -57,6 +65,7 @@ def build_cash_settlement(adjustment, reconciliation):
 	if reconciliation.get("pay_policy"):
 		settlement["pay_policy"] = reconciliation["pay_policy"]
 		settlement["rate_basis"] = reconciliation["rate_basis"]
+		settlement["settlement_election"] = reconciliation.get("settlement_election")
 	return settlement
 
 

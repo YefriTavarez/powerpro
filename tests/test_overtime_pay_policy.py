@@ -30,7 +30,7 @@ class PolicyTest(unittest.TestCase):
     def test_compensatory_equivalence_must_be_explicit(self):
         p=policy();p['enable_compensatory']=1
         with self.assertRaises(ValueError):validate_policy(p)
-        p.update(leave_type='Compensatory',hours_per_leave_day=8,leave_increment=.5)
+        p.update(leave_type='Compensatory',hours_per_leave_day=8,leave_increment=.5,rest_hours_per_worked_hour=1)
         validate_policy(p)
         p['hours_per_leave_day']=0
         with self.assertRaises(ValueError):validate_policy(p)

@@ -1,0 +1,230 @@
+{
+ "doctype": "DocType",
+ "name": "Overtime Settlement Election",
+ "module": "Power Pro",
+ "engine": "InnoDB",
+ "autoname": "format:ELEC-HE-{YYYY}-{#####}",
+ "is_submittable": 1,
+ "track_changes": 1,
+ "fields": [
+  {
+   "fieldname": "authorization",
+   "fieldtype": "Link",
+   "label": "Autorización",
+   "options": "Overtime Authorization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Empleado",
+   "options": "Employee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Empresa",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "choice",
+   "fieldtype": "Select",
+   "label": "Elección del empleado",
+   "options": "\nCash\nCompensatory Rest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee_reference",
+   "fieldtype": "Small Text",
+   "label": "Evidencia de la elección del empleado",
+   "reqd": 1
+  },
+  {
+   "fieldname": "policy",
+   "fieldtype": "Link",
+   "label": "Política aplicable",
+   "options": "Overtime Pay Policy",
+   "read_only": 1
+  },
+  {
+   "fieldname": "planned_start",
+   "fieldtype": "Datetime",
+   "label": "Inicio del descanso",
+   "depends_on": "eval:doc.choice==\"Compensatory Rest\""
+  },
+  {
+   "fieldname": "planned_end",
+   "fieldtype": "Datetime",
+   "label": "Fin del descanso",
+   "depends_on": "eval:doc.choice==\"Compensatory Rest\""
+  },
+  {
+   "fieldname": "minimum_rest_hours",
+   "fieldtype": "Float",
+   "label": "Descanso mínimo continuo (horas)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "credit_hours",
+   "fieldtype": "Float",
+   "label": "Horas para el banco de licencia",
+   "read_only": 1
+  },
+  {
+   "fieldname": "required_leave_days",
+   "fieldtype": "Float",
+   "label": "Días de licencia de esta obligación",
+   "read_only": 1,
+   "precision": "4"
+  },
+  {
+   "fieldname": "weekly_rest",
+   "fieldtype": "Check",
+   "label": "Trabajo durante descanso semanal",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rest_week",
+   "fieldtype": "Date",
+   "label": "Semana de la obligación",
+   "read_only": 1
+  },
+  {
+   "fieldname": "active_authorization",
+   "fieldtype": "Data",
+   "label": "Reserva de autorización",
+   "read_only": 1,
+   "hidden": 1,
+   "unique": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "active_weekly_rest",
+   "fieldtype": "Data",
+   "label": "Reserva de descanso semanal",
+   "read_only": 1,
+   "hidden": 1,
+   "unique": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "previous_method",
+   "fieldtype": "Data",
+   "label": "Forma prevista anterior",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "label": "Estado",
+   "read_only": 1,
+   "no_copy": 1,
+   "default": "Draft"
+  },
+  {
+   "fieldname": "leave_application",
+   "fieldtype": "Link",
+   "label": "Licencia aprobada",
+   "options": "Leave Application",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "actual_start",
+   "fieldtype": "Datetime",
+   "label": "Inicio de descanso disfrutado",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "actual_end",
+   "fieldtype": "Datetime",
+   "label": "Fin de descanso disfrutado",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "enjoyment_reference",
+   "fieldtype": "Small Text",
+   "label": "Evidencia de disfrute",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Aprobado por",
+   "options": "User",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "approved_on",
+   "fieldtype": "Datetime",
+   "label": "Aprobado el",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "confirmed_by",
+   "fieldtype": "Link",
+   "label": "Confirmado por",
+   "options": "User",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "confirmed_on",
+   "fieldtype": "Datetime",
+   "label": "Confirmado el",
+   "read_only": 1,
+   "no_copy": 1
+  }
+ ],
+ "field_order": [
+  "authorization",
+  "employee",
+  "company",
+  "choice",
+  "employee_reference",
+  "policy",
+  "planned_start",
+  "planned_end",
+  "minimum_rest_hours",
+  "credit_hours",
+  "required_leave_days",
+  "weekly_rest",
+  "rest_week",
+  "active_authorization",
+  "active_weekly_rest",
+  "previous_method",
+  "status",
+  "leave_application",
+  "actual_start",
+  "actual_end",
+  "enjoyment_reference",
+  "approved_by",
+  "approved_on",
+  "confirmed_by",
+  "confirmed_on"
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1
+  }
+ ]
+}

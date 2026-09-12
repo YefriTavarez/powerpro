@@ -19,6 +19,7 @@ def calculate_cash_settlement(
 	regular_overtime_percent=35,
 	extraordinary_overtime_percent=100,
 	night_hours_percent=15,
+	weekly_rest_overtime_percent=None,
 ):
 	"""Return auditable Additional Salary lines for an approved snapshot.
 
@@ -68,6 +69,9 @@ def calculate_cash_settlement(
 		premium_percent=night_percent,
 		include_base_hour=False,
 	)
+	if weekly_rest_overtime_percent is not None:
+		_append_line(lines,component=EXTRAORDINARY_100_COMPONENT,hours=weekly_rest,hourly_rate=rate,
+			premium_percent=_non_negative(weekly_rest_overtime_percent,"Weekly rest percentage"),include_base_hour=True)
 
 	return {
 		"hourly_rate": float(_money(rate)),
@@ -75,7 +79,7 @@ def calculate_cash_settlement(
 		"total_amount": float(
 			_money(sum((_decimal(line["amount"]) for line in lines), Decimal("0")))
 		),
-		"unsettled_weekly_rest_hours": float(weekly_rest),
+		"unsettled_weekly_rest_hours": float(weekly_rest) if weekly_rest_overtime_percent is None else 0,
 	}
 
 

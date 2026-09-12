@@ -66,8 +66,32 @@ def protect_overtime_leave_type_from_standard_request(request, method=None):
 def build_compensatory_preview(authorization, settings=None, bank_state=None, *, for_update=False):
 	from powerpro.controllers.overtime_settlement import settlement_hours
 	settings = settings or frappe.get_single("DGII Payroll Settings")
+	policy = None
+	election = None
+	current_hours = settlement_hours(authorization)
+	period_date = authorization.work_date
+	if authorization.get("evidence_enrolled"):
+		from powerpro.controllers.overtime_rest import get_election,validate_election,election_snapshot
+		from powerpro.payroll_rules.overtime_rest import rest_entitlement
+		frozen = frappe.parse_json(authorization.evidence_snapshot or "{}")
+		policy = frozen.get("input", {}).get("pay_policy")
+		election = get_election(authorization, for_update=for_update)
+		if not policy or not election or election.choice != "Compensatory Rest":
+			frappe.throw(_("Falta la política y elección de descanso aprobadas."))
+		validate_election(election, authorization, policy)
+		entitlement = rest_entitlement(policy, current_hours, weekly_rest=bool(election.weekly_rest))
+		current_hours = entitlement["credit_hours"]
+		period_date = getdate(election.planned_start)
+		settings = frappe._dict(settings.as_dict())
+		settings.update(overtime_compensatory_leave_type=policy["leave_type"],
+			overtime_hours_per_leave_day=policy["hours_per_leave_day"],overtime_leave_increment=policy["leave_increment"])
 	_validate_configuration(settings)
-	leave_period = _get_leave_period(authorization.work_date, authorization.company)
+	leave_period = _get_leave_period(period_date, authorization.company)
+	if election:
+		from datetime import timedelta
+		from frappe.utils import get_datetime
+		if (get_datetime(election.planned_end)-timedelta(microseconds=1)).date()>getdate(leave_period.to_date):
+			frappe.throw(_("El período de licencia debe cubrir toda la programación del descanso."))
 	bank_key = (
 		authorization.employee,
 		authorization.company,
@@ -75,12 +99,19 @@ def build_compensatory_preview(authorization, settings=None, bank_state=None, *,
 		leave_period.name,
 	)
 	bank = (bank_state or {}).get(bank_key)
+	if policy:
+		from powerpro.controllers.overtime import _reconciliation_rows
+		previous = _reconciliation_rows("Overtime Compensatory Credit",for_update=for_update,
+			filters={"employee":authorization.employee,"company":authorization.company,"leave_type":settings.overtime_compensatory_leave_type,
+				"leave_period":leave_period.name,"docstatus":1},fields=["hours_per_day","leave_increment"])
+		if any(abs(flt(r.hours_per_day)-flt(policy["hours_per_leave_day"]))>.000001 or abs(flt(r.leave_increment)-flt(policy["leave_increment"]))>.000001 for r in previous):
+			frappe.throw(_("El banco contiene otra equivalencia; revise su transición antes de mezclar créditos."))
 	if bank is None:
 		bank = _get_bank_totals(*bank_key, for_update=for_update)
 	try:
 		conversion = calculate_compensatory_credit(
 			active_hours_before=bank["active_hours"],
-			current_hours=settlement_hours(authorization),
+			current_hours=current_hours,
 			effective_days_before=bank["effective_days"],
 			hours_per_day=settings.overtime_hours_per_leave_day,
 			leave_increment=settings.overtime_leave_increment,
@@ -112,6 +143,8 @@ def build_compensatory_preview(authorization, settings=None, bank_state=None, *,
 		"will_create_allocation": bool(
 			conversion["days_to_credit"] and not allocation
 		),
+		"pay_policy": policy,
+		"settlement_election": election_snapshot(election) if election else None,
 		**conversion,
 	}
 

@@ -103,6 +103,9 @@ def before_cancel_authorization_settlement(authorization):
 		"settlement_status"
 	) in {SETTLEMENT_CREATED, SETTLEMENT_PAID}:
 		before_cancel_adjustment(authorization)
+	if authorization.get("evidence_enrolled"):
+		from powerpro.controllers.overtime_rest import release_for_source
+		release_for_source(authorization)
 
 
 def cancel_authorization_settlement(authorization):
@@ -193,6 +196,10 @@ def _settle_authorization(doc, *, payroll_date=None, settings=None, preview=None
 		),
 	}
 	frappe.db.set_value(doc.doctype, doc.name, values)
+	if doc.get("evidence_enrolled"):
+		from powerpro.controllers.overtime_rest import get_election
+		election = get_election(doc,for_update=True)
+		if election:election.db_set("status","Credited")
 	doc.add_comment(
 		"Info",
 		_(
@@ -340,6 +347,7 @@ def _reconciliation_snapshot(doc):
 	rates = _get_overtime_rates()
 	policy = None
 	rate_basis = None
+	election = None
 	if doc.get("evidence_enrolled"):
 		from powerpro.payroll_rules.overtime_pay_policy import rates as policy_rates
 		snapshot = frappe.parse_json(doc.evidence_snapshot or "{}")
@@ -348,6 +356,7 @@ def _reconciliation_snapshot(doc):
 			frappe.throw(_("Falta la política guardada de esta conciliación."))
 		rates = policy_rates(policy)
 		rate_basis = snapshot.get("input", {}).get("rate_basis")
+		election = snapshot.get("settlement_election")
 	return {
 		"regular_35_hours": flt(doc.regular_35_hours),
 		"regular_100_hours": flt(doc.regular_100_hours),
@@ -357,6 +366,7 @@ def _reconciliation_snapshot(doc):
 		"rates": rates,
 		"pay_policy": policy,
 		"rate_basis": rate_basis,
+		"settlement_election": election,
 	}
 
 

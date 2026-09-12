@@ -8,7 +8,8 @@ VERSION='overtime-pay-policy-v1'
 FIELDS=('name','company','valid_from','valid_until','approval_reference','approved_by','approved_on',
         'weekly_threshold','regular_percent','extraordinary_percent','night_percent',
         'night_basis','premium_combination','weekly_rest_cash','weekly_rest_percent',
-        'enable_compensatory','leave_type','hours_per_leave_day','leave_increment')
+        'enable_compensatory','leave_type','hours_per_leave_day','leave_increment',
+        'rest_hours_per_worked_hour','weekly_rest_duration_hours','weekly_rest_credit_hours')
 
 
 def validate_policy(policy):
@@ -35,6 +36,10 @@ def validate_policy(policy):
         for field in ['hours_per_leave_day','leave_increment']:
             value=float(policy.get(field) or 0)
             if not isfinite(value) or value<=0:raise ValueError(f'{field} debe ser positivo y finito.')
+        factor=float(policy.get('rest_hours_per_worked_hour') or 0)
+        if not isfinite(factor) or factor<1:raise ValueError('Defina al menos una hora de descanso por hora compensada.')
+        if float(policy['leave_increment']) not in {.5,1}:
+            raise ValueError('La licencia nativa admite incrementos de medio día o día completo en esta versión.')
 
 
 def classify_night_session(worked_intervals, overtime_intervals, *, basis):

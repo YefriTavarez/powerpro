@@ -260,7 +260,10 @@ doc_events = {
 	},
     "Leave Application": {
         "before_submit": "powerpro.controllers.automatic_overtime.lock_leave_balance",
-        "before_cancel": "powerpro.controllers.automatic_overtime.lock_leave_balance",
+        "before_cancel": [
+            "powerpro.controllers.automatic_overtime.lock_leave_balance",
+            "powerpro.controllers.overtime_rest.before_leave_cancel",
+        ],
     },
     "Salary Slip": {
         "before_submit": "powerpro.controllers.automatic_overtime.lock_payroll_inputs",

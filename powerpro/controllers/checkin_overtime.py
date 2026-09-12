@@ -188,14 +188,23 @@ def build_result(doc,*,for_update=False):
                 for segment in result['calculation']['segments']:segment['night_hours']=segment['verified_hours']
             if night['ordinary_premium_hours']:
                 blockers.append('La jornada contiene recargo nocturno fuera de la autorización; complete su liquidación ordinaria independiente.')
-        if result['calculation']['weekly_rest_hours']:
-            blockers.append('El trabajo durante descanso semanal requiere registrar la elección del empleado y completar su liquidación específica.')
+        if any(segment['classification']=='Legal Holiday on Weekly Rest' for segment in result['calculation']['segments']):
+            blockers.append('La coincidencia de feriado y descanso semanal requiere una regla conjunta aprobada e implementada.')
     result['input_hash']=_evidence_hash(data)
     result['input']=data
     if result.get('calculation') and not result['calculation']['weekly_evidence_complete']:
         blockers.append('Falta evidencia semanal completa para clasificar el recargo de horas ordinarias extra.')
-    if doc.planned_settlement!='Cash':
-        blockers.append('Complete la política y el recorrido de descanso compensatorio antes de acreditar licencia.')
+    from powerpro.controllers.overtime_rest import get_election,validate_election,election_snapshot
+    election=get_election(doc,for_update=for_update)
+    needs_election=doc.planned_settlement=='Compensatory Rest' or bool(result.get('calculation',{}).get('weekly_rest_hours'))
+    result['settlement_election']=election_snapshot(election)
+    if needs_election and not election:
+        blockers.append('Falta la elección expresa del empleado y la programación del descanso cuando corresponda.')
+    if election:
+        try:
+            validate_election(election,doc,policy,worked_hours=result.get('snapshot',{}).get('verified_hours'),calculation=result.get('calculation'))
+            if election.choice!=doc.planned_settlement:blockers.append('La elección del empleado no coincide con la forma de liquidación.')
+        except (ValueError,frappe.ValidationError) as exc:blockers.append(str(exc))
     result['settlement_ready']=bool(result['state']=='Verified' and result.get('snapshot') and not blockers)
     result['settlement_blockers']=blockers
     return result
@@ -231,7 +240,8 @@ def process_authorization(name):
         result['state']='Needs Review';result['issues'].append({'code':'verified_source_changed','severity':'review'})
         result['settlement_ready']=False
         result.pop('snapshot',None)
-    changed=doc.get('evidence_last_hash')!=result['input_hash'] or doc.get('evidence_status')!=result['state']
+    changed=(doc.get('evidence_last_hash')!=result['input_hash'] or doc.get('evidence_status')!=result['state']
+             or cint(doc.get('evidence_settlement_ready'))!=cint(result['settlement_ready']))
     if changed:_audit(doc,result)
     visible_issues=list(result['issues'])
     visible_issues.extend({**issue,'scope':'weekly_settlement'} for issue in result.get('weekly_evidence',{}).get('issues',[]))
@@ -275,6 +285,9 @@ def get_status(authorization):
     result={k:doc.get(k) for k in FIELDS}
     result['can_process']=bool(frappe.has_permission(AUTH,'write',doc=doc) and verification_roles(_settings().get('overtime_manual_verification_roles')).intersection(frappe.get_roles(frappe.session.user)))
     result['enabled']=bool(cint(_settings().get('enable_checkin_overtime_reconciliation')))
+    from powerpro.controllers.overtime_rest import get_election
+    election=get_election(doc)
+    result['election']=election.name if election else None
     return result
 
 

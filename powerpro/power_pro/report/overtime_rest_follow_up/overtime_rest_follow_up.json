@@ -1,0 +1,11 @@
+{
+ "doctype": "Report",
+ "name": "Overtime Rest Follow Up",
+ "report_name": "Overtime Rest Follow Up",
+ "module": "Power Pro",
+ "ref_doctype": "Overtime Settlement Election",
+ "report_type": "Script Report",
+ "is_standard": "Yes",
+ "disabled": 0,
+ "roles": [{"role": "System Manager"}, {"role": "HR Manager"}]
+}
