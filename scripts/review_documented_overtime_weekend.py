@@ -60,13 +60,16 @@ def review(plan):
         if len(intervals) != 1 or get_datetime(intervals[0]['start']) != get_datetime(doc.authorization_start) or get_datetime(intervals[0]['end']) != get_datetime(doc.authorization_end):
             raise ValueError('Declaration must match the existing documentary window')
         latest = service.latest(doc)
+        needs_review = True
         if latest:
             saved = frappe.parse_json(latest.evidence)['after']
             if saved['review'].get('manual_declaration') != declaration or saved['review']['reason'] != plan['reason']:
                 raise ValueError('An existing different review requires explicit amendment')
             applied = {'audit': latest.name, 'idempotent': True}
             created = False
-        else:
+            current = retroactive_evidence.reconcile(doc)
+            needs_review = current['evidence_state'] != 'Verified'
+        if needs_review:
             preview = service.preview_review(doc.name, plan['reason'], manual_declaration=declaration)
             if abs(preview['after']['verified_hours'] - case['expected_hours']) > .0001:
                 raise AssertionError('Unexpected reviewed hours')
