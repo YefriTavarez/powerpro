@@ -9,25 +9,11 @@ from powerpro.controllers.overtime_pay_policy import get_effective_policy
 from powerpro.payroll_rules.ordinary_night import evaluate_night_work, VERSION
 from powerpro.payroll_rules.overtime import get_shift_window
 from powerpro.payroll_rules.manual_overtime import verification_roles
+from powerpro.controllers.overtime_document_locks import lock_employees_before_save, check_locked_employee
 
 DT = 'Ordinary Night Settlement'
 FINAL = {'Created', 'Payroll Submitted', 'Paid', 'Credited'}
 COVERAGE_PENDING = 'La jornada contiene recargo nocturno fuera de la autorización; complete su liquidación ordinaria independiente.'
-
-
-def lock_employees_before_save(doc):
-    """Acquire the employee mutex before Frappe locks the parent and its children."""
-    stored = frappe.db.get_value(doc.doctype, doc.name, 'employee') if not doc.is_new() else None
-    employees = {name for name in (stored, doc.employee) if name}
-    for name in sorted(employees):
-        frappe.db.get_value('Employee', name, 'name', for_update=True)
-    return employees
-
-
-def check_locked_employee(doc, employees):
-    before = doc.get_doc_before_save()
-    if before and before.employee not in employees:
-        frappe.throw(_('El empleado del documento cambió; recargue antes de continuar.'))
 
 
 def check_role():

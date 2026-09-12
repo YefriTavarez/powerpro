@@ -191,6 +191,7 @@ has_permission = {
 # Override standard doctype classes
 
 override_doctype_class = {
+    "Leave Application": "powerpro.controllers.overtime_leave_application.OvertimeLeaveApplication",
     "Leave Allocation": "powerpro.controllers.overtime_leave_allocation.OvertimeLeaveAllocation",
     "Quality Procedure": "powerpro.controllers.quality_procedure.QualityProcedure",
     "Custom Field": "powerpro.controllers.custom_field.CustomField",

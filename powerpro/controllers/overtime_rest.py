@@ -172,14 +172,14 @@ def cancel_election(name,reason):
     return {'status':'Cancelled'}
 
 
-def _check_leave_coverage(auth,election,leave,*,start=None,end=None):
+def _check_leave_coverage(auth,election,leave,*,start=None,end=None,for_update=False):
     start=get_datetime(start or election.planned_start);end=get_datetime(end or election.planned_end)
     policy=frappe.parse_json(auth.evidence_snapshot)['input']['pay_policy']
     if leave.docstatus!=1 or leave.status!='Approved' or leave.employee!=auth.employee or leave.leave_type!=policy['leave_type']:
         frappe.throw(_('La licencia debe estar enviada, aprobada y corresponder al empleado y tipo de descanso.'))
-    employee=frappe.get_doc('Employee',auth.employee)
-    company=frappe.get_doc('Company',auth.company)
-    assignments=frappe.get_all('Shift Assignment',filters={'employee':auth.employee,'docstatus':1,'status':'Active','start_date':['<=',end.date()]},
+    employee=frappe.get_doc('Employee',auth.employee,for_update=for_update)
+    company=frappe.get_doc('Company',auth.company,for_update=for_update)
+    assignments=_reconciliation_rows('Shift Assignment',for_update=for_update,filters={'employee':auth.employee,'docstatus':1,'status':'Active','start_date':['<=',end.date()]},
         fields=['shift_type','start_date','end_date'],limit=1001)
     if len(assignments)>1000:frappe.throw(_('Demasiados turnos; revise la programación.'))
     required=[];day=start.date()-timedelta(days=1)
@@ -187,8 +187,8 @@ def _check_leave_coverage(auth,election,leave,*,start=None,end=None):
         names={r.shift_type for r in assignments if getdate(r.start_date)<=day and (not r.end_date or getdate(r.end_date)>=day)}
         if not names and employee.default_shift:names={employee.default_shift}
         if len(names)!=1:frappe.throw(_('Se requiere un turno inequívoco para comprobar la cobertura del descanso.'))
-        shift=frappe.get_doc('Shift Type',next(iter(names)))
-        context=get_schedule_context(day,shift.name,shift.get('holiday_list') or employee.get('holiday_list') or company.get('default_holiday_list'))
+        shift=frappe.get_doc('Shift Type',next(iter(names)),for_update=for_update)
+        context=get_schedule_context(day,shift.name,shift.get('holiday_list') or employee.get('holiday_list') or company.get('default_holiday_list'),for_update=for_update)
         if not context['holiday_list_covers_work_date']:frappe.throw(_('El calendario no cubre el descanso.'))
         if context['classification']=='Regular Workday' and get_datetime(context['shift_start'])<end and get_datetime(context['shift_end'])>start:
             if leave.half_day and getdate(leave.half_day_date)==day:
@@ -201,7 +201,7 @@ def _check_leave_coverage(auth,election,leave,*,start=None,end=None):
     if not required:frappe.throw(_('El descanso no libera ninguna jornada programada; requiere revisión.'))
     if any(not getdate(leave.from_date)<=day<=getdate(leave.to_date) for day in required):
         frappe.throw(_('La licencia no cubre todas las jornadas que coinciden con el descanso.'))
-    claims=frappe.get_all(DT,filters={'leave_application':leave.name,'docstatus':1,'name':['!=',election.name]},fields=['required_leave_days'])
+    claims=_reconciliation_rows(DT,for_update=for_update,filters={'leave_application':leave.name,'docstatus':1,'name':['!=',election.name]},fields=['required_leave_days'])
     if flt(election.required_leave_days)+sum(flt(r.required_leave_days) for r in claims)>flt(leave.total_leave_days)+.0001:
         frappe.throw(_('La licencia no cubre los días reclamados por estas obligaciones de descanso.'))
     return required
@@ -215,7 +215,7 @@ def link_leave(name,leave_application):
     if frappe.db.get_value('Overtime Compensatory Credit',auth.compensatory_credit,'docstatus',for_update=True)!=1:
         frappe.throw(_('El crédito de descanso no está vigente.'))
     leave=frappe.get_doc('Leave Application',leave_application,for_update=True);leave.check_permission('read')
-    _check_leave_coverage(auth,election,leave)
+    _check_leave_coverage(auth,election,leave,for_update=True)
     election.db_set({'leave_application':leave.name,'status':'Scheduled'})
     _event(auth,election,'Rest Scheduled',{'leave_application':leave.name})
     return {'status':'Scheduled'}
@@ -238,7 +238,7 @@ def confirm_enjoyment(name,actual_start,actual_end,reference):
         entitlement={'minimum_rest_hours':election.minimum_rest_hours,'weekly_rest':election.weekly_rest})
     if b>now_datetime():frappe.throw(_('No se confirma un descanso que aún no terminó.'))
     leave=frappe.get_doc('Leave Application',election.leave_application,for_update=True)
-    _check_leave_coverage(auth,election,leave,start=a,end=b)
+    _check_leave_coverage(auth,election,leave,start=a,end=b,for_update=True)
     if _reconciliation_rows('Employee Checkin',for_update=True,filters=[['employee','=',auth.employee],['time','>=',a],['time','<',b]],pluck='name',limit=1):
         frappe.throw(_('Hay marcaciones durante el descanso declarado; resuelva la discrepancia antes de confirmarlo.'))
     if _reconciliation_rows(DT,for_update=True,filters=[['employee','=',auth.employee],['docstatus','=',1],['status','=','Enjoyed'],
@@ -251,7 +251,7 @@ def confirm_enjoyment(name,actual_start,actual_end,reference):
 
 
 def before_leave_cancel(leave,method=None):
-    rows=frappe.get_all(DT,filters={'leave_application':leave.name,'docstatus':1},fields=['name','status','authorization','retroactive_adjustment'])
+    rows=_reconciliation_rows(DT,for_update=True,filters={'leave_application':leave.name,'docstatus':1},fields=['name','status','authorization','retroactive_adjustment'])
     if any(r.status=='Enjoyed' for r in rows):frappe.throw(_('Revise primero la confirmación de disfrute vinculada a esta licencia.'))
     for row in rows:
         election=frappe.get_doc(DT,row.name,for_update=True)
