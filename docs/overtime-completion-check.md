@@ -1,0 +1,20 @@
+# Comprobación del plan de horas extras
+
+Sitio: igcaribe.fortabs.com, Desarrollo. Código funcional local76a5c89 / VPS237748b. Esta revisión conserva el alcance del plan de 11 de septiembre: cálculo, conciliación, liquidación, controles y piloto. No incorpora Attendance masivo, multas, producción ni regularización de nómina histórica.
+
+| Requisito del plan | Evidencia concreta disponible | Estado y límite |
+|---|---|---|
+| Solicitud de Dieta sin convocatoria/autorización; creación Finanzas/GH | Metadata reqd0 y permisos actuales; dev_dieta_direct_roles.py ejecutado con ambas cuentas existentes, insert nativo, rollback verificado | Servidor verificado. Interfaz con esas identidades pendiente del recorrido operativo. |
+| Reglas por empresa/vigencia y variantes configurables | DGII Settings/Overtime Pay Policy; versiones inmutables, selector de versión, controles visibles; suites dev_overtime_policy_settings.py y test_overtime_policy_settings_ui.cjs | Implementado y probado; no hay política empresarial publicada en el sitio. |
+| Turno, pausas y ampliación nocturna con ponches originales | overtime_shift_evidence/evidence; test_overtime_shift_evidence.py20 + test_overtime_evidence.py14 | Pruebas actuales pasan; sincronización incompleta espera, ambigüedad conserva revisión. |
+| Cortes de fecha/feriado/semana/noche y acumulación real | overtime_calendar/actual_week; test_overtime_calendar.py27 + test_overtime_actual_week.py19 | Pruebas actuales pasan; evidencia semanal faltante no se sustituye por44h presumidas. |
+| Clasificación 2:59/3:00/3:01 y nocturnidad ordinaria | overtime_pay_policy, ordinary_night; test_overtime_pay_policy.py; dev_ordinary_night.py | Implementado; coexistencia de jornada ordinaria y OT conserva recargo nocturno sin convertir toda hora ordinaria en OT35. |
+| Conciliación, reintento y fuentes protegidas | checkin_overtime, checkin_overtime_review, monitores e historial; suites nativas de evidencia/rest/night y pruebas de guardas | Implementado y probado en escenarios controlados. Muestra revisada por operador pendiente. |
+| Efectivo y descanso, incluyendo componentes distintos | overtime_cash_settlement, overtime_rest, overtime_hybrid_settlement; dev_overtime_hybrid.py: Retro, AUTH y automatic process | Pago/SalarySlip, crédito/licencia, fallo intermedio, reintento y cancelación probados con rollback. Una ventana que mezcla obligaciones distintas sigue en revisión. |
+| Correcciones/dependencias y concurrencia | checkin_overtime_review, historical_review; dev_rest_bank_races.py, dev_checkin_night_races.py, dev_standalone_night_races.py | Existen pruebas nativas y evidencias anteriores; no se afirma una prueba concurrente nueva de todas las variantes híbridas. El bloque híbrido prueba reversión conjunta y reintento. |
+| Incidencias de jornada/trimestre y excepciones documentadas | working_time_controls/incidents/reviews; test_working_time_controls.py12 y suites nativas correspondientes | Las12 pruebas puras actuales pasan; alertas no borran horas ni crean descuentos. |
+| Ejecución de código actualizado por worker | Job terminado con ok=true y diez firmas coincidentes; diagnóstico readonly | Verificado para carga de código y cálculos puros. No equivale a activar scheduler/pagos. |
+| Preparación, commits, metadatos y reversión | Commits sucesivos, manifiestos SHA, backups, readbacks; docs de entrega | Entregados en Desarrollo; dos modificaciones ajenas preservadas. |
+| Simulación revisada y piloto delimitado | docs/overtime-pilot-activation.md define recorrido y evidencia | Pendiente: empleado, fecha, responsable y aceptación operativa. Scheduler global apagado; cuatro fuentes legacy fuera del alcance. |
+
+No se declara el objetivo completo. La pregunta pendiente solicita la muestra y el responsable. Los ejemplos y las configuraciones disponibles no sustituyen esa aceptación. El plan original se conserva y se revisarán sus casos de aceptación durante el piloto; esta tabla no redefine su alcance.

@@ -13,15 +13,18 @@ from frappe.utils import cint
 SITE='igcaribe.fortabs.com'
 COUNTS=('Employee Checkin','Attendance','Overtime Authorization','Overtime Reconciliation Run',
         'Overtime Pay Policy','Ordinary Night Settlement','Additional Salary','Salary Slip',
-        'Leave Allocation','Leave Application','Working Time Incident','Error Log','Version','Notification Log')
+        'Leave Allocation','Leave Application','Overtime Compensatory Credit','Overtime Settlement Election','Working Time Incident','Error Log','Version','Notification Log')
 
 
 def manifest():
-    from powerpro.controllers import checkin_overtime,ordinary_night_history
+    from powerpro.controllers import (checkin_overtime,ordinary_night_history,overtime_pay_policy,
+        overtime_cash_settlement,overtime_hybrid_settlement)
     from powerpro.payroll_rules import ordinary_night,overtime_evidence,overtime_observation_window
     methods=(checkin_overtime.process_authorization,checkin_overtime.scheduled_reconcile_due,
              ordinary_night_history.evaluate,ordinary_night.evaluate_night_work,
-             overtime_evidence.evaluate_evidence,overtime_observation_window.normalize_window)
+             overtime_evidence.evaluate_evidence,overtime_observation_window.normalize_window,
+             overtime_pay_policy.get_effective_policy,overtime_cash_settlement.build_cash_settlement,
+             overtime_cash_settlement.sync_adjustments_from_salary_slip,overtime_hybrid_settlement.create_hybrid)
     return {f.__module__+'.'+f.__name__:{
         'loaded_code_sha256':hashlib.sha256(marshal.dumps(f.__code__)).hexdigest(),
         'file_sha256':hashlib.sha256(Path(inspect.getsourcefile(f)).read_bytes()).hexdigest()} for f in methods}
@@ -68,9 +71,23 @@ def run_probe(probe_id,expected_manifest):
             assert result['worked_intervals']==[{'start':context['shift_start'],'end':'2026-09-15T06:00:00'}]
             assert result['unapproved_intervals']==[{'start':context['shift_end'],'end':'2026-09-15T06:00:00'}]
             assert result['source_checkins'][-1]['log_type']=='IN'
+            from powerpro.payroll_rules.overtime_combined_day import cash_kwargs,hybrid_cash_calculation,FIELD,HOURS,REST_FIELD,SINGLE,ADDITIVE
+            from powerpro.payroll_rules.overtime_cash_settlement import calculate_cash_settlement
+            calculation={HOURS:1,'verified_hours':1,'holiday_100_hours':1,'night_hours':1,'holiday_base_covered_hours':1}
+            policy={'extraordinary_percent':100,'weekly_rest_percent':100,REST_FIELD:1}
+            money={}
+            for mode,expected in [(SINGLE,115),(ADDITIVE,215)]:
+                output=calculate_cash_settlement(hourly_rate=100,holiday_100_hours=1,night_hours=1,
+                    holiday_base_covered_hours=1,**cash_kwargs(dict(policy,**{FIELD:mode}),calculation))
+                assert output['total_amount']==expected
+                money[mode]=output['total_amount']
+            hybrid=hybrid_cash_calculation(policy,calculation)
+            output=calculate_cash_settlement(hourly_rate=100,**{k:hybrid[k] for k in ['holiday_100_hours','night_hours','holiday_base_covered_hours']})
+            assert output['total_amount']==115 and hybrid[HOURS]==0
+            money['Holiday cash with rest']=output['total_amount']
             after={dt:frappe.db.count(dt) for dt in COUNTS};assert before==after
             return dict(ok=True,probe_id=probe_id,site=SITE,pid=os.getpid(),manifest=loaded,
-                        paused_result=paused,expanded_night_result=result['state'],original_direction='IN',
+                        paused_result=paused,expanded_night_result=result['state'],original_direction='IN',combined_examples=money,
                         database_counts_unchanged=True,counts=after,scope='Code loading, disabled guards and synthetic pure calculation only')
     except Exception as exc:
         # Return an explicit negative result instead of creating a business Error

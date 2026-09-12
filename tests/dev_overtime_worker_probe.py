@@ -8,6 +8,8 @@ before={dt:frappe.db.count(dt) for dt in COUNTS}
 try:
  good=run_probe('overtime-dev-probe-'+uuid.uuid4().hex,manifest())
  assert good['ok'] and good['paused_result']=='Paused'
+ assert good['combined_examples']=={'Single highest premium':115,'Additive premiums':215,'Holiday cash with rest':115}
+ assert 'powerpro.controllers.overtime_hybrid_settlement.create_hybrid' in good['manifest']
  stale=run_probe('overtime-dev-probe-'+uuid.uuid4().hex,{})
  assert stale['ok'] is False and stale['error_type']=='AssertionError'
  frappe.set_user('Guest')
