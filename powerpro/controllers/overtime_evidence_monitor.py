@@ -66,6 +66,12 @@ def watch_permission(doc,ptype=None,user=None,**kwargs):
 
 
 def watch_query(user=None):
+    return source_query('Overtime Evidence Watch',user)
+
+
+def source_query(table,user=None):
+    if table not in {'Overtime Evidence Watch','Working Time Incident'}:
+        raise ValueError('Unsupported evidence table')
     from frappe.model.db_query import DatabaseQuery
     user=user or frappe.session.user
     if user=='Administrator':return ''
@@ -75,8 +81,8 @@ def watch_query(user=None):
         query=DatabaseQuery(source_type,user=user)
         query.fields=['name'];query.tables=['`tab'+source_type+'`']
         condition=query.build_match_conditions()
-        clauses.append("(`tabOvertime Evidence Watch`.source_type="+frappe.db.escape(source_type)
-            +" AND EXISTS(SELECT 1 FROM `tab"+source_type+"` WHERE `tab"+source_type+"`.name=`tabOvertime Evidence Watch`.source_name"
+        clauses.append("(`tab"+table+"`.source_type="+frappe.db.escape(source_type)
+            +" AND EXISTS(SELECT 1 FROM `tab"+source_type+"` WHERE `tab"+source_type+"`.name=`tab"+table+"`.source_name"
             +(' AND ('+condition+')' if condition else '')+'))')
     return '('+' OR '.join(clauses)+')' if clauses else '1=0'
 

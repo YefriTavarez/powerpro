@@ -155,6 +155,7 @@ app_include_icons = "powerpro/icons/igcaribe/icons.svg"
 # Permissions evaluated in scripted ways
 
 permission_query_conditions = {
+    "Working Time Incident": "powerpro.controllers.working_time_incidents.incident_query",
     "Overtime Evidence Watch": "powerpro.controllers.overtime_evidence_monitor.watch_query",
     "Solicitud de Dieta": "powerpro.dietas.permissions.request_query",
     "Lote de Pago de Dietas": "powerpro.dietas.permissions.batch_query",
@@ -171,7 +172,9 @@ permission_query_conditions = {
 }
 #
 has_permission = {
-    "Overtime Evidence Watch": "powerpro.controllers.overtime_evidence_monitor.watch_permission",    "Solicitud de Dieta": "powerpro.dietas.permissions.request_permission",
+    "Working Time Incident": "powerpro.controllers.working_time_incidents.incident_permission",
+    "Overtime Evidence Watch": "powerpro.controllers.overtime_evidence_monitor.watch_permission",
+    "Solicitud de Dieta": "powerpro.dietas.permissions.request_permission",
     "Lote de Pago de Dietas": "powerpro.dietas.permissions.batch_permission",
 }
 

@@ -6,6 +6,7 @@ from frappe.utils import getdate,get_datetime,now_datetime
 from powerpro.controllers.overtime_source import AUTH,RETRO,evidence_enabled
 from powerpro.controllers.checkin_overtime import _evidence_hash
 from powerpro.payroll_rules.working_time_controls import evaluate
+from powerpro.controllers.overtime_history import physical_input
 
 NIGHT='Ordinary Night Settlement'
 
@@ -89,6 +90,23 @@ def preview(source_type,source_name,profile='General',reference='',break_rule='O
             quarter_intervals=quarter['intervals'],quarter_start=quarter['start'],quarter_end=quarter['end'],quarter_complete=False,
             quarterly_basis=quarterly_basis,rest_start=rest_start,rest_end=rest_end)
     except ValueError as exc:frappe.throw(str(exc))
+    # Separate proofs keep an unrelated quarterly change from invalidating a
+    # decision about this session. Physical identity includes the original marks.
+    def access(rows=(),sources=()):
+        return ([{'document_type':'Employee Checkin','document_name':r['name']} for r in rows]
+            +[{'document_type':r['source_type'],'document_name':r['source_name']} for r in sources if r.get('source_type') and r.get('source_name')])
+    result['supporting_evidence']={
+        'session':{'input':{**physical_input(current),**{k:current['input'][k] for k in ('context','extensions','certified_session') if k in current['input']}},'worked_intervals':current.get('worked_intervals',[]),
+            'checkins':current.get('source_checkins',[]),'state':current['state'],
+            'access':access(current.get('source_checkins',[]))},
+        'weekly':{**weekly,'access':access(week_rows,weekly.get('issues',[]))
+            +[{'document_type':'Attendance','document_name':n} for c in weekly.get('coverage',[]) for n in c.get('attendances',[])]},
+        'quarter':{**{k:quarter[k] for k in ('start','end','intervals','sources','issues','complete')},
+            'access':access([{'name':n} for n in quarter['checkins']],quarter['sources']+quarter['issues'])}}
+    for part in result['supporting_evidence'].values():
+        for ref in part.get('access',[]):
+            if not frappe.has_permission(ref['document_type'],'read',doc=ref['document_name']):
+                frappe.throw(_('Falta acceso a una referencia necesaria para evaluar la jornada.'),frappe.PermissionError)
     result.update(source_type=source_type,source_name=doc.name,employee=doc.employee,work_date=str(getdate(doc.work_date)),
         evaluated_on=str(now_datetime()),current_evidence_state=current['state'],quarter_sources=quarter['sources'],
         evidence_issues=list(current.get('issues',[]))+weekly.get('issues',[])+quarter['issues'],
