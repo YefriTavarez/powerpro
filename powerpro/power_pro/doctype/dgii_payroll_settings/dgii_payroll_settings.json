@@ -61,7 +61,10 @@
   "checkin_overtime_section",
   "enable_checkin_overtime_reconciliation",
   "checkin_overtime_effective_from",
-  "enable_overtime_evidence_monitor"
+  "enable_overtime_evidence_monitor",
+  "enable_working_time_incident_monitor",
+  "enable_working_time_incident_notices",
+  "working_time_incident_reminder_days"
  ],
  "fields": [
   {
@@ -423,6 +426,27 @@
    "label": "Vigilar cambios en evidencia de horas extras",
    "default": "0",
    "description": "Comprueba evidencia inscrita, ajustes retroactivos y nocturnidad. Crea seguimiento; no modifica horas aprobadas, pagos ni licencias. Sigue disponible aunque se pause la creación de pagos."
+  },
+  {
+   "fieldname": "enable_working_time_incident_monitor",
+   "fieldtype": "Check",
+   "label": "Vigilar incidencias de jornada",
+   "default": "0",
+   "description": "Comprueba periódicamente incidencias guardadas, incluso resueltas, con los permisos actuales de su responsable. No cambia pagos."
+  },
+  {
+   "fieldname": "enable_working_time_incident_notices",
+   "fieldtype": "Check",
+   "label": "Avisos internos de incidencias de jornada",
+   "default": "0",
+   "description": "Avisa al responsable de casos abiertos o descansos previstos vencidos pendientes de revisión. Respeta sus preferencias; no envía correo."
+  },
+  {
+   "fieldname": "working_time_incident_reminder_days",
+   "fieldtype": "Int",
+   "label": "Días entre recordatorios de incidencia",
+   "default": "7",
+   "description": "Cero desactiva recordatorios repetidos; conserva avisos por evidencia modificada o reasignación. De 0 a 30 días."
   }
  ],
  "index_web_pages_for_search": 1,

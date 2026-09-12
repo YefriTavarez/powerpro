@@ -177,6 +177,54 @@
    "fieldtype": "Table",
    "options": "Working Time Evidence Reference",
    "read_only": 1
+  },
+  {
+   "fieldname": "monitor_status",
+   "label": "Estado de vigilancia",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Pending\nCurrent\nNeeds Review\nAccess Required\nError",
+   "default": "Pending",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "monitor_checked_on",
+   "label": "Última vigilancia automática",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "monitor_message",
+   "label": "Resultado de vigilancia",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notice_status",
+   "label": "Resultado del aviso",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_notice_key",
+   "label": "Identidad del último aviso",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "hidden": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "last_notice_on",
+   "label": "Último aviso",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_notice",
+   "label": "Registro del último aviso",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Notification Log"
   }
  ],
  "field_order": [
@@ -203,7 +251,14 @@
   "resolved_on",
   "resolved_hash",
   "incident_key",
-  "evidence_references"
+  "evidence_references",
+  "monitor_status",
+  "monitor_checked_on",
+  "monitor_message",
+  "notice_status",
+  "last_notice_key",
+  "last_notice_on",
+  "last_notice"
  ],
  "permissions": [
   {
