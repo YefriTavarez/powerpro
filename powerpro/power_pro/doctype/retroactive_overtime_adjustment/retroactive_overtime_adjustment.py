@@ -8,6 +8,7 @@ from frappe import _
 from frappe.utils import flt, getdate, now_datetime
 
 from powerpro.controllers.overtime import reconcile_overtime_document
+from powerpro.controllers import retroactive_evidence
 from powerpro.controllers.overtime_cash_settlement import (
 	before_cancel_adjustment,
 	cancel_cash_settlement,
@@ -69,7 +70,7 @@ class RetroactiveOvertimeAdjustment(OvertimeAuthorization):
 			self.work_date,
 			self.authorization_start,
 			self.authorization_end,
-			allow_overnight=allow_overnight,
+			allow_overnight=allow_overnight or retroactive_evidence.enabled(self),
 		):
 			frappe.throw(
 				_(
@@ -145,7 +146,12 @@ class RetroactiveOvertimeAdjustment(OvertimeAuthorization):
 				frappe.PermissionError,
 			)
 
-		result = reconcile_overtime_document(self, include_weekly_context=True)
+		frappe.db.get_value('Employee',self.employee,'name',for_update=True)
+		if retroactive_evidence.enabled(self):
+			result=retroactive_evidence.reconcile(self,for_update=True)
+			retroactive_evidence.prepare_snapshot(self,result)
+		else:
+			result = reconcile_overtime_document(self, include_weekly_context=True)
 		if flt(result["verified_hours"]) <= 0:
 			frappe.throw(
 				_("No verified overtime was found inside the reviewed historical window."),
@@ -170,11 +176,21 @@ class RetroactiveOvertimeAdjustment(OvertimeAuthorization):
 		self.status = "Approved"
 		self.approved_by = frappe.session.user
 		self.approved_on = now_datetime()
-		prepare_cash_settlement(self, result)
+		if retroactive_evidence.enabled(self) and not result['settlement_ready']:
+			self.settlement_status='Pending'
+			self.settlement_amount=0;self.settlement_hourly_rate=0
+			self.settlement_references=None;self.settlement_breakdown=None
+		else:
+			prepare_cash_settlement(self, result)
 
 	def before_cancel(self):
+		frappe.db.get_value('Employee',self.employee,'name',for_update=True)
 		before_cancel_adjustment(self)
 
 	def on_cancel(self):
 		super().on_cancel()
 		cancel_cash_settlement(self)
+
+	def on_update_after_submit(self):
+		if retroactive_evidence.enabled(self):
+			frappe.throw(_("El ajuste aprobado conserva su evidencia; utilice cancelación y una revisión trazable."))

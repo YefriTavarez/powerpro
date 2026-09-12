@@ -457,6 +457,14 @@ def lock_payroll_inputs(slip, method=None):
                 from powerpro.controllers.ordinary_night import validate_fresh
                 validate_fresh(source)
             continue
+        if salary.ref_doctype == 'Retroactive Overtime Adjustment' and salary.ref_docname:
+            source=frappe.get_doc(salary.ref_doctype,salary.ref_docname,for_update=True)
+            if method=='before_submit':
+                if salary.docstatus!=1 or source.docstatus!=1:
+                    frappe.throw(_('El ajuste retroactivo vinculado fue cancelado. Actualice esta nómina.'))
+                from powerpro.controllers.retroactive_evidence import validate_fresh
+                validate_fresh(source,payroll=True)
+            continue
         if salary.ref_doctype != AUTH or not salary.ref_docname:
             continue
         source = frappe.get_doc(AUTH, salary.ref_docname, for_update=True)

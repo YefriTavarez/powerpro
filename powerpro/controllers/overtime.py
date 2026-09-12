@@ -151,7 +151,7 @@ def get_retroactive_adjustment_preview(adjustment):
 		return _submitted_adjustment_snapshot(doc)
 
 	result = reconcile_overtime_document(doc, include_weekly_context=True)
-	if doc.planned_settlement == "Cash":
+	if doc.planned_settlement == "Cash" and result.get("settlement_ready",True):
 		from powerpro.controllers.overtime_cash_settlement import build_cash_settlement
 
 		result["cash_settlement"] = build_cash_settlement(doc, result)
@@ -227,6 +227,8 @@ def get_retroactive_reviewed_end_default(employee, work_date):
 
 def reconcile_overtime_document(doc, *, include_weekly_context=True):
 	"""Public app helper used by guarded controllers without saving documents."""
+	from powerpro.controllers.retroactive_evidence import enabled,reconcile
+	if enabled(doc):return reconcile(doc)
 	return _reconcile(doc, include_weekly_context=include_weekly_context)
 
 
@@ -490,6 +492,16 @@ def _serialize_checkin(row):
 
 
 def _submitted_adjustment_snapshot(doc):
+	from powerpro.controllers.retroactive_evidence import enabled,as_reconciliation
+	if enabled(doc):
+		evidence=frappe.parse_json(doc.evidence_snapshot or '{}')
+		result=as_reconciliation(doc,evidence)
+		result.update(adjustment=doc.name,read_only=True,snapshot=True,
+			cash_settlement=frappe.parse_json(doc.settlement_breakdown or '{}') or None,
+			settlement_status=doc.settlement_status,payroll_connected=bool(doc.settlement_references),
+			saved_documents=len(frappe.parse_json(doc.settlement_references or '[]')),
+			reconciled_by=doc.reconciled_by,reconciled_on=_iso(doc.reconciled_on))
+		return result
 	settlement = frappe.parse_json(doc.get("settlement_breakdown") or "{}")
 	references = frappe.parse_json(doc.get("settlement_references") or "[]")
 	return {

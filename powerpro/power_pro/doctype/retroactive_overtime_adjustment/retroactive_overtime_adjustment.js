@@ -43,6 +43,7 @@ frappe.ui.form.on("Retroactive Overtime Adjustment", {
 		mark_reconciliation_preview_stale(frm);
 		set_reviewed_end_from_last_out(frm);
 	},
+	reconciliation_engine: mark_reconciliation_preview_stale,
 	authorization_start: mark_reconciliation_preview_stale,
 	authorization_end: mark_reconciliation_preview_stale,
 	maximum_hours: mark_reconciliation_preview_stale,
@@ -308,6 +309,7 @@ function get_reconciliation_rows(result) {
 	const rates = result.rates || {};
 	const extraordinary_rate = rates.extraordinary_overtime_percent ?? 100;
 	return [
+		...(result.evidence_state ? [[__("Estado de evidencia"), result.evidence_state], [__("Lista para liquidar"), result.settlement_ready ? __("Sí") : __("Pendiente de revisión")]] : []),
 		[__("Classification"), result.classification],
 		[__("Verified hours"), format_hours(result.verified_hours)],
 		[

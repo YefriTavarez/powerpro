@@ -47,19 +47,28 @@ def load_week(doc,employee,assignments,*,for_update=False):
             schedules.append(context)
         day+=timedelta(days=1)
     historical_intervals=[];historical_checkins=[];certified_sessions=[]
-    previous=_reconciliation_rows('Overtime Authorization',for_update=for_update,
-        filters=[['employee','=',doc.employee],['docstatus','=',1],['evidence_enrolled','=',1],
-                 ['authorization_end','>',start],['authorization_end','<=',doc.authorization_start],['name','!=',doc.name]],
-        fields=['name','reconciliation_source','evidence_snapshot'],order_by='authorization_start asc, name asc',limit=51)
-    if len(previous)>50:raise ValueError('Demasiadas autorizaciones semanales; requiere revisión.')
+    previous=[]
+    for source_type,mode_filter in [('Overtime Authorization',['evidence_enrolled','=',1]),
+                                  ('Retroactive Overtime Adjustment',['reconciliation_engine','=','Verified Checkins'])]:
+        filters=[['employee','=',doc.employee],['docstatus','in',[1,2]],mode_filter,
+                 ['authorization_end','>',start],['authorization_end','<=',doc.authorization_start]]
+        if source_type==doc.doctype:filters.append(['name','!=',doc.name])
+        records=_reconciliation_rows(source_type,for_update=for_update,filters=filters,
+            fields=['name','docstatus','authorization_start','reconciliation_source','evidence_snapshot'],order_by='authorization_start asc, name asc',limit=51)
+        # Cancelling payment does not erase the physical work evidence.
+        for record in records:
+            if record.docstatus==2 and not record.evidence_snapshot:continue
+            record['source_type']=source_type;previous.append(record)
+    if len(previous)>50:raise ValueError('Demasiadas fuentes semanales; requiere revisión.')
+    previous.sort(key=lambda row:(get_datetime(row.authorization_start),row.source_type,row.name))
     from powerpro.controllers.checkin_overtime import _data,_evidence_hash,now_datetime
     from powerpro.payroll_rules.overtime_evidence import evaluate_evidence
     for prior in previous:
         saved=frappe.parse_json(prior.evidence_snapshot or '{}')
         declaration=(saved.get('review') or {}).get('manual_declaration')
         if prior.reconciliation_source!='Employee Checkin' and not (prior.reconciliation_source=='Manual Verification' and declaration):
-            issues.append({'code':'weekly_previous_verification_requires_review','authorization':prior.name});continue
-        current,_settings=_data(frappe.get_doc('Overtime Authorization',prior.name,for_update=for_update),for_update=for_update,include_weekly=False)
+            issues.append({'code':'weekly_previous_verification_requires_review','authorization':prior.name,'source_type':prior.source_type});continue
+        current,_settings=_data(frappe.get_doc(prior.source_type,prior.name,for_update=for_update),for_update=for_update,include_weekly=False)
         fresh=evaluate_evidence(authorization=current['authorization'],rows=current['rows'],shift=current['shift'],contexts=current['contexts'],
             next_windows=current['next_windows'],now=now_datetime(),competing=current['competing'])
         if declaration:
@@ -70,9 +79,9 @@ def load_week(doc,employee,assignments,*,for_update=False):
         if not acceptable or not saved.get('worked_intervals') or (
             _evidence_hash(saved.get('source_checkins'))!=_evidence_hash(fresh.get('source_checkins')) or
             _evidence_hash(saved['worked_intervals'])!=_evidence_hash(fresh.get('worked_intervals'))):
-            issues.append({'code':'weekly_previous_snapshot_changed','authorization':prior.name});continue
+            issues.append({'code':'weekly_previous_snapshot_changed','authorization':prior.name,'source_type':prior.source_type});continue
         if declaration and (_evidence_hash(saved['input']['shift'])!=_evidence_hash(current['shift']) or _evidence_hash(saved['input']['contexts'])!=_evidence_hash(current['contexts'])):
-            issues.append({'code':'weekly_previous_manual_context_changed','authorization':prior.name});continue
+            issues.append({'code':'weekly_previous_manual_context_changed','authorization':prior.name,'source_type':prior.source_type});continue
         certified_sessions.extend(fresh.get('certified_sessions',[]))
         historical_intervals.extend(fresh['worked_intervals'])
         historical_checkins.extend(name for session in fresh['sessions'] for name in session['checkins'])

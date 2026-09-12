@@ -168,6 +168,15 @@ def create_cash_settlement(adjustment):
 		"night_hours": doc.night_hours,
 		"rates": _get_overtime_rates(),
 	}
+	from powerpro.controllers.retroactive_evidence import enabled,validate_fresh
+	if enabled(doc):
+		frappe.db.get_value('Employee',doc.employee,'name',for_update=True)
+		doc=frappe.get_doc(doc.doctype,doc.name,for_update=True)
+		if doc.settlement_status in {SETTLEMENT_CREATED,SETTLEMENT_PAYROLL_SUBMITTED,SETTLEMENT_PAID}:
+			frappe.throw(_("La liquidación ya existe para este ajuste."))
+		reconciliation=validate_fresh(doc)
+		from powerpro.controllers.checkin_overtime import _json
+		doc.db_set({'evidence_snapshot':_json(reconciliation['_evidence']),'evidence_settlement_ready':1})
 	settlement, values = create_cash_settlement_for_source(doc, reconciliation)
 	frappe.db.set_value(doc.doctype, doc.name, values)
 	doc.add_comment(

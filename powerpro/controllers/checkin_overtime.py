@@ -131,7 +131,11 @@ def _data(doc,*,for_update=False,include_weekly=True):
             next_windows.append({'shift':name,'start':a-timedelta(minutes=flt(nxt.begin_check_in_before_shift_start_time)),
                 'end':b+timedelta(minutes=flt(nxt.allow_check_out_after_shift_end_time))})
         day+=timedelta(days=1)
-    competing=bool(_reconciliation_rows(AUTH,for_update=for_update,filters=[['employee','=',doc.employee],['docstatus','=',1],['name','!=',doc.name],['authorization_start','<',end],['authorization_end','>',start]],pluck='name',limit=1))
+    competing=False
+    for source_type in [AUTH,'Retroactive Overtime Adjustment']:
+        filters=[['employee','=',doc.employee],['docstatus','=',1],['authorization_start','<',end],['authorization_end','>',start]]
+        if source_type==doc.doctype:filters.append(['name','!=',doc.name])
+        if _reconciliation_rows(source_type,for_update=for_update,filters=filters,pluck='name',limit=1):competing=True
     settings=_settings()
     pay_policy=get_effective_policy(doc,for_update=for_update)
     salary_fields=['name','base','from_date']
@@ -148,7 +152,7 @@ def _data(doc,*,for_update=False,include_weekly=True):
     weekly=load_week(doc,employee,assignments,for_update=for_update) if include_weekly else {'start':week_start}
     config={k:settings.get(k) for k in ['weekly_expected_hours','max_weekly_extra_hours','start_night_hours','end_night_hours','extra_hours_rate','extraordinary_hours_rate','night_hours_rate']}
     policy={k:shift.get(k) for k in ['name','modified','start_time','end_time','last_sync_of_checkin','determine_check_in_and_check_out','working_hours_calculation_based_on','begin_check_in_before_shift_start_time','allow_check_out_after_shift_end_time']}
-    authorization={'name':doc.name,'start':str(start),'end':str(end),'shift':doc.shift_type,'maximum_hours':doc.maximum_hours}
+    authorization={'name':doc.name,'start':str(start),'end':str(end),'shift':doc.shift_type,'maximum_hours':flt(doc.maximum_hours)}
     current_context=next(c for c in contexts if c['date']==str(start.date()))
     lower=min(start,get_datetime(current_context['shift_start']))-timedelta(minutes=flt(shift.begin_check_in_before_shift_start_time))
     upper=max(end,get_datetime(current_context['shift_end']))+timedelta(minutes=flt(shift.allow_check_out_after_shift_end_time))

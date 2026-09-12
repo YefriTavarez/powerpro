@@ -33,6 +33,13 @@
   "requested_by",
   "approver",
   "reconciliation_section",
+  "reconciliation_engine",
+  "actual_start",
+  "actual_end",
+  "reconciliation_source",
+  "evidence_status",
+  "evidence_snapshot",
+  "evidence_settlement_ready",
   "draft_reconciliation_preview",
   "verified_hours",
   "regular_35_hours",
@@ -473,6 +480,65 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "reconciliation_engine",
+   "fieldtype": "Select",
+   "label": "Motor de conciliación",
+   "options": "Legacy\nVerified Checkins",
+   "default": "Legacy",
+   "description": "Verified Checkins utiliza el motor común, evidencia semanal real y una política aprobada. No convierte instantáneas históricas existentes."
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "actual_start",
+   "fieldtype": "Datetime",
+   "label": "Actual Overtime Start",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "actual_end",
+   "fieldtype": "Datetime",
+   "label": "Actual Overtime End",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "reconciliation_source",
+   "fieldtype": "Select",
+   "label": "Attendance Verification Source",
+   "options": "\nEmployee Checkin\nManual Verification\nPresumed Attendance\nHR Exception",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "evidence_status",
+   "fieldtype": "Select",
+   "label": "Estado de evidencia",
+   "options": "\nPending\nWaiting\nNeeds Review\nVerified\nManual Verification\nFrozen",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "evidence_snapshot",
+   "fieldtype": "Code",
+   "label": "Instantánea de cálculo y fuentes",
+   "options": "JSON",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "evidence_settlement_ready",
+   "fieldtype": "Check",
+   "label": "Evidencia apta para liquidación",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
   }
  ],
  "index_web_pages_for_search": 1,
