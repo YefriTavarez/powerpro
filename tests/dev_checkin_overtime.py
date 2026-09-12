@@ -23,7 +23,7 @@ try:
  base=frappe.get_doc('Overtime Authorization','AUT-HE-2026-00018')
  employee=frappe.copy_doc(frappe.get_doc('Employee',base.employee));employee.name=prefix+'-EMP';employee.docstatus=0
  employee.employee_name='DEV Evidence';employee.user_id=None;employee.company_email=None;employee.personal_email=None;employee.status='Active'
- shift=frappe.copy_doc(frappe.get_doc('Shift Type','Diurna Extendida'));shift.name=prefix+'-SHIFT';shift.enable_auto_attendance=0
+ shift=frappe.copy_doc(frappe.get_doc('Shift Type','Diurna Extendida'));shift.name=prefix+'-SHIFT';shift.docstatus=0;shift.enable_auto_attendance=0
  shift.determine_check_in_and_check_out='Alternating entries as IN and OUT during the same shift';shift.working_hours_calculation_based_on='Every Valid Check-in and Check-out'
  shift.last_sync_of_checkin='2026-09-16 08:00:00';shift.db_insert()
  employee.default_shift=shift.name;employee.db_insert()
