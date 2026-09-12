@@ -92,12 +92,12 @@ try:
   doc.insert(ignore_permissions=True);doc.flags.ignore_permissions=True;doc.submit();return doc
  application=leave('2026-09-16')
  rest.link_leave(election.name,application.name)
- with patch.object(rest,'now_datetime',return_value=get_datetime('2026-09-16 20:00:00')):
+ with patch.object(rest,'now_datetime',return_value=get_datetime('2026-09-16 20:00:00')),patch.object(evidence,'now_datetime',return_value=get_datetime('2026-09-16 20:00:00')):
   try:rest.confirm_enjoyment(election.name,'2026-09-15 18:00:00','2026-09-17 06:00:00','Test confirmation')
   except frappe.ValidationError:pass
   else:raise AssertionError('Future rest was marked enjoyed')
  conflict=punch('2026-09-16','10:00:00','IN')
- with patch.object(rest,'now_datetime',return_value=get_datetime('2026-09-18 08:00:00')):
+ with patch.object(rest,'now_datetime',return_value=get_datetime('2026-09-18 08:00:00')),patch.object(evidence,'now_datetime',return_value=get_datetime('2026-09-18 08:00:00')):
   try:rest.confirm_enjoyment(election.name,'2026-09-15 18:00:00','2026-09-17 06:00:00','Test confirmation')
   except frappe.ValidationError:pass
   else:raise AssertionError('Contradictory Checkin was ignored')
@@ -116,7 +116,7 @@ try:
  application.reload();application.flags.ignore_permissions=True;application.cancel()
  election.reload();assert not election.leave_application and election.status=='Credited'
  rest.reschedule(election.name,'2026-09-16 18:00:00','2026-09-18 06:00:00','Synthetic reschedule')
- with patch.object(rest,'now_datetime',return_value=get_datetime('2026-09-19 08:00:00')):
+ with patch.object(rest,'now_datetime',return_value=get_datetime('2026-09-19 08:00:00')),patch.object(evidence,'now_datetime',return_value=get_datetime('2026-09-19 08:00:00')):
   assert rest.get_rest_status(election.name)['status']=='Overdue'
   from powerpro.power_pro.report.overtime_rest_follow_up.overtime_rest_follow_up import execute
   columns,rows,message=execute({'employee':employee.name})

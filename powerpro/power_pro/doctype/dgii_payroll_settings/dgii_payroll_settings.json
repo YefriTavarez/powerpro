@@ -64,7 +64,10 @@
   "enable_overtime_evidence_monitor",
   "enable_working_time_incident_monitor",
   "enable_working_time_incident_notices",
-  "working_time_incident_reminder_days"
+  "working_time_incident_reminder_days",
+  "enable_overtime_rest_monitor",
+  "enable_overtime_rest_notices",
+  "overtime_rest_reminder_days"
  ],
  "fields": [
   {
@@ -447,6 +450,27 @@
    "label": "Días entre recordatorios de incidencia",
    "default": "7",
    "description": "Cero desactiva recordatorios repetidos; conserva avisos por evidencia modificada o reasignación. De 0 a 30 días."
+  },
+  {
+   "fieldname": "enable_overtime_rest_monitor",
+   "fieldtype": "Check",
+   "label": "Vigilar descanso compensatorio",
+   "default": "0",
+   "description": "Comprueba elecciones aprobadas, crédito, licencia y respaldo de disfrute. No modifica saldos ni pagos."
+  },
+  {
+   "fieldname": "enable_overtime_rest_notices",
+   "fieldtype": "Check",
+   "label": "Avisos internos de descanso compensatorio",
+   "default": "0",
+   "description": "Avisa al responsable sobre programación pendiente, vencimiento o evidencia que requiere revisión; sin correo."
+  },
+  {
+   "fieldname": "overtime_rest_reminder_days",
+   "fieldtype": "Int",
+   "label": "Días entre recordatorios de descanso compensatorio",
+   "default": "7",
+   "description": "De cero a treinta días. Cero conserva solo avisos por cambios de estado, evidencia o responsable."
   }
  ],
  "index_web_pages_for_search": 1,

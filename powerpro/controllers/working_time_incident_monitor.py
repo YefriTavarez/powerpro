@@ -20,13 +20,14 @@ def enabled():
 
 
 def validate_settings(settings):
-    if settings.get('enable_working_time_incident_notices') and not settings.get('enable_working_time_incident_monitor'):
-        frappe.throw(_('Active la vigilancia de incidencias antes de habilitar sus avisos.'))
-    value=settings.get('working_time_incident_reminder_days')
-    try:
-        days=float(value or 0);valid=days==int(days) and 0<=days<=30
-    except (TypeError,ValueError,OverflowError):valid=False
-    if not valid:frappe.throw(_('Los recordatorios deben configurarse entre cero y treinta días enteros.'))
+    for prefix in ('working_time_incident','overtime_rest'):
+        if settings.get('enable_'+prefix+'_notices') and not settings.get('enable_'+prefix+'_monitor'):
+            frappe.throw(_('Active la vigilancia correspondiente antes de habilitar sus avisos.'))
+        value=settings.get(prefix+'_reminder_days')
+        try:
+            days=float(value or 0);valid=days==int(days) and 0<=days<=30
+        except (TypeError,ValueError,OverflowError):valid=False
+        if not valid:frappe.throw(_('Los recordatorios deben configurarse entre cero y treinta días enteros.'))
 
 
 @contextmanager

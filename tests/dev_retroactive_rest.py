@@ -13,7 +13,7 @@ from powerpro.controllers.overtime_cash_settlement import _get_linked_additional
 prefix='RETRO-REST-DEV-'+uuid.uuid4().hex[:10]
 types=['Employee','Shift Type','Employee Checkin','Attendance','Overtime Authorization','Overtime Work Call','Retroactive Overtime Adjustment',
        'Overtime Pay Policy','Overtime Settlement Election','Overtime Reconciliation Run','Overtime Compensatory Credit',
-       'Leave Period','Leave Allocation','Leave Application','Leave Ledger Entry','Additional Salary','Salary Slip','Salary Structure Assignment']
+       'Overtime Rest Watch','Working Time Evidence Reference','Version','Error Log','Leave Period','Leave Allocation','Leave Application','Leave Ledger Entry','Additional Salary','Salary Slip','Salary Structure Assignment']
 before={d:frappe.db.count(d) for d in types}
 settings_before={d:frappe.db.get_singles_dict(d) for d in ['DGII Payroll Settings','HR Settings','Payroll Settings']}
 commit,enqueue,sendmail=frappe.db.commit,frappe.enqueue,frappe.sendmail
@@ -125,6 +125,13 @@ try:
   else:raise AssertionError('Duplicate retroactive credit')
   assert frappe.db.count('Overtime Compensatory Credit',{'retroactive_adjustment':name,'docstatus':1})==1
   checks.append('four actual weekly-rest hours create one explicit eight-hour credit / one leave day, with 36 continuous hours still owed')
+ from powerpro.controllers import overtime_rest_monitor as rest_monitor
+ frappe.db.set_single_value('DGII Payroll Settings',{'enable_overtime_rest_monitor':1,'enable_overtime_rest_notices':0})
+ with patch.object(rest,'now_datetime',return_value=get_datetime('2026-09-07 12:00:00')):
+  watched=rest_monitor.process_election(election.name)
+  assert watched['status']=='Credited',watched
+  initial_watch=frappe.get_doc(rest_monitor.DT,watched['name']);initial_election=election.name
+  assert initial_watch.source_type==retro.DT and initial_watch.source_name==name
  def leave(day):
   doc=frappe.get_doc({'doctype':'Leave Application','employee':employee.name,'company':employee.company,'leave_type':leave_type,
    'from_date':day,'to_date':day,'posting_date':'2026-09-07','status':'Approved','leave_approver':'Administrator','follow_via_email':0,'description':'DEV rollback rest'})
@@ -211,6 +218,8 @@ try:
  call.reload();call.flags.ignore_permissions=True;call.cancel()
  assert frappe.db.get_value('Overtime Compensatory Credit',auth.compensatory_credit,'docstatus')==2
  election.reload();assert election.docstatus==2 and not election.active_authorization and not election.active_weekly_rest
+ assert rest_monitor.process_election(initial_election)['status']=='Cancelled'
+ assert rest_monitor.process_election(election.name)['status']=='Cancelled'
  checks.append('source cancellation reverses the credit and releases the weekly-rest claim')
  assert frappe.db.get_value(retro.DT,name,'settlement_status')=='Cancelled'
  assert not frappe.db.count('Additional Salary',{'ref_doctype':retro.DT,'ref_docname':name,'docstatus':1})

@@ -21,13 +21,16 @@ def execute(filters=None):
     query_filters=[[field,'=',value] for field,value in query.items()]+date_filters
     rows=frappe.get_list(DT,filters=query_filters,fields=['name','authorization','retroactive_adjustment','employee','planned_start','planned_end','leave_application'],
                          order_by='planned_end asc, name asc',limit_page_length=201)
-    data=[]
+    data=[];restricted=False
     labels={'Approved':'Pendiente de crédito','Credited':'Pendiente de licencia','Scheduled':'Programado',
-            'Enjoyed':'Disfrutado','Overdue':'Vencido: revisar disfrute','Review':'Revisión: marcaciones posteriores'}
+            'Enjoyed':'Disfrutado','Overdue':'Vencido: revisar disfrute','Review':'Revisión de evidencia y respaldo'}
     for row in rows[:200]:
         source_type,source=identity(row)
-        if not frappe.has_permission(source_type,'read',doc=source):continue
-        status=get_rest_status(row.name)
+        if not frappe.has_permission(source_type,'read',doc=source):
+            restricted=True;continue
+        try:status=get_rest_status(row.name)
+        except frappe.PermissionError:
+            restricted=True;continue
         if status['status']=='Enjoyed' and not cint(filters.get('include_enjoyed')):continue
         data.append({**row,'status':labels.get(status['status'],status['status']),'credit':status['credit']})
     columns=[{'fieldname':f,'label':_(label),'fieldtype':kind,'options':options,'width':width} for f,label,kind,options,width in [
@@ -36,4 +39,5 @@ def execute(filters=None):
         ('planned_start','Inicio','Datetime',None,170),('planned_end','Fin','Datetime',None,170),
         ('leave_application','Licencia','Link','Leave Application',180),('credit','Crédito','Link','Overtime Compensatory Credit',180)]]
     message=_('La consulta supera 200 elecciones. Este resultado es parcial: acote las fechas, empresa o empleado para revisar el resto.') if len(rows)>200 else None
+    if restricted:message=(message+' ' if message else '')+_('Se omitieron elecciones cuyo respaldo no es accesible para este usuario.')
     return columns,data,message

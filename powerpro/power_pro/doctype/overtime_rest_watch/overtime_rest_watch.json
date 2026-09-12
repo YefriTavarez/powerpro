@@ -1,0 +1,194 @@
+{
+ "doctype": "DocType",
+ "name": "Overtime Rest Watch",
+ "module": "Power Pro",
+ "autoname": "hash",
+ "engine": "InnoDB",
+ "track_changes": 1,
+ "fields": [
+  {
+   "fieldname": "election",
+   "label": "Elección del empleado",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Overtime Settlement Election",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "source_type",
+   "label": "Tipo de origen",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_name",
+   "label": "Origen",
+   "fieldtype": "Dynamic Link",
+   "read_only": 1,
+   "options": "source_type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "label": "Empleado",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Employee",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "company",
+   "label": "Empresa",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Company"
+  },
+  {
+   "fieldname": "responsible",
+   "label": "Responsable",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "User",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "label": "Estado actual",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Approved\nCredited\nScheduled\nEnjoyed\nOverdue\nReview\nCancelled\nDraft\nNot Applicable\nAccess Required\nError",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "summary",
+   "label": "Seguimiento",
+   "fieldtype": "Small Text",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "planned_start",
+   "label": "Inicio previsto",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "planned_end",
+   "label": "Fin previsto",
+   "fieldtype": "Datetime",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "checked_on",
+   "label": "Última comprobación",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "changed_on",
+   "label": "Último cambio",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "change_reason",
+   "label": "Motivo del último cambio",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_hash",
+   "label": "Huella de evidencia",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence",
+   "label": "Respaldo de la evaluación",
+   "fieldtype": "Code",
+   "read_only": 1,
+   "options": "JSON"
+  },
+  {
+   "fieldname": "issues",
+   "label": "Problemas detectados",
+   "fieldtype": "Code",
+   "read_only": 1,
+   "options": "JSON"
+  },
+  {
+   "fieldname": "evidence_references",
+   "label": "Documentos de respaldo",
+   "fieldtype": "Table",
+   "read_only": 1,
+   "options": "Working Time Evidence Reference"
+  },
+  {
+   "fieldname": "notice_status",
+   "label": "Resultado del aviso",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_notice_key",
+   "label": "Identidad del último aviso",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "last_notice_on",
+   "label": "Último aviso",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_notice",
+   "label": "Registro de aviso",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Notification Log"
+  }
+ ],
+ "field_order": [
+  "election",
+  "source_type",
+  "source_name",
+  "employee",
+  "company",
+  "responsible",
+  "status",
+  "summary",
+  "planned_start",
+  "planned_end",
+  "checked_on",
+  "changed_on",
+  "change_reason",
+  "evidence_hash",
+  "evidence",
+  "issues",
+  "evidence_references",
+  "notice_status",
+  "last_notice_key",
+  "last_notice_on",
+  "last_notice"
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "report": 1
+  }
+ ]
+}

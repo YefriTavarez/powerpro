@@ -70,7 +70,7 @@ def watch_query(user=None):
 
 
 def source_query(table,user=None):
-    if table not in {'Overtime Evidence Watch','Working Time Incident','Working Time Review'}:
+    if table not in {'Overtime Evidence Watch','Working Time Incident','Working Time Review','Overtime Rest Watch'}:
         raise ValueError('Unsupported evidence table')
     from frappe.model.db_query import DatabaseQuery
     user=user or frappe.session.user

@@ -155,6 +155,7 @@ app_include_icons = "powerpro/icons/igcaribe/icons.svg"
 # Permissions evaluated in scripted ways
 
 permission_query_conditions = {
+    "Overtime Rest Watch": "powerpro.controllers.overtime_rest_monitor.watch_query",
     "Working Time Review": "powerpro.controllers.working_time_reviews.review_query",
     "Working Time Incident": "powerpro.controllers.working_time_incidents.incident_query",
     "Overtime Evidence Watch": "powerpro.controllers.overtime_evidence_monitor.watch_query",
@@ -173,6 +174,7 @@ permission_query_conditions = {
 }
 #
 has_permission = {
+    "Overtime Rest Watch": "powerpro.controllers.overtime_rest_monitor.watch_permission",
     "Working Time Review": "powerpro.controllers.working_time_reviews.review_permission",
     "Working Time Incident": "powerpro.controllers.working_time_incidents.incident_permission",
     "Overtime Evidence Watch": "powerpro.controllers.overtime_evidence_monitor.watch_permission",
@@ -302,6 +304,7 @@ scheduler_events = {
 		"powerpro.controllers.overtime_candidates.scheduled_generate_overtime_candidates",
         "powerpro.controllers.overtime_evidence_monitor.scheduled_check",
         "powerpro.controllers.working_time_incident_monitor.scheduled_check",
+        "powerpro.controllers.overtime_rest_monitor.scheduled_check",
         "powerpro.controllers.ordinary_night_automation.scheduled_check",
 	],
 }

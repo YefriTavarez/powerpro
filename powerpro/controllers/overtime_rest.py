@@ -291,13 +291,105 @@ def reschedule(name,start,end,reason):
 
 @frappe.whitelist()
 def get_rest_status(name):
+    """Current operational proof; never infer enjoyment from absence of punches."""
     election=frappe.get_doc(DT,name);election.check_permission('read')
     auth=get_source(election);auth.check_permission('read')
-    status=election.status
-    if status=='Enjoyed' and frappe.get_all('Employee Checkin',filters=[['employee','=',auth.employee],
-        ['time','>=',election.actual_start],['time','<',election.actual_end]],pluck='name',limit=1):
-        status='Review'
-    if election.docstatus==1 and election.choice=='Compensatory Rest' and status not in {'Enjoyed','Review'} and get_datetime(election.planned_end)<now_datetime():
-        status='Overdue'
-    return {'status':status,'settlement_status':auth.settlement_status,'leave_application':election.leave_application,
-            'credit':auth.get('compensatory_credit'),'allocation':auth.get('leave_allocation')}
+    frappe.get_doc('Employee',auth.employee).check_permission('read')
+    from powerpro.controllers.checkin_overtime import _evidence_hash
+    from powerpro.controllers.overtime_source import identity
+    refs=[{'document_type':DT,'document_name':election.name},
+          {'document_type':auth.doctype,'document_name':auth.name}]
+    proof={'election':{k:election.get(k) for k in ['name','docstatus','status','active_authorization','employee','company','choice',
+        'planned_start','planned_end','actual_start','actual_end','confirmed_by','confirmed_on','enjoyment_reference','leave_application']},
+        'source':{'doctype':auth.doctype,'name':auth.name,'docstatus':auth.docstatus,'status':auth.status,
+            'settlement_status':auth.settlement_status,'compensatory_credit':auth.get('compensatory_credit'),'leave_allocation':auth.get('leave_allocation')}}
+    issues=[]
+    def issue(code):issues.append({'code':code})
+    def finish(status):
+        return {'status':status,'settlement_status':auth.settlement_status,'leave_application':election.leave_application,
+            'credit':auth.get('compensatory_credit'),'allocation':auth.get('leave_allocation'),'issues':issues,
+            'evidence':proof,'evidence_hash':_evidence_hash({'proof':proof,'issues':issues,'status':status}),'references':refs}
+    if election.docstatus==2 or auth.docstatus==2:return finish('Cancelled')
+    if election.docstatus!=1:return finish('Draft')
+    if election.choice!='Compensatory Rest':return finish('Not Applicable')
+    if (auth.docstatus!=1 or auth.status!='Approved' or not evidence_enabled(auth)
+            or auth.planned_settlement!=election.choice or election.active_authorization!=claim(auth) or election.employee!=auth.employee or election.company!=auth.company):
+        issue('inactive_or_mismatched_election');return finish('Review')
+    if not election.planned_start or not election.planned_end:
+        issue('missing_rest_window');return finish('Review')
+    try:
+        validate_rest_schedule(election.planned_start,election.planned_end,work_date=auth.work_date,
+            authorization_end=auth.authorization_end,entitlement={'minimum_rest_hours':election.minimum_rest_hours,'weekly_rest':election.weekly_rest})
+    except ValueError:
+        issue('invalid_rest_window');return finish('Review')
+    # A changing work record calls for review; it never silently reduces an
+    # already created rest obligation or changes the frozen source.
+    from powerpro.controllers import checkin_overtime as evidence
+    from powerpro.controllers.overtime_history import physical_input
+    saved=frappe.parse_json(auth.evidence_snapshot or '{}')
+    current=evidence.build_result(auth)
+    checkins={r['name'] for r in (current.get('source_checkins') or [])+(saved.get('source_checkins') or [])}
+    if not frappe.has_permission('Employee Checkin','read'):
+        frappe.throw(_('Necesita acceso a las marcaciones para verificar el descanso.'),frappe.PermissionError)
+    for checkin in sorted(checkins):
+        if not frappe.has_permission('Employee Checkin','read',doc=checkin):
+            frappe.throw(_('No tiene acceso a una marcación necesaria para verificar el descanso.'),frappe.PermissionError)
+        refs.append({'document_type':'Employee Checkin','document_name':checkin})
+    proof['physical_work']={'saved_hash':_evidence_hash(physical_input(saved)),
+        'current_hash':_evidence_hash(physical_input(current)),'current_state':current['state']}
+    if proof['physical_work']['saved_hash']!=proof['physical_work']['current_hash'] or current['state']!='Verified':
+        issue('work_evidence_changed')
+    credited=auth.settlement_status=='Credited'
+    if credited:
+        if not auth.get('compensatory_credit'):
+            issue('missing_compensatory_credit')
+        else:
+            credit=frappe.get_doc('Overtime Compensatory Credit',auth.compensatory_credit);credit.check_permission('read')
+            refs.append({'document_type':credit.doctype,'document_name':credit.name})
+            proof['credit']={k:credit.get(k) for k in ['name','docstatus','status','employee','banked_hours','credited_days','leave_allocation']}
+            if credit.docstatus!=1 or credit.status!='Credited' or credit.employee!=auth.employee or identity(credit,authorization_field='overtime_authorization')!=(auth.doctype,auth.name):
+                issue('inactive_or_mismatched_credit')
+            if credit.leave_allocation and credit.leave_allocation!=auth.get('leave_allocation'):
+                issue('credit_allocation_link_changed')
+    elif auth.settlement_status in {'Created','Payroll Submitted','Paid','Cancelled'}:
+        issue('settlement_inconsistent_with_rest')
+    if auth.get('leave_allocation'):
+        allocation=frappe.get_doc('Leave Allocation',auth.leave_allocation);allocation.check_permission('read')
+        refs.append({'document_type':allocation.doctype,'document_name':allocation.name})
+        proof['allocation']={k:allocation.get(k) for k in ['name','docstatus','employee','leave_type','from_date','to_date']}
+        policy=saved.get('input',{}).get('pay_policy') or {}
+        if allocation.docstatus!=1 or allocation.employee!=auth.employee or allocation.leave_type!=policy.get('leave_type'):
+            issue('inactive_or_mismatched_allocation')
+    leave=None
+    if election.leave_application:
+        leave=frappe.get_doc('Leave Application',election.leave_application);leave.check_permission('read')
+        refs.append({'document_type':leave.doctype,'document_name':leave.name})
+        proof['leave']={k:leave.get(k) for k in ['name','docstatus','status','employee','leave_type','from_date','to_date','half_day','half_day_date','total_leave_days']}
+        try:
+            if election.status=='Enjoyed':
+                _check_leave_coverage(auth,election,leave,start=election.actual_start,end=election.actual_end)
+            else:_check_leave_coverage(auth,election,leave)
+        except frappe.ValidationError:issue('leave_no_longer_covers_rest')
+    if election.status=='Enjoyed':
+        if (not credited or not leave or not election.actual_start or not election.actual_end
+                or not election.enjoyment_reference or not election.confirmed_by or not election.confirmed_on):
+            issue('incomplete_enjoyment_confirmation')
+        else:
+            a,b=get_datetime(election.actual_start),get_datetime(election.actual_end)
+            try:validate_rest_schedule(a,b,work_date=auth.work_date,authorization_end=auth.authorization_end,
+                entitlement={'minimum_rest_hours':election.minimum_rest_hours,'weekly_rest':election.weekly_rest})
+            except ValueError:issue('invalid_confirmed_rest_window')
+            if b>now_datetime():issue('confirmed_rest_has_not_ended')
+            conflicts=frappe.get_all('Employee Checkin',filters=[['employee','=',auth.employee],['time','>=',a],['time','<',b]],fields=['name','time'],limit=101)
+            if len(conflicts)>100:frappe.throw(_('Demasiadas marcaciones en el descanso; acote la revisión.'))
+            for row in conflicts:
+                if not frappe.has_permission('Employee Checkin','read',doc=row.name):
+                    frappe.throw(_('No tiene acceso a una marcación del descanso.'),frappe.PermissionError)
+                refs.append({'document_type':'Employee Checkin','document_name':row.name})
+            proof['rest_checkins']=conflicts
+            if conflicts:issue('checkin_during_confirmed_rest')
+        return finish('Review' if issues else 'Enjoyed')
+    if election.status=='Scheduled' and (not credited or not leave):issue('missing_scheduled_rest_support')
+    if issues:return finish('Review')
+    if get_datetime(election.planned_end)<now_datetime():return finish('Overdue')
+    return finish('Scheduled' if leave else 'Credited' if credited else 'Approved')
