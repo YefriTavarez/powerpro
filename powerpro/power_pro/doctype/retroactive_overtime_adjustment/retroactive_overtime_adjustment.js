@@ -423,6 +423,17 @@ function add_evidence_actions(frm) {
 				: __('La liquidación tiene condiciones pendientes de revisión.');
 			frm.dashboard.set_headline_alert(message, 'orange');
 		}
+		if (state.election || state.can_elect) frm.add_custom_button(__('Elección del empleado'), () => {
+            if (frm.is_dirty()) return frappe.msgprint(__('Guarde los cambios primero.'));
+            if (state.election) return frappe.set_route('Form', 'Overtime Settlement Election', state.election);
+            return frappe.new_doc('Overtime Settlement Election', {retroactive_adjustment: frm.doc.name,
+                choice: frm.doc.planned_settlement, settlement_payroll_date: frm.doc.settlement_payroll_date});
+        }, __('Overtime'));
+        if (state.can_credit) frm.add_custom_button(__('Acreditar descanso compensatorio'), () => {
+            if (frm.is_dirty()) return frappe.msgprint(__('Guarde los cambios primero.'));
+            return frappe.call({method: 'powerpro.controllers.retroactive_evidence.create_compensatory_settlement',
+                type: 'POST', args: {adjustment: frm.doc.name}, freeze: true}).then(() => frm.reload_doc());
+        }, __('Overtime'));
 		if (!state.can_night) return;
 		frm.add_custom_button(__('Nocturnidad ordinaria'), () => {
 			if (frm.is_dirty()) return frappe.msgprint(__('Guarde los cambios antes de abrir la nocturnidad.'));

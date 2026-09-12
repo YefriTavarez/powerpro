@@ -25,5 +25,9 @@ async function fixture(state,options={}) {
  x=await fixture({state:'Verified',can_night:false});x.ctx.add_cash_settlement_actions(x.frm);x.buttons[0].fn();
  assert.equal(x.calls[1].type,'POST');assert.equal(x.calls[1].method,'powerpro.controllers.overtime_cash_settlement.create_cash_settlement');
  await Promise.resolve();assert(x.messages.includes('reload'));
+ x=await fixture({state:'Verified',can_elect:true});x.buttons[0].fn();assert.equal(x.drafts[0][0],'Overtime Settlement Election');assert.equal(x.drafts[0][1].retroactive_adjustment,'AJUSTE');
+ x=await fixture({state:'Verified',election:'ELECT'});x.buttons[0].fn();assert.equal(x.routes[0][2],'ELECT');
+ x=await fixture({state:'Verified',can_credit:true});await x.buttons[0].fn();assert.equal(x.calls[1].type,'POST');assert.equal(x.calls[1].method,'powerpro.controllers.retroactive_evidence.create_compensatory_settlement');
+ x=await fixture({state:'Verified',can_credit:true},{dirty:true});x.buttons[0].fn();assert.equal(x.calls.length,1);
  console.log('Retroactive UI: current evidence alert, scoped night creation/link, permission/dirty guards and explicit cash POST passed.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

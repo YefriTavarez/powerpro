@@ -7,6 +7,7 @@
  "field_order": [
   "source_section",
   "overtime_authorization",
+  "retroactive_adjustment",
   "employee",
   "employee_name",
   "source_column",
@@ -51,8 +52,16 @@
    "label": "Overtime Authorization",
    "options": "Overtime Authorization",
    "read_only": 1,
-   "reqd": 1,
+   "reqd": 0,
    "search_index": 1
+  },
+  {
+   "fieldname": "retroactive_adjustment",
+   "fieldtype": "Link",
+   "options": "Retroactive Overtime Adjustment",
+   "label": "Ajuste retroactivo",
+   "read_only": 1,
+   "no_copy": 1
   },
   {
    "fieldname": "employee",

@@ -9,6 +9,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt, getdate, now_datetime
 
+from powerpro.controllers.overtime_source import evidence_enabled,links,identity
+
 from powerpro.payroll_rules.overtime_compensatory import (
 	calculate_compensatory_credit,
 	calculate_compensatory_reversal,
@@ -70,7 +72,7 @@ def build_compensatory_preview(authorization, settings=None, bank_state=None, *,
 	election = None
 	current_hours = settlement_hours(authorization)
 	period_date = authorization.work_date
-	if authorization.get("evidence_enrolled"):
+	if evidence_enabled(authorization):
 		from powerpro.controllers.overtime_rest import get_election,validate_election,election_snapshot
 		from powerpro.payroll_rules.overtime_rest import rest_entitlement
 		frozen = frappe.parse_json(authorization.evidence_snapshot or "{}")
@@ -132,7 +134,7 @@ def build_compensatory_preview(authorization, settings=None, bank_state=None, *,
 		}
 	return {
 		"method": "Compensatory Rest",
-		"authorization": authorization.name,
+		**links(authorization),
 		"employee": authorization.employee,
 		"work_date": str(getdate(authorization.work_date)),
 		"leave_period": leave_period.name,
@@ -158,7 +160,7 @@ def create_compensatory_credit(authorization):
 	frappe.db.get_value("Employee", authorization.employee, "name", for_update=True)
 	if frappe.db.exists(
 		"Overtime Compensatory Credit",
-		{"overtime_authorization": authorization.name, "docstatus": ["<", 2]},
+		{**links(authorization,authorization_field="overtime_authorization"), "docstatus": ["<", 2]},
 	):
 		frappe.throw(
 			_("A compensatory credit already exists for this overtime authorization."),
@@ -175,7 +177,7 @@ def create_compensatory_credit(authorization):
 
 	credit = frappe.new_doc("Overtime Compensatory Credit")
 	credit.update({
-		"overtime_authorization": authorization.name,
+		**links(authorization,authorization_field="overtime_authorization"),
 		"employee": authorization.employee,
 		"employee_name": authorization.employee_name,
 		"company": authorization.company,
@@ -206,12 +208,14 @@ def create_compensatory_credit(authorization):
 def reverse_compensatory_credit(authorization, reason=None):
 	credit_name = authorization.get("compensatory_credit") or frappe.db.get_value(
 		"Overtime Compensatory Credit",
-		{"overtime_authorization": authorization.name, "docstatus": 1},
+		{**links(authorization,authorization_field="overtime_authorization"), "docstatus": 1},
 		"name",
 	)
 	if not credit_name:
 		return None
 	credit = frappe.get_doc("Overtime Compensatory Credit", credit_name, for_update=True)
+	if identity(credit,authorization_field="overtime_authorization") != (authorization.doctype,authorization.name):
+		frappe.throw(_("El crédito no corresponde al origen que se intenta cancelar."))
 	if credit.docstatus != 1:
 		return None
 	frappe.db.get_value(credit.doctype, credit.name, "name", for_update=True)

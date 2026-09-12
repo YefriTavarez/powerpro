@@ -170,6 +170,11 @@ def _settle_authorization(doc, *, payroll_date=None, settings=None, preview=None
 			**settlement,
 		}
 
+	return _credit_and_record(doc)
+
+
+def _credit_and_record(doc):
+	from powerpro.controllers.overtime_source import evidence_enabled,links
 	credit, allocation, preview = create_compensatory_credit(doc)
 	values = {
 		"settlement_status": "Credited",
@@ -198,7 +203,7 @@ def _settle_authorization(doc, *, payroll_date=None, settings=None, preview=None
 		),
 	}
 	frappe.db.set_value(doc.doctype, doc.name, values)
-	if doc.get("evidence_enrolled"):
+	if evidence_enabled(doc):
 		from powerpro.controllers.overtime_rest import get_election
 		election = get_election(doc,for_update=True)
 		if election:election.db_set("status","Credited")
@@ -213,7 +218,7 @@ def _settle_authorization(doc, *, payroll_date=None, settings=None, preview=None
 		),
 	)
 	return {
-		"authorization": doc.name,
+		**links(doc),
 		"settlement_status": "Credited",
 		"settlement_method": "Compensatory Rest",
 		"compensatory_credit": credit.name,

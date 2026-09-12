@@ -12,7 +12,15 @@
    "fieldtype": "Link",
    "label": "Autorización",
    "options": "Overtime Authorization",
-   "reqd": 1
+   "reqd": 0
+  },
+  {
+   "fieldname": "retroactive_adjustment",
+   "fieldtype": "Link",
+   "options": "Retroactive Overtime Adjustment",
+   "label": "Ajuste retroactivo",
+   "read_only": 0,
+   "no_copy": 1
   },
   {
    "fieldname": "employee",
@@ -182,14 +190,23 @@
    "label": "Confirmado el",
    "read_only": 1,
    "no_copy": 1
+  },
+  {
+   "fieldname": "settlement_payroll_date",
+   "fieldtype": "Date",
+   "label": "Fecha de nómina para pago",
+   "depends_on": "eval:doc.retroactive_adjustment && doc.choice==\"Cash\"",
+   "no_copy": 1
   }
  ],
  "field_order": [
   "authorization",
+  "retroactive_adjustment",
   "employee",
   "company",
   "choice",
   "employee_reference",
+  "settlement_payroll_date",
   "policy",
   "planned_start",
   "planned_end",

@@ -89,6 +89,11 @@ def get_status(adjustment):
         'warnings':as_reconciliation(doc,current)['warnings'],'can_night':False,'ordinary_night':None,
         'ordinary_night_hours':current.get('night_session',{}).get('ordinary_premium_hours',0)}
     if changed:result['warnings'].insert(0,_('La evidencia actual cambió; se conserva la instantánea aprobada.'))
+    from powerpro.controllers.overtime_rest import get_election
+    election=get_election(doc)
+    result['election']=election.name if election and frappe.has_permission(election.doctype,'read',doc=election) else None
+    result['can_elect']=bool(not changed and current['state']=='Verified' and not election and doc.settlement_status not in {'Created','Payroll Submitted','Paid','Credited','Cancelled'} and frappe.has_permission('Overtime Settlement Election','create'))
+    result['can_credit']=bool(result['settlement_ready'] and doc.planned_settlement=='Compensatory Rest' and doc.settlement_status=='Pending' and doc.approver==frappe.session.user and frappe.has_permission(DT,'submit',doc=doc))
     if result['ordinary_night_hours']:
         name=frappe.db.get_value('Ordinary Night Settlement',{'employee':doc.employee,'work_date':doc.work_date,'docstatus':1},'name')
         if name:
@@ -97,3 +102,36 @@ def get_status(adjustment):
                 result.update(can_night=True,ordinary_night=name)
         else:result['can_night']=bool(frappe.has_permission('Ordinary Night Settlement','create'))
     return result
+
+
+@frappe.whitelist(methods=['POST'])
+def create_compensatory_settlement(adjustment):
+    """Explicit reviewed historical credit; same allocation ledger as authorizations."""
+    from powerpro.controllers.overtime_rest import _lock_source,get_election,_event
+    from powerpro.controllers.overtime_settlement import _validate_settlement_role,_credit_and_record
+    from powerpro.controllers.checkin_overtime import _json
+    doc,_call=_lock_source(adjustment,source_type=DT)
+    doc.check_permission('submit')
+    if doc.approver!=frappe.session.user:
+        frappe.throw(_('Solo el aprobador asignado puede liquidar este ajuste.'),frappe.PermissionError)
+    _validate_settlement_role()
+    if doc.planned_settlement!='Compensatory Rest':
+        frappe.throw(_('Seleccione descanso compensatorio mediante la elección del empleado.'))
+    if doc.settlement_status in {'Created','Payroll Submitted','Paid','Credited','Cancelled'}:
+        frappe.throw(_('El ajuste ya tiene una liquidación; no se crea otra.'))
+    current=validate_fresh(doc)
+    election=get_election(doc,for_update=True)
+    if not election or election.choice!='Compensatory Rest':
+        frappe.throw(_('Confirme primero la elección de descanso del empleado.'))
+    # Snapshot refresh and ledger writes are one financial action, including for
+    # callers that catch exceptions within a larger request/transaction.
+    point='retroactive_credit_'+frappe.generate_hash(length=8)
+    frappe.db.savepoint(point)
+    try:
+        doc.db_set({'evidence_snapshot':_json(current['_evidence']),'evidence_settlement_ready':1})
+        result=_credit_and_record(doc)
+        _event(doc,election,'Retroactive Rest Credited',result)
+        return result
+    except Exception:
+        frappe.db.rollback(save_point=point)
+        raise

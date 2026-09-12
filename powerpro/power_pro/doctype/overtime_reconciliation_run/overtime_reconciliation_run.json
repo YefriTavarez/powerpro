@@ -10,7 +10,15 @@
    "fieldtype": "Link",
    "label": "Autorización",
    "options": "Overtime Authorization",
-   "reqd": 1
+   "reqd": 0
+  },
+  {
+   "fieldname": "retroactive_adjustment",
+   "fieldtype": "Link",
+   "options": "Retroactive Overtime Adjustment",
+   "label": "Ajuste retroactivo",
+   "read_only": 1,
+   "no_copy": 1
   },
   {
    "fieldname": "employee",
@@ -60,6 +68,7 @@
  ],
  "field_order": [
   "authorization",
+  "retroactive_adjustment",
   "employee",
   "work_date",
   "result_status",

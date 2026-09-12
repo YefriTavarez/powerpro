@@ -9,6 +9,8 @@ from powerpro.controllers.overtime import _reconciliation_rows,get_schedule_cont
 from powerpro.controllers.overtime_pay_policy import get_effective_policy
 from powerpro.payroll_rules.overtime_rest import rest_entitlement,validate_rest_schedule
 
+from powerpro.controllers.overtime_source import AUTH,RETRO,evidence_enabled,identity,get_source,claim
+
 DT='Overtime Settlement Election'
 
 
@@ -25,7 +27,20 @@ def require_managed(action,name):
         frappe.throw(_('Utilice las acciones de elección y descanso.'),frappe.PermissionError)
 
 
-def _lock_source(name,*,allow_cancelled=False):
+def _lock_source(name,*,allow_cancelled=False,source_type=AUTH):
+    if source_type==RETRO:
+        ref=frappe.db.get_value(RETRO,name,'employee')
+        if not ref:frappe.throw(_('El ajuste retroactivo no existe.'))
+        frappe.db.get_value('Employee',ref,'name',for_update=True)
+        doc=frappe.get_doc(RETRO,name,for_update=True)
+        if doc.employee!=ref:frappe.throw(_('El empleado del ajuste cambió; vuelva a intentar.'))
+        from powerpro.controllers.checkin_overtime import _access
+        _access(doc)
+        if not evidence_enabled(doc):frappe.throw(_('El ajuste requiere conciliación por marcaciones.'))
+        if not allow_cancelled and (doc.docstatus!=1 or doc.status!='Approved'):
+            frappe.throw(_('El ajuste debe permanecer aprobado.'))
+        return doc,None
+    if source_type!=AUTH:frappe.throw(_('Origen de horas extra no admitido.'))
     from powerpro.controllers.checkin_overtime import _lock,_access
     if not allow_cancelled:
         auth,call=_lock(name)
@@ -41,16 +56,17 @@ def _lock_source(name,*,allow_cancelled=False):
 
 def _locked_election(name,*,allow_cancelled=False):
     ref=frappe.get_doc(DT,name);ref.check_permission('write')
-    auth,call=_lock_source(ref.authorization,allow_cancelled=allow_cancelled)
+    source_type,source_name=identity(ref)
+    auth,call=_lock_source(source_name,allow_cancelled=allow_cancelled,source_type=source_type)
     election=frappe.get_doc(DT,name,for_update=True);election.check_permission('write')
-    if election.authorization!=auth.name:
+    if identity(election)!=(auth.doctype,auth.name):
         frappe.throw(_('La autorización de la elección cambió; vuelva a intentar.'))
     return election,auth,call
 
 
 def get_election(auth,*,for_update=False):
     rows=_reconciliation_rows(DT,for_update=for_update,
-        filters={'active_authorization':auth.name,'docstatus':1},fields=['name'],limit=2)
+        filters={'active_authorization':claim(auth),'docstatus':1},fields=['name'],limit=2)
     if not rows:return None
     if len(rows)!=1:frappe.throw(_('Hay elecciones activas duplicadas.'))
     return frappe.get_doc(DT,rows[0].name,for_update=for_update)
@@ -62,20 +78,28 @@ def _weekly(auth,calculation=None):
 
 def election_snapshot(election):
     if not election:return None
-    return json.loads(json.dumps({k:election.get(k) for k in ['name','authorization','employee','choice','employee_reference','policy',
+    fields=['retroactive_adjustment','settlement_payroll_date'] if election.get('retroactive_adjustment') else []
+    return json.loads(json.dumps({k:election.get(k) for k in fields+['name','authorization','employee','choice','employee_reference','policy',
         'planned_start','planned_end','minimum_rest_hours','credit_hours','required_leave_days','weekly_rest',
         'approved_by','approved_on']},default=str))
 
 
 def validate_election(election,auth,policy,*,worked_hours=None,calculation=None):
-    if not auth.get('evidence_enrolled') or auth.docstatus!=1 or auth.status!='Approved':
+    if not evidence_enabled(auth) or auth.docstatus!=1 or auth.status!='Approved':
         frappe.throw(_('La autorización debe estar aprobada e inscrita por marcaciones.'))
+    if identity(election)!=(auth.doctype,auth.name):frappe.throw(_('La elección no corresponde al origen.'))
     if not str(election.employee_reference or '').strip():frappe.throw(_('Adjunte o referencie la elección expresa del empleado.'))
     if election.choice not in {'Cash','Compensatory Rest'}:frappe.throw(_('Seleccione efectivo o descanso.'))
     if not policy or (election.policy and election.policy!=policy['name']):frappe.throw(_('La política aprobada no coincide con esta elección.'))
     weekly=_weekly(auth,calculation)
     values={'employee':auth.employee,'company':auth.company,'policy':policy['name'],'weekly_rest':int(weekly)}
     if election.choice=='Cash':
+        if auth.doctype==RETRO:
+            from powerpro.payroll_rules.retroactive_overtime import is_settlement_payroll_date_valid
+            date=election.get('settlement_payroll_date') or auth.get('settlement_payroll_date')
+            if not date or not is_settlement_payroll_date_valid(auth.work_date,date):
+                frappe.throw(_('Indique una fecha de nómina igual o posterior al trabajo para la elección de pago.'))
+            values['settlement_payroll_date']=getdate(date)
         if weekly and not policy.get('weekly_rest_cash'):frappe.throw(_('La política no autoriza efectivo por descanso semanal.'))
         values.update(credit_hours=0,minimum_rest_hours=0,required_leave_days=0)
     else:
@@ -117,7 +141,10 @@ def approve_election(name):
     if auth.settlement_status in {'Created','Payroll Submitted','Paid','Credited','Cancelled'}:frappe.throw(_('No se cambia la elección de una obligación ya liquidada.'))
     with managed('submit',name):
         election.flags.ignore_permissions=True;election.submit()
-    auth.db_set({'planned_settlement':election.choice,'evidence_settlement_ready':0,'evidence_retry_after':now_datetime()})
+    values={'planned_settlement':election.choice,'evidence_settlement_ready':0}
+    if auth.doctype==AUTH:values['evidence_retry_after']=now_datetime()
+    elif election.choice=='Cash':values['settlement_payroll_date']=election.settlement_payroll_date
+    auth.db_set(values)
     _event(auth,election,'Employee Election Approved',election_snapshot(election))
     return {'name':name,'status':election.status}
 
@@ -138,7 +165,9 @@ def cancel_election(name,reason):
     if auth.settlement_status in {'Created','Payroll Submitted','Paid','Credited'}:frappe.throw(_('Revierta primero la liquidación vinculada.'))
     with managed('cancel',name):
         election.flags.ignore_permissions=True;election.cancel()
-    auth.db_set({'evidence_settlement_ready':0,'evidence_retry_after':now_datetime()})
+    values={'evidence_settlement_ready':0}
+    if auth.doctype==AUTH:values['evidence_retry_after']=now_datetime()
+    auth.db_set(values)
     _event(auth,election,'Employee Election Cancelled',{'reason':reason})
     return {'status':'Cancelled'}
 
@@ -222,12 +251,12 @@ def confirm_enjoyment(name,actual_start,actual_end,reference):
 
 
 def before_leave_cancel(leave,method=None):
-    rows=frappe.get_all(DT,filters={'leave_application':leave.name,'docstatus':1},fields=['name','status','authorization'])
+    rows=frappe.get_all(DT,filters={'leave_application':leave.name,'docstatus':1},fields=['name','status','authorization','retroactive_adjustment'])
     if any(r.status=='Enjoyed' for r in rows):frappe.throw(_('Revise primero la confirmación de disfrute vinculada a esta licencia.'))
     for row in rows:
         election=frappe.get_doc(DT,row.name,for_update=True)
         election.db_set({'leave_application':None,'status':'Credited'})
-        _event(frappe.get_doc('Overtime Authorization',row.authorization),election,'Linked Leave Cancelled',{'leave_application':leave.name})
+        _event(get_source(row),election,'Linked Leave Cancelled',{'leave_application':leave.name})
 
 
 @frappe.whitelist(methods=['POST'])
@@ -263,7 +292,7 @@ def reschedule(name,start,end,reason):
 @frappe.whitelist()
 def get_rest_status(name):
     election=frappe.get_doc(DT,name);election.check_permission('read')
-    auth=frappe.get_doc('Overtime Authorization',election.authorization);auth.check_permission('read')
+    auth=get_source(election);auth.check_permission('read')
     status=election.status
     if status=='Enjoyed' and frappe.get_all('Employee Checkin',filters=[['employee','=',auth.employee],
         ['time','>=',election.actual_start],['time','<',election.actual_end]],pluck='name',limit=1):

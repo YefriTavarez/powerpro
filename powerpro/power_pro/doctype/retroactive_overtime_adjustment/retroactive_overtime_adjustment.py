@@ -186,10 +186,18 @@ class RetroactiveOvertimeAdjustment(OvertimeAuthorization):
 	def before_cancel(self):
 		frappe.db.get_value('Employee',self.employee,'name',for_update=True)
 		before_cancel_adjustment(self)
+		if retroactive_evidence.enabled(self):
+			from powerpro.controllers.overtime_rest import release_for_source
+			release_for_source(self)
 
 	def on_cancel(self):
 		super().on_cancel()
-		cancel_cash_settlement(self)
+		if retroactive_evidence.enabled(self):
+			# The parent has already reversed cash or the compensatory ledger.
+			# Do not overwrite its new status with this in-memory pre-cancel value.
+			self.db_set("settlement_status", "Cancelled")
+		else:
+			cancel_cash_settlement(self)
 
 	def on_update_after_submit(self):
 		if retroactive_evidence.enabled(self):

@@ -68,7 +68,13 @@
   "status",
   "approved_by",
   "approved_on",
-  "amended_from"
+  "amended_from",
+  "settlement_method",
+  "compensatory_credit",
+  "leave_allocation",
+  "compensatory_hours",
+  "compensatory_days",
+  "compensatory_residual_hours"
  ],
  "fields": [
   {
@@ -370,7 +376,7 @@
    "fieldtype": "Select",
    "in_standard_filter": 1,
    "label": "Settlement Status",
-   "options": "Pending\nCreated\nPayroll Submitted\nPaid\nNot Applicable\nCancelled",
+   "options": "Pending\nCreated\nPayroll Submitted\nPaid\nNot Applicable\nCancelled\nCredited",
    "read_only": 1
   },
   {
@@ -539,6 +545,60 @@
    "read_only": 1,
    "allow_on_submit": 1,
    "no_copy": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "settlement_method",
+   "fieldtype": "Select",
+   "label": "Settlement Method",
+   "no_copy": 1,
+   "options": "\nCash\nCompensatory Rest",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "compensatory_credit",
+   "fieldtype": "Link",
+   "label": "Compensatory Credit",
+   "no_copy": 1,
+   "options": "Overtime Compensatory Credit",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "leave_allocation",
+   "fieldtype": "Link",
+   "label": "Consolidated Leave Allocation",
+   "no_copy": 1,
+   "options": "Leave Allocation",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "compensatory_hours",
+   "fieldtype": "Float",
+   "label": "Compensatory Hours Banked",
+   "no_copy": 1,
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "compensatory_days",
+   "fieldtype": "Float",
+   "label": "Leave Days Credited",
+   "no_copy": 1,
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "compensatory_residual_hours",
+   "fieldtype": "Float",
+   "label": "Residual Bank Hours",
+   "no_copy": 1,
+   "precision": "4",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,

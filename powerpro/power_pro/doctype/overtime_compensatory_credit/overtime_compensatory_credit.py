@@ -9,6 +9,8 @@ from frappe.utils import flt
 
 class OvertimeCompensatoryCredit(Document):
 	def validate(self):
+		from powerpro.controllers.overtime_source import identity
+		identity(self,authorization_field="overtime_authorization")
 		if self.is_new() and not self.flags.get("generated_from_overtime_settlement"):
 			frappe.throw(
 				_("Compensatory credits can only be created from an overtime settlement."),

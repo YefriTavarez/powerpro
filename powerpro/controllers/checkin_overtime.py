@@ -241,8 +241,9 @@ def _sync(call):
 
 
 def _audit(doc,result):
+    from powerpro.controllers.overtime_source import links
     run=frappe.new_doc('Overtime Reconciliation Run')
-    run.update({'authorization':doc.name,'employee':doc.employee,'work_date':doc.work_date,'result_status':result['state'],
+    run.update({**links(doc),'employee':doc.employee,'work_date':doc.work_date,'result_status':result['state'],
         'evidence_hash':result['input_hash'],'evidence':_json(result),'issues':_json(result['issues']),
         'evaluated_by':frappe.session.user,'evaluated_on':now_datetime()})
     run.name=frappe.generate_hash(length=16);run.db_insert()

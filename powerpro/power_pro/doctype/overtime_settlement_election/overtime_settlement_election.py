@@ -7,12 +7,13 @@ from frappe.utils import getdate,now_datetime
 from powerpro.controllers.overtime import _reconciliation_rows
 from powerpro.controllers.overtime_pay_policy import get_effective_policy
 from powerpro.controllers.overtime_rest import require_managed,validate_election
+from powerpro.controllers.overtime_source import get_source,claim
 
 
 class OvertimeSettlementElection(Document):
     def validate(self):
         if self.docstatus==2:return
-        auth=frappe.get_doc('Overtime Authorization',self.authorization);auth.check_permission('read')
+        auth=get_source(self);auth.check_permission('read')
         policy=get_effective_policy(auth)
         try:self.update(validate_election(self,auth,policy))
         except ValueError as exc:frappe.throw(str(exc))
@@ -24,11 +25,11 @@ class OvertimeSettlementElection(Document):
 
     def before_submit(self):
         require_managed('submit',self.name)
-        auth=frappe.get_doc('Overtime Authorization',self.authorization,for_update=True)
+        auth=get_source(self,for_update=True)
         self.previous_method=auth.planned_settlement
-        if _reconciliation_rows(self.doctype,for_update=True,filters={'active_authorization':self.authorization},pluck='name',limit=1):
+        if _reconciliation_rows(self.doctype,for_update=True,filters={'active_authorization':claim(auth)},pluck='name',limit=1):
             frappe.throw(_('Ya hay una elección activa para esta autorización.'))
-        self.active_authorization=self.authorization
+        self.active_authorization=claim(auth)
         if self.weekly_rest:
             date=getdate(auth.work_date);week=str(date-timedelta(days=date.weekday()))
             self.rest_week=week
