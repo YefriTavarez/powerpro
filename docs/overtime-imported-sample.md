@@ -39,7 +39,15 @@ Paquete fuente, hashes, copia previa del código, recibos y resultados: `logs/ob
 
 ## Pendiente y reversión
 
-La selección de empleado/fechas ya está resuelta; no repetir aquella pregunta de alcance. Falta resolver las discrepancias de la muestra y completar la semana antes de certificar recargos. La revisión automática de permisos rechazó ampliar el GET a la semana completa con Attendance y ajustes previos porque lo consideró fuera de la descarga autorizada. No se ejecutó esa consulta; requiere autorización expresa para ese alcance y destino local. El resto de la preparación siguió adelante.
+La selección de empleado/fechas ya está resuelta; no repetir aquella pregunta de alcance. La ampliación semanal fue inicialmente rechazada por la revisión automática de permisos. Posteriormente el usuario la autorizó expresamente y se ejecutó; ese bloqueo quedó resuelto. Falta revisar los intervalos reales y las pausas de las jornadas incompletas antes de certificar recargos o liquidar.
+
+### Ampliación semanal autorizada
+
+Se descargaron 22 Checkins del 10 al 16 de agosto, ningún Attendance enviado y un solo ajuste existente en el período. Las diez marcas anteriores no habían cambiado. Doce marcas nuevas se importaron en Desarrollo y diez se reutilizaron, con el mismo importador, hash del nuevo paquete, prueba de rollback, idempotencia y lectura posterior al commit. No se creó otro Employee. Los contadores de la muestra pasan a 22 Checkins; los globales, a Employee=102 y Employee Checkin=101. Los documentos protegidos y ajustes permanecieron intactos.
+
+La comparación con sincronización completa hipotética da 55:53:32 de lunes a viernes con primera entrada–última salida, y 51:30:54 con cada pareja válida. La diferencia es 4:22:38 de pausas. Son duraciones provisionales de jornada completa, no horas extra a pagar. El lunes guarda IN, IN, OUT, OUT: la alternancia lo interpreta sin modificar los originales; el modo estricto requiere revisión. Sábado y domingo siguen sin una pareja completa y no cuentan como cero. No se certificó la semana ni se activaron procesos.
+
+Se preparó un informe concreto para confirmar si los horarios firmados del fin de semana reflejan el trabajo real y qué pausas contienen, antes de una declaración manual. Confirmar AM/PM no equivale a resolver una discrepancia entre formulario y reloj. El día que ya tiene liquidación en Producción queda excluido de propuestas de pago nuevo. Los comprobantes semanales y el diagnóstico permanecen en el directorio privado de la muestra, fuera de Git.
 
 Para revertir código, revertir el commit correspondiente o restaurar únicamente los archivos del manifiesto desde `code-before.tar`; conservar los dos archivos ajenos. Revertir código no elimina los datos importados. Para retirar la muestra, revisar el recibo y dependencias actuales, eliminar por el ciclo nativo únicamente los Checkins allí creados y luego el Employee si fue creado por la importación y sigue sin dependencias nuevas. Conservar fuente y recibos; no borrar registros que el importador reutilizó ni ejecutar DELETE SQL.
 
