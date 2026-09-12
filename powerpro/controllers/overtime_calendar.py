@@ -21,7 +21,7 @@ from powerpro.payroll_rules.overtime_cash_settlement import calculate_cash_settl
 from powerpro.controllers.overtime_weekly import get_weekly_evidence
 
 ALLOWED_SOURCES = {"Overtime Authorization", "Retroactive Overtime Adjustment"}
-VERSION = "calendar-preview-v2-weekly-evidence"
+VERSION = "calendar-preview-v3-shift-corrections"
 
 
 @frappe.whitelist()

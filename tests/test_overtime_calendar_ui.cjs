@@ -59,3 +59,14 @@ assert(weeklyHtml.includes("cobertura no certificada"));
 assert(!weeklyHtml.includes("<img"));
 assert(!weeklyHtml.includes("<button"));
 console.log("Weekly UI: evidence, coverage, truncation and issue escaping passed.");
+const shiftedHtml = api.render({name:"AUTH", evidence_source:"snapshot", baseline:{}, difference:{},proposed:{segments:[]},
+ warnings:[],assumptions:[],weekly_evidence:{notes:[],weeks:[{week_start:"2026-09-21",days:[],issues:[],
+ shift_comparison:{configured:{paired_hours:10,hours_before_cutoff:8},with_corrections:{paired_hours:9,hours_before_cutoff:8},
+ sessions:[{shift:xss,shift_start:"2026-09-21",hours:10,direction_rule:xss,hours_rule:xss}],
+ applied_corrections:[{name:xss,kind:"Manual Verification",start:"2026-09-21",end:"2026-09-22"}],
+ issues:[{code:"overlapping_corrections",source:xss}],notes:[xss]}}]}});
+assert(shiftedHtml.includes("Turno con correcciones aplicadas"));
+assert(shiftedHtml.includes("Correcciones superpuestas"));
+assert(shiftedHtml.includes("<details>"));
+assert(!shiftedHtml.includes("<img"));
+console.log("Shift/correction UI: separate totals, review issues and escaping passed.");

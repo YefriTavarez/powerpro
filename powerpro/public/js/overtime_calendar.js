@@ -50,6 +50,32 @@ frappe.provide("powerpro.overtime_calendar");
 				html += table(["Horas de pares IN/OUT", "Antes de la autorización", "Umbral configurado", "Distancia provisional al umbral"], [[
 					hours(week.paired_hours), hours(week.hours_before_cutoff), hours(week.configured_threshold), hours(week.provisional_hours_to_threshold)]]);
 				html += `<p>${escape(__("Horas extras regulares previas usadas por el cálculo vigente"))}: ${hours(week.legacy_regular_overtime_before)}</p>`;
+				if (week.shift_comparison) {
+					const shifted = week.shift_comparison;
+					html += `<h5>${escape(__("Comparación con turno y Gestión Humana"))}</h5>`;
+					html += table(["Lectura", "Total semanal provisional", "Antes de la autorización"], [
+						[__("Pares IN/OUT explícitos"), hours(week.paired_hours), hours(week.hours_before_cutoff)],
+						[__("Según reglas del turno"), hours(shifted.configured.paired_hours), hours(shifted.configured.hours_before_cutoff)],
+						[__("Turno con correcciones aplicadas"), hours(shifted.with_corrections.paired_hours), hours(shifted.with_corrections.hours_before_cutoff)]]);
+					html += `<details><summary>${escape(__("Ver turnos, correcciones y advertencias"))}</summary>`;
+					html += table(["Turno guardado", "Inicio del turno", "Horas", "Interpretación", "Cálculo"],
+						shifted.sessions.map((row) => [row.shift, row.shift_start, hours(row.hours), __(row.direction_rule), __(row.hours_rule)]));
+					if (shifted.applied_corrections.length) html += table(["Corrección aplicada", "Tipo", "Desde", "Hasta"],
+						shifted.applied_corrections.map((row) => [row.name, __(row.kind), row.start, row.end]));
+					const issueLabels = {skip_auto_attendance:"Excluida de asistencia automática", offshift:"Fuera de turno",
+						missing_shift_window:"Sin horario de turno guardado", invalid_shift_window:"Horario de turno inválido",
+						outside_captured_window:"Fuera de la ventana guardada", unavailable_shift_policy:"Reglas del turno no disponibles",
+						unsupported_shift_policy:"Reglas del turno no reconocidas", duplicate_timestamp:"Marcaciones simultáneas",
+						insufficient_shift_punches:"Faltan marcaciones del turno", odd_alternating_count:"Cantidad impar de marcaciones",
+						direction_reinterpreted:"Dirección interpretada por alternancia", consecutive_in:"Entradas consecutivas",
+						out_without_in:"Salida sin entrada", unknown_direction:"Dirección desconocida", in_without_out:"Entrada sin salida",
+						first_last_includes_breaks:"Primera/última incluye el tiempo intermedio", invalid_duration:"Duración inválida",
+						invalid_correction:"Corrección inválida", overlapping_corrections:"Correcciones superpuestas: requieren revisión"};
+					if (shifted.issues.length) html += table(["Advertencia", "Referencia"], shifted.issues.map((row) => [
+						__(issueLabels[row.code] || row.code), row.source || (row.checkins || []).join(", ")]));
+					html += list(shifted.notes || []);
+					html += `</details>`;
+				}
 				const statuses = {review: "Revisar marcaciones", paired_evidence: "Con pares; cobertura no certificada", no_paired_evidence: "Sin pares; no confirma ausencia"};
 				html += table(["Fecha", "Horas reconstruidas", "Marcaciones", "Estado"],
 					week.days.map((day) => [day.date, hours(day.paired_hours), day.punch_count, __(statuses[day.status] || day.status)]));

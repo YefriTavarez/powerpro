@@ -107,3 +107,44 @@ Validation: `python3 tests/test_overtime_weekly.py`, the calendar tests above, a
 new fields, Attendance generation or historical salary updates are needed. Revert
 the weekly evidence commit and clear the explicit Development site's cache to roll
 back this stage.
+
+## Shift interpretation and HR corrections (v3)
+
+The weekly preview now compares three separate readings: conservative explicit
+IN/OUT pairs; current Shift Type options applied to captured shift sessions; and
+those configured intervals with current, audited HR corrections. The original
+calendar amounts and settlement engine remain unchanged.
+
+Sessions are grouped by the shift name/start/end saved on Employee Checkin. These
+capture the assignment resolved when the punch was saved; the preview does not
+reassign historical punches from today's Employee default shift. Off-shift,
+skip-auto-attendance and missing-window punches are listed for review. An overtime
+authorization does not yet expand a captured shift's window.
+
+All four combinations of alternating/strict direction and first-last/every-valid-
+pair calculations are supported. First-last intentionally includes intermediate
+break time, matching the meaning of the HRMS option. Alternating first-last uses
+first/last even with an odd count, but prominently flags the odd count. Reinterpreted
+directions remain unchanged in the stored Checkins. Duplicate timestamps and
+invalid durations are excluded rather than forced into a session. Hours retain
+second precision until the preview rounds to four decimals; HRMS's attendance
+helper rounds individual contributions to two decimals, so small rounding
+variations can occur. Session unions prevent overlap from double counting.
+
+Manual Verification is taken from currently submitted, permission-visible Overtime
+Authorizations with reconciliation user/date. HR exceptions must be the current
+linked event, Applied, matching the employee/authorization, and have resolver/date.
+Pending corrections, unconfirmed events and Cancel Participation do not change the
+evidence. Correct Worked Hours replaces its authorization window; Mark Absent
+removes only that window, never the ordinary workday. Raw manual intervals may
+extend outside the authorization; only their overlapping portion is used here.
+Overlapping correction windows are all flagged and left unapplied, with no arbitrary
+priority. Presumed Attendance is never used as worked evidence.
+
+This does not certify weekly completeness or eligibility for settlement. Remaining
+work includes overnight authorization-aware grouping, synchronization/coverage,
+manual correction conflicts and the legal policy decisions in the original plan.
+Current Shift Type options are not an immutable historical settings snapshot.
+
+Additional tests: `python3 tests/test_overtime_shift_evidence.py` (pure, no site).
+Rollback: revert the v3 commit and clear the explicit Development site's cache.

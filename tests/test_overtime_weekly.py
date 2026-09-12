@@ -96,7 +96,7 @@ class AdapterTest(unittest.TestCase):
     def test_permission_filtered_query_is_bounded_and_scoped(self):
         with patch.object(frappe, 'has_permission', return_value=True), patch.object(frappe, 'get_list', return_value=pair(21)) as query:
             x = get_weekly_evidence(self.doc, {'2026-09-21':3}, 68)
-            args = query.call_args.kwargs
+            args = next(call.kwargs for call in query.call_args_list if call.args[0] == 'Employee Checkin')
             self.assertEqual(args['limit_page_length'], LIMIT + 1)
             self.assertIn(['employee', '=', 'EMP-TEST'], args['filters'])
             self.assertEqual(x['weeks'][0]['paired_hours'], 8)
