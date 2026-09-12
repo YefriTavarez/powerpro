@@ -6,7 +6,7 @@ from powerpro.payroll_rules.overtime_shift_evidence import interpret_shift_punch
 from powerpro.payroll_rules.overtime_calendar import reconcile_calendar_intervals
 from powerpro.payroll_rules.overtime_work_call import derive_reconciliation_snapshot
 
-VERSION='checkin-evidence-v1'
+VERSION='checkin-evidence-v2-actual-week'
 EVIDENCE_FIELDS=('evidence_enrolled','evidence_status','evidence_enrolled_by','evidence_enrolled_on','evidence_last_hash','evidence_last_attempt','evidence_retry_after','evidence_issues','evidence_snapshot','evidence_settlement_ready','evidence_auto_settle')
 INFORMATIONAL={'direction_reinterpreted','first_last_includes_breaks'}
 
@@ -18,8 +18,6 @@ def evaluate_evidence(*, authorization, rows, shift, contexts, next_windows, now
     result={'version':VERSION,'state':'Verified','issues':[],'interpretations':[],'source_checkins':deepcopy(rows)}
     def issue(code,severity='review'):
         if not any(r['code']==code for r in result['issues']):result['issues'].append({'code':code,'severity':severity})
-    if _as_datetime(now)<end:issue('window_not_ended','wait')
-    if not shift.get('last_sync_of_checkin') or _as_datetime(shift['last_sync_of_checkin'])<end:issue('sync_incomplete','wait')
     if competing:issue('overlapping_authorization')
     if not context_complete:issue('incomplete_context')
     first=next((c for c in contexts if c['date']==str(start.date())),None)
@@ -28,6 +26,9 @@ def evaluate_evidence(*, authorization, rows, shift, contexts, next_windows, now
     regular=first['classification']=='Regular Workday'
     session_start=min(ordinary_start,start)
     session_end=max(ordinary_end,end) if regular else end
+    cutoff=session_end+timedelta(minutes=float(shift.get('allow_check_out_after_shift_end_time') or 0))
+    if _as_datetime(now)<cutoff:issue('window_not_ended','wait')
+    if not shift.get('last_sync_of_checkin') or _as_datetime(shift['last_sync_of_checkin'])<cutoff:issue('sync_incomplete','wait')
     if session_end-session_start>timedelta(hours=24):issue('extended_session_over_24h')
     group=[]
     for raw in sorted(rows,key=lambda r:(_as_datetime(r['time']),str(r.get('name') or ''))):

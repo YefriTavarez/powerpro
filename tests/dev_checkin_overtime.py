@@ -37,8 +37,8 @@ try:
  name=names[0];auth=frappe.get_doc('Overtime Authorization',name)
  assert auth.evidence_enrolled and not auth.auto_enrolled and auth.evidence_status=='Pending'
  checks.append('normal Work Call submit generated and enrolled verified mode without presumed enrollment')
- def punch(clock,kind):
-  doc=frappe.get_doc({'doctype':'Employee Checkin','employee':employee.name,'time':'2026-09-15 '+clock,'log_type':kind,'skip_auto_attendance':0})
+ def punch(clock,kind,day='2026-09-15'):
+  doc=frappe.get_doc({'doctype':'Employee Checkin','employee':employee.name,'time':day+' '+clock,'log_type':kind,'skip_auto_attendance':0})
   doc.insert(ignore_permissions=True);return doc
  first=punch('08:00:00','IN');punch('12:00:00','OUT');punch('13:00:00','IN')
  with patch.object(evidence,'now_datetime',return_value=get_datetime('2026-09-15 21:00:00')):
@@ -50,15 +50,33 @@ try:
   assert auth.actual_start==get_datetime('2026-09-15 18:00:00') and auth.actual_end==get_datetime('2026-09-15 20:00:00')
   assert auth.verified_hours==2 and auth.presumed_hours==0 and auth.reconciliation_source=='Employee Checkin'
   assert frappe.db.get_value('Overtime Work Call',call.name,'verified_hours')==2
+  snapshot=frappe.parse_json(auth.evidence_snapshot)
+  assert not snapshot['weekly_evidence']['complete'] and snapshot['calculation']['unclassified_regular_hours']==2
+  assert auth.regular_35_hours==auth.regular_100_hours==0
+  checks.append('missing prior weekday preserves two verified hours with recargo pending, without assumed 44 hours')
   checks.append('late exit changes review to actual 18:00-20:00 / 2 hours and syncs Work Call')
   audit_count=frappe.db.count('Overtime Reconciliation Run',{'authorization':name})
   assert evidence.process_authorization(name)=='Verified'
   assert frappe.db.count('Overtime Reconciliation Run',{'authorization':name})==audit_count
   checks.append('idempotent evaluation has no duplicate immutable run')
+  original_snapshot=auth.evidence_snapshot
+  shift.db_set('last_sync_of_checkin','2026-09-17 08:00:00')
+  punch('08:00:00','IN',day='2026-09-16')
+  assert evidence.process_authorization(name)=='Verified'
+  assert frappe.db.count('Overtime Reconciliation Run',{'authorization':name})==audit_count
+  assert frappe.db.get_value('Overtime Authorization',name,'evidence_snapshot')==original_snapshot
+  checks.append('advancing sync and next-day punches do not invalidate a completed snapshot')
   try:_validate_ready(auth)
   except frappe.ValidationError:pass
   else:raise AssertionError('Unapproved policy allowed settlement')
   checks.append('pending payroll policy blocks settlement independently of real-hour persistence')
+  prior=punch('08:00:00','IN',day='2026-09-14');punch('18:00:00','OUT',day='2026-09-14')
+  fresh=evidence.build_result(auth,for_update=True)
+  assert fresh['weekly_evidence']['complete'] and fresh['calculation']['regular_35_hours']==2
+  assert fresh['calculation']['segments'][0]['actual_weekly_hours_before']==19
+  assert evidence.process_authorization(name)=='Needs Review'
+  assert frappe.db.get_value('Overtime Authorization',name,'verified_hours')==2
+  checks.append('late prior-weekday evidence recomputes actual 19-hour basis and flags the frozen dependent authorization')
   frozen=auth.evidence_snapshot
   last.time='2026-09-15 19:00:00';last.save(ignore_permissions=True)
   assert evidence.process_authorization(name)=='Needs Review'

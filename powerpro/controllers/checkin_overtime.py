@@ -9,10 +9,12 @@ from datetime import datetime,time,timedelta
 import frappe
 from frappe import _
 from frappe.utils import cint,flt,get_datetime,getdate,now_datetime
-from powerpro.controllers.overtime import get_schedule_context,_reconciliation_rows,_get_verified_regular_overtime_before
-from powerpro.payroll_rules.overtime import coerce_time,get_regular_35_percent_cap,get_shift_window
+from powerpro.controllers.overtime import get_schedule_context,_reconciliation_rows
+from powerpro.payroll_rules.overtime import coerce_time,get_shift_window
 from powerpro.payroll_rules.overtime_calendar import calendar_dates
-from powerpro.payroll_rules.overtime_evidence import evaluate_evidence
+from powerpro.payroll_rules.overtime_evidence import VERSION,evaluate_evidence
+from powerpro.payroll_rules.overtime_actual_week import collect_weekly_work,apply_actual_week_bands
+from powerpro.controllers.checkin_overtime_week import load_week
 from powerpro.payroll_rules.manual_overtime import verification_roles
 
 AUTH='Overtime Authorization'
@@ -24,6 +26,17 @@ FIELDS=('evidence_enrolled','evidence_status','evidence_enrolled_by','evidence_e
 
 def _json(value):return json.dumps(value,ensure_ascii=False,sort_keys=True,default=str)
 def _settings():return frappe.get_single('DGII Payroll Settings')
+
+
+def _evidence_hash(data):
+    # Advancing the synchronization watermark does not change worked time.
+    # Regressed/incomplete synchronization still prevents verification via state.
+    def semantic(value):
+        if isinstance(value,dict):
+            return {k:semantic(v) for k,v in value.items() if k not in {'modified','last_sync_of_checkin'}}
+        if isinstance(value,(list,tuple)):return [semantic(v) for v in value]
+        return value
+    return hashlib.sha256(_json(semantic(data)).encode()).hexdigest()
 
 
 def validate_enrollment(doc,settings=None):
@@ -113,31 +126,40 @@ def _data(doc,*,for_update=False):
                 'end':b+timedelta(minutes=flt(nxt.allow_check_out_after_shift_end_time))})
         day+=timedelta(days=1)
     competing=bool(_reconciliation_rows(AUTH,for_update=for_update,filters=[['employee','=',doc.employee],['docstatus','=',1],['name','!=',doc.name],['authorization_start','<',end],['authorization_end','>',start]],pluck='name',limit=1))
-    settings=_settings();before={}
-    for day in days:
-        week=str(day-timedelta(days=day.weekday()))
-        if week not in before:
-            ref=frappe._dict(doc.as_dict());ref.work_date=day;ref.authorization_start=max(start,datetime.combine(day,time.min))
-            before[week]=_get_verified_regular_overtime_before(ref,for_update=for_update)
+    settings=_settings()
+    weekly=load_week(doc,employee,assignments,for_update=for_update)
     config={k:settings.get(k) for k in ['weekly_expected_hours','max_weekly_extra_hours','start_night_hours','end_night_hours','extra_hours_rate','extraordinary_hours_rate','night_hours_rate']}
     policy={k:shift.get(k) for k in ['name','modified','start_time','end_time','last_sync_of_checkin','determine_check_in_and_check_out','working_hours_calculation_based_on','begin_check_in_before_shift_start_time','allow_check_out_after_shift_end_time']}
     authorization={'name':doc.name,'start':str(start),'end':str(end),'shift':doc.shift_type,'maximum_hours':doc.maximum_hours}
-    data={'authorization':authorization,'rows':[dict(r) for r in rows],'shift':policy,'contexts':contexts,'next_windows':next_windows,'competing':competing,'weekly_before':before,'configuration':config,
-          'assignments':[dict(r) for r in assignments],'default_shift':employee.get('default_shift')}
+    current_context=next(c for c in contexts if c['date']==str(start.date()))
+    lower=min(start,get_datetime(current_context['shift_start']))-timedelta(minutes=flt(shift.begin_check_in_before_shift_start_time))
+    upper=max(end,get_datetime(current_context['shift_end']))+timedelta(minutes=flt(shift.allow_check_out_after_shift_end_time))
+    data={'calculator_version':VERSION,'authorization':authorization,'rows':[dict(r) for r in rows if lower<=get_datetime(r.time)<=upper],
+          'shift':policy,'contexts':contexts,'next_windows':next_windows,'competing':competing,'weekly':weekly,'configuration':config,
+          'assignments':[dict(r) for r in assignments if not r.end_date or getdate(r.end_date)>=getdate(weekly['start'])-timedelta(days=1)],
+          'default_shift':employee.get('default_shift')}
     return data,settings
 
 
 def build_result(doc,*,for_update=False):
     data,settings=_data(doc,for_update=for_update)
     result=evaluate_evidence(authorization=data['authorization'],rows=data['rows'],shift=data['shift'],contexts=data['contexts'],
-        next_windows=data['next_windows'],now=now_datetime(),competing=data['competing'],weekly_before=data['weekly_before'],
-        regular_cap=get_regular_35_percent_cap(settings.weekly_expected_hours,settings.max_weekly_extra_hours),
+        next_windows=data['next_windows'],now=now_datetime(),competing=data['competing'],
         night_start=coerce_time(settings.start_night_hours,time(21)),night_end=coerce_time(settings.end_night_hours,time(7)))
-    result['input_hash']=hashlib.sha256(_json(data).encode()).hexdigest()
+    if result.get('calculation'):
+        accepted=[name for session in result['sessions'] for name in session['checkins']]
+        weekly=collect_weekly_work(**data['weekly'],accepted_intervals=result['worked_intervals'],accepted_checkins=accepted)
+        result['weekly_evidence']=weekly
+        result['calculation']=apply_actual_week_bands(result['calculation'],weekly,threshold=settings.max_weekly_extra_hours)
+        for field in ['regular_35_hours','regular_100_hours']:
+            result['snapshot'][field]=result['calculation'][field]
+    result['input_hash']=_evidence_hash(data)
     result['input']=data
     # Real-work validation is separate from pending weekly/premium policy approval.
     result['settlement_ready']=False
     result['settlement_blockers']=['La política de liquidación por evidencia debe estar validada antes de pagar.']
+    if result.get('calculation') and not result['calculation']['weekly_evidence_complete']:
+        result['settlement_blockers'].append('Falta evidencia semanal completa para clasificar el recargo de horas ordinarias extra.')
     return result
 
 
@@ -172,9 +194,12 @@ def process_authorization(name):
         result.pop('snapshot',None)
     changed=doc.get('evidence_last_hash')!=result['input_hash'] or doc.get('evidence_status')!=result['state']
     if changed:_audit(doc,result)
+    visible_issues=list(result['issues'])
+    visible_issues.extend({**issue,'scope':'weekly_settlement'} for issue in result.get('weekly_evidence',{}).get('issues',[]))
+    visible_issues.extend({'code':'settlement_pending','scope':'settlement','message':message} for message in result['settlement_blockers'])
     values={'evidence_status':result['state'],'evidence_last_hash':result['input_hash'],
         'evidence_last_attempt':now_datetime(),'evidence_retry_after':now_datetime()+timedelta(minutes=5 if result['state']=='Waiting' else 10),
-        'evidence_issues':_json(result['issues']),'evidence_settlement_ready':0}
+        'evidence_issues':_json(visible_issues),'evidence_settlement_ready':0}
     if result.get('snapshot') and result['state']=='Verified' and (changed or not doc.get('reconciled_on')):
         values.update(result['snapshot'])
         values.update(reconciliation_source='Employee Checkin',presumed_hours=0,presumed_on=None,
