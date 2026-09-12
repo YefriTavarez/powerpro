@@ -45,3 +45,17 @@ for (const dt of ["overtime_authorization", "overtime_work_call", "retroactive_o
 	assert(code.includes('/assets/powerpro/js/overtime_calendar.js'));
 }
 console.log("Calendar UI: escaping, read-only actions, dirty/new/cancelled guards and three entry points passed.");
+
+const weeklyHtml = api.render({name:"AUTH", evidence_source:"snapshot", baseline:{}, difference:{},
+ proposed:{segments:[]}, warnings:[], assumptions:[], weekly_evidence:{notes:[xss], weeks:[
+ {week_start:"2026-09-21", paired_hours:16, hours_before_cutoff:8, configured_threshold:68,
+ provisional_hours_to_threshold:60, legacy_regular_overtime_before:3, offshift_punches:1,
+ days:[{date:"2026-09-21",paired_hours:8,punch_count:2,status:"paired_evidence"}],
+ issues:[{code:"consecutive_in",checkins:[xss]}]}, {week_start:"2026-09-28",truncated:true}]}});
+assert(weeklyHtml.includes("Evidencia semanal provisional"));
+assert(weeklyHtml.includes("Demasiadas marcaciones"));
+assert(weeklyHtml.includes("Entradas consecutivas"));
+assert(weeklyHtml.includes("cobertura no certificada"));
+assert(!weeklyHtml.includes("<img"));
+assert(!weeklyHtml.includes("<button"));
+console.log("Weekly UI: evidence, coverage, truncation and issue escaping passed.");

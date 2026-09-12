@@ -18,9 +18,10 @@ from powerpro.payroll_rules.overtime_calendar import (
     HOUR_FIELDS, calendar_dates, reconcile_calendar_intervals,
 )
 from powerpro.payroll_rules.overtime_cash_settlement import calculate_cash_settlement
+from powerpro.controllers.overtime_weekly import get_weekly_evidence
 
 ALLOWED_SOURCES = {"Overtime Authorization", "Retroactive Overtime Adjustment"}
-VERSION = "calendar-preview-v1"
+VERSION = "calendar-preview-v2-weekly-evidence"
 
 
 @frappe.whitelist()
@@ -126,6 +127,7 @@ def _compare(doc):
     proposed = reconcile_calendar_intervals(**shared, contexts=contexts,
                                             regular_hours_before_by_week=weekly_before)
     pricing, pricing_note = _pricing(doc, baseline, proposed, settings)
+    weekly_evidence = get_weekly_evidence(doc, weekly_before, settings.max_weekly_extra_hours)
     warnings.extend(warning for context in contexts for warning in context.get("warnings", []))
     result = {
         "doctype": doc.doctype, "name": doc.name, "employee_name": doc.employee_name,
@@ -140,11 +142,11 @@ def _compare(doc):
             "Se conservan las bandas y porcentajes actuales. La jornada nocturna completa, los recargos combinados y el total semanal real siguen pendientes de validación.",
             "Los importes son ilustrativos; esta comparación no verifica asistencia ni permite liquidar.",
         ],
-        "contexts": contexts, "weekly_before": weekly_before,
+        "contexts": contexts, "weekly_before": weekly_before, "weekly_evidence": weekly_evidence,
     }
     provenance = {"version": VERSION, "source": doc.name, "modified": str(doc.modified),
                   "window": [str(start), str(end), doc.maximum_hours], "evidence": evidence,
-                  "contexts": contexts, "weekly_before": weekly_before,
+                  "contexts": contexts, "weekly_before": weekly_before, "weekly_evidence": weekly_evidence,
                   "rates": [settings.extra_hours_rate, settings.extraordinary_hours_rate,
                             settings.night_hours_rate], "night_window": [str(night_start), str(night_end)],
                   "weekly_cap": cap, "pricing": pricing}

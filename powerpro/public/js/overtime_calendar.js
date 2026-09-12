@@ -38,6 +38,30 @@ frappe.provide("powerpro.overtime_calendar");
 		if (result.proposed.excluded_by_maximum_hours > 0) {
 			html += `<p>${escape(__("Horas que exceden el máximo autorizado"))}: ${hours(result.proposed.excluded_by_maximum_hours)}</p>`;
 		}
+		if (result.weekly_evidence) {
+			const weekly = result.weekly_evidence;
+			html += `<h5>${escape(__("Evidencia semanal provisional"))}</h5>`;
+			for (const week of weekly.weeks || []) {
+				html += `<p>${escape(__("Semana desde"))} ${escape(week.week_start)}</p>`;
+				if (week.truncated) {
+					html += `<p>${escape(__("Demasiadas marcaciones: no se calcula un total con evidencia truncada."))}</p>`;
+					continue;
+				}
+				html += table(["Horas de pares IN/OUT", "Antes de la autorización", "Umbral configurado", "Distancia provisional al umbral"], [[
+					hours(week.paired_hours), hours(week.hours_before_cutoff), hours(week.configured_threshold), hours(week.provisional_hours_to_threshold)]]);
+				html += `<p>${escape(__("Horas extras regulares previas usadas por el cálculo vigente"))}: ${hours(week.legacy_regular_overtime_before)}</p>`;
+				const statuses = {review: "Revisar marcaciones", paired_evidence: "Con pares; cobertura no certificada", no_paired_evidence: "Sin pares; no confirma ausencia"};
+				html += table(["Fecha", "Horas reconstruidas", "Marcaciones", "Estado"],
+					week.days.map((day) => [day.date, hours(day.paired_hours), day.punch_count, __(statuses[day.status] || day.status)]));
+				if (week.offshift_punches) html += `<p>${escape(__("Marcaciones fuera de turno que requieren revisión"))}: ${Number(week.offshift_punches)}</p>`;
+				const issues = {duplicate_timestamp: "Marcaciones con la misma hora", ambiguous_pair: "Par ambiguo excluido",
+					unknown_direction: "Dirección desconocida", consecutive_in: "Entradas consecutivas", out_without_in: "Salida sin entrada",
+					invalid_duration: "Duración inválida o superior a 24 horas", in_without_out: "Entrada sin salida"};
+				if (week.issues.length) html += table(["Incidencia", "Marcaciones de origen"],
+					week.issues.map((item) => [__(issues[item.code] || item.code), item.checkins.join(", ")]));
+			}
+			html += `<div class="alert alert-info">${list(weekly.notes || [])}</div>`;
+		}
 		if (result.pricing) {
 			const price = result.pricing;
 			const money = (value) => `${price.currency} ${Number(value || 0).toFixed(2)}`;

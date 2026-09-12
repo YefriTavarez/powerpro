@@ -73,3 +73,37 @@ Las nuevas respuestas se obtienen únicamente al solicitar la comparación.
 
 Para revertir, retirar el commit de esta entrega preservando cambios ajenos, limpiar
 caché y recargar. No hay documentos de negocio que revertir por usar la comparación.
+
+## Weekly evidence diagnostic (v2)
+
+The same dialog now shows a permission-filtered, current Employee Checkin diagnostic
+for each Monday–Sunday week touched by the authorization. This is separate from the
+saved evidence used to compare the authorization's hours and amounts. It does not
+replace the existing 44-to-68 hour band or change settlement.
+
+It sums explicit, non-ambiguous IN/OUT pairs, excludes breaks between pairs, clips
+intervals at week boundaries, and splits totals by calendar date. It shows the total
+before the authorization, the configured total-hours threshold, the provisional gap,
+and the prior regular overtime used by the existing implementation. These quantities
+are deliberately labelled separately: total work and regular overtime are not equal.
+
+Consecutive IN marks, missing partners, unknown directions, duplicate timestamps,
+and pairs longer than 24 hours produce review issues. Ambiguous pairs contribute no
+hours. The 24-hour guard is a diagnostic validity boundary, not a legal work limit.
+One calendar day on either side permits overnight boundary pairs. A limit of 2,000
+permission-visible punches per nine-day employee query prevents unbounded scans;
+truncated sets produce no totals. No user can read weekly punches solely by gaining
+access to an authorization: Employee Checkin read and list permissions apply.
+
+Completeness and settlement eligibility always remain false. Permission filtering,
+missing/late punches, unrecorded breaks and corrected manual evidence can affect the
+total. No missing date becomes an absence or a presumed full day. This first weekly
+stage does not apply Shift Type alternation/first-last rules, combine manual approvals
+or certify synchronization completeness; those are necessary subsequent steps before
+weekly evidence can drive payroll. All dates use the site's existing local datetimes.
+
+Validation: `python3 tests/test_overtime_weekly.py`, the calendar tests above, and
+`node tests/test_overtime_calendar_ui.cjs`. Deployment is code-only; no migration,
+new fields, Attendance generation or historical salary updates are needed. Revert
+the weekly evidence commit and clear the explicit Development site's cache to roll
+back this stage.
