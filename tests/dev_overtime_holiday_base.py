@@ -100,6 +100,15 @@ try:
  try:coverage.preview(DT,source.name,0,'Cannot replace a settled declaration')
  except frappe.ValidationError:pass
  else:raise AssertionError('Settled source allowed coverage change')
+ # Publishing new settings must not reprice an existing submitted settlement.
+ from powerpro.controllers.overtime_policy_settings import load_version
+ from powerpro.controllers.overtime_pay_policy import get_effective_policy
+ settings=frappe.get_single('DGII Payroll Settings');settings.update(load_version(policy.name))
+ settings.manage_overtime_pay_policy=1;settings.overtime_policy_night_percent=20
+ settings.save();settings.reload();revision=settings.overtime_policy_version
+ assert revision!=policy.name
+ assert get_effective_policy(source)['name']==policy.name
+ assert evidence.build_result(source)['input_hash']==frappe.parse_json(source.evidence_snapshot)['input_hash']
  # Native Salary Slip includes the linked increments once and validates frozen evidence.
  from hrms.payroll.doctype.salary_structure.salary_structure import make_salary_slip
  slip=make_salary_slip(assignment.salary_structure,employee=employee.name,posting_date='2026-09-15',ignore_permissions=True)
@@ -107,7 +116,7 @@ try:
  refs=set(frappe.parse_json(source.settlement_references))
  assert sum(float(r.amount) for r in slip.earnings if r.get('additional_salary') in refs)==115
  slip.cancel();source.reload();source.flags.ignore_permissions=True;source.cancel()
- # Same real evidence with a separate AUTH source: explicit zero coverage pays full 215.
+ # A new AUTH uses the revised 20% night premium: explicit zero coverage pays 220.
  # Remove cancelled retroactive document from competing active sources; reuse its employee.
  auth=frappe.copy_doc(base);auth.name=prefix+'-AUTH';auth.employee=employee.name;auth.docstatus=1;auth.status='Approved'
  auth.overtime_work_call=None;auth.shift_type=shift.name;auth.holiday_list=holiday.name;auth.work_date='2026-09-07'
@@ -117,13 +126,14 @@ try:
  auth.settlement_status='Pending';auth.settlement_references=None;auth.settlement_breakdown=None;auth.settlement_amount=0
  auth.planned_settlement='Cash';auth.auto_enrolled=0;auth.db_insert()
  q=coverage.preview(auth.doctype,auth.name,0,'DEV base not included for these hours')
- assert q['estimate']['total_amount']==215
+ assert q['estimate']['total_amount']==220
  coverage.apply(auth.doctype,auth.name,0,q['declaration']['reference'],q['token'])
  assert evidence.process_authorization(auth.name)=='Verified'
  auth.reload()
  from powerpro.controllers.overtime_settlement import _settle_authorization
  _settle_authorization(auth,payroll_date='2026-09-15',settings=evidence._settings());auth.reload()
- assert auth.settlement_amount==215
+ assert auth.settlement_amount==220
+ assert get_effective_policy(auth)['name']==revision
  # Permission denial and audit immutability are enforced on actual native documents.
  frappe.set_user('Guest')
  try:coverage.preview(DT,source.name,0,'unauthorized')
@@ -134,9 +144,10 @@ try:
  try:audit.save(ignore_permissions=True)
  except frappe.ValidationError:pass
  else:raise AssertionError('Coverage audit was editable')
- print(json.dumps({'ok':True,'retroactive_additional':115,'authorization_additional':215,
+ print(json.dumps({'ok':True,'retroactive_additional':115,'authorization_additional':220,
    'checks':['explicit coverage required','finite bounded hours','stale/tampered tokens refused','idempotent apply',
-   'salary change blocks','immutable audit','native Additional Salary and Salary Slip','settled source protected','Guest denied']},ensure_ascii=False))
+   'salary change blocks','immutable audit','native Additional Salary and Salary Slip','saved policy preserved after settings revision',
+   'new source uses new policy','settled source protected','Guest denied']},ensure_ascii=False))
 finally:
  frappe.set_user('Administrator');frappe.db.rollback();frappe.db.commit=commit;frappe.enqueue=enqueue;frappe.sendmail=sendmail
  after={d:frappe.db.count(d) for d in counts}

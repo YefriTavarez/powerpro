@@ -165,6 +165,14 @@
    "label": "Liquidar nocturnidad ordinaria con autorizaciones automáticas",
    "default": "0",
    "description": "Permite crear el recargo ordinario de la misma jornada al liquidar una autorización inscrita con liquidación automática. Requiere evidencia completa y no procesa empleados sin autorización inscrita."
+  },
+  {
+   "fieldname": "supersedes",
+   "fieldtype": "Link",
+   "options": "Overtime Pay Policy",
+   "label": "Revisa la versión",
+   "no_copy": 1,
+   "description": "La revisión conserva empresa y vigencia. Las conciliaciones ya guardadas conservan su versión anterior."
   }
  ],
  "field_order": [
@@ -173,6 +181,7 @@
   "valid_from",
   "valid_until",
   "approval_reference",
+  "supersedes",
   "weekly_threshold",
   "regular_percent",
   "extraordinary_percent",

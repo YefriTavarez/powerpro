@@ -46,6 +46,15 @@ try:
  with patch.object(night,'now_datetime',return_value=get_datetime('2026-09-16 10:00:00')):
   doc=draft();assert doc.evidence_status=='Verified' and doc.night_hours==5 and doc.settlement_amount==75
   doc.submit();doc.reload();assert doc.settlement_status=='Created'
+  # A settings revision changes new calculations, not an already submitted night claim.
+  from powerpro.controllers.overtime_policy_settings import load_version
+  frappe.db.savepoint('night_policy_revision')
+  settings=frappe.get_single('DGII Payroll Settings');settings.update(load_version(policy.name))
+  settings.manage_overtime_pay_policy=1;settings.overtime_policy_whole_night=1;settings.save()
+  assert night.validate_fresh(doc)['amount']==75
+  anonymous=frappe._dict(doctype=DT,employee=employee.name,work_date='2026-09-14')
+  assert night.build_preview(anonymous)['amount']==120
+  frappe.db.rollback(save_point='night_policy_revision')
   refs=_get_linked_additional_salaries(doc,docstatus=1);assert len(refs)==1
   assert frappe.db.count('Overtime Authorization')==before['Overtime Authorization']
   frappe.db.savepoint('duplicate_night_draft')

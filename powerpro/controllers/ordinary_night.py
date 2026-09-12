@@ -111,7 +111,8 @@ def build_preview(doc, *, for_update=False, historical_snapshot=None, historical
         lo,hi=get_datetime(historical_window['start']),get_datetime(historical_window['end'])
     policy=None
     if not physical_only:
-        policy=get_effective_policy(frappe._dict(company=company.name,authorization_start=lo,authorization_end=hi),for_update=for_update)
+        policy=get_effective_policy(frappe._dict(doctype=doc.get('doctype'),name=doc.get('name'),
+            company=company.name,authorization_start=lo,authorization_end=hi),for_update=for_update)
         if not policy:frappe.throw(_('Falta una política aprobada que cubra toda la jornada.'))
     next_windows=[]
     date=lo.date()-timedelta(days=1) if historical_window else day+timedelta(days=1)

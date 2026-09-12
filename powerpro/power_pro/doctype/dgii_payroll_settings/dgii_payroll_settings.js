@@ -3,6 +3,9 @@
 
 frappe.ui.form.on("DGII Payroll Settings", {
 	refresh(frm) {
+		frm.set_query("overtime_policy_version", () => ({filters: {
+			docstatus: 1, ...(frm.doc.overtime_policy_company ? {company: frm.doc.overtime_policy_company} : {})
+		}}));
 		frm.add_custom_button(__("Preview Overtime Candidates"), () => {
 			run_candidate_scan(true);
 		}, __("Overtime Candidates"));
@@ -15,6 +18,30 @@ frappe.ui.form.on("DGII Payroll Settings", {
 				);
 			}, __("Overtime Candidates"));
 		}
+	},
+
+	overtime_policy_load(frm) {
+		if (!frm.doc.overtime_policy_version) {
+			frappe.msgprint(__("Seleccione una versión de reglas para cargarla."));
+			return;
+		}
+		return frappe.call({
+			method: "powerpro.controllers.overtime_policy_settings.load_version",
+			args: {name: frm.doc.overtime_policy_version},
+			freeze: true,
+		}).then(({message}) => frm.set_value(message));
+	},
+
+	manage_overtime_pay_policy(frm) {
+		if (!frm.doc.manage_overtime_pay_policy) return;
+		const defaults = {weekly_threshold: 68, regular_percent: 35, extraordinary_percent: 100,
+			night_percent: 15, weekly_rest_percent: 100};
+		return set_missing_policy_defaults(frm, defaults);
+	},
+
+	overtime_policy_compensatory(frm) {
+		if (!frm.doc.overtime_policy_compensatory) return;
+		return set_missing_policy_defaults(frm, {hours_per_day: 8, leave_increment: 0.5, rest_factor: 1, rest_duration: 36});
 	},
 
 	enable_overtime_candidate_generation(frm) {
@@ -35,6 +62,14 @@ frappe.ui.form.on("DGII Payroll Settings", {
 		}
 	},
 });
+
+function set_missing_policy_defaults(frm, defaults) {
+	const values = {};
+	for (const [key, value] of Object.entries(defaults)) {
+		if (!frm.doc[`overtime_policy_${key}`]) values[`overtime_policy_${key}`] = value;
+	}
+	return frm.set_value(values);
+}
 
 function run_candidate_scan(dry_run) {
 	return frappe.call({

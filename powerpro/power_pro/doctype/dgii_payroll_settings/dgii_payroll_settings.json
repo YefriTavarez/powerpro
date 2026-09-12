@@ -58,6 +58,31 @@
   "enable_automatic_overtime_settlement",
   "overtime_exception_roles",
   "overtime_auto_payroll_date_policy",
+  "overtime_policy_section",
+  "manage_overtime_pay_policy",
+  "overtime_policy_company",
+  "overtime_policy_from",
+  "overtime_policy_until",
+  "overtime_policy_version",
+  "overtime_policy_load",
+  "overtime_policy_change_note",
+  "overtime_policy_night_column",
+  "overtime_policy_whole_night",
+  "overtime_policy_night_percent",
+  "overtime_policy_regular_percent",
+  "overtime_policy_extraordinary_percent",
+  "overtime_policy_weekly_threshold",
+  "overtime_policy_auto_ordinary_night",
+  "overtime_policy_rest_section",
+  "overtime_policy_weekly_rest_cash",
+  "overtime_policy_weekly_rest_percent",
+  "overtime_policy_compensatory",
+  "overtime_policy_leave_type",
+  "overtime_policy_hours_per_day",
+  "overtime_policy_leave_increment",
+  "overtime_policy_rest_factor",
+  "overtime_policy_rest_duration",
+  "overtime_policy_rest_credit",
   "checkin_overtime_section",
   "enable_checkin_overtime_reconciliation",
   "checkin_overtime_effective_from",
@@ -471,6 +496,188 @@
    "label": "Días entre recordatorios de descanso compensatorio",
    "default": "7",
    "description": "De cero a treinta días. Cero conserva solo avisos por cambios de estado, evidencia o responsable."
+  },
+  {
+   "fieldname": "overtime_policy_section",
+   "fieldtype": "Section Break",
+   "label": "Reglas de pago por marcaciones",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "manage_overtime_pay_policy",
+   "fieldtype": "Check",
+   "label": "Publicar reglas al guardar",
+   "default": "0",
+   "description": "Guardar publica una versión para la empresa y vigencia indicadas. No crea pagos ni activa el scheduler. Apagar esta opción detiene la publicación desde Configuración; no cancela las reglas ya aprobadas."
+  },
+  {
+   "fieldname": "overtime_policy_company",
+   "fieldtype": "Link",
+   "label": "Empresa de las reglas",
+   "depends_on": "eval:doc.manage_overtime_pay_policy",
+   "options": "Company",
+   "mandatory_depends_on": "eval:doc.manage_overtime_pay_policy"
+  },
+  {
+   "fieldname": "overtime_policy_from",
+   "fieldtype": "Date",
+   "label": "Vigencia desde",
+   "depends_on": "eval:doc.manage_overtime_pay_policy",
+   "mandatory_depends_on": "eval:doc.manage_overtime_pay_policy"
+  },
+  {
+   "fieldname": "overtime_policy_until",
+   "fieldtype": "Date",
+   "label": "Vigencia hasta",
+   "depends_on": "eval:doc.manage_overtime_pay_policy",
+   "mandatory_depends_on": "eval:doc.manage_overtime_pay_policy"
+  },
+  {
+   "fieldname": "overtime_policy_version",
+   "fieldtype": "Link",
+   "label": "Versión de partida / última publicación",
+   "depends_on": "eval:doc.manage_overtime_pay_policy",
+   "options": "Overtime Pay Policy",
+   "description": "Para revisar reglas existentes, seleccione su versión vigente y cárguela. Cada cambio conserva la versión anterior."
+  },
+  {
+   "fieldname": "overtime_policy_load",
+   "fieldtype": "Button",
+   "label": "Cargar reglas de la versión",
+   "depends_on": "eval:doc.manage_overtime_pay_policy"
+  },
+  {
+   "fieldname": "overtime_policy_change_note",
+   "fieldtype": "Small Text",
+   "label": "Motivo del cambio",
+   "depends_on": "eval:doc.manage_overtime_pay_policy",
+   "description": "Opcional. Se registra junto con el usuario que guarda y publica las reglas."
+  },
+  {
+   "fieldname": "overtime_policy_night_column",
+   "fieldtype": "Column Break",
+   "label": "Nocturnidad y recargos",
+   "depends_on": "eval:doc.manage_overtime_pay_policy"
+  },
+  {
+   "fieldname": "overtime_policy_whole_night",
+   "fieldtype": "Check",
+   "label": "Aplicar el recargo nocturno a toda la jornada nocturna",
+   "depends_on": "eval:doc.manage_overtime_pay_policy",
+   "default": "0",
+   "description": "Apagado: solo trabajo de 21:00 a 07:00. Encendido: toda la jornada evidenciada si acumula al menos tres horas nocturnas. Aplica el recargo nocturno; las horas ordinarias no se convierten en horas extra."
+  },
+  {
+   "fieldname": "overtime_policy_night_percent",
+   "fieldtype": "Percent",
+   "label": "Recargo nocturno (%)",
+   "depends_on": "eval:doc.manage_overtime_pay_policy",
+   "default": "15",
+   "mandatory_depends_on": "eval:doc.manage_overtime_pay_policy"
+  },
+  {
+   "fieldname": "overtime_policy_regular_percent",
+   "fieldtype": "Percent",
+   "label": "Recargo de horas extra ordinarias (%)",
+   "depends_on": "eval:doc.manage_overtime_pay_policy",
+   "default": "35",
+   "mandatory_depends_on": "eval:doc.manage_overtime_pay_policy"
+  },
+  {
+   "fieldname": "overtime_policy_extraordinary_percent",
+   "fieldtype": "Percent",
+   "label": "Recargo extraordinario y feriado (%)",
+   "depends_on": "eval:doc.manage_overtime_pay_policy",
+   "default": "100",
+   "mandatory_depends_on": "eval:doc.manage_overtime_pay_policy"
+  },
+  {
+   "fieldname": "overtime_policy_weekly_threshold",
+   "fieldtype": "Float",
+   "label": "Umbral de horas reales semanales",
+   "depends_on": "eval:doc.manage_overtime_pay_policy",
+   "default": "68",
+   "mandatory_depends_on": "eval:doc.manage_overtime_pay_policy",
+   "description": "Suma de horas trabajadas de lunes a domingo. Los recargos se suman sobre la hora base: 35% + 15% = 50%, sin capitalización."
+  },
+  {
+   "fieldname": "overtime_policy_auto_ordinary_night",
+   "fieldtype": "Check",
+   "label": "Liquidar también nocturnidad ordinaria al procesar una autorización",
+   "depends_on": "eval:doc.manage_overtime_pay_policy",
+   "default": "0",
+   "description": "Requiere una autorización inscrita con liquidación automática y evidencia completa. No procesa empleados sin autorización inscrita."
+  },
+  {
+   "fieldname": "overtime_policy_rest_section",
+   "fieldtype": "Section Break",
+   "label": "Descanso semanal y compensatorio",
+   "depends_on": "eval:doc.manage_overtime_pay_policy"
+  },
+  {
+   "fieldname": "overtime_policy_weekly_rest_cash",
+   "fieldtype": "Check",
+   "label": "Permitir pago por descanso semanal trabajado",
+   "depends_on": "eval:doc.manage_overtime_pay_policy",
+   "default": "0"
+  },
+  {
+   "fieldname": "overtime_policy_weekly_rest_percent",
+   "fieldtype": "Percent",
+   "label": "Recargo por descanso semanal (%)",
+   "depends_on": "eval:doc.manage_overtime_pay_policy",
+   "default": "100",
+   "mandatory_depends_on": "eval:doc.manage_overtime_pay_policy"
+  },
+  {
+   "fieldname": "overtime_policy_compensatory",
+   "fieldtype": "Check",
+   "label": "Permitir descanso compensatorio en estas reglas",
+   "depends_on": "eval:doc.manage_overtime_pay_policy",
+   "default": "0"
+  },
+  {
+   "fieldname": "overtime_policy_leave_type",
+   "fieldtype": "Link",
+   "label": "Tipo de licencia compensatoria",
+   "depends_on": "eval:doc.manage_overtime_pay_policy && doc.overtime_policy_compensatory",
+   "options": "Leave Type"
+  },
+  {
+   "fieldname": "overtime_policy_hours_per_day",
+   "fieldtype": "Float",
+   "label": "Horas por día de licencia",
+   "depends_on": "eval:doc.manage_overtime_pay_policy && doc.overtime_policy_compensatory",
+   "default": "8"
+  },
+  {
+   "fieldname": "overtime_policy_leave_increment",
+   "fieldtype": "Float",
+   "label": "Fracción mínima de licencia",
+   "depends_on": "eval:doc.manage_overtime_pay_policy && doc.overtime_policy_compensatory",
+   "default": "0.5",
+   "description": "Medio día (0.5) o día completo (1)."
+  },
+  {
+   "fieldname": "overtime_policy_rest_factor",
+   "fieldtype": "Float",
+   "label": "Horas de descanso por hora compensada",
+   "depends_on": "eval:doc.manage_overtime_pay_policy && doc.overtime_policy_compensatory",
+   "default": "1"
+  },
+  {
+   "fieldname": "overtime_policy_rest_duration",
+   "fieldtype": "Float",
+   "label": "Horas continuas de descanso semanal",
+   "depends_on": "eval:doc.manage_overtime_pay_policy && doc.overtime_policy_compensatory",
+   "default": "36"
+  },
+  {
+   "fieldname": "overtime_policy_rest_credit",
+   "fieldtype": "Float",
+   "label": "Crédito de licencia por descanso semanal",
+   "depends_on": "eval:doc.manage_overtime_pay_policy && doc.overtime_policy_compensatory",
+   "description": "Equivalencia con el banco de licencia. Vacío mantiene este caso pendiente de revisión."
   }
  ],
  "index_web_pages_for_search": 1,

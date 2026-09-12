@@ -47,6 +47,8 @@ class DGIIPayrollSettings(Document):
 	# end: auto-generated types
 
 	def validate(self):
+		from powerpro.controllers.overtime_policy_settings import validate_settings as validate_policy_settings
+		validate_policy_settings(self)
 		from powerpro.controllers.working_time_incident_monitor import validate_settings
 		validate_settings(self)
 		if self.get("enable_checkin_overtime_reconciliation"):
@@ -103,3 +105,7 @@ class DGIIPayrollSettings(Document):
 		increment = flt(self.overtime_leave_increment)
 		if increment <= 0 or increment > 1:
 			frappe.throw(_("Leave Credit Increment must be greater than zero and at most one day."))
+
+	def on_update(self):
+		from powerpro.controllers.overtime_policy_settings import publish
+		publish(self)
