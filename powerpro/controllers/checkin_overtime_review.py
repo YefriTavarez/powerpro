@@ -117,11 +117,13 @@ def preview_review(authorization, reason, manual_declaration=None, source_type=A
     doc=frappe.get_doc(source_type,authorization);_access(doc)
     if doc.docstatus!=1 or doc.status!='Approved':frappe.throw(_('La autorización debe permanecer aprobada.'))
     result=_preview(doc,reason,manual_declaration=manual_declaration)
+    from powerpro.payroll_rules.overtime_pay_policy import review_summary
     return {'token':result['token'],**links(doc),'reason':result['reason'],
             'before':result['before'].get('snapshot',{}),'after':result['after']['snapshot'],
             'financial_before':result['financial_before'],'dependencies':result['dependencies'],
             'proposed_amount':result['proposed_amount'],'manual_declaration':result['after'].get('manual_declaration'),
             'checkin_comparison':result['after'].get('checkin_comparison'),
+            'rules_summary':review_summary(result['after']),
             'settlement_ready':result['after']['settlement_ready'],
             'settlement_blockers':result['after']['settlement_blockers']}
 

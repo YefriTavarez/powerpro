@@ -16,6 +16,20 @@ Una nueva vigencia debe ser un período sin superposición. Una autorización qu
 
 Las conciliaciones ya guardadas en fuentes enviadas conservan la versión de su instantánea persistida en el servidor. Las evaluaciones nuevas y borradores usan la revisión vigente. Una revisión no invalida por sí sola la nómina anterior; los cambios en marcaciones, tarifa, calendario u otra evidencia continúan sujetos a los controles de vigencia del motor. Las versiones aprobadas son inmutables. Una versión con sucesora aprobada no puede cancelarse.
 
+Al abrir **Revisar evidencia corregida** o declarar la jornada inicial de un ajuste
+retroactivo, la vista previa muestra **Reglas utilizadas en esta evaluación**:
+versión y vigencia, opción nocturna, porcentajes configurados, horas por categoría,
+horas nocturnas de reloj y horas que reciben el recargo. Estas últimas pueden ser
+distintas cuando se eligió toda la jornada nocturna. Se separa la nocturnidad
+ordinaria de la extraordinaria y no se suman dos veces las horas superpuestas.
+También se indica si falta evidencia semanal o cobertura salarial del feriado.
+El detalle proviene del resultado evaluado, no de una lectura posterior de las
+opciones actuales, y no cambia el token ni la acción de aceptación.
+
+**Comparar cálculo por fecha** conserva la comparación anterior de calendario y
+la identifica como referencia. No aplica las políticas versionadas ni representa
+por sí sola el importe que liquidará el motor por marcaciones.
+
 ## Verificación y límites
 
 La prueba nativa de Configuración cubre publicación mediante `Single.save`, reintento sin duplicado, revisiones sucesivas, editor obsoleto, mínimos, vigencias, empresa, conversión de descanso, denegación a Guest y ausencia de creación financiera. Las pruebas nativas de feriado y nocturnidad ordinaria comprueban que una revisión cambia los cálculos nuevos y preserva las liquidaciones anteriores, incluida su validación en Salary Slip. Todo se revierte al terminar en Desarrollo.

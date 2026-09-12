@@ -1,7 +1,9 @@
 # Comparación de horas extras por fecha
 
-Primera entrega del plan de revisión laboral. Incluye un cálculo segmentado y una
-comparación de solo lectura; todavía no sustituye la conciliación usada para liquidar.
+Comparación de referencia anterior, de solo lectura. No aplica las políticas
+versionadas ni sustituye la conciliación del motor por marcaciones para liquidar.
+La revisión de evidencia de ese motor muestra por separado las reglas y horas
+utilizadas en su evaluación; consulte `overtime-settings-rules.md`.
 
 ## Uso
 
@@ -9,7 +11,7 @@ En una **Overtime Authorization** o **Retroactive Overtime Adjustment** guardada
 abrir **Horas extra → Comparar cálculo por fecha**. En una **Overtime Work Call**,
 el mismo botón permite elegir una autorización accesible al usuario.
 
-La tabla compara el motor vigente recalculado con el motor segmentado usando la
+La tabla compara la referencia anterior recalculada con el cálculo segmentado usando la
 misma evidencia. No compara automáticamente contra una liquidación histórica:
 esa liquidación pudo utilizar otra tarifa, configuración o evidencia.
 
@@ -40,10 +42,10 @@ Ventanas de hasta 48 horas, dentro de las dos fechas cubiertas por el lector
 actual de marcaciones. La comparación no infiere que un ponche ausente sea ausencia
 laboral. Las advertencias de marcaciones se muestran, sin declarar validación.
 
-Se conservan las tasas, bandas semanales y regla de solapamiento nocturno actuales.
-Quedan pendientes la clasificación de jornada nocturna completa, la combinación
-legal de recargos, el total semanal de todas las fuentes y el flujo completo de
-descanso semanal. El calendario de la comparación es el actualmente configurado;
+Se usan las tasas generales, las bandas de referencia y el solapamiento nocturno
+de reloj. Las opciones de jornada nocturna completa, recargos combinados,
+evidencia semanal y descanso están implementadas en el motor por marcaciones;
+esta comparación anterior no las aplica. El calendario es el actualmente configurado;
 no es una reconstrucción garantizada del calendario histórico.
 
 El resultado incluye versión, huella de entradas, contexto por fecha y origen de
@@ -75,6 +77,10 @@ Para revertir, retirar el commit de esta entrega preservando cambios ajenos, lim
 caché y recargar. No hay documentos de negocio que revertir por usar la comparación.
 
 ## Weekly evidence diagnostic (v2)
+
+Las secciones v2–v4 siguientes documentan la evolución de esta comparación de
+referencia. Sus pendientes describen aquellas etapas, no el estado de entrega
+del motor por marcaciones. El estado actual está en `overtime-completion-check.md`.
 
 The same dialog now shows a permission-filtered, current Employee Checkin diagnostic
 for each Monday–Sunday week touched by the authorization. This is separate from the

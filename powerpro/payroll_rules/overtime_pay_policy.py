@@ -80,3 +80,34 @@ def rates(policy):
     return {'regular_overtime_percent':policy['regular_percent'],
             'extraordinary_overtime_percent':policy['extraordinary_percent'],
             'night_hours_percent':policy['night_percent']}
+
+
+def review_summary(result):
+    """Describe the policy already used by this evaluation; do not select or price.
+
+    In particular, never substitute today's settings for a pinned revision or
+    return the full input containing salary assignments and employee evidence.
+    """
+    from powerpro.payroll_rules.overtime_combined_day import FIELD, REST_FIELD, REVIEW
+    policy = (result.get('input') or {}).get('pay_policy')
+    night = result.get('night_session') or {}
+    snapshot = result.get('snapshot') or {}
+    calculation = result.get('calculation') or {}
+    selected = None
+    if policy:
+        selected = {key: policy.get(key) for key in (
+            'name', 'valid_from', 'valid_until', 'night_basis', 'regular_percent',
+            'extraordinary_percent', 'night_percent', 'weekly_rest_percent',
+            'weekly_threshold', 'premium_combination', 'weekly_rest_cash')}
+        selected[FIELD] = policy.get(FIELD) or REVIEW
+        selected[REST_FIELD] = bool(policy.get(REST_FIELD))
+    return {
+        'policy': selected,
+        'hours': {key: snapshot.get(key) for key in (
+            'verified_hours', 'regular_35_hours', 'regular_100_hours',
+            'holiday_100_hours', 'weekly_rest_hours', 'night_hours')},
+        'night': {key: night.get(key) for key in (
+            'classification', 'clock_night_hours', 'overtime_premium_hours', 'ordinary_premium_hours')},
+        'weekly_evidence_complete': calculation.get('weekly_evidence_complete'),
+        'holiday_base_covered_hours': calculation.get('holiday_base_covered_hours'),
+    }

@@ -22,8 +22,9 @@ frappe.provide("powerpro.overtime_calendar");
 	const list = (rows) => `<ul>${rows.map((value) => `<li>${escape(__(value))}</li>`).join("")}</ul>`;
 	api.render = (result) => {
 		let html = `<p><strong>${escape(__("Vista previa de solo lectura"))}</strong> · ${escape(result.name)}</p>
-			<p>${escape(__(result.evidence_source))}</p>`;
-		html += table(["Concepto", "Vigente recalculado", "Por fecha", "Diferencia"],
+			<p>${escape(__(result.evidence_source))}</p>
+			<p>${escape(__("Comparación de referencia anterior. No aplica las políticas versionadas del motor por marcaciones ni determina el pago vigente."))}</p>`;
+		html += table(["Concepto", "Referencia anterior", "Por fecha (referencia)", "Diferencia"],
 			fields.map(([field, label]) => [__(label), hours(result.baseline[field]),
 				hours(result.proposed[field]), hours(result.difference[field])]));
 		const segments = result.proposed.segments || [];
@@ -49,7 +50,7 @@ frappe.provide("powerpro.overtime_calendar");
 				}
 				html += table(["Horas de pares IN/OUT", "Antes de la autorización", "Umbral configurado", "Distancia provisional al umbral"], [[
 					hours(week.paired_hours), hours(week.hours_before_cutoff), hours(week.configured_threshold), hours(week.provisional_hours_to_threshold)]]);
-				html += `<p>${escape(__("Horas extras regulares previas usadas por el cálculo vigente"))}: ${hours(week.legacy_regular_overtime_before)}</p>`;
+				html += `<p>${escape(__("Horas extras regulares previas usadas por la referencia anterior"))}: ${hours(week.legacy_regular_overtime_before)}</p>`;
 				if (week.shift_comparison) {
 					const shifted = week.shift_comparison;
 					const hasShiftIntervals = shifted.sessions.some((row) => row.hours > 0);
@@ -113,8 +114,8 @@ frappe.provide("powerpro.overtime_calendar");
 		if (result.pricing) {
 			const price = result.pricing;
 			const money = (value) => `${price.currency} ${Number(value || 0).toFixed(2)}`;
-			html += `<h5>${escape(__("Importes ilustrativos con las tasas actuales"))}</h5>`;
-			html += table(["Vigente recalculado", "Por fecha", "Diferencia"], [[
+			html += `<h5>${escape(__("Importes ilustrativos de referencia"))}</h5>`;
+			html += table(["Referencia anterior", "Por fecha (referencia)", "Diferencia"], [[
 				money(price.baseline.total_amount), money(price.proposed.total_amount), money(price.difference)]]);
 			html += `<p>${escape(__(price.rate_source))}: ${escape(money(price.hourly_rate))}</p>`;
 		} else if (result.pricing_note) {

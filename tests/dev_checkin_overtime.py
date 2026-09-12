@@ -178,6 +178,11 @@ try:
   exit_doc.time='2026-09-15 19:00:00';exit_doc.save(ignore_permissions=True)
   second.reload();old_snapshot=second.evidence_snapshot;old_refs=_get_linked_additional_salaries(second,docstatus=1)
   preview=review.preview_review(second_auth,'Salida temprana comprobada y revisada por Gestión Humana.')
+  rules=preview['rules_summary']
+  assert rules['policy']['name']==policy.name and rules['policy']['regular_percent']==40
+  assert rules['policy']['night_basis']=='Clock overlap' and rules['hours']['verified_hours']==1
+  assert rules['weekly_evidence_complete'] is True and 'rate_basis' not in rules
+  checks.append('review GET describes the evaluated policy40 and one revised hour without exposing salary inputs')
   assert preview['before']['verified_hours']==2 and preview['after']['verified_hours']==1 and preview['settlement_ready'],evidence.build_result(second,use_saved_review=False)['weekly_evidence']['issues']
   assert preview['proposed_amount']==140
   frappe.db.savepoint('test_excluded_review')

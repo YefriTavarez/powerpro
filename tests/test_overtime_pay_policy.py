@@ -1,7 +1,7 @@
 import copy
 import unittest
 from test_overtime_calendar import dt
-from powerpro.payroll_rules.overtime_pay_policy import validate_policy,classify_night_session,rates
+from powerpro.payroll_rules.overtime_pay_policy import validate_policy,classify_night_session,rates,review_summary
 
 
 def policy():
@@ -11,6 +11,39 @@ def policy():
 
 
 class PolicyTest(unittest.TestCase):
+    def test_review_summary_preserves_evaluated_revision_and_filters_private_inputs(self):
+        p=dict(policy(),name='PINNED-OLD',night_percent=15)
+        result={'input':{'pay_policy':p,'configuration':{'night_hours_rate':20},
+                        'rate_basis':{'base':987654,'name':'PRIVATE-SALARY'}},
+                'snapshot':{'night_hours':0,'regular_35_hours':2},
+                'calculation':{'weekly_evidence_complete':True,'holiday_base_covered_hours':0}}
+        before=copy.deepcopy(result)
+        summary=review_summary(result)
+        self.assertEqual(summary['policy']['name'],'PINNED-OLD')
+        self.assertEqual(summary['policy']['night_percent'],15)
+        self.assertEqual(summary['hours']['night_hours'],0)
+        self.assertTrue(summary['weekly_evidence_complete'])
+        self.assertNotIn('PRIVATE-SALARY',str(summary))
+        self.assertNotIn('rate_basis',summary)
+        self.assertEqual(result,before)
+
+    def test_review_summary_separates_clock_night_from_whole_session_premium(self):
+        worked=[{'start':'2026-09-21T18:00:00','end':'2026-09-22T00:00:00'}]
+        overtime=[{'start':'2026-09-21T20:00:00','end':'2026-09-22T00:00:00'}]
+        for basis,ot,ordinary in [('Clock overlap',3,0),('Whole nocturnal session',4,2)]:
+            night=classify_night_session(worked,overtime,basis=basis)
+            summary=review_summary({'input':{'pay_policy':dict(policy(),night_basis=basis)},
+                'night_session':night,'snapshot':{'night_hours':night['overtime_premium_hours']}})
+            self.assertEqual(summary['night']['clock_night_hours'],3)
+            self.assertEqual(summary['hours']['night_hours'],ot)
+            self.assertEqual(summary['night']['ordinary_premium_hours'],ordinary)
+
+    def test_review_summary_does_not_invent_policy_or_missing_hours(self):
+        summary=review_summary({'input':{'configuration':{'night_hours_rate':15}}})
+        self.assertIsNone(summary['policy'])
+        self.assertIsNone(summary['hours']['night_hours'])
+        self.assertIsNone(summary['weekly_evidence_complete'])
+
     def test_requires_explicit_reference_and_supported_rules(self):
         validate_policy(policy())
         for field in ['approval_reference','night_basis','premium_combination','company','valid_from']:

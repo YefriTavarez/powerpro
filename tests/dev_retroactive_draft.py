@@ -69,6 +69,8 @@ try:
  reject(lambda:preview(first,{**declaration,'full_session':False}))
  reject(lambda:preview(first,{**declaration,'reference':''}))
  p=preview(first,declaration);assert p['draft_only'] and p['after']['verified_hours']==2
+ assert p['rules_summary']['policy']['name']==policy.name and p['rules_summary']['policy']['regular_percent']==40
+ assert p['rules_summary']['hours']['verified_hours']==2 and p['rules_summary']['weekly_evidence_complete'] is True
  money=frappe.db.count('Additional Salary');punches=frappe.db.count('Employee Checkin')
  entrance.time='2026-09-07 08:01:00';entrance.save(ignore_permissions=True)
  reject(lambda:apply(first,p,declaration))

@@ -22,7 +22,7 @@ from powerpro.controllers.overtime_weekly import get_weekly_evidence
 from powerpro.controllers.overtime_overnight import get_overnight_comparison
 
 ALLOWED_SOURCES = {"Overtime Authorization", "Retroactive Overtime Adjustment"}
-VERSION = "calendar-preview-v4-overnight"
+VERSION = "calendar-preview-v5-legacy-reference"
 
 
 @frappe.whitelist()
@@ -140,8 +140,9 @@ def _compare(doc):
         "difference": {field: round(proposed[field] - baseline[field], 4) for field in HOUR_FIELDS},
         "warnings": list(dict.fromkeys(warnings)), "pricing": pricing, "pricing_note": pricing_note,
         "assumptions": [
-            "El cálculo vigente se vuelve a calcular con la misma evidencia; no representa necesariamente el importe guardado.",
-            "Se conservan las bandas y porcentajes actuales. La jornada nocturna completa, los recargos combinados y el total semanal real siguen pendientes de validación.",
+            "La referencia anterior se vuelve a calcular con la misma evidencia; no representa necesariamente el importe guardado.",
+            "Esta comparación usa las tasas generales y el solapamiento nocturno de reloj. No aplica las políticas versionadas del motor por marcaciones.",
+            "Para revisar la regla de nocturnidad y los recargos de una política, utilice la conciliación por marcaciones y su revisión de evidencia.",
             "Los importes son ilustrativos; esta comparación no verifica asistencia ni permite liquidar.",
         ],
         "contexts": contexts, "weekly_before": weekly_before, "weekly_evidence": weekly_evidence, "overnight": overnight,

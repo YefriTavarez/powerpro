@@ -21,6 +21,9 @@ const html = api.render({name:xss, evidence_source:xss, baseline:{}, difference:
 assert(!html.includes("<img"));
 assert(html.includes("&lt;img"));
 assert(html.includes("Vista previa de solo lectura"));
+assert(html.includes("No aplica las políticas versionadas"));
+assert(html.includes("Referencia anterior"));
+assert(!html.includes("Vigente recalculado"));
 assert(!html.includes("<button"));
 let button;
 const frm = {doc:{doctype:"Overtime Authorization",name:"AUTH",docstatus:1},

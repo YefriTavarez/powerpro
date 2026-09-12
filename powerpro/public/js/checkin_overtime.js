@@ -1,4 +1,35 @@
 frappe.provide("powerpro.checkin_overtime");
+powerpro.checkin_overtime.render_rules_summary = (summary) => {
+    if (!summary) return "";
+    const e = value => frappe.utils.escape_html(String(value ?? ""));
+    const p = summary.policy, h = summary.hours || {}, n = summary.night || {};
+    if (!p) return `<p>${e(__("Falta una política aprobada para esta evaluación. No se presumen porcentajes de pago."))}</p>`;
+    const number = (value, digits = 4) => value == null || !Number.isFinite(Number(value)) ? __("Sin cálculo") : Number(value).toFixed(digits);
+    const percent = value => value == null ? __("Sin regla") : `${number(value, 2)}%`;
+    const basis = {"Clock overlap": "Solo el tiempo trabajado entre 21:00 y 07:00",
+        "Whole nocturnal session": "Toda la jornada cuando contiene al menos tres horas nocturnas"};
+    const combined = {"Require review": "Requiere revisión", "Single highest premium": "Un solo recargo (el mayor)", "Additive premiums": "Sumar ambos recargos"};
+    const rows = [
+        [__("Extra ordinaria"), number(h.regular_35_hours), percent(p.regular_percent)],
+        [__("Extra por encima del umbral semanal"), number(h.regular_100_hours), percent(p.extraordinary_percent)],
+        [__("Feriado"), number(h.holiday_100_hours), percent(p.extraordinary_percent)],
+        [__("Descanso semanal (efectivo)"), number(h.weekly_rest_hours), p.weekly_rest_cash ? percent(p.weekly_rest_percent) : __("Deshabilitado en estas reglas")],
+        [__("Recargo nocturno sobre horas extra"), number(h.night_hours), percent(p.night_percent)],
+        [__("Recargo nocturno sobre horas ordinarias"), number(n.ordinary_premium_hours), percent(p.night_percent)],
+    ];
+    return `<h5>${e(__("Reglas utilizadas en esta evaluación"))}</h5>
+        <p>${e(__("Versión"))}: ${e(p.name)} · ${e(p.valid_from)} — ${e(p.valid_until)}</p>
+        <p>${e(__("Nocturnidad"))}: ${e(__(basis[p.night_basis] || p.night_basis))}</p>
+        <p>${e(__("Clasificación de la jornada"))}: ${e(__(n.classification || "Sin cálculo"))} · ${e(__("Horas entre 21:00 y 07:00"))}: ${e(number(n.clock_night_hours))}</p>
+        <table class="table table-bordered"><thead><tr><th>${e(__("Concepto"))}</th><th>${e(__("Horas"))}</th><th>${e(__("Recargo sobre la hora base"))}</th></tr></thead>
+        <tbody>${rows.map(row => `<tr>${row.map(value => `<td>${e(value)}</td>`).join("")}</tr>`).join("")}</tbody></table>
+        <p>${e(__("El recargo nocturno se añade sobre la misma hora base. Las horas nocturnas pueden estar incluidas en las otras categorías; no se suman como horas adicionales."))}</p>
+        <p>${e(__("Umbral semanal"))}: ${e(number(p.weekly_threshold))} · ${e(__("Evidencia semanal completa"))}: ${e(__(summary.weekly_evidence_complete === true ? "Sí" : "Pendiente"))}</p>
+        <p>${e(__("Feriado coincidente con descanso semanal"))}: ${e(__(combined[p.holiday_weekly_rest_mode] || p.holiday_weekly_rest_mode))}</p>
+        ${p.holiday_weekly_rest_compensatory ? `<p>${e(__("Habilitado: pago del feriado junto con descanso semanal compensatorio, sujeto a elección y cobertura salarial."))}</p>` : ""}
+        <p>${e(__("Horas de feriado con base ya cubierta"))}: ${e(number(summary.holiday_base_covered_hours))}</p>
+        <p>${e(__("Este detalle explica la vista previa. Los requisitos pendientes de evidencia, elección y liquidación siguen aplicando."))}</p>`;
+};
 powerpro.checkin_overtime.add_actions = (frm) => {
     powerpro.checkin_overtime.add_holiday_action(frm);
     if (frm.doc.docstatus === 2) return powerpro.checkin_overtime.add_history_actions(frm);
@@ -103,6 +134,7 @@ powerpro.checkin_overtime.review = (frm, manual = false, observationWindow = nul
                 [__("Importe"), p.financial_before.settlement_amount || 0, p.historical_only ? __("Sin cambios") : (p.proposed_amount ?? __("Pendiente de liquidación"))]];
             if (p.historical_only) rows.unshift([__("Horas de la jornada completa"), p.worked_hours_before, p.worked_hours_after]);
             const html = `<p>${e(p.reason)}</p><table class="table table-bordered"><thead><tr><th></th><th>${__("Anterior")}</th><th>${__("Revisado")}</th></tr></thead><tbody>${rows.map(r => `<tr>${r.map(v => `<td>${e(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>
+                ${powerpro.checkin_overtime.render_rules_summary(p.rules_summary)}
                 ${p.observation_window ? `<p>${__('Ventana de observación')}: ${e(p.observation_window.start)} — ${e(p.observation_window.end)}</p><p>${__('Horas fuera de autorización, sin nuevo pago')}: ${e(p.unapproved_hours)}</p>` : ''}
                 ${p.manual_declaration ? `<p>${__("Fuente: jornada completa declarada por Gestión Humana. Las marcaciones originales se conservan como comparación.")}</p><p>${e(p.manual_declaration.reference)}</p>
                     <ul>${p.manual_declaration.intervals.map(row => `<li>${e(row.start)} — ${e(row.end)}</li>`).join("")}</ul>

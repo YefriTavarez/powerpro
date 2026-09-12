@@ -5,12 +5,31 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  const ctx={__:x=>x,powerpro:{checkin_overtime:{}},frappe:{provide(){},utils:{escape_html:s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')},
   prompt(fields,fn){assert(fields[0].reqd);requested=fn;},msgprint(m){messages.push(m)},call(args){calls.push(args);return Promise.resolve({message:preview})},ui:{Dialog:function(args){Object.assign(this,args);this.show=()=>{};this.hide=()=>{};dialogs.push(this);}}}};
  vm.runInNewContext(fs.readFileSync('powerpro/public/js/checkin_overtime.js','utf8'),ctx);
+ const summary={policy:{name:'<policy>',valid_from:'2026-09-01',valid_until:'2026-09-30',night_basis:'Whole nocturnal session',
+  regular_percent:40,extraordinary_percent:100,night_percent:20,weekly_rest_percent:100,weekly_threshold:68,
+  holiday_weekly_rest_mode:'Single highest premium',holiday_weekly_rest_compensatory:true,weekly_rest_cash:1},
+  hours:{regular_35_hours:4,regular_100_hours:0,holiday_100_hours:0,weekly_rest_hours:0,night_hours:4},
+  night:{classification:'Nocturna',clock_night_hours:3,ordinary_premium_hours:2},weekly_evidence_complete:true,holiday_base_covered_hours:0};
+ let detail=ctx.powerpro.checkin_overtime.render_rules_summary(summary);
+ assert(detail.includes('Toda la jornada'));assert(detail.includes('40.00%'));assert(detail.includes('20.00%'));
+ assert(detail.includes('3.0000'));assert(detail.includes('4.0000'));assert(detail.includes('2.0000'));
+ assert(detail.includes('Un solo recargo (el mayor)'));assert(detail.includes('pago del feriado junto'));
+ assert(!detail.includes('<policy>'));assert(detail.includes('&lt;policy&gt;'));assert(!detail.includes('<button'));
+ summary.policy.night_basis='Clock overlap';summary.weekly_evidence_complete=false;summary.policy.weekly_rest_cash=0;
+ detail=ctx.powerpro.checkin_overtime.render_rules_summary(summary);
+ assert(detail.includes('Solo el tiempo trabajado entre 21:00 y 07:00'));assert(detail.includes('Pendiente'));
+ assert(detail.includes('Deshabilitado en estas reglas'));
+ detail=ctx.powerpro.checkin_overtime.render_rules_summary({policy:null});
+ assert(detail.includes('Falta una política'));assert(!detail.includes('15.00%'));assert(!detail.includes('0.0000'));
+ assert.equal(ctx.powerpro.checkin_overtime.render_rules_summary(undefined),'');
+ preview.rules_summary=summary;
  const frm={doc:{name:'AUTH'},is_dirty:()=>dirty,reload_doc(){reloaded=true;}};
  dirty=true;ctx.powerpro.checkin_overtime.review(frm);assert.equal(requested,undefined);
  dirty=false;ctx.powerpro.checkin_overtime.review(frm);requested({reason:'reason'});await Promise.resolve();
  assert.equal(calls[0].method,'powerpro.controllers.checkin_overtime_review.preview_review');
  assert(dialogs[0].fields[0].options.includes('&lt;img'));assert(!dialogs[0].fields[0].options.includes('<img'));
  assert(dialogs[0].fields[0].options.includes('140'));
+ assert(dialogs[0].fields[0].options.includes('Reglas utilizadas en esta evaluación'));
  dirty=true;dialogs[0].primary_action();assert.equal(calls.length,1);
  dirty=false;dialogs[0].primary_action();await Promise.resolve();
  assert.equal(calls[1].type,'POST');assert.equal(calls[1].args.token,'TOKEN');assert.equal(calls[1].args.authorization,'AUTH');assert(reloaded);
