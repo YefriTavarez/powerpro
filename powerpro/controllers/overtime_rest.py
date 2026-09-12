@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from datetime import timedelta
 import frappe
 from frappe import _
-from frappe.utils import flt,get_datetime,getdate,now_datetime
+from frappe.utils import cint,flt,get_datetime,getdate,now_datetime
 from powerpro.controllers.overtime import _reconciliation_rows,get_schedule_context
 from powerpro.controllers.overtime_pay_policy import get_effective_policy
 from powerpro.payroll_rules.overtime_rest import rest_entitlement,validate_rest_schedule
@@ -103,8 +103,17 @@ def _event(auth,election,action,details):
 def approve_election(name):
     election,auth,_call=_locked_election(name)
     if election.docstatus!=0:frappe.throw(_('La elección ya fue procesada.'))
-    if auth.evidence_status!='Verified' or flt(auth.verified_hours)<=0 or auth.reconciliation_source!='Employee Checkin':
-        frappe.throw(_('Concilie primero las marcaciones para aprobar la elección sobre horas verificadas.'))
+    from powerpro.controllers import checkin_overtime as evidence
+    saved=frappe.parse_json(auth.evidence_snapshot or '{}')
+    certified=bool(auth.reconciliation_source=='Manual Verification' and (saved.get('review') or {}).get('manual_declaration'))
+    if auth.evidence_status!='Verified' or flt(auth.verified_hours)<=0 or (auth.reconciliation_source!='Employee Checkin' and not certified):
+        frappe.throw(_('Concilie primero las marcaciones o la jornada declarada para elegir sobre horas verificadas.'))
+    if certified and not cint(evidence._settings().get('enable_manual_overtime_verification')):
+        frappe.throw(_('La verificación manual está desactivada.'))
+    current=evidence.build_result(auth,for_update=True)
+    if (current['state']!='Verified' or not saved.get('input_hash') or saved['input_hash']!=current['input_hash']
+            or evidence._evidence_hash(saved.get('snapshot'))!=evidence._evidence_hash(current.get('snapshot'))):
+        frappe.throw(_('La evidencia cambió. Revise las horas antes de aprobar la elección del empleado.'))
     if auth.settlement_status in {'Created','Payroll Submitted','Paid','Credited','Cancelled'}:frappe.throw(_('No se cambia la elección de una obligación ya liquidada.'))
     with managed('submit',name):
         election.flags.ignore_permissions=True;election.submit()

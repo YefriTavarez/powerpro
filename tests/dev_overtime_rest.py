@@ -162,6 +162,61 @@ try:
  assert cash.settlement_status=='Created' and not cash.settlement_salary_slip
  before_cancel_adjustment(cash)
  checks.append('native Salary Slip submission means payroll included, never paid; cancellation restores Created and releases the payroll guard')
+ # The same employee may explicitly choose rest after HR certifies a missing
+ # exit. This is a new obligation, after cancelling the cash fixture above.
+ cash_call.reload();cash_call.flags.ignore_permissions=True;cash_call.cancel()
+ frappe.db.set_single_value('DGII Payroll Settings','enable_manual_overtime_verification',1)
+ exit_name=frappe.db.get_value('Employee Checkin',{'employee':employee.name,'time':'2026-09-13 11:00:00'},'name')
+ exit_doc=frappe.get_doc('Employee Checkin',exit_name);exit_doc.skip_auto_attendance=1;exit_doc.save(ignore_permissions=True)
+ manual_call,manual_name=source('Compensatory Rest')
+ from powerpro.controllers import checkin_overtime_review as review
+ with patch.object(evidence,'now_datetime',return_value=get_datetime('2026-09-13 20:00:00')):
+  assert evidence.process_authorization(manual_name)=='Needs Review'
+  declaration={'full_session':True,'reference':'DEV signed HR complete-session record',
+      'intervals':[{'start':'2026-09-13 07:00:00','end':'2026-09-13 10:00:00'}]}
+  preview=review.preview_review(manual_name,'DEV confirms three hours with missing exit',manual_declaration=declaration)
+  review.apply_review(manual_name,'DEV confirms three hours with missing exit',preview['token'],manual_declaration=declaration)
+  manual=frappe.get_doc('Overtime Authorization',manual_name)
+  frozen=frappe.parse_json(manual.evidence_snapshot);punch_count=frappe.db.count('Employee Checkin')
+  assert manual.verified_hours==3 and manual.reconciliation_source=='Manual Verification'
+  manual_election=choose(manual_name,'Compensatory Rest')
+  frappe.db.savepoint('manual_election_stale')
+  exit_doc.skip_auto_attendance=0;exit_doc.save(ignore_permissions=True)
+  try:rest.approve_election(manual_election.name)
+  except frappe.ValidationError:pass
+  else:raise AssertionError('Election approved stale HR evidence')
+  frappe.db.rollback(save_point='manual_election_stale')
+  assert frappe.db.get_value('Overtime Settlement Election',manual_election.name,'docstatus')==0
+  rest.approve_election(manual_election.name)
+  assert evidence.process_authorization(manual_name)=='Frozen'
+  manual.reload();assert manual.reconciliation_source=='Manual Verification' and manual.compensatory_hours==8 and manual.compensatory_days==1
+  current=frappe.parse_json(manual.evidence_snapshot)
+  assert current['review']==frozen['review'] and current['snapshot']==frozen['snapshot']
+  assert evidence.process_authorization(manual_name)=='Frozen'
+  assert frappe.db.count('Overtime Compensatory Credit',{'overtime_authorization':manual_name,'docstatus':1})==1
+  assert frappe.db.count('Employee Checkin')==punch_count
+  manual_leave=leave('2026-09-16');rest.link_leave(manual_election.name,manual_leave.name)
+  # A used native leave balance cannot be silently clawed back by a correction.
+  revised={'full_session':True,'reference':'DEV corrected signed HR record',
+      'intervals':[{'start':'2026-09-13 07:00:00','end':'2026-09-13 09:00:00'}]}
+  replacement=review.preview_review(manual_name,'DEV corrected two-hour declaration',manual_declaration=revised)
+  try:review.apply_review(manual_name,'DEV corrected two-hour declaration',replacement['token'],manual_declaration=revised)
+  except frappe.ValidationError:pass
+  else:raise AssertionError('Used leave could be silently reversed')
+  manual.reload();assert manual.verified_hours==3 and manual.compensatory_hours==8
+  assert frappe.db.get_value('Leave Application',manual_leave.name,'docstatus')==1
+  manual_leave.cancel()
+  replacement=review.preview_review(manual_name,'DEV corrected two-hour declaration',manual_declaration=revised)
+  review.apply_review(manual_name,'DEV corrected two-hour declaration',replacement['token'],manual_declaration=revised)
+  manual.reload();manual_election.reload()
+  assert manual.verified_hours==2 and manual.settlement_status=='Pending' and not manual.evidence_settlement_ready
+  assert manual_election.docstatus==2
+  fresh_choice=choose(manual_name,'Compensatory Rest');rest.approve_election(fresh_choice.name)
+  assert evidence.process_authorization(manual_name)=='Frozen'
+  manual.reload();assert manual.compensatory_hours==8 and manual.verified_hours==2
+  assert frappe.db.count('Overtime Compensatory Credit',{'overtime_authorization':manual_name,'docstatus':1})==1
+  manual_call.reload();manual_call.flags.ignore_permissions=True;manual_call.cancel()
+ checks.append('certified missing-exit session supports fresh employee rest election, unique credit and native leave; stale evidence and used-leave correction block; cancellation then reviewed replacement requires a new employee election')
  frappe.set_user('Guest')
  try:rest.revoke_enjoyment(election.name,'Unauthorized')
  except frappe.PermissionError:pass
