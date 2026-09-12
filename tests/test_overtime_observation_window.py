@@ -29,6 +29,11 @@ class ObservationWindowTest(unittest.TestCase):
  def test_next_shift_overlap_still_requires_review(self):
   args=self.args();args['next_windows']=[{'start':'2026-09-22T05:00','end':'2026-09-22T18:00'}]
   self.assertTrue(any(i['code']=='next_shift_overlap' for i in evaluate_evidence(**args)['issues']))
+ def test_prior_shift_conflict_is_not_accepted_as_authorized_extension(self):
+  args=self.args();args['next_windows']=[{'shift':'Previous','start':'2026-09-20T22:00','end':'2026-09-21T09:00','relation':'previous'}]
+  r=evaluate_evidence(**args)
+  self.assertEqual(r['state'],'Needs Review')
+  self.assertTrue(any(i['code']=='adjacent_shift_overlap' for i in r['issues']))
  def test_explicit_manual_session_can_preserve_overrun_without_fake_punches(self):
   args=self.args();declaration={'full_session':True,'reference':'Signed full session','intervals':[
    {'start':'2026-09-21T08:00','end':'2026-09-21T12:00'}, {'start':'2026-09-21T13:00','end':'2026-09-22T06:00'}]}

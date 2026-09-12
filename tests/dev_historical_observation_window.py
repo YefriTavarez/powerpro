@@ -119,6 +119,24 @@ try:
   live=frappe.get_doc('Overtime Authorization',auth_name)
   fails(lambda:evidence._data(live,observation_window={'start':'2026-09-14 08:00:00','end':'2026-09-15 06:00:00'}))
   call.reload();call.flags.ignore_permissions=True;call.cancel();auth=frappe.get_doc('Overtime Authorization',auth_name);protected=auth.as_dict()
+  frappe.db.savepoint('auth_prior_shift')
+  prior=frappe.copy_doc(shift);prior.name=prefix+'-PRIOR';prior.docstatus=0;prior.start_time='22:00:00';prior.end_time='06:00:00';prior.db_insert()
+  frappe.get_doc({'doctype':'Shift Assignment','employee':employee.name,'shift_type':prior.name,
+   'start_date':'2026-09-13','end_date':'2026-09-13','status':'Active','docstatus':1}).db_insert()
+  early=frappe.get_doc('Employee Checkin',frappe.db.get_value('Employee Checkin',{'employee':employee.name,'time':'2026-09-14 08:00:00'},'name'))
+  early.time='2026-09-13 23:00:00';early.save(ignore_permissions=True)
+  backward={'start':'2026-09-13 21:00:00','end':'2026-09-14 20:00:00'}
+  raw=history.evaluate(auth,observation_window=backward)
+  assert any(w.get('relation')=='previous' and w['shift']==prior.name for w in raw['input']['next_windows'])
+  assert any(i['code']=='adjacent_shift_overlap' for i in raw['issues'])
+  fails(lambda:history.preview_review(auth_name,'Prior shift is ambiguous',observation_window=backward))
+  declared={'full_session':True,'reference':'DEV documented current session only','intervals':[
+   {'start':'2026-09-14 08:00:00','end':'2026-09-14 20:00:00'}]}
+  p=history.preview_review(auth_name,'DEV resolve prior shift',declared,observation_window=backward)
+  assert p['worked_hours_after']==12
+  history.apply_review(auth_name,'DEV resolve prior shift',p['token'],declared,observation_window=backward)
+  assert history.compare(auth)['matches']
+  frappe.db.rollback(save_point='auth_prior_shift');auth.reload();auth_exit.reload()
   auth_exit.time='2026-09-15 06:00:00';auth_exit.save(ignore_permissions=True)
   observed={'start':'2026-09-14 08:00:00','end':'2026-09-15 06:00:00'}
   p=history.preview_review(auth_name,'DEV authorization overrun',observation_window=observed)

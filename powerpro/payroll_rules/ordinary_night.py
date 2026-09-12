@@ -8,12 +8,16 @@ from powerpro.payroll_rules.overtime_pay_policy import classify_night_session
 VERSION = 'ordinary-night-v1'
 
 
-def evaluate_night_work(*, rows, shift, context, extensions, next_windows, now, basis, certified_intervals=None):
+def evaluate_night_work(*, rows, shift, context, extensions, next_windows, now, basis, certified_intervals=None,observation_window=None):
     start, end = _as_datetime(context['shift_start']), _as_datetime(context['shift_end'])
     windows = [(start, end)] + [(_as_datetime(r['start']), _as_datetime(r['end'])) for r in extensions]
     if any(b <= a for a, b in windows):
         raise ValueError('Ventana de trabajo inválida.')
     lo, hi = min(a for a, b in windows), max(b for a, b in windows)
+    if observation_window is not None:
+        from powerpro.payroll_rules.overtime_observation_window import normalize_window
+        observation_window=normalize_window(observation_window,lo,hi)
+        lo,hi=_as_datetime(observation_window['start']),_as_datetime(observation_window['end'])
     before = timedelta(minutes=float(shift.get('begin_check_in_before_shift_start_time') or 0))
     after = timedelta(minutes=float(shift.get('allow_check_out_after_shift_end_time') or 0))
     result = {'version': VERSION, 'state': 'Verified', 'issues': [], 'source_checkins': [], 'interpretations': []}
@@ -37,15 +41,16 @@ def evaluate_night_work(*, rows, shift, context, extensions, next_windows, now, 
         captured = (raw.get('shift') == shift['name'] and raw.get('shift_start') and raw.get('shift_end')
                     and _as_datetime(raw['shift_start']) == start and _as_datetime(raw['shift_end']) == end)
         if raw.get('skip_auto_attendance'): issue('excluded_checkin'); continue
-        if any(_as_datetime(w['start']) <= stamp <= _as_datetime(w['end']) for w in next_windows):
-            issue('next_shift_overlap'); continue
-        if not captured and not any(a <= stamp <= b + after for a, b in windows[1:]):
+        overlaps=[w for w in next_windows if _as_datetime(w['start']) <= stamp <= _as_datetime(w['end'])]
+        if overlaps:
+            issue('adjacent_shift_overlap' if any(w.get('relation')=='previous' for w in overlaps) else 'next_shift_overlap'); continue
+        if not captured and not (observation_window and lo <= stamp <= hi) and not any(a <= stamp <= b + after for a, b in windows[1:]):
             issue('checkin_without_matching_shift'); continue
         row = deepcopy(raw)
         row.update(shift=shift['name'], shift_start=lo, shift_end=hi,
                    shift_actual_start=lo-before, shift_actual_end=hi+after, offshift=0)
         if not captured:
-            result['interpretations'].append({'checkin': raw.get('name'), 'reason': 'approved_extension',
+            result['interpretations'].append({'checkin': raw.get('name'), 'reason': 'historical_observation' if observation_window else 'approved_extension',
                                               'stored_log_type': raw.get('log_type')})
         grouped.append(row)
     if certified_intervals is None:

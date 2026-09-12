@@ -3,7 +3,11 @@ powerpro.ordinary_night_history.add_button=(frm,status)=>{
     if(frm.doc.docstatus!==2 || !status.can_review)return;
     frm.add_custom_button(__('Revisar evidencia histórica'),()=>{
         if(frm.is_dirty())return frappe.msgprint(__('Guarde los cambios antes de revisar.'));
-        const fields=[{fieldname:'reason',label:__('Motivo de la revisión'),fieldtype:'Small Text',reqd:1}];
+        const fields=[{fieldname:'reason',label:__('Motivo de la revisión'),fieldtype:'Small Text',reqd:1},
+            {fieldname:'expand_window',label:__('Ampliar la ventana histórica'),fieldtype:'Check'},
+            {fieldname:'observation_start',label:__('Inicio de la jornada a revisar'),fieldtype:'Datetime',depends_on:'eval:doc.expand_window',default:status.observation_window?.start},
+            {fieldname:'observation_end',label:__('Fin de la jornada a revisar'),fieldtype:'Datetime',depends_on:'eval:doc.expand_window',default:status.observation_window?.end,
+                description:__('Máximo 24 horas. Conserva la jornada documentada y no genera un nuevo pago.')}];
         if(status.manual_review_allowed)fields.push(
             {fieldname:'manual',label:__('Declarar toda la jornada con respaldo documental'),fieldtype:'Check'},
             {fieldname:'reference',label:__('Referencia de la jornada completa'),fieldtype:'Small Text',depends_on:'eval:doc.manual'},
@@ -13,17 +17,20 @@ powerpro.ordinary_night_history.add_button=(frm,status)=>{
         frappe.prompt(fields,values=>{
             if(frm.is_dirty())return frappe.msgprint(__('Guarde los cambios antes de revisar.'));
             const args={name:frm.doc.name,reason:values.reason};
+            if(values.expand_window)args.observation_window=JSON.stringify({start:values.observation_start,end:values.observation_end});
             if(values.manual)args.manual_declaration=JSON.stringify({full_session:true,reference:values.reference,
                 intervals:(values.intervals||[]).map(r=>({start:r.start,end:r.end}))});
             frappe.call({method:'powerpro.controllers.ordinary_night_history.preview_review',args,freeze:true}).then(({message:r})=>{
                 const e=v=>frappe.utils.escape_html(String(v??''));
                 const dialog=new frappe.ui.Dialog({title:__('Revisión histórica nocturna'),fields:[{fieldname:'preview',fieldtype:'HTML',options:
                     `<p>${e(r.note)}</p><p>${__('Horas trabajadas antes')}: ${e(r.worked_hours_before)} · ${__('Después')}: ${e(r.worked_hours_after)}</p>`+
+                    (r.observation_window ? `<p>${__('Ventana de observación')}: ${e(r.observation_window.start)} — ${e(r.observation_window.end)}</p>` : '')+
+                    ((r.unapproved_intervals||[]).length ? `<p>${__('Trabajo fuera de la ventana documentada, sin nuevo pago')}</p><ul>${r.unapproved_intervals.map(x=>`<li>${e(x.start)} — ${e(x.end)}</li>`).join('')}</ul>` : '')+
                     `<ul>${r.worked_intervals.map(x=>`<li>${e(x.start)} — ${e(x.end)}</li>`).join('')}</ul>`}],
                     primary_action_label:__('Aceptar revisión histórica'),primary_action:()=>{
                         if(frm.is_dirty())return frappe.msgprint(__('Guarde los cambios antes de aceptar.'));
                         frappe.call({method:'powerpro.controllers.ordinary_night_history.apply_review',type:'POST',freeze:true,
-                            args:{...args,token:r.token}}).then(()=>{dialog.hide();frm.reload_doc();});
+                            args:{...args,token:r.token,...(r.observation_window ? {observation_window:JSON.stringify(r.observation_window)} : {})}}).then(()=>{dialog.hide();frm.reload_doc();});
                     }});dialog.show();
             });
         },__('Revisar trabajo conservado'),__('Consultar'));

@@ -60,12 +60,14 @@ def _certified_session(extensions, employee, shift, *, for_update=False):
     return found[0] if found else None
 
 
-def build_preview(doc, *, for_update=False, historical_snapshot=None, historical_declaration=None):
+def build_preview(doc, *, for_update=False, historical_snapshot=None, historical_declaration=None,historical_window=None):
     from powerpro.controllers.checkin_overtime import _evidence_hash
     from powerpro.controllers.overtime_cash_settlement import _get_hourly_rate
     physical_only=historical_snapshot is not None
     if physical_only and doc.docstatus!=2:
         frappe.throw(_('La evaluación histórica requiere una liquidación cancelada.'))
+    if historical_window is not None and not physical_only:
+        frappe.throw(_('La ventana histórica solo se admite en liquidaciones canceladas.'))
     employee = frappe.get_doc('Employee', doc.employee, for_update=for_update)
     employee.check_permission('read')
     company = frappe.get_doc('Company', employee.company, for_update=for_update)
@@ -103,16 +105,23 @@ def build_preview(doc, *, for_update=False, historical_snapshot=None, historical
     windows=[{'name':r.name,'start':str(r.authorization_start),'end':str(r.authorization_end),
               **({'source_type':r.source_type} if r.get('source_type') else {})} for r in extensions]
     lo=min([start]+[get_datetime(r['start']) for r in windows]);hi=max([end]+[get_datetime(r['end']) for r in windows])
+    if historical_window is not None:
+        from powerpro.payroll_rules.overtime_observation_window import normalize_window
+        historical_window=normalize_window(historical_window,lo,hi)
+        lo,hi=get_datetime(historical_window['start']),get_datetime(historical_window['end'])
     policy=None
     if not physical_only:
         policy=get_effective_policy(frappe._dict(company=company.name,authorization_start=lo,authorization_end=hi),for_update=for_update)
         if not policy:frappe.throw(_('Falta una política aprobada que cubra toda la jornada.'))
     next_windows=[]
-    date=day+timedelta(days=1)
+    date=lo.date()-timedelta(days=1) if historical_window else day+timedelta(days=1)
     while date<=hi.date():
+        if date==day:
+            date+=timedelta(days=1);continue
         nxt=shift_at(date);a,b=get_shift_window(date,nxt.start_time,nxt.end_time)
         next_windows.append({'shift':nxt.name,'start':str(a-timedelta(minutes=flt(nxt.begin_check_in_before_shift_start_time))),
-                             'end':str(b+timedelta(minutes=flt(nxt.allow_check_out_after_shift_end_time)))})
+                             'end':str(b+timedelta(minutes=flt(nxt.allow_check_out_after_shift_end_time))),
+                             **({'relation':'previous'} if date<day else {})})
         date+=timedelta(days=1)
     shift={k:current.get(k) for k in ['name','start_time','end_time','last_sync_of_checkin','determine_check_in_and_check_out',
         'working_hours_calculation_based_on','begin_check_in_before_shift_start_time','allow_check_out_after_shift_end_time']}
@@ -124,7 +133,7 @@ def build_preview(doc, *, for_update=False, historical_snapshot=None, historical
     if len(rows)>2000:frappe.throw(_('Demasiadas marcaciones para una jornada.'))
     if physical_only:
         from powerpro.controllers.ordinary_night_history import evaluate_physical
-        return evaluate_physical(doc,company.name,rows,shift,context,windows,next_windows,historical_declaration)
+        return evaluate_physical(doc,company.name,rows,shift,context,windows,next_windows,historical_declaration,historical_window)
     salary_fields=['name','base','from_date','salary_structure']
     if frappe.get_meta('Salary Structure Assignment').has_field('salary_per_hour'):salary_fields.append('salary_per_hour')
     rates=_reconciliation_rows('Salary Structure Assignment',for_update=for_update,

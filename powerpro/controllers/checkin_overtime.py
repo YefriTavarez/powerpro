@@ -128,15 +128,18 @@ def _data(doc,*,for_update=False,include_weekly=True,observation_window=None):
     if len(assignments)>1000:raise ValueError('Demasiadas asignaciones; requiere revisión.')
     employee=frappe.get_doc('Employee',doc.employee,for_update=for_update)
     next_windows=[]
-    day=start.date()+timedelta(days=1)
+    day=observed_start.date()-timedelta(days=1) if observation_window else start.date()+timedelta(days=1)
     while day<=observed_end.date():
+        if day==start.date():
+            day+=timedelta(days=1);continue
         names={a.shift_type for a in assignments if getdate(a.start_date)<=day and (not a.end_date or getdate(a.end_date)>=day)}
         if not names and employee.get('default_shift'):names={employee.default_shift}
         for name in names:
             nxt=frappe.get_doc('Shift Type',name,for_update=for_update)
             a,b=get_shift_window(day,nxt.start_time,nxt.end_time)
             next_windows.append({'shift':name,'start':a-timedelta(minutes=flt(nxt.begin_check_in_before_shift_start_time)),
-                'end':b+timedelta(minutes=flt(nxt.allow_check_out_after_shift_end_time))})
+                'end':b+timedelta(minutes=flt(nxt.allow_check_out_after_shift_end_time)),
+                **({'relation':'previous'} if day<start.date() else {})})
         day+=timedelta(days=1)
     competing=False
     for source_type in [AUTH,'Retroactive Overtime Adjustment']:

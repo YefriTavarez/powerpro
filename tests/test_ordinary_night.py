@@ -59,4 +59,29 @@ class OrdinaryNightTest(unittest.TestCase):
   r=self.run_case([],certified_intervals=[dict(start='2026-09-14T18:00',end='2026-09-15T03:00')])
   self.assertEqual(r['state'],'Needs Review')
 
+ def test_expanded_window_preserves_physical_overrun_and_original_classification(self):
+  r=self.run_case([('2026-09-14T18:00','IN'),('2026-09-15T06:00','IN')],
+   row_changes={1:{'shift':None}},observation_window={'start':'2026-09-14T18:00','end':'2026-09-15T06:00'})
+  self.assertEqual(r['state'],'Needs Review')
+  self.assertEqual(r['night_session']['ordinary_premium_hours'],5)
+  self.assertEqual(r['unapproved_intervals'],[{'start':'2026-09-15T02:00:00','end':'2026-09-15T06:00:00'}])
+  self.assertEqual(r['source_checkins'][-1]['log_type'],'IN')
+  self.assertEqual(r['interpretations'][-1]['reason'],'historical_observation')
+ def test_expanded_window_waits_for_actual_end_and_sync(self):
+  window={'start':'2026-09-14T18:00','end':'2026-09-15T06:00'}
+  for kwargs in [dict(now='2026-09-15T05:00'),dict(shift={'last_sync_of_checkin':'2026-09-15T05:00'})]:
+   r=self.run_case([('2026-09-14T18:00','IN'),('2026-09-15T06:00','OUT')],observation_window=window,**kwargs)
+   self.assertEqual(r['state'],'Waiting')
+ def test_prior_shift_is_not_reinterpreted_as_current_session(self):
+  r=self.run_case([('2026-09-14T04:00','IN'),('2026-09-15T02:00','OUT')],
+   row_changes={0:{'shift':'Other'}},observation_window={'start':'2026-09-14T03:00','end':'2026-09-15T02:00'},
+   next_windows=[{'shift':'Other','start':'2026-09-13T22:00','end':'2026-09-14T06:00','relation':'previous'}])
+  self.assertEqual(r['state'],'Needs Review')
+  self.assertTrue(any(i['code']=='adjacent_shift_overlap' for i in r['issues']))
+ def test_next_shift_conflict_still_blocks_expanded_window(self):
+  r=self.run_case([('2026-09-14T18:00','IN'),('2026-09-15T06:00','OUT')],
+   observation_window={'start':'2026-09-14T18:00','end':'2026-09-15T06:00'},
+   next_windows=[{'start':'2026-09-15T05:00','end':'2026-09-15T13:00'}])
+  self.assertTrue(any(i['code']=='next_shift_overlap' for i in r['issues']))
+
 if __name__=='__main__':unittest.main()

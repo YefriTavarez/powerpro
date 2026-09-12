@@ -96,6 +96,8 @@ def _current(doc):
         'start_date':['<=',getdate(doc.work_date)+timedelta(days=2)]},fields=['shift_type','start_date','end_date'],limit=1001)
     if len(assignments)>1000:frappe.throw(_('Demasiadas asignaciones de turno.'))
     start=get_datetime(context['shift_start']);end=max([get_datetime(context['shift_end'])]+[get_datetime(r['end']) for r in current['input']['extensions']])
+    if current['input'].get('observation_window'):
+        start,end=get_datetime(current['input']['observation_window']['start']),get_datetime(current['input']['observation_window']['end'])
     facade=frappe._dict(doctype=NIGHT,name=doc.name,employee=doc.employee,authorization_start=start,authorization_end=end,work_date=doc.work_date)
     data=load_week(facade,employee,assignments)
     historical=data.pop('historical_intervals',[]);historical_names=data.pop('historical_checkins',[]);certified=data.pop('certified_sessions',[])

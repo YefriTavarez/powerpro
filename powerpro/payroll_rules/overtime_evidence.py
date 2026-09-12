@@ -46,7 +46,9 @@ def evaluate_evidence(*, authorization, rows, shift, contexts, next_windows, now
         if stamp<session_start-timedelta(minutes=float(shift.get('begin_check_in_before_shift_start_time') or 0)):continue
         if stamp>session_end+timedelta(minutes=float(shift.get('allow_check_out_after_shift_end_time') or 0)):continue
         if raw.get('skip_auto_attendance'):issue('excluded_checkin');continue
-        if any(_as_datetime(w['start'])<=stamp<=_as_datetime(w['end']) for w in next_windows):issue('next_shift_overlap');continue
+        overlaps=[w for w in next_windows if _as_datetime(w['start'])<=stamp<=_as_datetime(w['end'])]
+        if overlaps:
+            issue('adjacent_shift_overlap' if any(w.get('relation')=='previous' for w in overlaps) else 'next_shift_overlap');continue
         r=deepcopy(raw)
         if not captured:
             result['interpretations'].append({'checkin':raw.get('name'),'time':stamp.isoformat(),'stored_log_type':raw.get('log_type'),

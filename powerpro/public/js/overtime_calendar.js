@@ -104,7 +104,7 @@ frappe.provide("powerpro.overtime_calendar");
 					missing_shift_policy:"Faltan las reglas del turno",sync_not_confirmed:"La sincronización no cubre el fin autorizado",
 					excluded_checkins:"Hay marcaciones excluidas de Auto Attendance",missing_captured_anchor:"Falta el turno de origen en las marcaciones elegibles",
 					extended_session_over_24h:"La jornada extendida supera el límite de revisión de 24 horas",
-					next_shift_overlap:"Una marcación también cabe en el turno siguiente",punch_sequence_requires_review:"La secuencia de marcaciones requiere revisión",
+					next_shift_overlap:"Una marcación también cabe en el turno siguiente",adjacent_shift_overlap:"Una marcación también cabe en el turno anterior",punch_sequence_requires_review:"La secuencia de marcaciones requiere revisión",
 					missing_worked_interval:"Faltan intervalos de trabajo calculables"};
 				if (night.coverage_blockers.length) html += `<div class="alert alert-warning">${list(night.coverage_blockers.map((r) => reasons[r] || r))}</div>`;
 			}

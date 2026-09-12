@@ -14,7 +14,7 @@ from powerpro.controllers.overtime_history import APPLIED,_hours
 
 DT=night.DT
 RUN='Overtime Reconciliation Run'
-PHYSICAL_KEYS=('version','employee','company','work_date','shift','context','extensions','next_windows','rows')
+PHYSICAL_KEYS=('version','employee','company','work_date','shift','context','extensions','next_windows','rows','observation_window')
 
 
 def physical_input(snapshot):
@@ -53,21 +53,24 @@ def historical_extensions(doc,snapshot,*,for_update=False):
     return extensions
 
 
-def evaluate_physical(doc,company,rows,shift,context,windows,next_windows,declaration):
+def evaluate_physical(doc,company,rows,shift,context,windows,next_windows,declaration,observation_window=None):
     from powerpro.payroll_rules.ordinary_night import evaluate_night_work,VERSION
     from powerpro.payroll_rules.overtime_manual_session import validate_manual_intervals
     certified=None
     if declaration is not None:
         start=min([get_datetime(context['shift_start'])]+[get_datetime(w['start']) for w in windows])
         end=max([get_datetime(context['shift_end'])]+[get_datetime(w['end']) for w in windows])
+        if observation_window:
+            start,end=get_datetime(observation_window['start']),get_datetime(observation_window['end'])
         # Validate the complete declaration through the same bounded interval
         # contract used by HR, including reference, pauses and elapsed window.
         worked=validate_manual_intervals(declaration,start,end,night.now_datetime())
         certified=[{'start':a.isoformat(),'end':b.isoformat()} for a,b in worked]
     result=evaluate_night_work(rows=[dict(r) for r in rows],shift=shift,context=context,extensions=windows,
-        next_windows=next_windows,now=night.now_datetime(),basis='Clock overlap',certified_intervals=certified)
+        next_windows=next_windows,now=night.now_datetime(),basis='Clock overlap',certified_intervals=certified,observation_window=observation_window)
     data=dict(version=VERSION,employee=doc.employee,company=company,work_date=str(getdate(doc.work_date)),
         shift=shift,context=context,extensions=windows,next_windows=next_windows,rows=[dict(r) for r in rows])
+    if observation_window is not None:data['observation_window']=observation_window
     if declaration is not None:
         data['manual_declaration']=deepcopy(declaration);result['manual_declaration']=deepcopy(declaration)
         result['certified_sessions']=[{'shift':shift['name'],'start':str(context['shift_start']),'end':str(context['shift_end'])}]
@@ -75,14 +78,19 @@ def evaluate_physical(doc,company,rows,shift,context,windows,next_windows,declar
     return result
 
 
-def evaluate(doc,saved,*,for_update=False,declaration=None):
-    return night.build_preview(doc,for_update=for_update,historical_snapshot=saved,historical_declaration=declaration)
+def evaluate(doc,saved,*,for_update=False,declaration=None,observation_window=None):
+    return night.build_preview(doc,for_update=for_update,historical_snapshot=saved,historical_declaration=declaration,historical_window=observation_window)
+
+
+def _acceptable(result):
+    return bool(result.get('worked_intervals') and result['state'] in {'Verified','Needs Review'}
+        and all(i['code']=='work_outside_documented_window' or i.get('severity')=='information' for i in result['issues']))
 
 
 def compare(doc,*,for_update=False):
     saved,revision=effective_snapshot(doc,for_update=for_update)
-    current=evaluate(doc,saved,for_update=for_update,declaration=physical_input(saved).get('manual_declaration'))
-    same=bool(current['state']=='Verified' and current.get('worked_intervals')
+    current=evaluate(doc,saved,for_update=for_update,declaration=physical_input(saved).get('manual_declaration'),observation_window=physical_input(saved).get('observation_window'))
+    same=bool(_acceptable(current) and (current['state']=='Verified' or saved.get('review'))
         and _evidence_hash(physical_input(saved))==current['input_hash']
         and _evidence_hash(saved.get('source_checkins'))==_evidence_hash(current.get('source_checkins'))
         and _evidence_hash(saved.get('worked_intervals'))==_evidence_hash(current.get('worked_intervals')))
@@ -108,7 +116,7 @@ def _references(saved,revision=None):
         if not frappe.has_permission(dt,'read',doc=name):frappe.throw(_('Falta acceso a una referencia de evidencia histórica.'),frappe.PermissionError)
 
 
-def _preview(doc,reason,declaration=None,*,for_update=False):
+def _preview(doc,reason,declaration=None,*,for_update=False,observation_window=None):
     from powerpro.controllers.overtime_cash_settlement import _get_linked_additional_salaries
     if not isinstance(reason,str) or not 1<=len(reason.strip())<=2000:frappe.throw(_('Documente el motivo de la revisión histórica.'))
     if isinstance(declaration,str):declaration=frappe.parse_json(declaration)
@@ -118,13 +126,21 @@ def _preview(doc,reason,declaration=None,*,for_update=False):
         frappe.throw(_('Revierta primero los salarios adicionales del origen cancelado.'))
     saved,revision=effective_snapshot(doc,for_update=for_update)
     _references(saved,revision)
-    try:current=evaluate(doc,saved,for_update=for_update,declaration=declaration)
+    previous_window=physical_input(saved).get('observation_window')
+    if isinstance(observation_window,str):observation_window=frappe.parse_json(observation_window)
+    if observation_window is None:observation_window=previous_window
+    try:
+        if previous_window:
+            from powerpro.payroll_rules.overtime_observation_window import normalize_window
+            observation_window=normalize_window(observation_window,previous_window['start'],previous_window['end'])
+        current=evaluate(doc,saved,for_update=for_update,declaration=declaration,observation_window=observation_window)
     except ValueError as exc:frappe.throw(str(exc))
     _references(current)
-    if current['state']!='Verified' or not current.get('worked_intervals'):
+    if not _acceptable(current):
         frappe.throw(_('Complete la evidencia física y resuelva las marcaciones faltantes o ambiguas antes de aceptar.'))
     if (_evidence_hash(physical_input(saved))==current['input_hash']
-        and _evidence_hash(saved.get('worked_intervals'))==_evidence_hash(current['worked_intervals'])):
+        and _evidence_hash(saved.get('worked_intervals'))==_evidence_hash(current['worked_intervals'])
+        and (current['state']=='Verified' or saved.get('review'))):
         frappe.throw(_('La evidencia física no cambió; no hace falta otra revisión histórica.'))
     # This adapter only feeds diagnostic incidents, never weekly financial
     # calculations or replacement settlements; those still require fresh proof.
@@ -135,28 +151,32 @@ def _preview(doc,reason,declaration=None,*,for_update=False):
 
 
 @frappe.whitelist()
-def preview_review(name,reason,manual_declaration=None):
+def preview_review(name,reason,manual_declaration=None,observation_window=None):
     doc=frappe.get_doc(DT,name);_access(doc)
-    p=_preview(doc,reason,manual_declaration)
+    p=_preview(doc,reason,manual_declaration,observation_window=observation_window)
     return dict(token=p['token'],night_settlement=doc.name,historical_only=True,settlement_ready=False,
         worked_hours_before=_hours(p['saved']),worked_hours_after=_hours(p['current']),
         worked_intervals=p['current']['worked_intervals'],source_checkins=p['current']['source_checkins'],
+        observation_window=p['current']['input'].get('observation_window'),unapproved_intervals=p['current'].get('unapproved_intervals',[]),
         revision=p['revision'].name if p['revision'] else None,
         note=_('Solo se revisa el trabajo histórico; la liquidación permanece cancelada.'))
 
 
 @frappe.whitelist(methods=['POST'])
-def apply_review(name,reason,token,manual_declaration=None):
+def apply_review(name,reason,token,manual_declaration=None,observation_window=None):
     from powerpro.controllers.overtime_evidence_monitor import _source
     doc=_source(DT,name);_access(doc)
     existing=_reconciliation_rows(RUN,for_update=True,filters={'night_settlement':name,'result_status':APPLIED,'evidence_hash':token},pluck='name',limit=1)
     if existing:
         _references({},frappe._dict(name=existing[0]))
         return dict(status='Applied',audit=existing[0],idempotent=True)
-    p=_preview(doc,reason,manual_declaration,for_update=True)
+    p=_preview(doc,reason,manual_declaration,for_update=True,observation_window=observation_window)
     if not token or token!=p['token']:frappe.throw(_('La evidencia histórica cambió; obtenga una vista previa nueva.'))
     after=deepcopy(p['current']);after['review']=dict(reason=p['reason'],reviewed_by=frappe.session.user,
         reviewed_on=str(now_datetime()),request_token=token,input_hash=after['input_hash'])
+    after['state']='Verified'
+    for issue in after['issues']:
+        if issue['code']=='work_outside_documented_window':issue.update(severity='information',accepted_by_hr=True)
     record=frappe.new_doc(RUN)
     record.update(dict(night_settlement=doc.name,employee=doc.employee,work_date=doc.work_date,result_status=APPLIED,
         history_sequence=p['sequence']+1,evidence_hash=token,evaluated_by=frappe.session.user,evaluated_on=now_datetime(),
@@ -177,7 +197,12 @@ def get_status(name):
         and frappe.has_permission(DT,'write',doc=doc) and frappe.has_permission(RUN,'read')
         and verification_roles(settings.get('overtime_manual_verification_roles')).intersection(frappe.get_roles()))
     saved,revision=effective_snapshot(doc);_references(saved,revision)
-    result=dict(applicable=True,can_review=can,historical_only=True,settlement_status=doc.settlement_status,
+    data=saved.get('input') or {};context=data.get('context') or {};extensions=data.get('extensions') or []
+    observation=physical_input(saved).get('observation_window')
+    if not observation and context.get('shift_start') and context.get('shift_end'):
+        observation=dict(start=str(min([get_datetime(context['shift_start'])]+[get_datetime(w['start']) for w in extensions])),
+            end=str(max([get_datetime(context['shift_end'])]+[get_datetime(w['end']) for w in extensions])))
+    result=dict(observation_window=observation,applicable=True,can_review=can,historical_only=True,settlement_status=doc.settlement_status,
         manual_review_allowed=bool(can and cint(settings.get('enable_manual_overtime_verification'))),
         revision=revision.name if revision else None)
     try:

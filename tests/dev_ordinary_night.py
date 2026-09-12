@@ -8,7 +8,7 @@ assert frappe.local.site=='igcaribe.fortabs.com' and frappe.conf.developer_mode
 from powerpro.controllers import ordinary_night as night
 from powerpro.controllers.overtime_cash_settlement import _get_linked_additional_salaries
 DT=night.DT
-counts=['Employee','Shift Type','Employee Checkin','Overtime Authorization','Overtime Work Call','Overtime Reconciliation Run','Overtime Pay Policy',DT,'Additional Salary','Salary Slip','Salary Structure Assignment',
+counts=['Shift Assignment','Employee','Shift Type','Employee Checkin','Overtime Authorization','Overtime Work Call','Overtime Reconciliation Run','Overtime Pay Policy',DT,'Additional Salary','Salary Slip','Salary Structure Assignment',
  'Working Time Incident','Working Time Review','Working Time Evidence Reference','Overtime Evidence Watch','Version','Error Log','User','Has Role','User Permission']
 before={dt:frappe.db.count(dt) for dt in counts}
 settings_before={dt:frappe.db.get_singles_dict(dt) for dt in ['DGII Payroll Settings','Payroll Settings']}
@@ -90,6 +90,65 @@ try:
         patch.object(cash,'_get_hourly_rate',side_effect=AssertionError('History read salary rate'))):
    assert history.compare(doc)['matches']
   assert night.get_status(doc.name)['state']=='Verified' and monitor.check_source(DT,doc.name)['status']=='Current'
+  # Explicit observations retain physical overruns without reviving earnings.
+  frappe.db.savepoint('night_observation')
+  observed={'start':'2026-09-14 18:00:00','end':'2026-09-15 06:00:00'}
+  last.time='2026-09-15 06:00:00';last.log_type='IN';last.save(ignore_permissions=True)
+  fails(lambda:history.preview_review(doc.name,'Missing original exit'))
+  with patch.object(night,'now_datetime',return_value=get_datetime('2026-09-15 05:00:00')):
+   fails(lambda:history.preview_review(doc.name,'Future physical exit',observation_window=observed))
+  with (patch.object(night,'get_effective_policy',side_effect=AssertionError('Historical expansion read pay policy')),
+        patch.object(cash,'_get_hourly_rate',side_effect=AssertionError('Historical expansion read rate'))):
+   p=history.preview_review(doc.name,'DEV expanded night',observation_window=json.dumps(observed))
+   assert p['worked_hours_before']==8 and p['worked_hours_after']==12 and not p['settlement_ready']
+   assert p['unapproved_intervals']==[{'start':'2026-09-15T02:00:00','end':'2026-09-15T06:00:00'}]
+   assert p['source_checkins'][-1]['log_type']=='IN'
+   last.time='2026-09-15 05:30:00';last.save(ignore_permissions=True)
+   fails(lambda:history.apply_review(doc.name,'DEV expanded night',p['token'],observation_window=observed))
+   last.time='2026-09-15 06:00:00';last.save(ignore_permissions=True)
+   p=history.preview_review(doc.name,'DEV expanded night',observation_window=observed)
+   accepted=history.apply_review(doc.name,'DEV expanded night',p['token'],observation_window=p['observation_window'])
+   assert history.apply_review(doc.name,'DEV expanded night',p['token'],observation_window=observed)['idempotent']
+   assert history.compare(doc)['matches']
+  assert get_datetime(history.get_status(doc.name)['observation_window']['end'])==get_datetime(observed['end'])
+  assert monitor.check_source(DT,doc.name)['status']=='Current'
+  diagnostic=controls.preview(DT,doc.name);assert diagnostic['historical_review']['accepted']
+  assert get_datetime(diagnostic['supporting_evidence']['weekly']['cutoff'])==get_datetime(observed['end'])
+  fails(lambda:history.preview_review(doc.name,'Cannot shorten night',observation_window={'start':observed['start'],'end':'2026-09-15 05:00:00'}))
+  last.skip_auto_attendance=1;last.save(ignore_permissions=True)
+  fails(lambda:history.preview_review(doc.name,'Excluded night exit'))
+  declaration={'full_session':True,'reference':'DEV supervisor expanded full night','intervals':[
+   {'start':'2026-09-14 18:00:00','end':'2026-09-14 22:00:00'},
+   {'start':'2026-09-14 23:00:00','end':'2026-09-15 06:00:00'}]}
+  p=history.preview_review(doc.name,'DEV expanded manual night',declaration)
+  assert p['worked_hours_after']==11
+  history.apply_review(doc.name,'DEV expanded manual night',p['token'],declaration)
+  assert history.compare(doc)['matches']
+  doc.reload();assert doc.as_dict()==frozen_source and frappe.db.count('Additional Salary')==money and frappe.db.count('Employee Checkin')==marks
+  frappe.db.rollback(save_point='night_observation');last.reload();doc.reload()
+  assert history.compare(doc)['matches']
+  # Previous date has a DIFFERENT actual Shift Assignment ending this morning.
+  # A broad explicit window must not silently adopt that shift's 04:00 mark.
+  frappe.db.savepoint('night_prior_shift')
+  prior=frappe.copy_doc(shift);prior.name=prefix+'-PRIOR';prior.docstatus=0;prior.start_time='22:00:00';prior.end_time='06:00:00';prior.db_insert()
+  frappe.get_doc({'doctype':'Shift Assignment','employee':employee.name,'shift_type':prior.name,
+   'start_date':'2026-09-13','end_date':'2026-09-13','status':'Active','docstatus':1}).db_insert()
+  first.time='2026-09-14 04:00:00';first.save(ignore_permissions=True)
+  backward={'start':'2026-09-14 03:00:00','end':'2026-09-15 02:00:00'}
+  current=history.evaluate(doc,frappe.parse_json(doc.evidence_snapshot),observation_window=backward)
+  assert any(w.get('relation')=='previous' and w['shift']==prior.name for w in current['input']['next_windows'])
+  assert any(i['code']=='adjacent_shift_overlap' for i in current['issues'])
+  fails(lambda:history.preview_review(doc.name,'Ambiguous earlier shift',observation_window=backward))
+  declaration={'full_session':True,'reference':'DEV supervisor assigns exact complete session','intervals':[
+   {'start':'2026-09-14 18:00:00','end':'2026-09-15 02:00:00'}]}
+  p=history.preview_review(doc.name,'DEV resolve earlier shift',declaration,observation_window=backward)
+  assert p['worked_hours_after']==8
+  history.apply_review(doc.name,'DEV resolve earlier shift',p['token'],declaration,observation_window=backward)
+  assert history.compare(doc)['matches']
+  assert frappe.db.count('Employee Checkin')==marks and frappe.db.count('Additional Salary')==money
+  frappe.db.rollback(save_point='night_prior_shift');first.reload();last.reload();doc.reload()
+  assert history.compare(doc)['matches']
+  print('NIGHT_OBSERVATION: explicit12h/raw11h/manual, no new pay, original IN retained, actual cutoff, stale/idempotent/no-shrink, previous different Shift Assignment ambiguity and explicit documented resolution passed')
   diagnostic=controls.preview(DT,doc.name);assert diagnostic['historical_review']['accepted']
   rows=cases.record(DT,doc.name,{},'Administrator',diagnostic['input_hash'])
   pause=frappe.get_doc(cases.DT,next(r['name'] for r in rows if frappe.db.get_value(cases.DT,r['name'],'control_code')=='work_break'))
