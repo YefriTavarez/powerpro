@@ -159,7 +159,7 @@ def _data(doc,*,for_update=False,include_weekly=True):
     return data,settings
 
 
-def build_result(doc,*,for_update=False):
+def build_result(doc,*,for_update=False,use_saved_review=True):
     data,settings=_data(doc,for_update=for_update)
     policy=data['pay_policy']
     result=evaluate_evidence(authorization=data['authorization'],rows=data['rows'],shift=data['shift'],contexts=data['contexts'],
@@ -211,6 +211,11 @@ def build_result(doc,*,for_update=False):
         except (ValueError,frappe.ValidationError) as exc:blockers.append(str(exc))
     result['settlement_ready']=bool(result['state']=='Verified' and result.get('snapshot') and not blockers)
     result['settlement_blockers']=blockers
+    if use_saved_review:
+        saved=frappe.parse_json(doc.get('evidence_snapshot') or '{}')
+        if saved.get('review'):
+            from powerpro.controllers.checkin_overtime_review import accept_result
+            result=accept_result(result,saved['review'])
     return result
 
 

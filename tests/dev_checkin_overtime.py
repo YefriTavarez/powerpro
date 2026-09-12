@@ -162,6 +162,63 @@ try:
   assert evidence.process_authorization(second_auth)=='Frozen'
   assert len(_get_linked_additional_salaries(second,docstatus=1))==1
   checks.append('failure after salary creation rolls back only settlement, preserves verified hours and succeeds once on retry')
+ from powerpro.controllers import checkin_overtime_review as review
+ with patch.object(evidence,'now_datetime',return_value=get_datetime('2026-09-16 21:00:00')):
+  frappe.db.savepoint('test_prior_dependency')
+  first_exit=frappe.get_doc('Employee Checkin',frappe.db.get_value('Employee Checkin',{'employee':cash_employee.name,'time':'2026-09-14 20:00:00'},'name'))
+  first_exit.time='2026-09-14 19:00:00';first_exit.save(ignore_permissions=True)
+  preview=review.preview_review(first_auth,'La salida corregida demuestra una hora menos.')
+  assert preview['dependencies'][0]['name']==second_auth and preview['dependencies'][0]['blocks_reversal']
+  try:review.apply_review(first_auth,preview['reason'],preview['token'])
+  except frappe.ValidationError:pass
+  else:raise AssertionError('Earlier correction bypassed settled weekly dependency')
+  frappe.db.rollback(save_point='test_prior_dependency')
+  frappe.db.value_cache.clear()
+  exit_doc=frappe.get_doc('Employee Checkin',frappe.db.get_value('Employee Checkin',{'employee':cash_employee.name,'time':'2026-09-15 20:00:00'},'name'))
+  exit_doc.time='2026-09-15 19:00:00';exit_doc.save(ignore_permissions=True)
+  second.reload();old_snapshot=second.evidence_snapshot;old_refs=_get_linked_additional_salaries(second,docstatus=1)
+  preview=review.preview_review(second_auth,'Salida temprana comprobada y revisada por Gestión Humana.')
+  assert preview['before']['verified_hours']==2 and preview['after']['verified_hours']==1 and preview['settlement_ready'],evidence.build_result(second,use_saved_review=False)['weekly_evidence']['issues']
+  assert preview['proposed_amount']==140
+  frappe.db.savepoint('test_excluded_review')
+  exit_doc.skip_auto_attendance=1;exit_doc.save(ignore_permissions=True)
+  try:review.preview_review(second_auth,'No aceptar una salida excluida.')
+  except frappe.ValidationError:pass
+  else:raise AssertionError('HR review fabricated evidence from an excluded exit')
+  frappe.db.rollback(save_point='test_excluded_review');exit_doc.reload()
+  exit_doc.time='2026-09-15 19:30:00';exit_doc.save(ignore_permissions=True)
+  try:review.apply_review(second_auth,preview['reason'],preview['token'])
+  except frappe.ValidationError:pass
+  else:raise AssertionError('Stale review token was accepted')
+  exit_doc.time='2026-09-15 19:00:00';exit_doc.save(ignore_permissions=True)
+  frappe.db.savepoint('test_payroll_guard')
+  slip=frappe.new_doc('Salary Slip');slip.name=prefix+'-REVIEW-SLIP';slip.employee=cash_employee.name;slip.company=cash_employee.company;slip.docstatus=1;slip.db_insert()
+  detail=frappe.new_doc('Salary Detail');detail.name=prefix+'-REVIEW-DETAIL';detail.docstatus=1;detail.parent=slip.name;detail.parenttype='Salary Slip';detail.parentfield='earnings';detail.additional_salary=old_refs[0];detail.db_insert()
+  try:review.apply_review(second_auth,preview['reason'],preview['token'])
+  except frappe.ValidationError:pass
+  else:raise AssertionError('Review reversed payroll-included earnings')
+  second.reload();assert second.evidence_snapshot==old_snapshot and _get_linked_additional_salaries(second,docstatus=1)==old_refs
+  frappe.db.rollback(save_point='test_payroll_guard')
+  with patch.object(settlement,'create_cash_settlement_for_source',side_effect=fail_after_creation):
+   try:review.apply_review(second_auth,preview['reason'],preview['token'])
+   except RuntimeError:pass
+   else:raise AssertionError('Replacement failure was not propagated')
+  second.reload();assert second.evidence_snapshot==old_snapshot and _get_linked_additional_salaries(second,docstatus=1)==old_refs
+  outcome=review.apply_review(second_auth,preview['reason'],preview['token']);second.reload()
+  assert outcome['status']=='Applied' and second.verified_hours==1 and second.settlement_amount==140
+  assert all(frappe.db.get_value('Additional Salary',r,'docstatus')==2 for r in old_refs)
+  replacement=_get_linked_additional_salaries(second,docstatus=1);assert len(replacement)==1
+  again=review.apply_review(second_auth,preview['reason'],preview['token'])
+  assert again['idempotent'] and again['audit']==outcome['audit']
+  assert _get_linked_additional_salaries(second,docstatus=1)==replacement
+  try:review.preview_review(second_auth,'Un motivo diferente no justifica duplicar lo ya aplicado.')
+  except frappe.ValidationError:pass
+  else:raise AssertionError('Unchanged reviewed evidence could be paid again')
+  assert evidence.process_authorization(second_auth)=='Frozen'
+  assert evidence.build_result(second,for_update=True)['settlement_ready']
+  audit=frappe.parse_json(frappe.db.get_value('Overtime Reconciliation Run',outcome['audit'],'evidence'))
+  assert audit['before']['snapshot']['verified_hours']==2 and audit['after']['snapshot']['verified_hours']==1
+  checks.append('HR review accepts a measured shortfall; stale preview, submitted payroll and later settled week block it; failed replacement preserves original money and evidence; retry applies once with before/after audit')
  first_call.reload();first_call.flags.ignore_permissions=True;first_call.cancel()
  assert all(frappe.db.get_value('Additional Salary',ref,'docstatus')==2 for ref in refs)
  checks.append('cancelling the Work Call reverses its generated Additional Salary through document lifecycles')
