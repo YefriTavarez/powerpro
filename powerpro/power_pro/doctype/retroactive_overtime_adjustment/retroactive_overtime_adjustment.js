@@ -3,6 +3,7 @@
 
 frappe.ui.form.on("Retroactive Overtime Adjustment", {
 	refresh(frm) {
+        frappe.require("/assets/powerpro/js/working_time_controls.js", () => powerpro.working_time_controls.add_button(frm));
 		frappe.require("/assets/powerpro/js/overtime_calendar.js", () => powerpro.overtime_calendar.add_button(frm));
 		configure_reconciliation_display(frm);
 		add_cash_settlement_actions(frm);

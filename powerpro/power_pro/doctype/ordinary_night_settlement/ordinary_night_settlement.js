@@ -1,5 +1,6 @@
 frappe.ui.form.on('Ordinary Night Settlement', {
  refresh(frm) {
+        frappe.require("/assets/powerpro/js/working_time_controls.js", () => powerpro.working_time_controls.add_button(frm));
   frm.set_intro(__('El envío crea únicamente el recargo nocturno ordinario como salario adicional. Revise las marcaciones o la declaración validada de Gestión Humana y la política antes de enviar.'));
   let snapshot;
   try { snapshot = JSON.parse(frm.doc.evidence_snapshot || '{}'); } catch (_) { snapshot = {}; }
