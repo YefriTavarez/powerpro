@@ -74,3 +74,6 @@ La simulación posterior de tres días de julio encontró las 14 marcas excluida
 ## Muestra posterior elegida por el usuario
 
 El usuario sustituyó la muestra de julio por cuatro jornadas documentadas del 13 al 16 de agosto, confirmó los horarios y autorizó descargar los ponches por la API de Producción. La importación limitada a Desarrollo y su prueba del motor están en `overtime-imported-sample.md`. Posteriormente autorizó expresamente la ampliación al 10–16 de agosto: se descargó la semana y se incorporaron doce ponches más, para un total de 22 de la muestra. No volver a pedir empleado/fechas ni aquella autorización de descarga. Quedan diferencias con los ponches, intervalos/pausas del fin de semana y aceptación de liquidación; la comparación semanal es provisional. Se conserva el límite de no activar scheduler global ni crear pagos automáticamente.
+
+
+Actualización documental: el operador ya aceptó utilizar el PDF como respaldo de los horarios. Tres adjuntos privados quedaron guardados y verificados en el Employee de la muestra; ver `overtime-imported-sample.md`. No repetir la aceptación del PDF. Pausas no especificadas y requisitos de configuración del piloto siguen separados de esa aceptación. No hay nuevos ajustes, declaraciones certificadas ni pagos.

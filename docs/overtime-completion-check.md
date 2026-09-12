@@ -22,3 +22,6 @@ No se declara el objetivo completo. Ya existe una muestra histórica concreta pa
 ## Actualización: muestra seleccionada por el operador
 
 El operador aportó un PDF, seleccionó una persona y confirmó cuatro ventanas del 13 al 16 de agosto. Autorizó descargar sus Checkins desde Producción; el empleado mínimo y, tras autorizar expresamente la ampliación semanal, 22 marcaciones están importados y verificados en Desarrollo. Esto sustituye la selección pendiente de la muestra de julio. Ver `overtime-imported-sample.md` para alcance, recibos, corrección del viernes y validación. La descarga semanal ya está resuelta. Hay diferencias documentales y marcas ausentes; no se aprobaron pagos ni se certificó la semana. Un día ya tiene liquidación en Producción. La revisión de los intervalos/pausas del fin de semana y el piloto completo siguen pendientes.
+
+
+Actualización documental: el operador ya aceptó utilizar el PDF como respaldo de los horarios. Tres adjuntos privados quedaron guardados y verificados en el Employee de la muestra; ver `overtime-imported-sample.md`. No repetir la aceptación del PDF. Pausas no especificadas y requisitos de configuración del piloto siguen separados de esa aceptación. No hay nuevos ajustes, declaraciones certificadas ni pagos.

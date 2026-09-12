@@ -52,3 +52,14 @@ Se preparó un informe concreto para confirmar si los horarios firmados del fin 
 Para revertir código, revertir el commit correspondiente o restaurar únicamente los archivos del manifiesto desde `code-before.tar`; conservar los dos archivos ajenos. Revertir código no elimina los datos importados. Para retirar la muestra, revisar el recibo y dependencias actuales, eliminar por el ciclo nativo únicamente los Checkins allí creados y luego el Employee si fue creado por la importación y sigue sin dependencias nuevas. Conservar fuente y recibos; no borrar registros que el importador reutilizó ni ejecutar DELETE SQL.
 
 El piloto operativo y la futura carga a Producción siguen pendientes. Las pruebas técnicas y la importación no sustituyen la aceptación de horarios discrepantes ni autorizan repetir una liquidación existente.
+
+
+## Aceptación posterior del respaldo documental
+
+El usuario autorizó continuar usando el PDF firmado como fuente de los horarios pese a las diferencias con los ponches. Esta decisión ya está resuelta y no debe volver a pedirse. Se prepararon tres filas pendientes, excluyendo del pago nuevo la fila con liquidación existente. La suma de sus ventanas declaradas es 14.5 horas; las pausas no constan y las horas netas permanecen sin certificar.
+
+Se guardaron tres adjuntos privados en el Employee de la muestra: imagen de la página pertinente, conciliación legible y paquete estructurado con hash del PDF original, horarios, diferencias y exclusión del ajuste existente. El script `scripts/attach_overtime_documentary_sample.py` utiliza File.insert con permisos nativos y el controlador efectivo de PowerPro. Verifica contenido, privacidad, reintento sin duplicados y contadores protegidos; por defecto revierte. La prueba con rollback y la aplicación con lectura posterior pasaron. No se creó una declaración Manual Full Session ni un Overtime Reconciliation Run.
+
+El preflight encontró una limitación operativa adicional: ajustes habilitados solo para julio, plazo retroactivo vencido, empleado mínimo sin elegibilidad/aprobador y modo de conciliación global apagado. No se eluden esas reglas para crear ajustes. La aceptación del documento no equivale a afirmar que no hubo pausas ni a seleccionar por el empleado pago o descanso. Preparar la configuración específica del piloto y la jornada neta antes de aprobar o liquidar.
+
+Reversión de esta entrega: usar el recibo privado para identificar únicamente los tres File creados, verificar que no tengan usos adicionales y eliminarlos mediante su ciclo nativo; conservar fuente y recibo. Eliminar adjuntos no revierte ni altera Checkins o nómina. El script y esta documentación se revierten con Git, sin tocar las dos modificaciones ajenas.
