@@ -68,7 +68,7 @@ def _dependencies(doc, *, for_update=False):
 
 
 def _financial(doc):
-    keys=['settlement_status','settlement_method','settlement_references','settlement_amount','settlement_breakdown',
+    keys=['settlement_status','holiday_cash_status','settlement_method','settlement_references','settlement_amount','settlement_breakdown',
           'settlement_salary_slip','compensatory_credit','leave_allocation']
     return {key:doc.get(key) for key in keys}
 
@@ -158,7 +158,7 @@ def apply_review(authorization, reason, token, manual_declaration=None, source_t
             'reconciliation_intervals':evidence._json(result['calculation']['intervals']),
             'unapproved_intervals':evidence._json(result['calculation']['unapproved_intervals']),
             'reconciliation_warnings':evidence._json(result['issues']),
-            'settlement_status':'Pending','settlement_method':None,'settlement_amount':0,
+            'settlement_status':'Pending','holiday_cash_status':None,'settlement_method':None,'settlement_amount':0,
             'settlement_references':None,'settlement_breakdown':None,'settlement_salary_slip':None,
             'compensatory_credit':None,'leave_allocation':None,'compensatory_hours':0,'compensatory_days':0,'compensatory_residual_hours':0}
         values.update(manual_worked_intervals=evidence._json(declaration['intervals']) if declaration else None,

@@ -100,7 +100,7 @@ def settle_overtime_work_call(work_call, payroll_date=None):
 
 def before_cancel_authorization_settlement(authorization):
 	authorization = frappe.get_doc(authorization.doctype, authorization.name, for_update=True)
-	if authorization.get("settlement_method") == "Cash" or authorization.get(
+	if authorization.get("holiday_cash_status") or authorization.get("settlement_method") == "Cash" or authorization.get(
 		"settlement_status"
 	) in {SETTLEMENT_CREATED, SETTLEMENT_PAYROLL_SUBMITTED, SETTLEMENT_PAID}:
 		before_cancel_adjustment(authorization)
@@ -112,6 +112,9 @@ def before_cancel_authorization_settlement(authorization):
 def cancel_authorization_settlement(authorization):
 	authorization = frappe.get_doc(authorization.doctype, authorization.name, for_update=True)
 	method = authorization.get("settlement_method")
+	if authorization.get('holiday_cash_status'):
+		from powerpro.controllers.overtime_hybrid_settlement import cancel_hybrid
+		return cancel_hybrid(authorization)
 	if method == "Cash" or authorization.get("settlement_status") in {
 		SETTLEMENT_CREATED,
 		SETTLEMENT_PAID,
@@ -174,6 +177,12 @@ def _settle_authorization(doc, *, payroll_date=None, settings=None, preview=None
 
 
 def _credit_and_record(doc):
+	from powerpro.controllers.overtime_hybrid_settlement import is_candidate, create_hybrid
+	if is_candidate(doc):return create_hybrid(doc)
+	return _credit_only_and_record(doc)
+
+
+def _credit_only_and_record(doc):
 	from powerpro.controllers.overtime_source import evidence_enabled,links
 	credit, allocation, preview = create_compensatory_credit(doc)
 	values = {
@@ -275,6 +284,8 @@ def _build_preview(
 			_("A compensatory credit already exists for this authorization."),
 			title=_("Duplicate settlement blocked"),
 		)
+	from powerpro.controllers.overtime_hybrid_settlement import is_candidate, preview_hybrid
+	if is_candidate(doc):return preview_hybrid(doc, settings=settings, bank_state=compensatory_bank_state)
 	return build_compensatory_preview(
 		doc,
 		settings=settings,

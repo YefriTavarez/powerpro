@@ -72,7 +72,11 @@ def _access(doc):
     if doc.docstatus == 2 or doc.get('settlement_status') in FINAL:
         frappe.throw(_('Resuelva la liquidación existente antes de cambiar la cobertura salarial.'))
     if doc.planned_settlement != 'Cash':
-        frappe.throw(_('Esta declaración corresponde a una liquidación en efectivo.'))
+        from powerpro.controllers.checkin_overtime import build_result
+        from powerpro.payroll_rules.overtime_combined_day import hybrid_cash_calculation
+        result=build_result(doc)
+        try:hybrid_cash_calculation(result['input'].get('pay_policy'),result.get('calculation') or {})
+        except ValueError as exc:frappe.throw(str(exc))
     if doc.doctype == AUTH and (doc.docstatus != 1 or doc.status != 'Approved'):
         frappe.throw(_('La autorización debe estar aprobada.'))
     if doc.doctype == RETRO:
@@ -105,7 +109,11 @@ def _preview(doc, covered_hours, reference, *, for_update=False):
     if data.get('pay_policy') and data.get('rate_basis'):
         from powerpro.payroll_rules.overtime_combined_day import cash_kwargs
         try:
-            combined=cash_kwargs(data['pay_policy'],result['calculation'])
+            if doc.planned_settlement=='Compensatory Rest':
+                from powerpro.payroll_rules.overtime_combined_day import hybrid_cash_calculation
+                hybrid_cash_calculation(data['pay_policy'],result['calculation'])
+                combined={}
+            else:combined=cash_kwargs(data['pay_policy'],result['calculation'])
         except ValueError:
             combined=None  # Coverage can be documented while the joint rule awaits review.
         if combined is not None:

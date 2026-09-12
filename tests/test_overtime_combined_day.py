@@ -53,3 +53,18 @@ class CombinedDayTest(unittest.TestCase):
         self.assertIsNotNone(settlement_blocker(p,{HOURS:1},'Compensatory Rest'))
         self.assertIsNone(settlement_blocker(p,{HOURS:1},'Cash'))
         self.assertEqual(cash_kwargs(p,{}),{})
+
+
+class HybridCalculationTest(unittest.TestCase):
+    def test_enabled_hybrid_preserves_holiday_and_night_without_rest_cash(self):
+        original={HOURS:1,'verified_hours':1,'holiday_100_hours':1,'night_hours':1,'holiday_base_covered_hours':1}
+        for mode in [REVIEW,SINGLE,ADDITIVE]:
+            result=combined.hybrid_cash_calculation({combined.REST_FIELD:1,FIELD:mode},original)
+            money=calculate_cash_settlement(hourly_rate=100,**{k:result.get(k,0) for k in ['holiday_100_hours','night_hours','holiday_base_covered_hours','weekly_rest_hours']})
+            self.assertEqual(money['total_amount'],115)
+            self.assertEqual(original[HOURS],1)
+
+    def test_disabled_or_mixed_obligation_requires_review(self):
+        for policy,calc in [({}, {HOURS:1}),({combined.REST_FIELD:1},{HOURS:1,'verified_hours':2})]:
+            with self.assertRaises(ValueError):combined.hybrid_cash_calculation(policy,calc)
+        self.assertIsNone(settlement_blocker({combined.REST_FIELD:1},{HOURS:1},'Compensatory Rest'))

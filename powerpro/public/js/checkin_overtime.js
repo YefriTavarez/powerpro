@@ -33,7 +33,7 @@ powerpro.checkin_overtime.add_actions = (frm) => {
 };
 
 powerpro.checkin_overtime.add_holiday_action = (frm) => {
-    if (frm.is_new() || frm.doc.docstatus === 2 || frm.doc.planned_settlement !== 'Cash') return;
+    if (frm.is_new() || frm.doc.docstatus === 2) return;
     const source = {source_type: frm.doc.doctype, source_name: frm.doc.name};
     const method = 'powerpro.controllers.overtime_holiday_base.';
     frappe.call({method: method + 'get_status', args: source}).then(({message: status}) => {

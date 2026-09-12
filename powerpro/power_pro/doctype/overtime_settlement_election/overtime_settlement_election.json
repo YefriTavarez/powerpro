@@ -195,8 +195,9 @@
    "fieldname": "settlement_payroll_date",
    "fieldtype": "Date",
    "label": "Fecha de nómina para pago",
-   "depends_on": "eval:doc.retroactive_adjustment && doc.choice==\"Cash\"",
-   "no_copy": 1
+   "depends_on": "eval:doc.choice==\"Cash\" || doc.choice==\"Compensatory Rest\"",
+   "no_copy": 1,
+   "description": "Obligatoria también cuando el descanso compensatorio incluye pago de un feriado."
   }
  ],
  "field_order": [

@@ -327,7 +327,7 @@ function show_team_settlement_preview(frm, result, payroll_date) {
 			<td class="text-right">${format_number(row.verified_hours || row.current_hours)}</td>
 			<td class="text-right">${is_cash
 				? escape_html(format_currency(row.total_amount, row.currency))
-				: format_number(row.days_to_credit)}</td>
+				: `${format_number(row.days_to_credit)}${row.holiday_cash ? `<br>${escape_html(__('Pago del feriado'))}: ${escape_html(format_currency(row.holiday_cash.total_amount,row.holiday_cash.currency))}` : ''}`}</td>
 		</tr>`).join("");
 	const summary_value = is_cash
 		? format_currency(result.total_amount, result.currency)

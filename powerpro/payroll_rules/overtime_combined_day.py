@@ -6,6 +6,7 @@ SINGLE = 'Single highest premium'
 ADDITIVE = 'Additive premiums'
 MODES = {REVIEW, SINGLE, ADDITIVE}
 FIELD = 'holiday_weekly_rest_mode'
+REST_FIELD = 'holiday_weekly_rest_compensatory'
 HOURS = 'holiday_weekly_rest_hours'
 
 
@@ -34,9 +35,27 @@ def settlement_blocker(policy, calculation, method):
     hours = combined_hours(calculation)
     if not hours: return None
     calculation[HOURS] = hours
+    if method == 'Compensatory Rest':
+        try: hybrid_cash_calculation(policy, calculation)
+        except ValueError as exc: return str(exc)
+        return None
     try: cash_kwargs(policy, calculation)
     except ValueError as exc: return str(exc)
-    if method != 'Cash':
-        return ('La coincidencia requiere separar el pago del feriado y el descanso compensatorio; '
-                'esta opción de reglas habilita únicamente la liquidación en efectivo.')
     return None
+
+
+def hybrid_cash_calculation(policy, calculation):
+    """Separate holiday money from the weekly-rest entitlement; never pay rest twice."""
+    hours = combined_hours(calculation)
+    if not hours or not (policy or {}).get(REST_FIELD):
+        raise ValueError('Habilite pagar el feriado junto con descanso compensatorio en las reglas de nómina.')
+    total = float(calculation.get('verified_hours') or hours)
+    if not isfinite(total) or total <= 0 or abs(total-hours) > .0001:
+        raise ValueError('La ventana mezcla obligaciones de descanso distintas; revise cada jornada antes de liquidar.')
+    result = dict(calculation)
+    # The holiday already contains its base and premium. Weekly rest is credited,
+    # never converted into another cash premium by the cash-mode setting.
+    result.pop('segments', None)
+    result.update(holiday_weekly_rest_hours=0, weekly_rest_hours=0,
+                  regular_35_hours=0, regular_100_hours=0)
+    return result

@@ -388,6 +388,9 @@ def _apply_exception(doc, call, event):
 def _reverse_outputs(doc, event):
     if doc.get('settlement_status') not in FINAL:
         return
+    if doc.get('holiday_cash_status'):
+        from powerpro.controllers.overtime_hybrid_settlement import reverse_hybrid
+        return reverse_hybrid(doc,event)
     if doc.get('settlement_method') == 'Cash' or doc.get('settlement_status') in {'Created','Payroll Submitted','Paid'}:
         from powerpro.controllers.overtime_cash_settlement import before_cancel_adjustment, _get_linked_additional_salaries
         before_cancel_adjustment(doc)

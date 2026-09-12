@@ -98,6 +98,10 @@ function show_settlement_preview(frm, result, payroll_date) {
 			[__("Leave Period"), result.leave_period],
 			[__("Leave Allocation"), result.leave_allocation || __("Will be created when days are available")],
 		];
+	if (result.holiday_cash) rows.push(
+		[__('Pago adicional del feriado'), format_currency(result.holiday_cash.total_amount, result.holiday_cash.currency)],
+		[__('Payroll Date'), result.holiday_cash.payroll_date]
+	);
 	const body = rows.map(([label, value]) => `
 		<tr><td>${escape_html(label)}</td><td class="text-right">${escape_html(value)}</td></tr>
 	`).join("");
@@ -108,7 +112,7 @@ function show_settlement_preview(frm, result, payroll_date) {
 			<p class="text-muted">${__("Nothing has been created yet. Confirm to freeze this settlement.")}</p>`,
 		wide: true,
 		primary_action: {
-			label: is_cash ? __("Create Additional Salary") : __("Credit Compensatory Rest"),
+			label: result.holiday_cash ? __("Crear pago del feriado y descanso") : is_cash ? __("Create Additional Salary") : __("Credit Compensatory Rest"),
 			action() {
 				dialog.hide();
 				frappe.call({

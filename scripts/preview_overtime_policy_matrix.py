@@ -18,6 +18,8 @@ from decimal import Decimal
 from datetime import datetime
 from powerpro.payroll_rules.overtime_cash_settlement import calculate_cash_settlement
 from powerpro.payroll_rules.overtime_pay_policy import classify_night_session
+from powerpro.payroll_rules.overtime_combined_day import cash_kwargs,hybrid_cash_calculation,FIELD,HOURS,REST_FIELD,SINGLE,ADDITIVE
+from powerpro.payroll_rules.overtime_rest import rest_entitlement
 
 
 def preview():
@@ -38,6 +40,19 @@ def preview():
         result=calculate_cash_settlement(hourly_rate=100,**inputs)
         scenarios.append(dict(case=name,inputs=inputs,additional_amount=result['total_amount'],
             holiday_base_already_in_salary=result['holiday_base_already_in_salary'],lines=result['lines']))
+    combined=[]
+    policy={'extraordinary_percent':100,'weekly_rest_percent':100,REST_FIELD:1,
+        'enable_compensatory':1,'weekly_rest_credit_hours':8,'weekly_rest_duration_hours':36,'hours_per_leave_day':8}
+    for covered in [0,1]:
+        calculation={HOURS:1,'verified_hours':1,'holiday_100_hours':1,'night_hours':1,'holiday_base_covered_hours':covered}
+        for mode in [SINGLE,ADDITIVE]:
+            result=calculate_cash_settlement(hourly_rate=100,holiday_100_hours=1,night_hours=1,
+                holiday_base_covered_hours=covered,**cash_kwargs(dict(policy,**{FIELD:mode}),calculation))
+            combined.append(dict(mode=mode,covered_hours=covered,additional_amount=result['total_amount'],rest=None))
+        separated=hybrid_cash_calculation(policy,calculation)
+        result=calculate_cash_settlement(hourly_rate=100,**{k:separated[k] for k in ['holiday_100_hours','night_hours','holiday_base_covered_hours']})
+        combined.append(dict(mode='Holiday cash and compensatory weekly rest',covered_hours=covered,
+            additional_amount=result['total_amount'],rest=rest_entitlement(policy,1,weekly_rest=True)))
     boundaries=[]
     for end in ['2026-09-21T23:59:00','2026-09-22T00:00:00','2026-09-22T00:01:00']:
         for basis in ['Clock overlap','Whole nocturnal session']:
@@ -54,8 +69,9 @@ def preview():
     return dict(synthetic=True,approved=False,settlement_ready=False,hourly_rate=100,
         interpretation='Implemented additive-on-base-hour arithmetic only; employee applicability and combined rules require approval.',
         ordinary_base='Ordinary shift base pay is assumed already covered and is not added again in these additional amounts.',
-        scenarios=scenarios,night_boundary_comparison=boundaries,
-        blocked_cases=['Legal Holiday on Weekly Rest: common evidence builder requires an approved implemented joint rule.'],
+        scenarios=scenarios,combined_day_examples=combined,night_boundary_comparison=boundaries,
+        blocked_cases=['Joint day remains in review unless the selected cash or hybrid option is enabled in the effective policy.',
+            'A compensatory window mixing distinct rest obligations requires separate review.'],
         user_selected={'night_basis':'Clock overlap','regular_night_additive':True,'holiday_night_additive':True},
         unresolved=['Holiday/rest concurrent with weekly overtime bands',
             'Which employees and dates follow each working-time regime','Rest election and conversion of continuous rest to native leave days'])

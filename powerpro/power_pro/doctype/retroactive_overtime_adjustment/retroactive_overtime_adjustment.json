@@ -55,6 +55,7 @@
   "reconciled_on",
   "cash_settlement_section",
   "settlement_status",
+  "holiday_cash_status",
   "settlement_hourly_rate",
   "settlement_amount",
   "settlement_currency",
@@ -364,7 +365,7 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:doc.planned_settlement == 'Cash' && doc.docstatus > 0",
+   "depends_on": "eval:(doc.planned_settlement == 'Cash' || doc.holiday_cash_status) && doc.docstatus > 0",
    "fieldname": "cash_settlement_section",
    "fieldtype": "Section Break",
    "label": "Cash Settlement"
@@ -378,6 +379,16 @@
    "label": "Settlement Status",
    "options": "Pending\nCreated\nPayroll Submitted\nPaid\nNot Applicable\nCancelled\nCredited",
    "read_only": 1
+  },
+  {
+   "fieldname": "holiday_cash_status",
+   "fieldtype": "Select",
+   "label": "Pago del feriado con descanso compensatorio",
+   "options": "\nCreated\nPayroll Submitted\nCancelled",
+   "read_only": 1,
+   "no_copy": 1,
+   "depends_on": "holiday_cash_status",
+   "description": "El estado de este pago es independiente del crédito y disfrute del descanso."
   },
   {
    "allow_on_submit": 1,

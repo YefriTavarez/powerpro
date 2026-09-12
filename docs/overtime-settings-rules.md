@@ -22,7 +22,7 @@ La prueba nativa de Configuración cubre publicación mediante `Single.save`, re
 
 La interfaz real en Desarrollo se verificó sin guardar: apertura de la sección, controles dependientes, valores iniciales y mensaje de carga de versión vacía. La publicación HTTP desde esa sesión y la aceptación con cuentas reales de Finanzas/Gestión Humana no quedan demostradas por esa revisión visual.
 
-El pago en efectivo de feriado coincidente con descanso semanal está cubierto por las opciones anteriores. La combinación de pago del feriado y descanso compensatorio todavía requiere implementación y permanece en revisión. Este bloque no activa un piloto ni certifica todos los regímenes laborales. Esos puntos siguen dentro del plan general.
+El pago en efectivo de feriado coincidente con descanso semanal está cubierto por las opciones anteriores. La opción **Pagar feriado y conceder descanso semanal compensatorio** permite registrar ambas obligaciones juntas para una ventana de coincidencia. Requiere habilitar compensatorio, definir equivalencia, crédito semanal y duración continua, aprobar la elección del empleado con fecha de nómina, y declarar la cobertura salarial del feriado. Este bloque no activa un piloto ni certifica todos los regímenes laborales. Esos puntos siguen dentro del plan general.
 
 ## Instalación y reversión en Desarrollo
 

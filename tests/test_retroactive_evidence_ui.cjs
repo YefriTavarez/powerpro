@@ -3,9 +3,9 @@ const file='powerpro/power_pro/doctype/retroactive_overtime_adjustment/retroacti
 async function fixture(state,options={}) {
  const calls=[],buttons=[],messages=[],routes=[],drafts=[],headlines=[];
  const reviews=[];
- const ctx={powerpro:{checkin_overtime:{add_holiday_action(){},review:(...args)=>reviews.push(args)}},__: (s,args=[])=>s.replace(/\{(\d+)\}/g,(_,i)=>args[i]),frappe:{ui:{form:{on(){}}},
+ const ctx={format_currency:(v,c)=>`${c} ${v}`,powerpro:{checkin_overtime:{add_holiday_action(){},review:(...args)=>reviews.push(args)}},__: (s,args=[])=>s.replace(/\{(\d+)\}/g,(_,i)=>args[i]),frappe:{ui:{form:{on(){}}},
   require(path,fn){fn();},call(q){calls.push(q);return Promise.resolve({message:state});},msgprint(s){messages.push(s);},
-  confirm(s,fn){fn();},new_doc(...args){drafts.push(args);},set_route(...args){routes.push(args);},datetime:{get_today:()=>'2026-09-15'}}};
+  utils:{escape_html:s=>String(s).replaceAll('<','&lt;')},confirm(s,fn){messages.push(s);fn();},new_doc(...args){drafts.push(args);},set_route(...args){routes.push(args);},datetime:{get_today:()=>'2026-09-15'}}};
  vm.runInNewContext(fs.readFileSync(file,'utf8'),ctx);
  const frm={doc:{docstatus:1,reconciliation_engine:'Verified Checkins',name:'AJUSTE',employee:'EMP',work_date:'2026-09-07',
   settlement_payroll_date:'2026-09-15',planned_settlement:'Cash',settlement_status:'Pending',...options.doc},
@@ -29,6 +29,10 @@ async function fixture(state,options={}) {
  x=await fixture({state:'Verified',can_elect:true});x.buttons[0].fn();assert.equal(x.drafts[0][0],'Overtime Settlement Election');assert.equal(x.drafts[0][1].retroactive_adjustment,'AJUSTE');
  x=await fixture({state:'Verified',election:'ELECT'});x.buttons[0].fn();assert.equal(x.routes[0][2],'ELECT');
  x=await fixture({state:'Verified',can_credit:true});await x.buttons[0].fn();assert.equal(x.calls[1].type,'POST');assert.equal(x.calls[1].method,'powerpro.controllers.retroactive_evidence.create_compensatory_settlement');
+ x=await fixture({state:'Verified',can_credit:true,holiday_cash:{total_amount:115,currency:'DOP',payroll_date:'2026-09-15'}});
+ assert.equal(x.buttons[0].label,'Crear pago del feriado y descanso');await x.buttons[0].fn();
+ assert(x.messages.some(s=>typeof s==='string'&&s.includes('DOP 115')&&s.includes('2026-09-15')));
+ assert.equal(x.calls[1].type,'POST');
  x=await fixture({state:'Verified',can_credit:true},{dirty:true});x.buttons[0].fn();assert.equal(x.calls.length,1);
  x=await fixture({state:'Needs Review',can_review:true,manual_review_allowed:true});x.buttons.find(b=>b.label==='Revisar evidencia corregida').fn();assert.equal(x.reviews[0][1],false);
  x.buttons.find(b=>b.label==='Declarar jornada de RR. HH.').fn();assert.equal(x.reviews[1][1],true);

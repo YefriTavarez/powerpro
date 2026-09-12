@@ -230,7 +230,10 @@ def build_result(doc,*,for_update=False,use_saved_review=True,manual_declaration
     result['input_hash']=_evidence_hash(data)
     result['input']=data
     result['settlement_blockers']=blockers
-    if policy and doc.planned_settlement=='Cash':
+    from powerpro.payroll_rules.overtime_combined_day import combined_hours,REST_FIELD
+    hybrid=bool(doc.planned_settlement=='Compensatory Rest' and combined_hours(result.get('calculation')) and (policy or {}).get(REST_FIELD))
+    if hybrid and not data['rate_basis']:blockers.append('Falta la tarifa salarial para el pago del feriado.')
+    if policy and (doc.planned_settlement=='Cash' or hybrid):
         from powerpro.controllers.overtime_holiday_base import apply_to_result
         apply_to_result(result)
     if result.get('calculation') and not result['calculation']['weekly_evidence_complete']:

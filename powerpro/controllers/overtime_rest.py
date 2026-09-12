@@ -81,7 +81,7 @@ def _weekly(auth,calculation=None):
 
 def election_snapshot(election):
     if not election:return None
-    fields=['retroactive_adjustment','settlement_payroll_date'] if election.get('retroactive_adjustment') else []
+    fields=['retroactive_adjustment','settlement_payroll_date'] if election.get('retroactive_adjustment') else (['settlement_payroll_date'] if election.get('settlement_payroll_date') else [])
     return json.loads(json.dumps({k:election.get(k) for k in fields+['name','authorization','employee','choice','employee_reference','policy',
         'planned_start','planned_end','minimum_rest_hours','credit_hours','required_leave_days','weekly_rest',
         'approved_by','approved_on']},default=str))
@@ -109,7 +109,13 @@ def validate_election(election,auth,policy,*,worked_hours=None,calculation=None)
         from powerpro.payroll_rules.overtime_combined_day import combined_hours
         actual_calculation=calculation if calculation is not None else frappe.parse_json(auth.get('evidence_snapshot') or '{}').get('calculation')
         if combined_hours(actual_calculation):
-            frappe.throw(_('Separe la obligación de pago del feriado antes de acreditar descanso compensatorio por esta coincidencia.'))
+            from powerpro.payroll_rules.overtime_combined_day import hybrid_cash_calculation
+            hybrid_cash_calculation(policy,actual_calculation)
+            from powerpro.payroll_rules.retroactive_overtime import is_settlement_payroll_date_valid
+            date=election.get('settlement_payroll_date')
+            if not date or not is_settlement_payroll_date_valid(auth.work_date,date):
+                frappe.throw(_('Indique fecha de nómina para pagar el feriado junto con el descanso.'))
+            values['settlement_payroll_date']=getdate(date)
         total=worked_hours if worked_hours is not None else (auth.verified_hours or auth.maximum_hours)
         weekly_hours=flt((calculation or {}).get('weekly_rest_hours',auth.get('weekly_rest_hours')))
         if weekly and weekly_hours and abs(flt(total)-weekly_hours)>.0001:
@@ -151,6 +157,7 @@ def approve_election(name):
     values={'planned_settlement':election.choice,'evidence_settlement_ready':0}
     if auth.doctype==AUTH:values['evidence_retry_after']=now_datetime()
     elif election.choice=='Cash':values['settlement_payroll_date']=election.settlement_payroll_date
+    if election.get('settlement_payroll_date'):values['settlement_payroll_date']=election.settlement_payroll_date
     auth.db_set(values)
     _event(auth,election,'Employee Election Approved',election_snapshot(election))
     return {'name':name,'status':election.status}

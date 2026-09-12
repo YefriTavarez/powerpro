@@ -58,6 +58,7 @@
   "reconciled_on",
   "settlement_section",
   "settlement_status",
+  "holiday_cash_status",
   "settlement_method",
   "settlement_payroll_date",
   "settlement_hourly_rate",
@@ -481,6 +482,16 @@
    "no_copy": 1,
    "options": "Pending\nCreated\nPayroll Submitted\nPaid\nCredited\nCancelled",
    "read_only": 1
+  },
+  {
+   "fieldname": "holiday_cash_status",
+   "fieldtype": "Select",
+   "label": "Pago del feriado con descanso compensatorio",
+   "options": "\nCreated\nPayroll Submitted\nCancelled",
+   "read_only": 1,
+   "no_copy": 1,
+   "depends_on": "holiday_cash_status",
+   "description": "El estado de este pago es independiente del crédito y disfrute del descanso."
   },
   {
    "allow_on_submit": 1,

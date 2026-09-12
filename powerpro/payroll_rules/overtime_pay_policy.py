@@ -13,7 +13,7 @@ FIELDS=('name','company','valid_from','valid_until','approval_reference','approv
 
 
 def validate_policy(policy):
-    from powerpro.payroll_rules.overtime_combined_day import FIELD, MODES, REVIEW
+    from powerpro.payroll_rules.overtime_combined_day import FIELD, MODES, REVIEW, REST_FIELD
     if (policy.get(FIELD) or REVIEW) not in MODES:
         raise ValueError('Seleccione una regla admitida para feriado y descanso semanal.')
     if not policy.get('company') or not policy.get('valid_from') or not policy.get('valid_until'):
@@ -33,6 +33,8 @@ def validate_policy(policy):
         raise ValueError('Seleccione expresamente la regla de nocturnidad aprobada.')
     if policy.get('premium_combination')!='Additive on base hour':
         raise ValueError('La combinación de recargos debe tener una regla implementada y aprobada.')
+    if policy.get(REST_FIELD) and not policy.get('enable_compensatory'):
+        raise ValueError('Habilite descanso compensatorio antes de combinarlo con el pago de feriado.')
     if policy.get('enable_compensatory'):
         if not policy.get('leave_type'):
             raise ValueError('Indique el tipo de licencia del descanso compensatorio.')

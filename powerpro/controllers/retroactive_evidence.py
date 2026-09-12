@@ -107,6 +107,9 @@ def get_status(adjustment):
         and verification_roles(settings.get('overtime_manual_verification_roles')).intersection(frappe.get_roles()))
     result['manual_review_allowed']=bool(result['can_review'] and cint(settings.get('enable_manual_overtime_verification')))
     result['can_credit']=bool(result['settlement_ready'] and doc.planned_settlement=='Compensatory Rest' and doc.settlement_status=='Pending' and doc.approver==frappe.session.user and frappe.has_permission(DT,'submit',doc=doc))
+    if result['can_credit']:
+        from powerpro.controllers.overtime_hybrid_settlement import is_candidate,preview_hybrid
+        if is_candidate(doc):result['holiday_cash']=preview_hybrid(doc,evidence=current)['holiday_cash']
     if result['ordinary_night_hours']:
         name=frappe.db.get_value('Ordinary Night Settlement',{'employee':doc.employee,'work_date':doc.work_date,'docstatus':1},'name')
         if name:

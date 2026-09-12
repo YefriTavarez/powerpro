@@ -24,6 +24,7 @@ SETTING_MAP = {
     'weekly_rest_duration_hours': 'overtime_policy_rest_duration',
     'weekly_rest_credit_hours': 'overtime_policy_rest_credit',
     'holiday_weekly_rest_mode': 'overtime_policy_combined_day',
+    'holiday_weekly_rest_compensatory': 'overtime_policy_combined_rest',
 }
 NUMBERS = set(SETTING_MAP) - {'company', 'valid_from', 'valid_until', 'leave_type', 'holiday_weekly_rest_mode'}
 

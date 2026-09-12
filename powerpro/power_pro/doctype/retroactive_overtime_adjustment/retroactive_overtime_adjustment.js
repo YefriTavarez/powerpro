@@ -448,10 +448,13 @@ function add_evidence_actions(frm) {
             return frappe.new_doc('Overtime Settlement Election', {retroactive_adjustment: frm.doc.name,
                 choice: frm.doc.planned_settlement, settlement_payroll_date: frm.doc.settlement_payroll_date});
         }, __('Overtime'));
-        if (state.can_credit) frm.add_custom_button(__('Acreditar descanso compensatorio'), () => {
+        if (state.can_credit) frm.add_custom_button(__(state.holiday_cash ? 'Crear pago del feriado y descanso' : 'Acreditar descanso compensatorio'), () => {
             if (frm.is_dirty()) return frappe.msgprint(__('Guarde los cambios primero.'));
-            return frappe.call({method: 'powerpro.controllers.retroactive_evidence.create_compensatory_settlement',
+            const create = () => frappe.call({method: 'powerpro.controllers.retroactive_evidence.create_compensatory_settlement',
                 type: 'POST', args: {adjustment: frm.doc.name}, freeze: true}).then(() => frm.reload_doc());
+            if (!state.holiday_cash) return create();
+            const cash = state.holiday_cash;
+            return frappe.confirm(__('Se creará el descanso y un pago de feriado de {0}, con fecha de nómina {1}.', [format_currency(cash.total_amount,cash.currency),frappe.utils.escape_html(cash.payroll_date)]),create);
         }, __('Overtime'));
 		if (!state.can_night) return;
 		frm.add_custom_button(__('Nocturnidad ordinaria'), () => {

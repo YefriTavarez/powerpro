@@ -46,6 +46,13 @@ def build_cash_settlement(adjustment, reconciliation):
 	coverage = reconciliation.get("holiday_base_coverage")
 	from powerpro.payroll_rules.overtime_combined_day import cash_kwargs, combined_hours
 	combined = combined_hours(reconciliation)
+	hybrid = bool(combined and adjustment.planned_settlement=='Compensatory Rest')
+	if hybrid:
+		from powerpro.payroll_rules.overtime_combined_day import hybrid_cash_calculation
+		if not election or election.get('choice')!='Compensatory Rest':frappe.throw(_('Falta la elección de descanso para el pago combinado.'))
+		try:reconciliation=hybrid_cash_calculation(policy,reconciliation)
+		except ValueError as exc:frappe.throw(str(exc))
+		combined=0
 	try: combined_kwargs = cash_kwargs(policy, reconciliation) if combined else {}
 	except ValueError as exc: frappe.throw(str(exc))
 	if policy and flt(reconciliation.get("holiday_100_hours")):
@@ -286,11 +293,12 @@ def sync_adjustments_from_salary_slip(salary_slip, *, submitted):
 		)
 		if submitted and not active_references.issubset(additional_salary_names):
 			continue
+		status_field = 'holiday_cash_status' if frappe.get_meta(source_doctype).has_field('holiday_cash_status') and frappe.db.get_value(source_doctype,source_name,'holiday_cash_status') else 'settlement_status'
 		frappe.db.set_value(
 			source_doctype,
 			source_name,
 			{
-				"settlement_status": SETTLEMENT_PAYROLL_SUBMITTED if submitted else SETTLEMENT_CREATED,
+				status_field: SETTLEMENT_PAYROLL_SUBMITTED if submitted else SETTLEMENT_CREATED,
 				"settlement_salary_slip": salary_slip.name if submitted else None,
 			},
 		)

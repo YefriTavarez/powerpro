@@ -5,13 +5,13 @@ from frappe import _
 from frappe.utils import get_datetime,getdate
 from powerpro.controllers.overtime import _reconciliation_rows
 from powerpro.payroll_rules.overtime_pay_policy import FIELDS,VERSION,validate_policy
-from powerpro.payroll_rules.overtime_combined_day import FIELD, REVIEW
+from powerpro.payroll_rules.overtime_combined_day import FIELD, REVIEW, REST_FIELD
 
 
 def policy_rows(company, start, last, *, for_update=False):
     rows=_reconciliation_rows('Overtime Pay Policy',for_update=for_update,
         filters=[['company','=',company],['docstatus','=',1],['valid_from','<=',last],['valid_until','>=',start]],
-        fields=list(FIELDS)+['supersedes',FIELD],order_by='creation asc, name asc',limit=1001)
+        fields=list(FIELDS)+['supersedes',FIELD,REST_FIELD],order_by='creation asc, name asc',limit=1001)
     if len(rows)>1000:frappe.throw(_('Demasiadas versiones de reglas para esta vigencia.'))
     return rows
 
@@ -34,7 +34,7 @@ def _saved_policy(doc, *, for_update=False):
     policy=inputs.get('pay_policy') or inputs.get('policy') or {}
     if not saved.get('input_hash') or not policy.get('name'):return None
     rows=_reconciliation_rows('Overtime Pay Policy',for_update=for_update,
-        filters={'name':policy['name'],'docstatus':1},fields=list(FIELDS)+[FIELD],limit=1)
+        filters={'name':policy['name'],'docstatus':1},fields=list(FIELDS)+[FIELD,REST_FIELD],limit=1)
     if not rows:frappe.throw(_('La versión de reglas de esta conciliación ya no está aprobada.'))
     return rows[0]
 
@@ -50,6 +50,7 @@ def get_effective_policy(doc,*,for_update=False):
     policy={k:rows[0].get(k) for k in FIELDS}
     # Do not change hashes of pre-feature policies that retain manual review.
     if rows[0].get(FIELD) and rows[0][FIELD]!=REVIEW:policy[FIELD]=rows[0][FIELD]
+    if rows[0].get(REST_FIELD):policy[REST_FIELD]=int(rows[0][REST_FIELD])
     validate_policy(policy)
     policy['calculator_version']=VERSION
     return policy
