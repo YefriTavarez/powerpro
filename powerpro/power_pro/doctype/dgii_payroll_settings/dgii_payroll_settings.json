@@ -57,7 +57,10 @@
   "automatic_overtime_section",
   "enable_automatic_overtime_settlement",
   "overtime_exception_roles",
-  "overtime_auto_payroll_date_policy"
+  "overtime_auto_payroll_date_policy",
+  "checkin_overtime_section",
+  "enable_checkin_overtime_reconciliation",
+  "checkin_overtime_effective_from"
  ],
  "fields": [
   {
@@ -395,6 +398,23 @@
    "options": "Work Date\nMonth End\nWork Call Date",
    "default": "Work Date",
    "description": "Frozen on enrollment. Work Call Date requires an explicit date on the Work Call, on or after its last work date."
+  },
+  {
+   "fieldname": "checkin_overtime_section",
+   "fieldtype": "Section Break",
+   "label": "Conciliación automática de horas extras"
+  },
+  {
+   "fieldname": "enable_checkin_overtime_reconciliation",
+   "fieldtype": "Check",
+   "label": "Habilitar conciliación con marcaciones",
+   "default": "0"
+  },
+  {
+   "fieldname": "checkin_overtime_effective_from",
+   "fieldtype": "Date",
+   "label": "Procesar marcaciones desde",
+   "description": "Solo autoriza inscripciones nuevas desde esta fecha. No convierte las convocatorias antiguas de asistencia presumida."
   }
  ],
  "index_web_pages_for_search": 1,

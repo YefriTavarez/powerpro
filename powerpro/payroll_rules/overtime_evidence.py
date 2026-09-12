@@ -1,0 +1,80 @@
+"""Evidence acceptance independent of Frappe. No synthetic punches or payroll writes."""
+from copy import deepcopy
+from datetime import timedelta
+from powerpro.payroll_rules.overtime import _as_datetime,WorkInterval,_outside_adjacent_portions,_subtract_interval
+from powerpro.payroll_rules.overtime_shift_evidence import interpret_shift_punches
+from powerpro.payroll_rules.overtime_calendar import reconcile_calendar_intervals
+from powerpro.payroll_rules.overtime_work_call import derive_reconciliation_snapshot
+
+VERSION='checkin-evidence-v1'
+EVIDENCE_FIELDS=('evidence_enrolled','evidence_status','evidence_enrolled_by','evidence_enrolled_on','evidence_last_hash','evidence_last_attempt','evidence_retry_after','evidence_issues','evidence_snapshot','evidence_settlement_ready','evidence_auto_settle')
+INFORMATIONAL={'direction_reinterpreted','first_last_includes_breaks'}
+
+
+def evaluate_evidence(*, authorization, rows, shift, contexts, next_windows, now, competing=False,
+                      context_complete=True, weekly_before=None, regular_cap=24, night_start=None, night_end=None):
+    start,end=_as_datetime(authorization['start']),_as_datetime(authorization['end'])
+    if end<=start or end-start>timedelta(hours=48):raise ValueError('Ventana autorizada inválida.')
+    result={'version':VERSION,'state':'Verified','issues':[],'interpretations':[],'source_checkins':deepcopy(rows)}
+    def issue(code,severity='review'):
+        if not any(r['code']==code for r in result['issues']):result['issues'].append({'code':code,'severity':severity})
+    if _as_datetime(now)<end:issue('window_not_ended','wait')
+    if not shift.get('last_sync_of_checkin') or _as_datetime(shift['last_sync_of_checkin'])<end:issue('sync_incomplete','wait')
+    if competing:issue('overlapping_authorization')
+    if not context_complete:issue('incomplete_context')
+    first=next((c for c in contexts if c['date']==str(start.date())),None)
+    if not first or not first.get('shift_start') or not first.get('shift_end'):raise ValueError('Falta turno de referencia.')
+    ordinary_start,ordinary_end=_as_datetime(first['shift_start']),_as_datetime(first['shift_end'])
+    regular=first['classification']=='Regular Workday'
+    session_start=min(ordinary_start,start)
+    session_end=max(ordinary_end,end) if regular else end
+    if session_end-session_start>timedelta(hours=24):issue('extended_session_over_24h')
+    group=[]
+    for raw in sorted(rows,key=lambda r:(_as_datetime(r['time']),str(r.get('name') or ''))):
+        stamp=_as_datetime(raw['time'])
+        captured=(raw.get('shift')==authorization['shift'] and raw.get('shift_start') and raw.get('shift_end')
+                  and _as_datetime(raw['shift_start'])==ordinary_start and _as_datetime(raw['shift_end'])==ordinary_end)
+        # Include documented shift attendance and punches in the authorization.
+        # The caller also supplies a bounded late-out tolerance for overrun review.
+        if not captured and not start<=stamp<=end+timedelta(minutes=float(shift.get('allow_check_out_after_shift_end_time') or 0)):continue
+        if stamp<session_start-timedelta(minutes=float(shift.get('begin_check_in_before_shift_start_time') or 0)):continue
+        if stamp>session_end+timedelta(minutes=float(shift.get('allow_check_out_after_shift_end_time') or 0)):continue
+        if raw.get('skip_auto_attendance'):issue('excluded_checkin');continue
+        if any(_as_datetime(w['start'])<=stamp<=_as_datetime(w['end']) for w in next_windows):issue('next_shift_overlap');continue
+        r=deepcopy(raw)
+        if not captured:
+            result['interpretations'].append({'checkin':raw.get('name'),'time':stamp.isoformat(),'stored_log_type':raw.get('log_type'),'group':'authorized_extension'})
+        r.update(shift=authorization['shift'],shift_start=session_start,shift_end=session_end,
+                 shift_actual_start=session_start-timedelta(minutes=float(shift.get('begin_check_in_before_shift_start_time') or 0)),
+                 shift_actual_end=session_end+timedelta(minutes=float(shift.get('allow_check_out_after_shift_end_time') or 0)),offshift=0)
+        group.append(r)
+    interpreted=interpret_shift_punches(group,{authorization['shift']:shift})
+    result['sessions']=interpreted['sessions']
+    for warning in interpreted['issues']:
+        issue(warning['code'],'information' if warning['code'] in INFORMATIONAL else 'review')
+    if not interpreted['intervals']:issue('missing_punch_pair')
+    if result['issues'] and any(i['severity']!='information' for i in result['issues']):
+        result['state']='Waiting' if any(i['severity']=='wait' for i in result['issues']) else 'Needs Review'
+        return result
+    intervals=[WorkInterval(a,b) for a,b in interpreted['intervals']]
+    kwargs={}
+    if night_start is not None:kwargs['night_start']=night_start
+    if night_end is not None:kwargs['night_end']=night_end
+    calculation=reconcile_calendar_intervals(authorization_start=start,authorization_end=end,
+        maximum_hours=authorization['maximum_hours'],intervals=intervals,contexts=contexts,
+        regular_hours_before_by_week=weekly_before,regular_35_percent_cap=regular_cap,**kwargs)
+    # An unapproved tail adjacent to this authorization remains reviewable; it is
+    # never silently discarded because the authorized maximum caps payment.
+    outside=_outside_adjacent_portions(intervals,WorkInterval(start,end))
+    for c in contexts:
+        if c.get('classification')=='Regular Workday' and c.get('shift_start') and c.get('shift_end'):
+            outside=_subtract_interval(outside,WorkInterval(_as_datetime(c['shift_start']),_as_datetime(c['shift_end'])))
+    unapproved=[{'start':r.start.isoformat(),'end':r.end.isoformat()} for r in outside]
+    calculation.update(source_checkins=deepcopy(rows),warnings=[],unapproved_intervals=unapproved,
+        unapproved_hours=round(sum((_as_datetime(r['end'])-_as_datetime(r['start'])).total_seconds()/3600 for r in unapproved),4))
+    snapshot=derive_reconciliation_snapshot(authorization_start=start,authorization_end=end,
+        maximum_hours=authorization['maximum_hours'],reconciliation=calculation,evaluation_time=now)
+    if snapshot['reconciliation_status']!='Completed':issue('worked_authorized_mismatch')
+    result.update(calculation=calculation,snapshot=snapshot,worked_intervals=[{'start':a.isoformat(),'end':b.isoformat()} for a,b in interpreted['intervals']])
+    if any(i['severity']=='review' for i in result['issues']):result['state']='Needs Review'
+    return result

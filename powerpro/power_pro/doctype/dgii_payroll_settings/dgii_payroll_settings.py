@@ -47,6 +47,9 @@ class DGIIPayrollSettings(Document):
 	# end: auto-generated types
 
 	def validate(self):
+		if self.get("enable_checkin_overtime_reconciliation"):
+			if not self.get("checkin_overtime_effective_from") or not self.get("enable_overtime_authorization"):
+				frappe.throw(_("Defina la fecha efectiva y habilite las autorizaciones antes de conciliar marcaciones."))
 		from powerpro.controllers.automatic_overtime import validate_settings
 		validate_settings(self)
 		if self.get("enable_manual_overtime_verification"):

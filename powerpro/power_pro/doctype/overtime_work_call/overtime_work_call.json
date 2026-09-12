@@ -49,7 +49,9 @@
   "presumed_hours",
   "automatic_settled_count",
   "automatic_blocked_count",
-  "correction_pending_count"
+  "correction_pending_count",
+  "evidence_reconciliation_enabled",
+  "evidence_auto_settle"
  ],
  "fields": [
   {
@@ -287,10 +289,10 @@
   {
    "fieldname": "automation_mode",
    "fieldtype": "Select",
-   "label": "Automatic Settlement",
-   "options": "Follow Settings\nManual",
+   "label": "Modo de procesamiento",
+   "options": "Follow Settings\nManual\nVerified Checkins",
    "default": "Follow Settings",
-   "description": "Submission must occur before work begins. Automatic settlement runs after each employee/date window ends using presumed attendance."
+   "description": "Verified Checkins guarda horas reales desde marcaciones. Follow Settings conserva el proceso anterior de asistencia presumida."
   },
   {
    "fieldname": "automatic_payroll_date",
@@ -370,6 +372,21 @@
    "read_only": 1,
    "allow_on_submit": 1,
    "no_copy": 1
+  },
+  {
+   "fieldname": "evidence_reconciliation_enabled",
+   "fieldtype": "Check",
+   "label": "Conciliación por marcaciones inscrita",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "evidence_auto_settle",
+   "fieldtype": "Check",
+   "label": "Liquidar automáticamente después de verificar",
+   "default": "0",
+   "description": "Requiere evidencia completa y política de liquidación revisada. Solo aplica al modo Verified Checkins."
   }
  ],
  "index_web_pages_for_search": 1,

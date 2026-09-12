@@ -254,7 +254,7 @@ def reconcile_overtime_work_call(work_call, dry_run=1):
 		if not dry_run:
 			frappe.db.get_value("Overtime Authorization", name, "name", for_update=True)
 		authorization = frappe.get_doc("Overtime Authorization", name, for_update=not dry_run)
-		if authorization.get("auto_enrolled") or authorization.get("reconciliation_source") in {"Manual Verification", "Presumed Attendance", "HR Exception"}:
+		if authorization.get("auto_enrolled") or authorization.get("evidence_enrolled") or authorization.get("reconciliation_source") in {"Manual Verification", "Presumed Attendance", "HR Exception"}:
 			# A check-in refresh must never overwrite a manager-certified snapshot.
 			rows.append({
 				"authorization": authorization.name, "employee": authorization.employee,

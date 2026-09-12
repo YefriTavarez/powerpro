@@ -90,7 +90,19 @@
   "attendance_state",
   "presumed_hours",
   "presumed_on",
-  "attendance_exception"
+  "attendance_exception",
+  "evidence_section",
+  "evidence_enrolled",
+  "evidence_status",
+  "evidence_enrolled_by",
+  "evidence_enrolled_on",
+  "evidence_last_hash",
+  "evidence_last_attempt",
+  "evidence_retry_after",
+  "evidence_issues",
+  "evidence_snapshot",
+  "evidence_settlement_ready",
+  "evidence_auto_settle"
  ],
  "fields": [
   {
@@ -777,6 +789,103 @@
    "allow_on_submit": 1,
    "no_copy": 1,
    "options": "Overtime Attendance Exception"
+  },
+  {
+   "fieldname": "evidence_section",
+   "fieldtype": "Section Break",
+   "label": "Conciliación automática con marcaciones"
+  },
+  {
+   "fieldname": "evidence_enrolled",
+   "fieldtype": "Check",
+   "label": "Inscrita para conciliar marcaciones",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "evidence_status",
+   "fieldtype": "Select",
+   "label": "Estado de evidencia",
+   "options": "\nPending\nWaiting\nNeeds Review\nVerified\nManual Verification\nFrozen",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "evidence_enrolled_by",
+   "fieldtype": "Link",
+   "label": "Inscrita por",
+   "options": "User",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "evidence_enrolled_on",
+   "fieldtype": "Datetime",
+   "label": "Inscrita el",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "evidence_last_hash",
+   "fieldtype": "Data",
+   "label": "Huella de evidencia",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "evidence_last_attempt",
+   "fieldtype": "Datetime",
+   "label": "Última comprobación",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "evidence_retry_after",
+   "fieldtype": "Datetime",
+   "label": "Próxima comprobación",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "evidence_issues",
+   "fieldtype": "Code",
+   "label": "Incidencias de evidencia",
+   "options": "JSON",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "evidence_snapshot",
+   "fieldtype": "Code",
+   "label": "Instantánea de cálculo y fuentes",
+   "options": "JSON",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "evidence_settlement_ready",
+   "fieldtype": "Check",
+   "label": "Evidencia apta para liquidación",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "evidence_auto_settle",
+   "fieldtype": "Check",
+   "label": "Liquidación automática por evidencia",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
   }
  ],
  "index_web_pages_for_search": 1,

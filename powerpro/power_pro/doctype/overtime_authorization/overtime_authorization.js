@@ -3,6 +3,7 @@
 
 frappe.ui.form.on("Overtime Authorization", {
 	refresh(frm) {
+		frappe.require("/assets/powerpro/js/checkin_overtime.js", () => powerpro.checkin_overtime.add_actions(frm));
 		frappe.require("/assets/powerpro/js/overtime_calendar.js", () => powerpro.overtime_calendar.add_button(frm));
 		if (frm.doc.docstatus === 0) {
 			frm.dashboard.set_headline_alert(

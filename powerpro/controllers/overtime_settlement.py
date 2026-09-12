@@ -288,6 +288,9 @@ def _validate_settlement_role():
 
 
 def _validate_ready(doc):
+	if doc.get("evidence_enrolled"):
+		from powerpro.controllers.checkin_overtime import validate_settlement
+		validate_settlement(doc)
 	if doc.docstatus != 1 or doc.status != "Approved":
 		frappe.throw(_("Only a submitted approved Overtime Authorization can be settled."))
 	if doc.get("settlement_status") in FINAL_SETTLEMENT_STATUSES:

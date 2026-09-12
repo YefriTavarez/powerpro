@@ -81,6 +81,8 @@ def save_authorization_reconciliation(authorization):
 		)
 	if doc.docstatus != 1:
 		frappe.throw(_("Only an approved Overtime Authorization can be reconciled."))
+	if doc.get('evidence_enrolled'):
+		frappe.throw(_('Use el procesamiento de evidencia para esta autorización.'))
 	if doc.overtime_work_call:
 		frappe.throw(
 			_("Refresh attendance from the linked Overtime Work Call to keep team totals synchronized.")

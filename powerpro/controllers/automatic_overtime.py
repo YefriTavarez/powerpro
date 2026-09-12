@@ -57,20 +57,25 @@ def validate_settings(settings):
 
 def protect_fields(doc):
     before = doc.get_doc_before_save()
-    fields = CALL_FIELDS if doc.doctype == CALL else AUTO_FIELDS
+    from powerpro.payroll_rules.overtime_evidence import EVIDENCE_FIELDS
+    fields = (CALL_FIELDS + ('evidence_reconciliation_enabled',)) if doc.doctype == CALL else AUTO_FIELDS + EVIDENCE_FIELDS
     if before:
         changed = any((before.get(f) or '') != (doc.get(f) or '') for f in fields)
     else:
         changed = any(doc.get(f) for f in fields)
     if changed:
         frappe.throw(_('Automatic settlement audit fields are managed by the Work Call service.'))
-    if doc.doctype == AUTH and (doc.get('auto_enrolled') or doc.get('reconciliation_source') in {'Presumed Attendance', 'HR Exception'}):
+    if doc.doctype == AUTH and (doc.get('auto_enrolled') or doc.get('evidence_enrolled') or doc.get('reconciliation_source') in {'Presumed Attendance', 'HR Exception'}):
         from powerpro.controllers.manual_overtime import AUDIT_FIELDS
         if not before or any(before.get(f) != doc.get(f) for f in AUDIT_FIELDS):
             frappe.throw(_('Use Attendance Exceptions on the Work Call to change this attendance.'))
 
 
 def prepare_submission(call):
+    if call.get('automation_mode') == 'Verified Checkins':
+        from powerpro.controllers.checkin_overtime import validate_enrollment
+        validate_enrollment(call)
+        return
     settings = _settings()
     if not cint(settings.get('enable_automatic_overtime_settlement')) or call.get('automation_mode') == 'Manual':
         return
@@ -79,6 +84,10 @@ def prepare_submission(call):
 
 
 def enroll_on_submit(call):
+    if call.get('automation_mode') == 'Verified Checkins':
+        from powerpro.controllers.checkin_overtime import enroll_call
+        enroll_call(call)
+        return
     settings = _settings()
     if cint(settings.get('enable_automatic_overtime_settlement')) and call.get('automation_mode') != 'Manual':
         _enroll(call, settings)
@@ -488,6 +497,10 @@ def run_dedicated_job():
     Run under an OS flock. It executes only this registered job and respects
     feature disablement, maintenance mode and the job's stopped flag.
     """
+    if not frappe.conf.maintenance_mode and cint(_settings().get('enable_checkin_overtime_reconciliation')):
+        evidence_job = frappe.get_doc('Scheduled Job Type', 'checkin_overtime.scheduled_reconcile_due')
+        if not evidence_job.stopped and evidence_job.get_next_execution() <= now_datetime():
+            evidence_job.execute()
     if frappe.conf.maintenance_mode or not cint(_settings().get('enable_automatic_overtime_settlement')):
         return
     job = frappe.get_doc('Scheduled Job Type', 'automatic_overtime.scheduled_process_due')

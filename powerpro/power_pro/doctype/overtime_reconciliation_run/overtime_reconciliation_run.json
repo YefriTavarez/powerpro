@@ -1,0 +1,86 @@
+{
+ "doctype": "DocType",
+ "name": "Overtime Reconciliation Run",
+ "module": "Power Pro",
+ "autoname": "hash",
+ "engine": "InnoDB",
+ "fields": [
+  {
+   "fieldname": "authorization",
+   "fieldtype": "Link",
+   "label": "Autorización",
+   "options": "Overtime Authorization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Empleado",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "work_date",
+   "fieldtype": "Date",
+   "label": "Fecha de trabajo"
+  },
+  {
+   "fieldname": "result_status",
+   "fieldtype": "Data",
+   "label": "Resultado"
+  },
+  {
+   "fieldname": "evidence_hash",
+   "fieldtype": "Data",
+   "label": "Huella"
+  },
+  {
+   "fieldname": "evidence",
+   "fieldtype": "Code",
+   "label": "Evidencia y cálculo",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "issues",
+   "fieldtype": "Code",
+   "label": "Incidencias",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "evaluated_by",
+   "fieldtype": "Link",
+   "label": "Evaluado por",
+   "options": "User"
+  },
+  {
+   "fieldname": "evaluated_on",
+   "fieldtype": "Datetime",
+   "label": "Evaluado el"
+  }
+ ],
+ "field_order": [
+  "authorization",
+  "employee",
+  "work_date",
+  "result_status",
+  "evidence_hash",
+  "evidence",
+  "issues",
+  "evaluated_by",
+  "evaluated_on"
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "report": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC"
+}

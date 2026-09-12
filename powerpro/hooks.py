@@ -288,7 +288,7 @@ doc_events = {
 # ---------------
 
 scheduler_events = {
-    "cron": {"* * * * *": ["powerpro.controllers.automatic_overtime.scheduled_process_due"]},
+    "cron": {"* * * * *": ["powerpro.controllers.automatic_overtime.scheduled_process_due", "powerpro.controllers.checkin_overtime.scheduled_reconcile_due"]},
 	"hourly": [
 		"powerpro.controllers.overtime_candidates.scheduled_generate_overtime_candidates",
 	],
