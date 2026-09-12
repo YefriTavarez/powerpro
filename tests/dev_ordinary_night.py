@@ -181,7 +181,18 @@ try:
    except frappe.ValidationError:pass
    else:raise AssertionError('Ordinary coverage could be cancelled before linked OT')
    call.reload();call.flags.ignore_permissions=True;call.cancel()
+   # A broader historical observation must include the still-paid ordinary
+   # night dependency before accepting new work beyond the old OT window.
+   from powerpro.controllers import overtime_history as auth_history
+   last.reload();last.time='2026-09-15 02:00:00';last.save(ignore_permissions=True)
+   observed={'start':'2026-09-14 16:00:00','end':'2026-09-15 02:00:00'}
+   expanded=auth_history.preview_review(auth_name,'DEV dependent night window',observation_window=observed)
+   assert any(r['name']==ordinary.name and r['doctype']==DT and r['blocks_reversal'] for r in expanded['dependencies'])
+   fails(lambda:auth_history.apply_review(auth_name,'DEV dependent night window',expanded['token'],observation_window=observed))
    ordinary.reload();ordinary.flags.ignore_permissions=True;ordinary.cancel()
+   expanded=auth_history.preview_review(auth_name,'DEV dependent night window',observation_window=observed)
+   auth_history.apply_review(auth_name,'DEV dependent night window',expanded['token'],observation_window=observed)
+   last.reload();last.time='2026-09-14 23:00:00';last.save(ignore_permissions=True)
    assert history.compare(ordinary)['matches'],'Cancelled authorization must preserve the documented extended session'
    assert controls.preview(DT,ordinary.name)['historical_review']['accepted']
   # Explicit policy opt-in lets an automatically enrolled authorization create

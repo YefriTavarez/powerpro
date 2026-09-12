@@ -38,5 +38,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  preview.applicable=true;preview.can_review=true;preview.manual_review_allowed=true;
  ctx.powerpro.checkin_overtime.add_history_actions(frm);await Promise.resolve();
  assert(historicalButtons.some(b=>b.label==='Revisar trabajo histórico'));assert(historicalButtons.some(b=>b.label==='Declarar jornada histórica'));
+ preview.observation_window={start:'2026-09-06T08:00:00',end:'2026-09-07T02:00:00'};preview.unapproved_hours=3;preview.historical_only=true;
+ ctx.powerpro.checkin_overtime.review(frm,false,preview.observation_window);
+ const before=calls.length;
+ dirty=true;requested({reason:'Expanded review',expand_window:1,observation_start:preview.observation_window.start,observation_end:preview.observation_window.end});assert.equal(calls.length,before);
+ dirty=false;requested({reason:'Expanded review',expand_window:1,observation_start:preview.observation_window.start,observation_end:preview.observation_window.end});await Promise.resolve();
+ assert.deepEqual(JSON.parse(calls.at(-1).args.observation_window),preview.observation_window);
+ assert(dialogs.at(-1).fields[0].options.includes('Horas fuera de autorización, sin nuevo pago'));
+ dialogs.at(-1).primary_action();await Promise.resolve();assert.equal(calls.at(-1).type,'POST');
+ assert.deepEqual(JSON.parse(calls.at(-1).args.observation_window),preview.observation_window);
  console.log('HR review UI: required reason, escaped preview, before/after amount, dirty guards and explicit token-bound POST passed.');
 })().catch(e=>{console.error(e);process.exitCode=1});

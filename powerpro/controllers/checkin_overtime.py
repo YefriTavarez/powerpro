@@ -104,25 +104,32 @@ def enroll(authorization):
     return {'authorization':doc.name,'status':doc.evidence_status}
 
 
-def _data(doc,*,for_update=False,include_weekly=True):
+def _data(doc,*,for_update=False,include_weekly=True,observation_window=None):
     start,end=get_datetime(doc.authorization_start),get_datetime(doc.authorization_end)
-    begin=datetime.combine(start.date(),time.min)-timedelta(days=1)
-    finish=datetime.combine(end.date()+timedelta(days=1),time.min)
+    observed_start,observed_end=start,end
+    if observation_window is not None:
+        if doc.docstatus!=2:raise ValueError('La ventana histórica solo se admite en orígenes cancelados.')
+        from powerpro.payroll_rules.overtime_observation_window import normalize_window
+        base=get_schedule_context(start.date(),doc.shift_type,doc.holiday_list,for_update=for_update)
+        observation_window=normalize_window(observation_window,min(start,get_datetime(base['shift_start'])),max(end,get_datetime(base['shift_end'])))
+        observed_start,observed_end=get_datetime(observation_window['start']),get_datetime(observation_window['end'])
+    begin=datetime.combine(observed_start.date(),time.min)-timedelta(days=1)
+    finish=datetime.combine(observed_end.date()+timedelta(days=1),time.min)
     rows=_reconciliation_rows('Employee Checkin',for_update=for_update,filters=[['employee','=',doc.employee],['time','>=',begin],['time','<',finish]],
         fields=['name','time','log_type','shift','shift_start','shift_end','shift_actual_start','shift_actual_end','skip_auto_attendance','offshift','modified'],order_by='time asc, name asc',limit=2001)
     if len(rows)>2000:raise ValueError('Demasiadas marcaciones en la ventana; requiere revisión.')
     shift=frappe.get_doc('Shift Type',doc.shift_type,for_update=for_update)
-    days=list(calendar_dates(start,end));contexts=[]
+    days=list(calendar_dates(observed_start,observed_end));contexts=[]
     for day in [days[0]-timedelta(days=1)]+days:
         c=get_schedule_context(day,doc.shift_type,doc.holiday_list,for_update=for_update)
         c['date']=str(day);contexts.append(c)
-    assignments=_reconciliation_rows('Shift Assignment',for_update=for_update,filters={'employee':doc.employee,'docstatus':1,'status':'Active','start_date':['<=',end.date()+timedelta(days=1)]},
+    assignments=_reconciliation_rows('Shift Assignment',for_update=for_update,filters={'employee':doc.employee,'docstatus':1,'status':'Active','start_date':['<=',observed_end.date()+timedelta(days=1)]},
         fields=['name','shift_type','start_date','end_date','modified'],limit=1001)
     if len(assignments)>1000:raise ValueError('Demasiadas asignaciones; requiere revisión.')
     employee=frappe.get_doc('Employee',doc.employee,for_update=for_update)
     next_windows=[]
     day=start.date()+timedelta(days=1)
-    while day<=end.date():
+    while day<=observed_end.date():
         names={a.shift_type for a in assignments if getdate(a.start_date)<=day and (not a.end_date or getdate(a.end_date)>=day)}
         if not names and employee.get('default_shift'):names={employee.default_shift}
         for name in names:
@@ -156,10 +163,14 @@ def _data(doc,*,for_update=False,include_weekly=True):
     current_context=next(c for c in contexts if c['date']==str(start.date()))
     lower=min(start,get_datetime(current_context['shift_start']))-timedelta(minutes=flt(shift.begin_check_in_before_shift_start_time))
     upper=max(end,get_datetime(current_context['shift_end']))+timedelta(minutes=flt(shift.allow_check_out_after_shift_end_time))
+    if observation_window is not None:
+        lower=observed_start-timedelta(minutes=flt(shift.begin_check_in_before_shift_start_time))
+        upper=observed_end+timedelta(minutes=flt(shift.allow_check_out_after_shift_end_time))
     data={'calculator_version':VERSION,'pay_policy':pay_policy,'rate_basis':rate_basis,'authorization':authorization,'rows':[dict(r) for r in rows if lower<=get_datetime(r.time)<=upper],
           'shift':policy,'contexts':contexts,'next_windows':next_windows,'competing':competing,'weekly':weekly,'configuration':config,
           'assignments':[dict(r) for r in assignments if not r.end_date or getdate(r.end_date)>=getdate(weekly['start'])-timedelta(days=1)],
           'default_shift':employee.get('default_shift')}
+    if observation_window is not None:data['observation_window']=observation_window
     return data,settings
 
 

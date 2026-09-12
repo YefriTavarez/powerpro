@@ -12,7 +12,7 @@ INFORMATIONAL={'direction_reinterpreted','first_last_includes_breaks'}
 
 
 def evaluate_evidence(*, authorization, rows, shift, contexts, next_windows, now, competing=False,
-                      context_complete=True, weekly_before=None, regular_cap=24, night_start=None, night_end=None):
+                      context_complete=True, weekly_before=None, regular_cap=24, night_start=None, night_end=None,observation_window=None):
     start,end=_as_datetime(authorization['start']),_as_datetime(authorization['end'])
     if end<=start or end-start>timedelta(hours=48):raise ValueError('Ventana autorizada inválida.')
     result={'version':VERSION,'state':'Verified','issues':[],'interpretations':[],'source_checkins':deepcopy(rows)}
@@ -26,6 +26,10 @@ def evaluate_evidence(*, authorization, rows, shift, contexts, next_windows, now
     regular=first['classification']=='Regular Workday'
     session_start=min(ordinary_start,start)
     session_end=max(ordinary_end,end) if regular else end
+    if observation_window is not None:
+        from powerpro.payroll_rules.overtime_observation_window import normalize_window
+        observation_window=normalize_window(observation_window,session_start,session_end)
+        session_start,session_end=_as_datetime(observation_window['start']),_as_datetime(observation_window['end'])
     cutoff=session_end+timedelta(minutes=float(shift.get('allow_check_out_after_shift_end_time') or 0))
     if _as_datetime(now)<cutoff:issue('window_not_ended','wait')
     if not shift.get('last_sync_of_checkin') or _as_datetime(shift['last_sync_of_checkin'])<cutoff:issue('sync_incomplete','wait')
@@ -37,14 +41,16 @@ def evaluate_evidence(*, authorization, rows, shift, contexts, next_windows, now
                   and _as_datetime(raw['shift_start'])==ordinary_start and _as_datetime(raw['shift_end'])==ordinary_end)
         # Include documented shift attendance and punches in the authorization.
         # The caller also supplies a bounded late-out tolerance for overrun review.
-        if not captured and not start<=stamp<=end+timedelta(minutes=float(shift.get('allow_check_out_after_shift_end_time') or 0)):continue
+        in_window=session_start<=stamp<=session_end if observation_window else start<=stamp<=end+timedelta(minutes=float(shift.get('allow_check_out_after_shift_end_time') or 0))
+        if not captured and not in_window:continue
         if stamp<session_start-timedelta(minutes=float(shift.get('begin_check_in_before_shift_start_time') or 0)):continue
         if stamp>session_end+timedelta(minutes=float(shift.get('allow_check_out_after_shift_end_time') or 0)):continue
         if raw.get('skip_auto_attendance'):issue('excluded_checkin');continue
         if any(_as_datetime(w['start'])<=stamp<=_as_datetime(w['end']) for w in next_windows):issue('next_shift_overlap');continue
         r=deepcopy(raw)
         if not captured:
-            result['interpretations'].append({'checkin':raw.get('name'),'time':stamp.isoformat(),'stored_log_type':raw.get('log_type'),'group':'authorized_extension'})
+            result['interpretations'].append({'checkin':raw.get('name'),'time':stamp.isoformat(),'stored_log_type':raw.get('log_type'),
+                'group':'historical_observation' if observation_window else 'authorized_extension'})
         r.update(shift=authorization['shift'],shift_start=session_start,shift_end=session_end,
                  shift_actual_start=session_start-timedelta(minutes=float(shift.get('begin_check_in_before_shift_start_time') or 0)),
                  shift_actual_end=session_end+timedelta(minutes=float(shift.get('allow_check_out_after_shift_end_time') or 0)),offshift=0)

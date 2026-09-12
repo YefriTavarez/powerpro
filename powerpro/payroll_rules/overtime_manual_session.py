@@ -29,12 +29,16 @@ def validate_manual_intervals(declaration,lower,upper,now):
     return worked
 
 
-def evaluate_manual_session(*, declaration, authorization, rows, contexts, now, competing=False, **kwargs):
+def evaluate_manual_session(*, declaration, authorization, rows, contexts, now, competing=False, observation_window=None,**kwargs):
     start,end=_as_datetime(authorization['start']),_as_datetime(authorization['end'])
     context=next((r for r in contexts if r['date']==str(start.date())),None)
     if not context:raise ValueError('Falta el turno de la jornada.')
     shift_start,shift_end=_as_datetime(context['shift_start']),_as_datetime(context['shift_end'])
     lower,upper=min(start,shift_start),max(end,shift_end)
+    if observation_window is not None:
+        from powerpro.payroll_rules.overtime_observation_window import normalize_window
+        observation_window=normalize_window(observation_window,lower,upper)
+        lower,upper=_as_datetime(observation_window['start']),_as_datetime(observation_window['end'])
     worked=validate_manual_intervals(declaration,lower,upper,now)
     result={'version':'manual-full-session-v1','state':'Verified','issues':[],
         'source_checkins':deepcopy(rows),'interpretations':[],

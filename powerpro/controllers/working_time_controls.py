@@ -63,7 +63,10 @@ def _historical_current(doc):
     from powerpro.payroll_rules.overtime_actual_week import collect_weekly_work
     current=_historical_state(compare(doc));accepted=current['historical_review']['accepted']
     employee=frappe.get_doc('Employee',doc.employee)
-    data=load_week(doc,employee,current['input']['assignments'])
+    facade=doc
+    if current['input'].get('observation_window'):
+        facade=frappe._dict(doc.as_dict());facade.authorization_start=current['input']['observation_window']['start'];facade.authorization_end=current['input']['observation_window']['end']
+    data=load_week(facade,employee,current['input']['assignments'])
     historical=data.pop('historical_intervals',[]);names=data.pop('historical_checkins',[])
     certified=data.pop('certified_sessions',[])
     weekly=collect_weekly_work(**data,

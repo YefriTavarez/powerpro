@@ -11,6 +11,7 @@ POLICY_FIELDS=('name','start_time','end_time','last_sync_of_checkin',
 
 
 def load_week(doc,employee,assignments,*,for_update=False):
+    assignments=[frappe._dict(row) for row in assignments]
     end=get_datetime(doc.authorization_end)
     day=get_datetime(doc.authorization_start).date()
     first=day-timedelta(days=day.weekday())
@@ -51,7 +52,7 @@ def load_week(doc,employee,assignments,*,for_update=False):
     for source_type,mode_filter in [('Overtime Authorization',['evidence_enrolled','=',1]),
                                   ('Retroactive Overtime Adjustment',['reconciliation_engine','=','Verified Checkins'])]:
         filters=[['employee','=',doc.employee],['docstatus','in',[1,2]],mode_filter,
-                 ['authorization_end','>',start],['authorization_end','<=',doc.authorization_start]]
+                 ['authorization_end','>',start-timedelta(days=1)],['authorization_end','<=',doc.authorization_start]]
         if source_type==doc.doctype:filters.append(['name','!=',doc.name])
         records=_reconciliation_rows(source_type,for_update=for_update,filters=filters,
             fields=['name','docstatus','authorization_start','reconciliation_source','evidence_snapshot'],order_by='authorization_start asc, name asc',limit=51)
@@ -64,9 +65,20 @@ def load_week(doc,employee,assignments,*,for_update=False):
     from powerpro.controllers.checkin_overtime import _data,_evidence_hash,now_datetime
     from powerpro.payroll_rules.overtime_evidence import evaluate_evidence
     for prior in previous:
+        prior_doc=frappe.get_doc(prior.source_type,prior.name,for_update=for_update)
+        if get_datetime(prior_doc.authorization_end)<=start:
+            # A reviewed Sunday overrun can enter Monday even when the original
+            # authorization ended Sunday. The bounded extra day finds it without
+            # making unrelated previous-week sessions required evidence.
+            from powerpro.controllers.overtime_history import effective_snapshot
+            snapshot,_revision=effective_snapshot(prior_doc,for_update=for_update)
+            window=(snapshot.get('input') or {}).get('observation_window')
+            ends=[get_datetime(r['end']) for r in snapshot.get('worked_intervals',[])]
+            if window:ends.append(get_datetime(window['end']))
+            if not ends or max(ends)<=start:continue
         if prior.docstatus==2:
             from powerpro.controllers.overtime_history import compare
-            history=compare(frappe.get_doc(prior.source_type,prior.name,for_update=for_update),for_update=for_update)
+            history=compare(prior_doc,for_update=for_update)
             if not history['matches']:
                 issues.append({'code':'weekly_previous_snapshot_changed','authorization':prior.name,'source_type':prior.source_type});continue
             fresh=history['current']

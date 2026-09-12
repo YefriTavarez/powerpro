@@ -31,11 +31,16 @@ powerpro.checkin_overtime.add_actions = (frm) => {
     });
 };
 
-powerpro.checkin_overtime.review = (frm, manual = false) => {
+powerpro.checkin_overtime.review = (frm, manual = false, observationWindow = null) => {
     if (frm.is_dirty()) {frappe.msgprint(__("Guarde los cambios antes de revisar.")); return;}
     const controller = frm.doc.docstatus === 2 ? "overtime_history" :
         (frm.doc.docstatus === 0 && frm.doc.doctype === "Retroactive Overtime Adjustment" ? "retroactive_draft_review" : "checkin_overtime_review");
     const fields = [{fieldname: "reason", label: __("Motivo y referencia de la corrección"), fieldtype: "Small Text", reqd: 1}];
+    if (frm.doc.docstatus===2) fields.push(
+        {fieldname:'expand_window',label:__('Ampliar ventana de observación histórica'),fieldtype:'Check'},
+        {fieldname:'observation_start',label:__('Inicio de la jornada a revisar'),fieldtype:'Datetime',depends_on:'eval:doc.expand_window',default:observationWindow?.start},
+        {fieldname:'observation_end',label:__('Fin de la jornada a revisar'),fieldtype:'Datetime',depends_on:'eval:doc.expand_window',default:observationWindow?.end,
+            description:__('Debe conservar toda la jornada documentada y no superar 24 horas. No amplía la autorización ni genera pagos.')});
     if (manual) fields.push(
         {fieldname: "reference", fieldtype: "Small Text", label: __("Documento o referencia de la evidencia alternativa"), reqd: 1},
         {fieldname: "intervals", fieldtype: "Table", label: __("Toda la jornada trabajada, excluyendo pausas"), reqd: 1, in_place_edit: true,
@@ -43,10 +48,12 @@ powerpro.checkin_overtime.review = (frm, manual = false) => {
                      {fieldname: "end", label: __("Fin"), fieldtype: "Datetime", in_list_view: 1, reqd: 1}]},
         {fieldname: "full_session", label: __("Confirmo que estos intervalos incluyen toda la jornada y sus prolongaciones"), fieldtype: "Check", reqd: 1});
     frappe.prompt(fields, (values) => {
+        if (frm.is_dirty()) {frappe.msgprint(__('Guarde los cambios antes de revisar.')); return;}
+        const observation = frm.doc.docstatus===2 && values.expand_window ? JSON.stringify({start:values.observation_start,end:values.observation_end}) : undefined;
         const declaration = manual ? {full_session: Boolean(values.full_session), reference: values.reference,
             intervals: values.intervals.map(row => ({start: row.start, end: row.end}))} : undefined;
         frappe.call({method: `powerpro.controllers.${controller}.preview_review`, args: {authorization: frm.doc.name, source_type: frm.doc.doctype || "Overtime Authorization", reason: values.reason,
-            manual_declaration: declaration && JSON.stringify(declaration)}, freeze: true}).then(({message: p}) => {
+            manual_declaration: declaration && JSON.stringify(declaration),...(observation ? {observation_window:observation} : {})}, freeze: true}).then(({message: p}) => {
             const e = value => frappe.utils.escape_html(String(value ?? ""));
             const rows = [[__("Horas verificadas"), p.before.verified_hours || 0, p.after.verified_hours],
                 [__("Entrada real"), p.before.actual_start, p.after.actual_start],
@@ -54,6 +61,7 @@ powerpro.checkin_overtime.review = (frm, manual = false) => {
                 [__("Importe"), p.financial_before.settlement_amount || 0, p.historical_only ? __("Sin cambios") : (p.proposed_amount ?? __("Pendiente de liquidación"))]];
             if (p.historical_only) rows.unshift([__("Horas de la jornada completa"), p.worked_hours_before, p.worked_hours_after]);
             const html = `<p>${e(p.reason)}</p><table class="table table-bordered"><thead><tr><th></th><th>${__("Anterior")}</th><th>${__("Revisado")}</th></tr></thead><tbody>${rows.map(r => `<tr>${r.map(v => `<td>${e(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>
+                ${p.observation_window ? `<p>${__('Ventana de observación')}: ${e(p.observation_window.start)} — ${e(p.observation_window.end)}</p><p>${__('Horas fuera de autorización, sin nuevo pago')}: ${e(p.unapproved_hours)}</p>` : ''}
                 ${p.manual_declaration ? `<p>${__("Fuente: jornada completa declarada por Gestión Humana. Las marcaciones originales se conservan como comparación.")}</p><p>${e(p.manual_declaration.reference)}</p>
                     <ul>${p.manual_declaration.intervals.map(row => `<li>${e(row.start)} — ${e(row.end)}</li>`).join("")}</ul>
                     <p>${__("Marcaciones originales")}</p><ul>${(p.checkin_comparison?.source_checkins || []).map(row => `<li>${e(row.name)}: ${e(row.time)} (${e(row.log_type)})</li>`).join("") || `<li>${__("Sin marcaciones disponibles")}</li>`}</ul>` : ""}
@@ -64,7 +72,8 @@ powerpro.checkin_overtime.review = (frm, manual = false) => {
                     if (frm.is_dirty()) {frappe.msgprint(__("Guarde los cambios y obtenga una vista previa nueva.")); return;}
                     frappe.call({method: `powerpro.controllers.${controller}.apply_review`, type: "POST",
                         args: {authorization: frm.doc.name, source_type: frm.doc.doctype || "Overtime Authorization", reason: p.reason, token: p.token,
-                            manual_declaration: p.manual_declaration && JSON.stringify(p.manual_declaration)}, freeze: true}).then(() => {dialog.hide();frm.reload_doc();});
+                            manual_declaration: p.manual_declaration && JSON.stringify(p.manual_declaration),
+                            ...(p.observation_window ? {observation_window:JSON.stringify(p.observation_window)} : {})}, freeze: true}).then(() => {dialog.hide();frm.reload_doc();});
                 }});
             dialog.show();
         });
@@ -80,7 +89,7 @@ powerpro.checkin_overtime.add_history_actions = (frm) => {
         const filter = frm.doc.doctype === 'Retroactive Overtime Adjustment' ? {retroactive_adjustment: frm.doc.name} : {authorization: frm.doc.name};
         frm.add_custom_button(__('Historial de evidencia física'), () => frappe.set_route('List', 'Overtime Reconciliation Run', filter), __('Overtime'));
         if (!status.can_review) return;
-        frm.add_custom_button(__('Revisar trabajo histórico'), () => powerpro.checkin_overtime.review(frm), __('Overtime'));
-        if (status.manual_review_allowed) frm.add_custom_button(__('Declarar jornada histórica'), () => powerpro.checkin_overtime.review(frm, true), __('Overtime'));
+        frm.add_custom_button(__('Revisar trabajo histórico'), () => powerpro.checkin_overtime.review(frm,false,status.observation_window), __('Overtime'));
+        if (status.manual_review_allowed) frm.add_custom_button(__('Declarar jornada histórica'), () => powerpro.checkin_overtime.review(frm,true,status.observation_window), __('Overtime'));
     });
 };
