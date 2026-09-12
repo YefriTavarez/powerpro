@@ -158,6 +158,13 @@
    "label": "Crédito de licencia por obligación de descanso semanal",
    "depends_on": "eval:doc.enable_compensatory",
    "description": "Equivalencia aprobada entre el descanso continuo y el banco de licencia; no se presume igual a las horas extra trabajadas. Dejar vacío bloquea este caso."
+  },
+  {
+   "fieldname": "auto_ordinary_night",
+   "fieldtype": "Check",
+   "label": "Liquidar nocturnidad ordinaria con autorizaciones automáticas",
+   "default": "0",
+   "description": "Permite crear el recargo ordinario de la misma jornada al liquidar una autorización inscrita con liquidación automática. Requiere evidencia completa y no procesa empleados sin autorización inscrita."
   }
  ],
  "field_order": [
@@ -171,6 +178,7 @@
   "extraordinary_percent",
   "night_percent",
   "night_basis",
+  "auto_ordinary_night",
   "premium_combination",
   "weekly_rest_cash",
   "weekly_rest_percent",

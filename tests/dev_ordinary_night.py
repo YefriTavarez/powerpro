@@ -47,10 +47,12 @@ try:
   doc.submit();doc.reload();assert doc.settlement_status=='Created'
   refs=_get_linked_additional_salaries(doc,docstatus=1);assert len(refs)==1
   assert frappe.db.count('Overtime Authorization')==before['Overtime Authorization']
+  frappe.db.savepoint('duplicate_night_draft')
   duplicate=draft()
   try:duplicate.submit()
   except (frappe.ValidationError,frappe.UniqueValidationError):pass
   else:raise AssertionError('Duplicate ordinary night settlement accepted')
+  frappe.db.rollback(save_point='duplicate_night_draft')
   salary=frappe.get_doc('Additional Salary',refs[0]);salary.flags.ignore_permissions=True
   try:salary.cancel()
   except frappe.ValidationError:pass
@@ -105,6 +107,68 @@ try:
    else:raise AssertionError('Ordinary coverage could be cancelled before linked OT')
    call.reload();call.flags.ignore_permissions=True;call.cancel()
    ordinary.reload();ordinary.flags.ignore_permissions=True;ordinary.cancel()
+  # Explicit policy opt-in lets an automatically enrolled authorization create
+  # ordinary night and OT atomically. No historical/manual draft is taken over.
+  frappe.db.savepoint('automatic_night_case')
+  assert not frappe.db.count(DT,{'employee':employee.name,'docstatus':0})
+  policy.flags.ignore_permissions=True;policy.cancel()
+  auto_policy=frappe.copy_doc(policy);auto_policy.name=None;auto_policy.docstatus=0;auto_policy.auto_ordinary_night=1
+  auto_policy.insert(ignore_permissions=True);auto_policy.flags.ignore_permissions=True;auto_policy.submit()
+  def automatic_call():
+   candidate=frappe.copy_doc(call);candidate.name=None;candidate.docstatus=0
+   from powerpro.controllers.automatic_overtime import CALL_FIELDS
+   for field in CALL_FIELDS+('evidence_reconciliation_enabled',):candidate.set(field,None)
+   candidate.insert(ignore_permissions=True);candidate.flags.ignore_permissions=True;candidate.submit()
+   return candidate,frappe.db.get_value('Overtime Authorization',{'overtime_work_call':candidate.name},'name')
+  with patch.object(evidence,'now_datetime',return_value=get_datetime('2026-09-16 10:00:00')):
+   from powerpro.controllers import overtime_settlement
+   auto_call,auto_name=automatic_call()
+   salaries_before=frappe.db.count('Additional Salary')
+   frappe.db.savepoint('human_night_draft')
+   human_draft=draft();human_snapshot=human_draft.evidence_snapshot
+   assert evidence.process_authorization(auto_name)=='Verified'
+   human_draft.reload();assert human_draft.docstatus==0 and human_draft.evidence_snapshot==human_snapshot
+   assert frappe.db.count('Additional Salary')==salaries_before
+   assert 'Ya existe una liquidación nocturna' in frappe.db.get_value('Overtime Authorization',auto_name,'evidence_issues')
+   frappe.db.rollback(save_point='human_night_draft')
+   settle=overtime_settlement._settle_authorization
+   def fail_after_both(*args,**kwargs):
+    settle(*args,**kwargs)
+    raise ValueError('Injected failure after both financial obligations')
+   with patch.object(overtime_settlement,'_settle_authorization',side_effect=fail_after_both):
+    assert evidence.process_authorization(auto_name)=='Verified'
+   failed=frappe.get_doc('Overtime Authorization',auto_name)
+   assert failed.verified_hours==1 and not failed.evidence_settlement_ready
+   assert 'Injected failure' in failed.evidence_issues
+   assert frappe.db.count('Additional Salary')==salaries_before
+   assert frappe.db.count(DT,{'employee':employee.name,'docstatus':1})==0
+   assert evidence.process_authorization(auto_name)=='Frozen'
+   automatic=frappe.get_doc('Overtime Authorization',auto_name)
+   automatic_night=frappe.get_doc(DT,frappe.parse_json(automatic.evidence_snapshot)['ordinary_night_settlement']['name'])
+   assert automatic_night.settlement_amount==15 and automatic.settlement_amount==150
+   assert automatic.name in automatic_night.review_reference
+   assert frappe.db.count('Additional Salary')==salaries_before+3
+   assert evidence.process_authorization(auto_name)=='Frozen'
+   assert frappe.db.count('Additional Salary')==salaries_before+3
+   auto_call.reload();auto_call.flags.ignore_permissions=True;auto_call.cancel()
+   automatic_night.reload();automatic_night.flags.ignore_permissions=True;automatic_night.cancel()
+   # The opt-in can also resume a complete-session HR declaration, preserving it.
+   frappe.db.set_single_value('DGII Payroll Settings','enable_manual_overtime_verification',1)
+   last.reload();last.skip_auto_attendance=1;last.save(ignore_permissions=True)
+   declared_call,declared_name=automatic_call()
+   from powerpro.controllers import checkin_overtime_review as review
+   declaration={'full_session':True,'reference':'DEV automatic night with certified session',
+       'intervals':[{'start':'2026-09-14 18:00:00','end':'2026-09-14 23:00:00'}]}
+   preview=review.preview_review(declared_name,'DEV certified complete session',manual_declaration=declaration)
+   review.apply_review(declared_name,'DEV certified complete session',preview['token'],manual_declaration=declaration)
+   assert evidence.process_authorization(declared_name)=='Frozen'
+   declared=frappe.get_doc('Overtime Authorization',declared_name)
+   declared_night=frappe.get_doc(DT,frappe.parse_json(declared.evidence_snapshot)['ordinary_night_settlement']['name'])
+   assert declared.reconciliation_source=='Manual Verification'
+   assert frappe.parse_json(declared_night.evidence_snapshot)['input']['certified_session']['authorization']==declared_name
+   assert declared_night.settlement_amount==15 and declared.settlement_amount==150
+  frappe.db.rollback(save_point='automatic_night_case');policy.reload();last.reload()
+  print('NIGHT_AUTOMATIC_ACCEPTANCE: explicit approved policy plus enrolled auto authorization creates both obligations, failure reverses both and preserves hours, retry once, HR declaration retained')
   # Missing/invalid exit: certify once through the real HR review API, then
   # reuse it for ordinary night and resume the pending OT without changing source.
   frappe.db.set_single_value('DGII Payroll Settings','enable_manual_overtime_verification',1)

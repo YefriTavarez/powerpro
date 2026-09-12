@@ -12,6 +12,7 @@ from powerpro.payroll_rules.manual_overtime import verification_roles
 
 DT = 'Ordinary Night Settlement'
 FINAL = {'Created', 'Payroll Submitted', 'Paid', 'Credited'}
+COVERAGE_PENDING = 'La jornada contiene recargo nocturno fuera de la autorización; complete su liquidación ordinaria independiente.'
 
 
 def check_role():
@@ -150,6 +151,47 @@ def coverage_for_authorization(auth, result, *, for_update=False):
     if abs(flt(fresh['ordinary_hours'])-flt(result['night_session']['ordinary_premium_hours']))>.0001:return None
     if not _get_linked_additional_salaries(doc,docstatus=1,for_update=for_update):return None
     return {'name':doc.name,'input_hash':fresh['input_hash'],'ordinary_hours':fresh['ordinary_hours']}
+
+
+def automatic_coverage_allowed(auth, result):
+    """Operational opt-in stays outside the frozen mathematical policy snapshot."""
+    from frappe.utils import cint
+    policy=(result.get('input') or {}).get('pay_policy') or {}
+    return bool(auth.evidence_enrolled and auth.evidence_auto_settle and result['state']=='Verified'
+        and result.get('night_session',{}).get('ordinary_premium_hours')
+        and not result.get('ordinary_night_settlement')
+        and result.get('settlement_blockers')==[COVERAGE_PENDING]
+        and policy.get('name') and cint(frappe.db.get_value('Overtime Pay Policy',
+            {'name':policy['name'],'docstatus':1},'auto_ordinary_night')))
+
+
+def create_automatic_coverage(auth, result):
+    """Caller owns Call->Employee->Authorization locks and a financial savepoint."""
+    from powerpro.controllers.checkin_overtime import _evidence_hash
+    if not automatic_coverage_allowed(auth,result):
+        frappe.throw(_('La política y la autorización no habilitan esta liquidación nocturna automática.'))
+    saved=frappe.parse_json(auth.evidence_snapshot or '{}')
+    if not saved.get('input_hash') or saved['input_hash']!=result.get('input_hash'):
+        frappe.throw(_('Guarde primero la evidencia verificada de la autorización.'))
+    existing=_reconciliation_rows(DT,for_update=True,
+        filters={'employee':auth.employee,'work_date':auth.work_date,'docstatus':['<',2]},
+        fields=['name','docstatus'],limit=2)
+    if existing:
+        frappe.throw(_('Ya existe una liquidación nocturna para revisar o reutilizar: {0}.').format(', '.join(r.name for r in existing)))
+    if not auth.auto_payroll_date:
+        frappe.throw(_('Falta la fecha de nómina del recargo nocturno ordinario.'))
+    doc=frappe.get_doc({'doctype':DT,'employee':auth.employee,'work_date':auth.work_date,
+        'settlement_payroll_date':auth.auto_payroll_date,
+        'review_reference':_('Automática desde {0}; política {1}; evidencia {2}.').format(
+            auth.name,result['input']['pay_policy']['name'],result['input_hash'])})
+    preview=build_preview(doc,for_update=True)
+    if (preview['state']!='Verified' or preview['amount']<=0
+            or _evidence_hash(preview['worked_intervals'])!=_evidence_hash(result.get('worked_intervals'))
+            or abs(flt(preview['ordinary_hours'])-flt(result['night_session']['ordinary_premium_hours']))>.0001
+            or preview['input']['policy']['name']!=result['input']['pay_policy']['name']):
+        frappe.throw(_('La evidencia nocturna no coincide con la jornada verificada de la autorización.'))
+    doc.insert();doc.submit()
+    return doc
 
 
 @frappe.whitelist()

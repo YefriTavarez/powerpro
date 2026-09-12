@@ -88,7 +88,7 @@ def enroll_call(call):
     for name in names:
         doc,_call=_lock(name)
         enroll_authorization(doc,auto_settle=call.get('evidence_auto_settle'))
-        if call.get('evidence_auto_settle') and call.planned_settlement=='Cash':
+        if call.get('evidence_auto_settle'):
             from powerpro.controllers.automatic_overtime import _payroll_date
             doc.db_set('auto_payroll_date',_payroll_date(call,doc.work_date,_settings().get('overtime_auto_payroll_date_policy') or 'Work Date'))
     call.db_set('evidence_reconciliation_enabled',1)
@@ -198,11 +198,11 @@ def build_result(doc,*,for_update=False,use_saved_review=True,manual_declaration
             if policy['night_basis']=='Whole nocturnal session' and night['classification']=='Nocturna':
                 for segment in result['calculation']['segments']:segment['night_hours']=segment['verified_hours']
             if night['ordinary_premium_hours']:
-                from powerpro.controllers.ordinary_night import coverage_for_authorization
+                from powerpro.controllers.ordinary_night import coverage_for_authorization,COVERAGE_PENDING
                 coverage=coverage_for_authorization(doc,result,for_update=for_update)
                 result['ordinary_night_settlement']=coverage
                 if not coverage:
-                    blockers.append('La jornada contiene recargo nocturno fuera de la autorización; complete su liquidación ordinaria independiente.')
+                    blockers.append(COVERAGE_PENDING)
         if any(segment['classification']=='Legal Holiday on Weekly Rest' for segment in result['calculation']['segments']):
             blockers.append('La coincidencia de feriado y descanso semanal requiere una regla conjunta aprobada e implementada.')
     result['input_hash']=_evidence_hash(data)
@@ -287,15 +287,26 @@ def process_authorization(name):
         values['reconciliation_status']='Scheduled' if result['state']=='Waiting' else 'Check-in Issue'
     doc.db_set(values)
     _sync(call)
-    if result['settlement_ready'] and doc.get('evidence_auto_settle'):
+    from powerpro.controllers.ordinary_night import automatic_coverage_allowed,create_automatic_coverage
+    auto_night=automatic_coverage_allowed(doc,result)
+    if doc.get('evidence_auto_settle') and (result['settlement_ready'] or auto_night):
         frappe.db.savepoint('checkin_cash_settlement')
         try:
+            if auto_night:
+                create_automatic_coverage(doc,result)
+                ready=build_result(doc,for_update=True)
+                if (not ready['settlement_ready'] or ready['input_hash']!=result['input_hash']
+                        or _evidence_hash(ready.get('snapshot'))!=_evidence_hash(result.get('snapshot'))):
+                    frappe.throw(_('La evidencia cambió al completar la cobertura nocturna.'))
+                doc.db_set({'evidence_snapshot':_json(ready),'evidence_settlement_ready':1,'evidence_issues':_json(ready['issues'])})
+                _audit(doc,ready)
             from powerpro.controllers.overtime_settlement import _settle_authorization
             _settle_authorization(doc,payroll_date=doc.auto_payroll_date,settings=_settings())
             doc.db_set({'evidence_status':'Frozen','evidence_retry_after':None})
             return 'Frozen'
         except Exception as exc:
             frappe.db.rollback(save_point='checkin_cash_settlement')
+            doc.reload()
             doc.db_set('evidence_issues',_json(visible_issues+[{'code':'settlement_error','scope':'settlement','message':str(exc)[:1500]}]))
     return result['state']
 
