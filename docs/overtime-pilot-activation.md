@@ -26,7 +26,7 @@ No se propone asignar `System Manager` a Gestión Humana. El permiso para verifi
 2. Alcance: operador, empleados, autorizaciones nuevas y fechas concretas. Finanzas dentro de su ámbito actual es la opción que requiere menos cambios de acceso.
 3. Sesión: autenticación real en Desarrollo para comprobar la interfaz y los permisos del operador. Nunca compartir contraseñas en documentos o mensajes.
 
-Faltan empleado/fecha y responsable de revisión de la muestra operativa. Se pidió esa información al usuario. Las reglas matemáticas confirmadas no se vuelven a tratar como una decisión pendiente. La autenticación efectiva del operador se comprobará durante el recorrido; no fabricar sesiones ni credenciales.
+Se preparó una muestra histórica concreta de tres fechas mediante el script descrito en `overtime-real-sample.md`. Falta la revisión del operador y delimitar las autorizaciones nuevas del piloto. Las reglas matemáticas confirmadas no se vuelven a tratar como una decisión pendiente. La autenticación efectiva del operador se comprobará durante el recorrido; no fabricar sesiones ni credenciales.
 
 ## Secuencia y evidencia de aceptación
 
@@ -68,3 +68,5 @@ Al verificar el código basado en `237748b` de Desarrollo: no hay políticas pub
 La prueba nativa de Dietas volvió a pasar con las cuentas existentes de Finanzas (dos empleados elegibles en su alcance) y Gestión Humana (57), sin ampliar roles. Inserción sin ignore_permissions, vínculos de horas extra vacíos, lectura/listado, protección de estados y duplicados; todo revertido. Esto demuestra permisos de servidor, no una sesión HTTP con esas cuentas.
 
 El job puntual `igcaribe.fortabs.com::overtime-dev-probe-73d4ddd66265425ea5616a149185f780` terminó finished/ok=true en worker `88ce6141638340e2890a486a203070e1`. Diez firmas de código/archivo coincidieron, incluidos política, pago híbrido e inclusión en nómina. Ejemplos sintéticos con base salarial cubierta: efectivo115 o215 según opción; pago feriado115 junto al descanso. El diagnóstico prohíbe escrituras SQL, commit, correo y nuevas colas. No crea créditos ni demuestra un piloto financiero en background; las pruebas nativas de esas operaciones permanecen separadas.
+
+La simulación posterior de tres días de julio encontró las 14 marcas excluidas y la sincronización del turno sin completar. Las variantes hipotéticas mantienen los datos originales y no certifican trabajo. Dos días con IN consecutivos quedan en revisión en ambas reglas de dirección. El empleado de la muestra no está en el ámbito actual de Finanzas; revisar con un operador ya autorizado o seleccionar otra muestra, sin ampliar roles automáticamente. Se generó el informe; no se registró aceptación del operador ni se activó el piloto.
