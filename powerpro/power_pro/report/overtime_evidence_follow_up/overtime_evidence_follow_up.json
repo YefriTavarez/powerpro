@@ -1,0 +1,18 @@
+{
+ "doctype": "Report",
+ "name": "Overtime Evidence Follow Up",
+ "report_name": "Overtime Evidence Follow Up",
+ "module": "Power Pro",
+ "ref_doctype": "Overtime Evidence Watch",
+ "report_type": "Script Report",
+ "is_standard": "Yes",
+ "disabled": 0,
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "HR Manager"
+  }
+ ]
+}

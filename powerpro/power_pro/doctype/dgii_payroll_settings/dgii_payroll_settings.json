@@ -60,7 +60,8 @@
   "overtime_auto_payroll_date_policy",
   "checkin_overtime_section",
   "enable_checkin_overtime_reconciliation",
-  "checkin_overtime_effective_from"
+  "checkin_overtime_effective_from",
+  "enable_overtime_evidence_monitor"
  ],
  "fields": [
   {
@@ -415,6 +416,13 @@
    "fieldtype": "Date",
    "label": "Procesar marcaciones desde",
    "description": "Solo autoriza inscripciones nuevas desde esta fecha. No convierte las convocatorias antiguas de asistencia presumida."
+  },
+  {
+   "fieldname": "enable_overtime_evidence_monitor",
+   "fieldtype": "Check",
+   "label": "Vigilar cambios en evidencia de horas extras",
+   "default": "0",
+   "description": "Comprueba evidencia inscrita, ajustes retroactivos y nocturnidad. Crea seguimiento; no modifica horas aprobadas, pagos ni licencias. Sigue disponible aunque se pause la creación de pagos."
   }
  ],
  "index_web_pages_for_search": 1,

@@ -1,0 +1,170 @@
+{
+ "doctype": "DocType",
+ "name": "Overtime Evidence Watch",
+ "module": "Power Pro",
+ "autoname": "hash",
+ "engine": "InnoDB",
+ "track_changes": 1,
+ "fields": [
+  {
+   "fieldname": "source_type",
+   "label": "Tipo de origen",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_name",
+   "label": "Documento de origen",
+   "fieldtype": "Dynamic Link",
+   "read_only": 1,
+   "options": "source_type",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "employee",
+   "label": "Empleado",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Employee",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "company",
+   "label": "Empresa",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Company"
+  },
+  {
+   "fieldname": "work_date",
+   "label": "Fecha de trabajo",
+   "fieldtype": "Date",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "label": "Estado",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Current\nWaiting\nNeeds Review\nError",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "responsible",
+   "label": "Responsable",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "summary",
+   "label": "Resultado",
+   "fieldtype": "Small Text",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "settlement_status",
+   "label": "Estado de liquidación",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stored_hours",
+   "label": "Horas guardadas",
+   "fieldtype": "Float",
+   "read_only": 1,
+   "precision": "4"
+  },
+  {
+   "fieldname": "current_hours",
+   "label": "Horas calculadas ahora",
+   "fieldtype": "Float",
+   "read_only": 1,
+   "precision": "4"
+  },
+  {
+   "fieldname": "checked_on",
+   "label": "Última comprobación",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "changed_on",
+   "label": "Último cambio detectado",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stored_hash",
+   "label": "Huella guardada",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_hash",
+   "label": "Huella actual",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issues",
+   "label": "Incidencias",
+   "fieldtype": "Code",
+   "read_only": 1,
+   "options": "JSON"
+  },
+  {
+   "fieldname": "dependencies",
+   "label": "Documentos dependientes",
+   "fieldtype": "Code",
+   "read_only": 1,
+   "options": "JSON"
+  },
+  {
+   "fieldname": "source_key",
+   "label": "Identidad del origen",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "unique": 1,
+   "hidden": 1,
+   "no_copy": 1
+  }
+ ],
+ "field_order": [
+  "source_type",
+  "source_name",
+  "employee",
+  "company",
+  "work_date",
+  "status",
+  "responsible",
+  "summary",
+  "settlement_status",
+  "stored_hours",
+  "current_hours",
+  "checked_on",
+  "changed_on",
+  "stored_hash",
+  "current_hash",
+  "issues",
+  "dependencies",
+  "source_key"
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "report": 1
+  }
+ ]
+}
