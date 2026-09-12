@@ -24,5 +24,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  ctx.powerpro.checkin_overtime.review(frm);requested({reason:'Retroactive correction'});await Promise.resolve();
  assert.equal(calls[4].args.source_type,'Retroactive Overtime Adjustment');
  dialogs[2].primary_action();await Promise.resolve();assert.equal(calls[5].args.source_type,'Retroactive Overtime Adjustment');assert.equal(calls[5].args.authorization,'AJUSTE');
+ frm.doc.docstatus=2;preview.historical_only=true;preview.worked_hours_before=11;preview.worked_hours_after=10;
+ ctx.powerpro.checkin_overtime.review(frm);requested({reason:'Historical physical correction'});await Promise.resolve();
+ assert.equal(calls[6].method,'powerpro.controllers.overtime_history.preview_review');assert(dialogs[3].fields[0].options.includes('Sin cambios'));
+ dialogs[3].primary_action();await Promise.resolve();assert.equal(calls[7].method,'powerpro.controllers.overtime_history.apply_review');
+ const historicalButtons=[];frm.add_custom_button=(label,fn)=>historicalButtons.push({label,fn});
+ preview.applicable=true;preview.can_review=true;preview.manual_review_allowed=true;
+ ctx.powerpro.checkin_overtime.add_history_actions(frm);await Promise.resolve();
+ assert(historicalButtons.some(b=>b.label==='Revisar trabajo histórico'));assert(historicalButtons.some(b=>b.label==='Declarar jornada histórica'));
  console.log('HR review UI: required reason, escaped preview, before/after amount, dirty guards and explicit token-bound POST passed.');
 })().catch(e=>{console.error(e);process.exitCode=1});

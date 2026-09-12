@@ -64,6 +64,13 @@
    "fieldname": "evaluated_on",
    "fieldtype": "Datetime",
    "label": "Evaluado el"
+  },
+  {
+   "fieldname": "history_sequence",
+   "fieldtype": "Int",
+   "label": "Revisión histórica",
+   "read_only": 1,
+   "no_copy": 1
   }
  ],
  "field_order": [
@@ -76,7 +83,8 @@
   "evidence",
   "issues",
   "evaluated_by",
-  "evaluated_on"
+  "evaluated_on",
+  "history_sequence"
  ],
  "permissions": [
   {

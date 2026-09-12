@@ -89,6 +89,20 @@ def _evaluate(doc):
         'settlement_status':doc.settlement_status,'dependencies':evidence._json(_dependencies(doc))}
     if doc.doctype==NIGHT and doc.docstatus==2:
         return {**values,'status':'Current','summary':_('La liquidación nocturna está cancelada.'),'issues':'[]'}
+    if doc.docstatus==2:
+        from powerpro.controllers.overtime_history import compare
+        from powerpro.controllers.checkin_overtime import _evidence_hash
+        history=compare(doc,for_update=True);current=history['current'];saved=history['saved']
+        issues=list(current['issues'])
+        if history['revision']:issues.append({'code':'historical_evidence_revision','revision':history['revision'].name,'severity':'information'})
+        if not history['matches']:issues.insert(0,{'code':'cancelled_physical_evidence_changed','message':_('Revise la evidencia física histórica del origen cancelado.')})
+        from powerpro.controllers.overtime_history import physical_input
+        return {**values,'stored_hash':_evidence_hash(physical_input(saved)),'current_hash':current['input_hash'],
+            'stored_hours':flt((saved.get('snapshot') or {}).get('verified_hours')),
+            'current_hours':flt((current.get('snapshot') or {}).get('verified_hours')),
+            'status':'Current' if history['matches'] else 'Needs Review',
+            'summary':_('La evidencia física histórica sigue vigente; la liquidación permanece cancelada.') if history['matches'] else _('Gestión Humana debe revisar el trabajo histórico y sus dependencias.'),
+            'issues':evidence._json(issues)}
     try:
         if doc.doctype==NIGHT:
             from powerpro.controllers.ordinary_night import build_preview

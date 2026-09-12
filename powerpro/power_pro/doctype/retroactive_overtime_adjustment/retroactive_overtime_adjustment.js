@@ -412,6 +412,9 @@ function show_retroactive_reconciliation(result) {
 
 
 function add_evidence_actions(frm) {
+    if (frm.doc.docstatus === 2 && frm.doc.reconciliation_engine === 'Verified Checkins') {
+        return frappe.require('/assets/powerpro/js/checkin_overtime.js', () => powerpro.checkin_overtime.add_history_actions(frm));
+    }
 	if (frm.doc.docstatus !== 1 || frm.doc.reconciliation_engine !== 'Verified Checkins') return;
 	frappe.call({method: 'powerpro.controllers.retroactive_evidence.get_status', args: {adjustment: frm.doc.name}}).then(r => {
 		const state = r.message || {};

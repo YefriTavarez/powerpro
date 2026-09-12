@@ -49,7 +49,11 @@ def _access(doc,manual_declaration=None):
 
 
 def _dependencies(doc, *, for_update=False):
-    day=getdate(doc.work_date);last=day+timedelta(days=6-day.weekday())
+    day=getdate(doc.work_date)
+    saved=frappe.parse_json(doc.get('evidence_snapshot') or '{}')
+    context=next((r for r in saved.get('input',{}).get('contexts',[]) if r.get('date')==str(day)),{})
+    end=max(day,getdate(doc.authorization_end),getdate(context.get('shift_end') or doc.authorization_end))
+    last=end+timedelta(days=6-end.weekday())
     found=[]
     for dt in ['Overtime Authorization','Retroactive Overtime Adjustment']:
         rows=_reconciliation_rows(dt,for_update=for_update,filters=[['employee','=',doc.employee],['docstatus','=',1],

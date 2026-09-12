@@ -64,6 +64,16 @@ def load_week(doc,employee,assignments,*,for_update=False):
     from powerpro.controllers.checkin_overtime import _data,_evidence_hash,now_datetime
     from powerpro.payroll_rules.overtime_evidence import evaluate_evidence
     for prior in previous:
+        if prior.docstatus==2:
+            from powerpro.controllers.overtime_history import compare
+            history=compare(frappe.get_doc(prior.source_type,prior.name,for_update=for_update),for_update=for_update)
+            if not history['matches']:
+                issues.append({'code':'weekly_previous_snapshot_changed','authorization':prior.name,'source_type':prior.source_type});continue
+            fresh=history['current']
+            certified_sessions.extend(fresh.get('certified_sessions',[]))
+            historical_intervals.extend(fresh['worked_intervals'])
+            historical_checkins.extend(name for session in fresh['sessions'] for name in session['checkins'])
+            continue
         saved=frappe.parse_json(prior.evidence_snapshot or '{}')
         declaration=(saved.get('review') or {}).get('manual_declaration')
         if prior.reconciliation_source!='Employee Checkin' and not (prior.reconciliation_source=='Manual Verification' and declaration):
