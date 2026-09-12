@@ -1,7 +1,7 @@
 """DEV-only independent connections with stale snapshots and contended employee locks.
 
-Commits uniquely owned fixtures, then removes only those documents. Global flags
-remain off; workers opt in only in memory. Never run on a production site.
+Commits uniquely owned fixtures, then removes only those documents. Global evidence reconciliation
+remains off; workers opt in only in memory. Never run on a production site.
 """
 import json
 import os
@@ -19,7 +19,7 @@ frappe.init(site=SITE)
 frappe.connect()
 frappe.set_user('Administrator')
 assert frappe.local.site == SITE and frappe.conf.developer_mode
-from powerpro.controllers import checkin_overtime as evidence, overtime_rest as rest, overtime_compensatory_settlement as bank
+from powerpro.controllers import checkin_overtime as evidence, overtime_rest as rest, overtime_compensatory_settlement as bank, retroactive_evidence as retro
 
 
 def forbidden(*args, **kwargs):
@@ -41,6 +41,8 @@ def wait_for(path):
         time.sleep(.02)
 
 
+from powerpro.power_pro.doctype.retroactive_overtime_adjustment import retroactive_overtime_adjustment as retro_controller
+MIXED = os.environ.get('REST_BANK_MIXED') == '1'
 get_single, get_single_value = frappe.get_single, frappe.db.get_single_value
 
 def settings(dt, *args, **kwargs):
@@ -49,6 +51,10 @@ def settings(dt, *args, **kwargs):
         doc.enable_checkin_overtime_reconciliation = 1
         doc.checkin_overtime_effective_from = '2026-09-01'
         doc.enable_overtime_compensatory_settlement = 1
+        doc.enable_retroactive_overtime_adjustment = 1
+        doc.retroactive_overtime_from_date = '2026-09-01'
+        doc.retroactive_overtime_to_date = '2026-09-30'
+        doc.retroactive_overtime_submission_deadline = '2026-09-30'
     if dt == 'HR Settings':
         doc.send_leave_notification = 0
     return doc
@@ -59,6 +65,12 @@ def setting(dt, field, *args, **kwargs):
             return 1
         if field == 'checkin_overtime_effective_from':
             return '2026-09-01'
+        if field == 'enable_retroactive_overtime_adjustment':
+            return 1
+        if field == 'retroactive_overtime_from_date':
+            return '2026-09-01'
+        if field in ['retroactive_overtime_to_date','retroactive_overtime_submission_deadline']:
+            return '2026-09-30'
     if dt == 'HR Settings' and field == 'send_leave_notification':
         return 0
     return get_single_value(dt, field, *args, **kwargs)
@@ -67,11 +79,12 @@ settings_before = {dt: frappe.db.get_singles_dict(dt) for dt in ['DGII Payroll S
 frappe.get_single, frappe.db.get_single_value = settings, setting
 evidence.now_datetime = rest.now_datetime = lambda: get_datetime('2026-09-20 10:00:00')
 rest.now_datetime = lambda: get_datetime('2026-09-24 10:00:00')
+retro.now_datetime = retro_controller.now_datetime = evidence.now_datetime
 
 if len(sys.argv) > 1:
     payload, action, barrier, slot = sys.argv[1:]
     data = json.loads(payload)
-    ref = frappe.get_doc('Overtime Authorization', data['auth'])
+    ref = frappe.get_doc(data.get('source_type', 'Overtime Authorization'), data['auth'])
     assert ref.employee.startswith('REST-BANK-RACE-DEV-')
     frappe.db.count('Overtime Compensatory Credit')
     frappe.db.count('Overtime Settlement Election')
@@ -80,7 +93,7 @@ if len(sys.argv) > 1:
 
     def lock_probe(doctype, *args, **kwargs):
         global intercepted
-        first = doctype == 'Employee' and kwargs.get('for_update') and not intercepted
+        first = doctype == data.get('mutex_doctype', 'Employee') and kwargs.get('for_update') and not intercepted
         if first:
             intercepted = True
             Path(barrier + '.' + slot + '.attempt').touch()
@@ -96,7 +109,12 @@ if len(sys.argv) > 1:
     wait_for(barrier + '.' + slot + '.go')
     try:
         if action == 'settle':
-            result = {'status': evidence.process_authorization(ref.name)}
+            if ref.doctype == retro.DT:
+                result = retro.create_compensatory_settlement(ref.name)
+                assert result['settlement_status'] == 'Credited', result
+                result = {'status': 'Frozen', 'source_type': retro.DT}
+            else:
+                result = {'status': evidence.process_authorization(ref.name)}
         elif action == 'link':
             result = rest.link_leave(data['election'], data['leave'])
         elif action == 'cancel_leave':
@@ -112,7 +130,7 @@ if len(sys.argv) > 1:
             result = rest.confirm_enjoyment(election.name, election.planned_start, election.planned_end,
                 ref.employee + ' synthetic enjoyment verification')
         else:
-            doc, call = rest._lock_source(ref.name)
+            doc = frappe.get_doc(ref.doctype, ref.name)
             doc.cancel()
             result = {'status': 'Cancelled'}
         frappe.db.commit()
@@ -127,7 +145,7 @@ if len(sys.argv) > 1:
     raise SystemExit()
 
 types = ['Employee', 'Shift Type', 'Employee Checkin', 'Salary Structure Assignment', 'Overtime Pay Policy',
-    'Overtime Work Call', 'Overtime Authorization', 'Overtime Settlement Election', 'Overtime Compensatory Credit', 'Additional Salary', 'Leave Period', 'Leave Allocation', 'Leave Application', 'Leave Ledger Entry', 'Attendance',
+    'Overtime Work Call', 'Overtime Authorization', 'Retroactive Overtime Adjustment', 'Overtime Settlement Election', 'Overtime Compensatory Credit', 'Additional Salary', 'Leave Period', 'Leave Allocation', 'Leave Application', 'Leave Ledger Entry', 'Attendance',
     'Overtime Reconciliation Run', 'Salary Slip', 'Error Log', 'Notification Log', 'Version', 'Comment']
 baseline = {dt: frappe.db.count(dt) for dt in types}
 prefix = 'REST-BANK-RACE-DEV-' + uuid.uuid4().hex[:10]
@@ -158,7 +176,7 @@ def race(schedules, actions):
     stage(barrier + '.holder.locked')
     Path(barrier + '.waiter.go').touch()
     stage(barrier + '.waiter.attempt')
-    # The holder still owns the employee lock when the second connection asks for it.
+    # The holder still owns the shared lock when the second connection asks for it.
     assert not Path(barrier + '.waiter.locked').exists()
     Path(barrier + '.release').touch()
     results = []
@@ -186,6 +204,7 @@ try:
     employee.name, employee.employee_name, employee.docstatus = employee_name, 'DEV Rest Concurrent', 0
     employee.user_id = employee.company_email = employee.personal_email = None
     employee.default_shift, employee.status = shift.name, 'Active'
+    employee.overtime_approver = 'Administrator'
     employee.db_insert()
     owned.append((employee.doctype, employee.name))
     name = frappe.get_all('Salary Structure Assignment', filters={'employee': base.employee, 'docstatus': 1},
@@ -217,30 +236,43 @@ try:
             owned.append((punch.doctype, punch.name))
 
     def source(day, hours, rest_start, rest_end):
-        call = frappe.copy_doc(frappe.get_doc('Overtime Work Call', 'CONV-HE-2026-00004-1'))
-        call.name, call.docstatus = None, 0
-        call.company, call.from_date, call.to_date = employee.company, f'2026-09-{day}', f'2026-09-{day}'
-        call.planned_settlement, call.automation_mode = 'Compensatory Rest', 'Verified Checkins'
-        call.evidence_auto_settle = 1
-        call.set('employees', [])
-        call.append('employees', {'employee': employee.name})
-        call.set('dates', [])
-        call.append('dates', {'work_date': f'2026-09-{day}', 'start_time': '18:00:00',
-            'end_time': f'{18+hours}:00:00', 'requested_hours': hours})
-        call.insert()
-        owned.append((call.doctype, call.name))
-        call.submit()
-        name = frappe.db.get_value('Overtime Authorization', {'overtime_work_call': call.name}, 'name')
-        owned.append(('Overtime Authorization', name))
-        result = evidence.process_authorization(name)
-        assert result == 'Verified', (result, frappe.db.get_value('Overtime Authorization', name, 'evidence_issues'))
-        election = frappe.get_doc({'doctype': 'Overtime Settlement Election', 'authorization': name,
+        source_type = retro.DT if MIXED and day == 15 else 'Overtime Authorization'
+        if source_type == retro.DT:
+            doc = frappe.get_doc({'doctype': retro.DT, 'employee': employee.name, 'work_date': f'2026-09-{day}',
+                'authorization_start': f'2026-09-{day} 18:00:00', 'authorization_end': f'2026-09-{day} {18+hours}:00:00',
+                'maximum_hours': hours, 'reason': prefix, 'exception_justification': prefix + ' synthetic historical exception',
+                'planned_settlement': 'Compensatory Rest', 'settlement_payroll_date': '2026-09-20',
+                'reconciliation_engine': retro.ENGINE})
+            doc.insert()
+            owned.append((doc.doctype, doc.name))
+            doc.submit()
+            name = doc.name
+            assert doc.evidence_status == 'Verified', doc.evidence_issues
+        else:
+            call = frappe.copy_doc(frappe.get_doc('Overtime Work Call', 'CONV-HE-2026-00004-1'))
+            call.name, call.docstatus = None, 0
+            call.company, call.from_date, call.to_date = employee.company, f'2026-09-{day}', f'2026-09-{day}'
+            call.planned_settlement, call.automation_mode = 'Compensatory Rest', 'Verified Checkins'
+            call.evidence_auto_settle = 1
+            call.set('employees', [])
+            call.append('employees', {'employee': employee.name})
+            call.set('dates', [])
+            call.append('dates', {'work_date': f'2026-09-{day}', 'start_time': '18:00:00',
+                'end_time': f'{18+hours}:00:00', 'requested_hours': hours})
+            call.insert()
+            owned.append((call.doctype, call.name))
+            call.submit()
+            name = frappe.db.get_value('Overtime Authorization', {'overtime_work_call': call.name}, 'name')
+            owned.append(('Overtime Authorization', name))
+            result = evidence.process_authorization(name)
+            assert result == 'Verified', (result, frappe.db.get_value('Overtime Authorization', name, 'evidence_issues'))
+        election = frappe.get_doc({'doctype': 'Overtime Settlement Election', ('retroactive_adjustment' if source_type == retro.DT else 'authorization'): name,
             'choice': 'Compensatory Rest', 'employee_reference': prefix,
             'planned_start': '2026-09-22 ' + rest_start, 'planned_end': '2026-09-22 ' + rest_end})
         election.insert()
         owned.append((election.doctype, election.name))
         rest.approve_election(election.name)
-        return {'auth': name, 'election': election.name}
+        return {'auth': name, 'election': election.name, 'source_type': source_type}
 
     a = source(14, 2, '08:00:00', '10:00:00')
     b = source(15, 3, '10:00:00', '13:00:00')
@@ -292,7 +324,7 @@ try:
     print('Concurrent enjoyment confirmation prevents cancellation of its backing leave', flush=True)
 
     # Neither a cancellation nor its released election may survive a failed reversal.
-    doc, _ = rest._lock_source(a['auth'])
+    doc = frappe.get_doc('Overtime Authorization', a['auth'])
     try:
         doc.cancel()
     except frappe.ValidationError:
@@ -315,7 +347,21 @@ try:
     assert frappe.db.get_value('Overtime Compensatory Credit', first.name, 'reversed_days') == .5
     assert frappe.db.get_value('Overtime Settlement Election', a['election'], 'status') == 'Cancelled'
     assert not frappe.db.count('Additional Salary', {'employee':employee.name})
-    print('REST_BANK_RACES_PASS: leave cancellation then residual-source reversal finds shared allocation, restores zero days and three residual hours')
+    if MIXED:
+        results = race([b,b], ['link','cancel'])
+        assert [r['status'] for r in results] == ['Rejected','Cancelled'], results
+        assert frappe.db.get_value(retro.DT, b['auth'], 'docstatus') == 2
+        assert frappe.db.get_value('Overtime Settlement Election', b['election'], 'status') == 'Cancelled'
+        assert bank._get_bank_totals(employee.name,employee.company,leave_type,period.name) == {'active_hours':0,'effective_days':0}
+        print('MIXED_SOURCE_BANK_PASS: native Authorization and Retroactive claims share one bank; native cancellations release both claims and leave zero balance', flush=True)
+    else:
+        same_call = {**b, 'mutex_doctype': 'Overtime Work Call'}
+        results = race([same_call,same_call], ['settle','cancel'])
+        assert [r['status'] for r in results] == ['Frozen','Cancelled'], results
+        assert frappe.db.get_value('Overtime Authorization', b['auth'], 'docstatus') == 2
+        assert bank._get_bank_totals(employee.name,employee.company,leave_type,period.name) == {'active_hours':0,'effective_days':0}
+        print('Native authorization cancellation serializes with its settlement service on the same Work Call', flush=True)
+    print('REST_BANK_RACES_PASS: intermediate residual reversal preserved three hours; final source cancellation leaves zero bank balance')
 finally:
     for proc in processes:
         if proc.poll() is None:

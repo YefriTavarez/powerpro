@@ -191,6 +191,8 @@ has_permission = {
 # Override standard doctype classes
 
 override_doctype_class = {
+    "Overtime Authorization": "powerpro.controllers.overtime_source_cancellation.LockedOvertimeAuthorization",
+    "Retroactive Overtime Adjustment": "powerpro.controllers.overtime_source_cancellation.LockedRetroactiveOvertimeAdjustment",
     "Leave Application": "powerpro.controllers.overtime_leave_application.OvertimeLeaveApplication",
     "Leave Allocation": "powerpro.controllers.overtime_leave_allocation.OvertimeLeaveAllocation",
     "Quality Procedure": "powerpro.controllers.quality_procedure.QualityProcedure",
