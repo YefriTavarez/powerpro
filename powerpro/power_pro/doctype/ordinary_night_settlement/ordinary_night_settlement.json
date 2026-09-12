@@ -1,0 +1,206 @@
+{
+ "doctype": "DocType",
+ "name": "Ordinary Night Settlement",
+ "module": "Power Pro",
+ "engine": "InnoDB",
+ "autoname": "format:NOCT-{YYYY}-{#####}",
+ "is_submittable": 1,
+ "track_changes": 1,
+ "fields": [
+  {
+   "fieldname": "employee",
+   "label": "Empleado",
+   "fieldtype": "Link",
+   "options": "Employee",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "work_date",
+   "label": "Fecha de trabajo",
+   "fieldtype": "Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "settlement_payroll_date",
+   "label": "Fecha de nómina",
+   "fieldtype": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "label": "Empresa",
+   "fieldtype": "Link",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "shift_type",
+   "label": "Turno",
+   "fieldtype": "Link",
+   "options": "Shift Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "policy",
+   "label": "Política aprobada",
+   "fieldtype": "Link",
+   "options": "Overtime Pay Policy",
+   "read_only": 1
+  },
+  {
+   "fieldname": "review_reference",
+   "label": "Referencia de revisión",
+   "fieldtype": "Small Text",
+   "reqd": 1
+  },
+  {
+   "fieldname": "night_hours",
+   "label": "Horas nocturnas ordinarias",
+   "fieldtype": "Float",
+   "read_only": 1
+  },
+  {
+   "fieldname": "hourly_rate",
+   "label": "Tarifa por hora",
+   "fieldtype": "Float",
+   "read_only": 1
+  },
+  {
+   "fieldname": "night_percent",
+   "label": "Recargo nocturno (%)",
+   "fieldtype": "Float",
+   "read_only": 1
+  },
+  {
+   "fieldname": "settlement_amount",
+   "label": "Importe del recargo",
+   "fieldtype": "Float",
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency",
+   "label": "Moneda",
+   "fieldtype": "Link",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_status",
+   "label": "Estado de evidencia",
+   "fieldtype": "Select",
+   "options": "Verified\nWaiting\nNeeds Review",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "label": "Estado",
+   "fieldtype": "Select",
+   "options": "Draft\nApproved\nCancelled",
+   "default": "Draft",
+   "read_only": 1
+  },
+  {
+   "fieldname": "settlement_status",
+   "label": "Liquidación",
+   "fieldtype": "Select",
+   "options": "Pending\nCreated\nPayroll Submitted\nPaid\nCancelled",
+   "default": "Pending",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "additional_salary",
+   "label": "Salario adicional",
+   "fieldtype": "Link",
+   "options": "Additional Salary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "settlement_salary_slip",
+   "label": "Nómina salarial",
+   "fieldtype": "Link",
+   "options": "Salary Slip",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issues",
+   "label": "Incidencias",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_snapshot",
+   "label": "Evidencia y cálculo",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "label": "Aprobado por",
+   "fieldtype": "Link",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_on",
+   "label": "Aprobado el",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "active_claim",
+   "label": "Jornada liquidada",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "hidden": 1,
+   "unique": 1,
+   "no_copy": 1
+  }
+ ],
+ "field_order": [
+  "employee",
+  "work_date",
+  "settlement_payroll_date",
+  "company",
+  "shift_type",
+  "policy",
+  "review_reference",
+  "night_hours",
+  "hourly_rate",
+  "night_percent",
+  "settlement_amount",
+  "currency",
+  "evidence_status",
+  "status",
+  "settlement_status",
+  "additional_salary",
+  "settlement_salary_slip",
+  "issues",
+  "evidence_snapshot",
+  "approved_by",
+  "approved_on",
+  "active_claim"
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "report": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "report": 1
+  }
+ ]
+}

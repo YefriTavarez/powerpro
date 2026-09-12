@@ -19,5 +19,11 @@ powerpro.checkin_overtime.add_actions = (frm) => {
             if (message.election) frappe.set_route("Form", "Overtime Settlement Election", message.election);
             else frappe.new_doc("Overtime Settlement Election", {authorization: frm.doc.name, choice: frm.doc.planned_settlement});
         }, __("Overtime"));
+        if (enrolled && message.can_night) frm.add_custom_button(__("Nocturnidad ordinaria"), () => {
+            if (frm.is_dirty()) {frappe.msgprint(__("Guarde los cambios antes de continuar.")); return;}
+            if (message.ordinary_night) frappe.set_route("Form", "Ordinary Night Settlement", message.ordinary_night);
+            else frappe.new_doc("Ordinary Night Settlement", {employee: frm.doc.employee, work_date: frm.doc.work_date,
+                settlement_payroll_date: frm.doc.auto_payroll_date || frm.doc.work_date});
+        }, __("Overtime"));
     });
 };

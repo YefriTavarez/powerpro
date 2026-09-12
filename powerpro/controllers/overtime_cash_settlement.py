@@ -24,6 +24,7 @@ SETTLEMENT_PAID = "Paid"  # Legacy value; Salary Slip submission is not payment 
 SETTLEMENT_PAYROLL_SUBMITTED = "Payroll Submitted"
 SETTLEMENT_CANCELLED = "Cancelled"
 OVERTIME_SETTLEMENT_SOURCES = {
+	"Ordinary Night Settlement",
 	"Retroactive Overtime Adjustment",
 	"Overtime Authorization",
 }

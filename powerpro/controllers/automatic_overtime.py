@@ -449,6 +449,14 @@ def lock_payroll_inputs(slip, method=None):
     frappe.db.get_value('Employee', slip.employee, 'name', for_update=True)
     for name in refs:
         salary = frappe.get_doc('Additional Salary', name, for_update=True)
+        if salary.ref_doctype == 'Ordinary Night Settlement' and salary.ref_docname:
+            source = frappe.get_doc(salary.ref_doctype, salary.ref_docname, for_update=True)
+            if method == 'before_submit':
+                if salary.docstatus != 1 or source.docstatus != 1:
+                    frappe.throw(_('El recargo nocturno vinculado fue cancelado. Actualice esta nómina.'))
+                from powerpro.controllers.ordinary_night import validate_fresh
+                validate_fresh(source)
+            continue
         if salary.ref_doctype != AUTH or not salary.ref_docname:
             continue
         source = frappe.get_doc(AUTH, salary.ref_docname, for_update=True)

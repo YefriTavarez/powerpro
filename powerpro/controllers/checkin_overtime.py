@@ -187,7 +187,11 @@ def build_result(doc,*,for_update=False):
             if policy['night_basis']=='Whole nocturnal session' and night['classification']=='Nocturna':
                 for segment in result['calculation']['segments']:segment['night_hours']=segment['verified_hours']
             if night['ordinary_premium_hours']:
-                blockers.append('La jornada contiene recargo nocturno fuera de la autorización; complete su liquidación ordinaria independiente.')
+                from powerpro.controllers.ordinary_night import coverage_for_authorization
+                coverage=coverage_for_authorization(doc,result,for_update=for_update)
+                result['ordinary_night_settlement']=coverage
+                if not coverage:
+                    blockers.append('La jornada contiene recargo nocturno fuera de la autorización; complete su liquidación ordinaria independiente.')
         if any(segment['classification']=='Legal Holiday on Weekly Rest' for segment in result['calculation']['segments']):
             blockers.append('La coincidencia de feriado y descanso semanal requiere una regla conjunta aprobada e implementada.')
     result['input_hash']=_evidence_hash(data)
@@ -288,6 +292,10 @@ def get_status(authorization):
     from powerpro.controllers.overtime_rest import get_election
     election=get_election(doc)
     result['election']=election.name if election else None
+    result['can_night']=frappe.has_permission('Ordinary Night Settlement','create')
+    if result['can_night']:
+        result['ordinary_night']=frappe.db.get_value('Ordinary Night Settlement',
+            {'employee':doc.employee,'work_date':doc.work_date,'docstatus':1},'name')
     return result
 
 
