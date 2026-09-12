@@ -1,7 +1,8 @@
 frappe.provide('powerpro.working_time_controls');
 powerpro.working_time_controls.add_button = frm => {
     const dt=frm.doc.doctype;
-    if (frm.doc.docstatus!==1 || (dt==='Overtime Authorization' && !frm.doc.evidence_enrolled)
+    const historical=frm.doc.docstatus===2 && ['Overtime Authorization','Retroactive Overtime Adjustment'].includes(dt);
+    if ((frm.doc.docstatus!==1 && !historical) || (dt==='Overtime Authorization' && !frm.doc.evidence_enrolled)
         || (dt==='Retroactive Overtime Adjustment' && frm.doc.reconciliation_engine!=='Verified Checkins')) return;
     frm.add_custom_button(__('Controles de jornada'), () => {
         if (frm.is_dirty()) return frappe.msgprint(__('Guarde los cambios antes de consultar los controles.'));
@@ -22,7 +23,7 @@ powerpro.working_time_controls.add_button = frm => {
             frappe.call({method:'powerpro.controllers.working_time_controls.preview',args:{source_type:dt,source_name:frm.doc.name,...options},freeze:true}).then(({message:r})=>{
                 const e=v=>frappe.utils.escape_html(String(v??''));
                 const labels={daily_work:'Jornada completa',weekly_work:'Acumulado semanal',work_break:'Pausas',session_evidence:'Evidencia de jornada',quarterly_extension:'Prolongación trimestral',weekly_continuous_rest:'Descanso semanal'};
-                const states={'Review':'Requiere revisión','Within evaluated limit':'Dentro del límite evaluado','Incomplete':'Evidencia incompleta','Applicability review':'Revisar aplicabilidad','Documented regime required':'Verificar régimen documentado','Enjoyment unverified':'Disfrute no verificado'};
+                const states={'Review':'Requiere revisión','Within evaluated limit':'Dentro del límite evaluado','Incomplete':'Evidencia incompleta','Applicability review':'Revisar aplicabilidad','Documented regime required':'Verificar régimen documentado','Enjoyment unverified':'Disfrute no verificado','Historical review required':'Requiere revisión histórica'};
                 const html=`<p>${__('Evaluación de controles; conserva las horas y los pagos. El régimen seleccionado requiere confirmar su aplicabilidad.')}</p>
                     <p>${e(values.profile)} · ${e(r.reference)}</p><p>${e(values.break_rule)} · ${e(values.quarterly_basis)}</p><div style="overflow-x:auto"><table class="table table-bordered"><thead><tr><th>${__('Control')}</th><th>${__('Resultado')}</th><th>${__('Observado')}</th><th>${__('Límite')}</th><th>${__('Detalle')}</th></tr></thead><tbody>
                     ${r.controls.map(x=>`<tr><td>${e(labels[x.code]||x.code)}</td><td>${e(states[x.status]||x.status)}</td><td>${e(x.observed)}</td><td>${e(x.limit)} ${e(x.unit==='hours'?'h':x.unit)}</td><td>${x.article ? `Art. ${e(x.article)}. ` : ""}${e(x.message)} ${e(x.start||'')} ${e(x.end||'')}</td></tr>`).join('')}</tbody></table></div>

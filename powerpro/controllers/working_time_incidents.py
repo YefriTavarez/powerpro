@@ -12,7 +12,7 @@ CLEAR='Within evaluated limit'
 DEFAULTS=dict(profile='General',reference='',break_rule='One hour after four',quarterly_basis='Unclassified',rest_start=None,rest_end=None)
 
 
-REFERENCE_TYPES=(*monitor.SOURCES,'Employee Checkin','Attendance')
+REFERENCE_TYPES=(*monitor.SOURCES,'Employee Checkin','Attendance','Overtime Reconciliation Run')
 
 
 def incident_query(user=None):
@@ -161,7 +161,7 @@ def _locked(name):
 
 def _refresh(doc,source):
     options=_options(doc.evaluation_options)
-    if source.docstatus==2:
+    if source.docstatus==2 and source.doctype not in {controls.AUTH,controls.RETRO}:
         # Financial cancellation cannot certify disappearance of physical work.
         proof={'source_type':source.doctype,'source_name':source.name,'docstatus':2,'options':options,
             'control':{'code':doc.control_code,'status':'Historical review required',

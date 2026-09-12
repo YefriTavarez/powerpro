@@ -1,5 +1,6 @@
 """Permission-scoped live work-time diagnostics; no payroll or incident writes."""
 from datetime import datetime,time,timedelta
+from copy import deepcopy
 import frappe
 from frappe import _
 from frappe.utils import getdate,get_datetime,now_datetime
@@ -37,7 +38,8 @@ def _quarter(doc):
                     issues.append({'code':'quarter_evidence_changed','source_type':dt,'source_name':row.name});continue
                 current=comparison['current']
                 intervals.extend(current.get('calculation',{}).get('intervals',[]))
-                sources.append({'source_type':dt,'source_name':row.name,'input_hash':current['input_hash']})
+                sources.append({'source_type':dt,'source_name':row.name,'input_hash':current['input_hash'],
+                    **({'history_revision':comparison['revision'].name} if comparison['revision'] else {})})
             except (frappe.ValidationError,ValueError):
                 issues.append({'code':'quarter_evidence_incomplete','source_type':dt,'source_name':row.name})
     # Enrollment is not evidence of all overtime worked in the quarter, and
@@ -45,7 +47,31 @@ def _quarter(doc):
     return {'start':start,'end':end,'intervals':intervals,'sources':sources,'checkins':checkins,'issues':issues,'complete':False}
 
 
+def _historical_current(doc):
+    from powerpro.controllers.overtime_history import compare
+    from powerpro.controllers.checkin_overtime_week import load_week
+    from powerpro.payroll_rules.overtime_actual_week import collect_weekly_work
+    comparison=compare(doc)
+    current=deepcopy(comparison['current'])
+    accepted=comparison['matches']
+    current['state']='Verified' if accepted else 'Needs Review'
+    current['historical_review']={'accepted':accepted,
+        'revision':comparison['revision'].name if comparison['revision'] else None,
+        'saved_physical_hash':_evidence_hash(physical_input(comparison['saved']))}
+    employee=frappe.get_doc('Employee',doc.employee)
+    data=load_week(doc,employee,current['input']['assignments'])
+    historical=data.pop('historical_intervals',[]);names=data.pop('historical_checkins',[])
+    certified=data.pop('certified_sessions',[])
+    weekly=collect_weekly_work(**data,
+        accepted_intervals=historical+(current.get('worked_intervals',[]) if accepted else []),
+        accepted_checkins=names+([r['name'] for r in current.get('source_checkins',[])] if accepted else []),
+        certified_sessions=certified+(current.get('certified_sessions',[]) if accepted else []))
+    return current,weekly,current['input']['shift'],data['rows']
+
+
 def _current(doc):
+    if doc.docstatus==2 and doc.doctype in {AUTH,RETRO}:
+        return _historical_current(doc)
     if doc.doctype!=NIGHT:
         from powerpro.controllers.checkin_overtime import build_result
         current=build_result(doc)
@@ -74,7 +100,8 @@ def preview(source_type,source_name,profile='General',reference='',break_rule='O
     doc=frappe.get_doc(source_type,source_name);doc.check_permission('read')
     frappe.get_doc('Employee',doc.employee).check_permission('read')
     if not frappe.has_permission('Employee Checkin','read'):frappe.throw(_('Necesita permiso de lectura de marcaciones.'),frappe.PermissionError)
-    if doc.docstatus!=1 or (source_type!=NIGHT and not evidence_enabled(doc)):
+    historical=doc.docstatus==2 and source_type in {AUTH,RETRO}
+    if (doc.docstatus!=1 and not historical) or (source_type!=NIGHT and not evidence_enabled(doc)):
         frappe.throw(_('Seleccione un origen aprobado con conciliación por evidencia.'))
     try:
         current,weekly,shift,week_rows=_current(doc)
@@ -90,11 +117,17 @@ def preview(source_type,source_name,profile='General',reference='',break_rule='O
             quarter_intervals=quarter['intervals'],quarter_start=quarter['start'],quarter_end=quarter['end'],quarter_complete=False,
             quarterly_basis=quarterly_basis,rest_start=rest_start,rest_end=rest_end)
     except ValueError as exc:frappe.throw(str(exc))
+    if historical and not current['historical_review']['accepted']:
+        for control in result['controls']:
+            control['observed_status']=control['status']
+            control['status']='Historical review required'
+            control['message']=_('La evidencia histórica cambió o está incompleta; revise el trabajo antes de resolver este control.')
     # Separate proofs keep an unrelated quarterly change from invalidating a
     # decision about this session. Physical identity includes the original marks.
     def access(rows=(),sources=()):
         return ([{'document_type':'Employee Checkin','document_name':r['name']} for r in rows]
-            +[{'document_type':r['source_type'],'document_name':r['source_name']} for r in sources if r.get('source_type') and r.get('source_name')])
+            +[{'document_type':r['source_type'],'document_name':r['source_name']} for r in sources if r.get('source_type') and r.get('source_name')]
+            +[{'document_type':'Overtime Reconciliation Run','document_name':r['history_revision']} for r in sources if r.get('history_revision')])
     result['supporting_evidence']={
         'session':{'input':{**physical_input(current),**{k:current['input'][k] for k in ('context','extensions','certified_session') if k in current['input']}},'worked_intervals':current.get('worked_intervals',[]),
             'checkins':current.get('source_checkins',[]),'state':current['state'],
@@ -103,6 +136,12 @@ def preview(source_type,source_name,profile='General',reference='',break_rule='O
             +[{'document_type':'Attendance','document_name':n} for c in weekly.get('coverage',[]) for n in c.get('attendances',[])]},
         'quarter':{**{k:quarter[k] for k in ('start','end','intervals','sources','issues','complete')},
             'access':access([{'name':n} for n in quarter['checkins']],quarter['sources']+quarter['issues'])}}
+    if historical:
+        for key in ('session','weekly'):
+            result['supporting_evidence'][key]['historical_review']=current['historical_review']
+            if current['historical_review']['revision']:
+                result['supporting_evidence'][key]['access'].append({'document_type':'Overtime Reconciliation Run',
+                    'document_name':current['historical_review']['revision']})
     for part in result['supporting_evidence'].values():
         for ref in part.get('access',[]):
             if not frappe.has_permission(ref['document_type'],'read',doc=ref['document_name']):
@@ -115,4 +154,8 @@ def preview(source_type,source_name,profile='General',reference='',break_rule='O
             _('El trimestre incluye solo orígenes inscritos, accesibles y con evidencia vigente; su cobertura no está certificada.'),
             _('La semana se agrupa de lunes a domingo y el trimestre por calendario; confirme el período aplicable.'),
             _('La falta de marcaciones no acredita ausencia ni disfrute de descanso.')])
+    if historical:
+        result['historical_only']=True
+        result['historical_review']=current['historical_review']
+        result['notes'].append(_('El origen está cancelado: se evalúa el trabajo físico conservado, sin reabrir la liquidación.'))
     return result

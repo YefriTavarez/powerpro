@@ -92,7 +92,7 @@ def process_review(name):
     review,source=_locked(name)
     if review.status!='Active':return {'status':'Paused'}
     with _as_responsible(review,source):
-        if source.docstatus==2:
+        if source.docstatus==2 and source.doctype not in {cases.controls.AUTH,cases.controls.RETRO}:
             _save_state(review,'Needs Review',_('Origen cancelado: conserve y revise el trabajo histórico antes de ampliar esta evaluación.'))
             return {'status':'Needs Review','cases':[]}
         options=cases._options(review.evaluation_options)

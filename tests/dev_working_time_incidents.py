@@ -151,6 +151,60 @@ try:
  cases.recheck(daily.name);daily.reload()
  assert daily.status=='Open' and daily.evaluation_status=='Historical review required' and daily.resolution_reference=='DEV correction'
  fails(lambda:cases.resolve(daily.name,daily.evidence_hash,'Resolved','Cancelled payment','DEV'))
+ fails(lambda:cases.resolve(daily.name,daily.evidence_hash,'Documented Exception','Cancelled payment','DEV'))
+ # An append-only physical review unlocks evaluation, never automatic closure
+ # or renewed payment. Later source dependencies must be reversed first.
+ from powerpro.controllers import overtime_history as history,working_time_reviews as reviews
+ second.reload();second.flags.ignore_permissions=True;second.cancel()
+ first.reload();cancelled_source=first.as_dict();money=frappe.db.count('Additional Salary')
+ p=history.preview_review(first.name,'DEV accepted corrected eight-hour session',source_type=DT)
+ accepted=history.apply_review(first.name,'DEV accepted corrected eight-hour session',p['token'],source_type=DT)
+ preview=controls.preview(DT,first.name)
+ assert preview['historical_only'] and preview['historical_review']['accepted']
+ assert preview['historical_review']['revision']==accepted['audit']
+ old_hash=daily.evidence_hash
+ cases.recheck(daily.name);daily.reload()
+ assert daily.status=='Open' and daily.evaluation_status==cases.CLEAR and daily.evidence_hash!=old_hash
+ assert daily.resolution_reference=='DEV correction'
+ assert any(r.document_type=='Overtime Reconciliation Run' and r.document_name==accepted['audit'] for r in daily.evidence_references)
+ fails(lambda:cases.resolve(daily.name,old_hash,'Resolved','Old preview','DEV'))
+ cases.resolve(daily.name,daily.evidence_hash,'Resolved','Accepted complete historical session','DEV historical correction')
+ versions=frappe.db.count('Version');assert not cases.recheck(daily.name)['changed']
+ assert frappe.db.count('Version')==versions
+ # The native list and action must also respect a hidden revision reference.
+ frappe.db.delete('User Permission',{'name':restricted.name});frappe.clear_cache(user=user_name)
+ frappe.set_user(user_name)
+ try:
+  assert frappe.has_permission(cases.DT,'read',doc=daily.name)
+  assert frappe.get_list(cases.DT,filters={'name':daily.name},pluck='name')
+ finally:frappe.set_user('Administrator')
+ other_run=frappe.copy_doc(frappe.get_doc('Overtime Reconciliation Run',accepted['audit']))
+ other_run.name=prefix+'-OTHER-RUN';other_run.employee=other.name;other_run.retroactive_adjustment=foreign.name
+ other_run.docstatus=0;other_run.db_insert()
+ restricted_run=frappe.get_doc({'doctype':'User Permission','user':user_name,'allow':'Overtime Reconciliation Run',
+  'for_value':other_run.name,'apply_to_all_doctypes':1});restricted_run.db_insert()
+ frappe.clear_cache(user=user_name);frappe.set_user(user_name)
+ try:
+  assert not frappe.has_permission(cases.DT,'read',doc=daily.name)
+  assert not frappe.get_list(cases.DT,filters={'name':daily.name},pluck='name')
+  fails(lambda:cases.recheck(daily.name),frappe.PermissionError)
+  fails(lambda:controls.preview(DT,first.name),frappe.PermissionError)
+ finally:frappe.set_user('Administrator')
+ # Registered reviews resume on cancelled sources and detect a newly changed
+ # physical session. No synthetic exit or undocumented exception can clear it.
+ frappe.db.set_single_value('DGII Payroll Settings','enable_working_time_incident_monitor',1)
+ review=frappe.get_doc(reviews.DT,daily.working_time_review)
+ assert reviews.process_review(review.name)['status']=='Checked'
+ daily.reload();assert daily.status=='Resolved'
+ corrected.time='2026-09-07 16:30:00';corrected.save(ignore_permissions=True)
+ assert reviews.process_review(review.name)['status']=='Checked'
+ daily.reload();assert daily.status=='Open' and daily.evaluation_status=='Historical review required'
+ assert daily.resolution_reference=='DEV historical correction'
+ fails(lambda:cases.resolve(daily.name,daily.evidence_hash,'Resolved','Unreviewed shorter session','DEV'))
+ fails(lambda:cases.resolve(daily.name,daily.evidence_hash,'Documented Exception','Skip physical review','DEV'))
+ corrected.skip_auto_attendance=1;corrected.save(ignore_permissions=True)
+ cases.recheck(daily.name);daily.reload();assert daily.evaluation_status=='Historical review required'
+ first.reload();assert first.as_dict()==cancelled_source and frappe.db.count('Additional Salary')==money
  print('WORK_INCIDENTS: idempotency, token binding, audit, scoped reopening, guarded resolution, separate scenarios, no financial changes, native permissions and cancellation passed')
 finally:
  frappe.set_user('Administrator');frappe.db.rollback();frappe.db.commit=commit;frappe.enqueue=enqueue;frappe.sendmail=sendmail

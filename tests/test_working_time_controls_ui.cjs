@@ -17,5 +17,25 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  assert.equal(calls[1].type,'POST');assert.equal(calls[1].args.expected_hash,'token');
  assert.equal(JSON.parse(calls[1].args.options).profile,'General');
  assert.equal(calls[1].args.responsible,'reviewer@example.invalid');
+ // Historical controls are accessible only for the two evidence adapters.
+ const cases=[
+  ['Overtime Authorization',2,1,undefined,true],
+  ['Overtime Authorization',2,0,undefined,false],
+  ['Retroactive Overtime Adjustment',2,0,'Verified Checkins',true],
+  ['Retroactive Overtime Adjustment',2,0,'Legacy',false],
+  ['Ordinary Night Settlement',2,0,undefined,false],
+  ['Ordinary Night Settlement',1,0,undefined,true],
+  ['Overtime Authorization',0,1,undefined,false]
+ ];
+ for(const [doctype,docstatus,evidence_enrolled,reconciliation_engine,shown] of cases){
+  const before=buttons.length;
+  frm.doc={doctype,name:'HISTORICAL',docstatus,evidence_enrolled,reconciliation_engine};
+  ctx.powerpro.working_time_controls.add_button(frm);
+  assert.equal(buttons.length-before,Number(shown),doctype+' '+docstatus+' '+reconciliation_engine);
+ }
+ result.controls[0].status='Historical review required';result.notes=['Origen cancelado; conserva la liquidación.'];
+ buttons[1]();prompt({profile:'General',break_rule:'Una hora después de cuatro',quarterly_basis:'Pendiente de clasificar'});await Promise.resolve();
+ assert(dialogs.at(-1).fields[0].options.includes('Requiere revisión histórica'));
+ assert(dialogs.at(-1).fields[0].options.includes('Origen cancelado; conserva la liquidación.'));
  console.log('Working-time UI: enrolled/submitted scope, dirty guard, selected scenario, escaped preview and explicit token-bound POST registration passed.');
 })().catch(e=>{console.error(e);process.exitCode=1});

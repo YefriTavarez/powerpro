@@ -10,6 +10,7 @@ from powerpro.controllers.overtime import get_retroactive_adjustment_preview
 from powerpro.controllers.overtime_cash_settlement import _get_linked_additional_salaries
 DT=retro.DT
 counts=['Employee','Shift Type','Employee Checkin','Salary Structure Assignment','Overtime Pay Policy',DT,
+ 'Working Time Review','Working Time Incident','Working Time Evidence Reference','Version','Error Log',
  'Overtime Work Call','Overtime Evidence Watch','Overtime Authorization','Overtime Reconciliation Run','Ordinary Night Settlement','Additional Salary','Salary Slip']
 before={d:frappe.db.count(d) for d in counts}
 settings_before={d:frappe.db.get_singles_dict(d) for d in ['DGII Payroll Settings','Payroll Settings']}
@@ -96,6 +97,10 @@ try:
                {'start':'2026-09-07 13:00:00','end':'2026-09-07 19:30:00'}]}
  p=preview(first,'DEV declared history',declaration)
  result=apply(first,p,'DEV declared history',declaration);assert result['history_sequence']==2
+ from powerpro.controllers import working_time_controls as controls,working_time_incidents as cases,working_time_reviews as reviews
+ diagnostic=controls.preview(DT,first.name)
+ assert diagnostic['historical_review']['accepted'] and diagnostic['current_evidence_state']=='Verified'
+ assert diagnostic['supporting_evidence']['session']['worked_intervals']==history.compare(first)['current']['worked_intervals']
  first.reload();assert protected=={k:first.get(k) for k in protected}
  fourth=draft('2026-09-08');projection=retro.reconcile(fourth)
  assert projection['_evidence']['calculation']['segments'][0]['actual_weekly_hours_before']==19.5
@@ -142,10 +147,25 @@ try:
   call.reload();call.flags.ignore_permissions=True;call.cancel()
   auth=frappe.get_doc('Overtime Authorization',auth_name)
   original=auth.evidence_snapshot
+  diagnostic=controls.preview(auth.doctype,auth.name)
+  assert diagnostic['historical_only'] and diagnostic['historical_review']['accepted'] and not diagnostic['historical_review']['revision']
+  rows=cases.record(auth.doctype,auth.name,{},'Administrator',diagnostic['input_hash'])
+  daily=frappe.get_doc(cases.DT,next(r['name'] for r in rows if frappe.db.get_value(cases.DT,r['name'],'control_code')=='daily_work'))
+  assert daily.status=='Open' and daily.evaluation_status=='Review'
+  cases.resolve(daily.name,daily.evidence_hash,'Documented Exception','DEV accepted long historical session','DEV exception')
   auth_exit.time='2026-09-14 19:00:00';auth_exit.save(ignore_permissions=True)
+  cases.recheck(daily.name);daily.reload();assert daily.evaluation_status=='Historical review required' and daily.status=='Open'
   p=history.preview_review(auth_name,'DEV cancelled authorization',source_type='Overtime Authorization')
   result=history.apply_review(auth_name,'DEV cancelled authorization',p['token'],source_type='Overtime Authorization')
   assert result['history_sequence']==1 and history.compare(auth)['matches']
+  protected=frappe.get_doc(auth.doctype,auth.name).as_dict();money=frappe.db.count('Additional Salary')
+  frappe.db.set_single_value('DGII Payroll Settings','enable_working_time_incident_monitor',1)
+  assert reviews.process_review(daily.working_time_review)['status']=='Checked'
+  daily.reload();assert daily.evaluation_status=='Review' and daily.status=='Open' and daily.resolution_reference=='DEV exception'
+  assert any(r.document_type=='Overtime Reconciliation Run' and r.document_name==result['audit'] for r in daily.evidence_references)
+  cases.resolve(daily.name,daily.evidence_hash,'Documented Exception','DEV accepted revised historical session','DEV revision')
+  assert not cases.recheck(daily.name)['changed']
+  assert frappe.get_doc(auth.doctype,auth.name).as_dict()==protected and frappe.db.count('Additional Salary')==money
   auth.reload();assert auth.docstatus==2 and auth.evidence_snapshot==original and auth.verified_hours==2
  print('CANCELLED_HISTORY: append-only physical correction, immutable cancelled finance/source, stale-token and settled-dependent guards, manual evidence and zero-OT ordinary work, actual weekly19/19.5/18, Sunday->Monday impact passed')
 finally:
