@@ -7,6 +7,7 @@ from frappe import _
 from frappe.utils import getdate, flt, cint, now_datetime
 from powerpro.controllers import checkin_overtime as evidence
 from powerpro.controllers.overtime import _reconciliation_rows
+from powerpro.controllers.overtime_source import AUTH,RETRO,evidence_enabled,links
 
 APPLIED = 'HR Evidence Review Applied'
 REVIEWABLE = {'worked_authorized_mismatch'}
@@ -34,8 +35,12 @@ def accept_result(result, review):
 
 def _access(doc,manual_declaration=None):
     evidence._access(doc)
-    if not doc.get('evidence_enrolled'):
+    if not evidence_enabled(doc):
         frappe.throw(_('La autorización no está inscrita en el modo por marcaciones.'))
+    if doc.doctype==RETRO:
+        doc.check_permission('submit')
+        if doc.approver!=frappe.session.user:
+            frappe.throw(_('Solo el aprobador asignado puede revisar este ajuste.'),frappe.PermissionError)
     previous_review=frappe.parse_json(doc.evidence_snapshot or '{}').get('review') or {}
     if doc.reconciliation_source in {'Manual Verification','HR Exception','Presumed Attendance'} and not (doc.reconciliation_source=='Manual Verification' and previous_review.get('manual_declaration')):
         frappe.throw(_('Esta revisión conserva marcaciones como fuente; la verificación manual requiere su revisión específica.'))
@@ -89,10 +94,10 @@ def _preview(doc, reason, *, for_update=False,manual_declaration=None):
             **{key:calculation.get(key,0) for key in ['regular_35_hours','regular_100_hours','holiday_100_hours','weekly_rest_hours','night_hours']},
             **rates(p),weekly_rest_overtime_percent=p['weekly_rest_percent'] if p.get('weekly_rest_cash') else None)['total_amount']
     dependencies=_dependencies(doc,for_update=for_update)
-    payload={'authorization':doc.name,'reason':reason.strip(),'before':frozen,'financial_before':_financial(doc),
+    payload={**links(doc),'reason':reason.strip(),'before':frozen,'financial_before':_financial(doc),
              'after':accepted,'dependencies':dependencies,'proposed_amount':estimate}
     # Evaluation timestamps/watermarks are not changes in work evidence.
-    stable={'authorization':doc.name,'reason':reason.strip(),'before':evidence._evidence_hash(frozen),
+    stable={**links(doc),'reason':reason.strip(),'before':evidence._evidence_hash(frozen),
             'financial_before':_financial(doc),'new_hash':raw['input_hash'],'dependencies':dependencies,
             'settlement_ready':accepted['settlement_ready'],'settlement_blockers':accepted['settlement_blockers']}
     payload['token']=hashlib.sha256(evidence._json(stable).encode()).hexdigest()
@@ -100,11 +105,12 @@ def _preview(doc, reason, *, for_update=False,manual_declaration=None):
 
 
 @frappe.whitelist()
-def preview_review(authorization, reason, manual_declaration=None):
-    doc=frappe.get_doc(evidence.AUTH,authorization);_access(doc)
+def preview_review(authorization, reason, manual_declaration=None, source_type=AUTH):
+    if source_type not in {AUTH,RETRO}:frappe.throw(_('Origen de revisión no admitido.'))
+    doc=frappe.get_doc(source_type,authorization);_access(doc)
     if doc.docstatus!=1 or doc.status!='Approved':frappe.throw(_('La autorización debe permanecer aprobada.'))
     result=_preview(doc,reason,manual_declaration=manual_declaration)
-    return {'token':result['token'],'authorization':doc.name,'reason':result['reason'],
+    return {'token':result['token'],**links(doc),'reason':result['reason'],
             'before':result['before'].get('snapshot',{}),'after':result['after']['snapshot'],
             'financial_before':result['financial_before'],'dependencies':result['dependencies'],
             'proposed_amount':result['proposed_amount'],'manual_declaration':result['after'].get('manual_declaration'),
@@ -114,9 +120,10 @@ def preview_review(authorization, reason, manual_declaration=None):
 
 
 @frappe.whitelist(methods=['POST'])
-def apply_review(authorization, reason, token, manual_declaration=None):
-    doc,call=evidence._lock(authorization);_access(doc)
-    existing=frappe.db.get_value('Overtime Reconciliation Run',{'authorization':doc.name,'result_status':APPLIED,'evidence_hash':token},'name',for_update=True)
+def apply_review(authorization, reason, token, manual_declaration=None, source_type=AUTH):
+    from powerpro.controllers.overtime_rest import _lock_source
+    doc,call=_lock_source(authorization,source_type=source_type);_access(doc)
+    existing=frappe.db.get_value('Overtime Reconciliation Run',{**links(doc),'result_status':APPLIED,'evidence_hash':token},'name',for_update=True)
     if existing:return {'status':'Applied','audit':existing,'idempotent':True}
     preview=_preview(doc,reason,for_update=True,manual_declaration=manual_declaration)
     if not token or preview['token']!=token:
@@ -150,14 +157,23 @@ def apply_review(authorization, reason, token, manual_declaration=None):
         values.update(manual_worked_intervals=evidence._json(declaration['intervals']) if declaration else None,
             manual_verification_reason=preview['reason'] if declaration else None,
             manual_checkin_comparison=evidence._json(result.get('checkin_comparison')) if declaration else None)
+        if doc.doctype==RETRO:
+            # Scheduling and manual display fields only exist on authorizations;
+            # historical evidence and declaration are retained in the audit JSON.
+            values={key:value for key,value in values.items() if doc.meta.has_field(key)}
         doc.db_set(values)
         fresh=evidence.build_result(doc,for_update=True)
-        doc.db_set({'evidence_snapshot':evidence._json(fresh),'evidence_settlement_ready':int(fresh['settlement_ready']),
-                    'evidence_issues':evidence._json(fresh['issues']+[{'code':'settlement_pending','message':m} for m in fresh['settlement_blockers']])})
-        if fresh['settlement_ready'] and (doc.evidence_auto_settle or preview['financial_before']['settlement_status'] in evidence.FINAL):
-            from powerpro.controllers.overtime_settlement import _settle_authorization
-            _settle_authorization(doc,payroll_date=doc.auto_payroll_date,settings=evidence._settings())
-            doc.db_set({'evidence_status':'Frozen','evidence_retry_after':None})
+        values={'evidence_snapshot':evidence._json(fresh),'evidence_settlement_ready':int(fresh['settlement_ready'])}
+        if doc.doctype==AUTH:values['evidence_issues']=evidence._json(fresh['issues']+[{'code':'settlement_pending','message':m} for m in fresh['settlement_blockers']])
+        doc.db_set(values)
+        if fresh['settlement_ready'] and (doc.get('evidence_auto_settle') or preview['financial_before']['settlement_status'] in evidence.FINAL):
+            if doc.doctype==RETRO:
+                from powerpro.controllers.retroactive_evidence import settle_reviewed_cash
+                settle_reviewed_cash(doc,fresh)
+            else:
+                from powerpro.controllers.overtime_settlement import _settle_authorization
+                _settle_authorization(doc,payroll_date=doc.auto_payroll_date,settings=evidence._settings())
+                doc.db_set({'evidence_status':'Frozen','evidence_retry_after':None})
         evidence._sync(call)
         doc.reload()
         evidence._audit(doc,{'state':APPLIED,'input_hash':token,'issues':[],
@@ -166,5 +182,5 @@ def apply_review(authorization, reason, token, manual_declaration=None):
     except Exception:
         frappe.db.rollback(save_point='checkin_hr_review')
         raise
-    audit=frappe.db.get_value('Overtime Reconciliation Run',{'authorization':doc.name,'result_status':APPLIED,'evidence_hash':token},'name',for_update=True)
+    audit=frappe.db.get_value('Overtime Reconciliation Run',{**links(doc),'result_status':APPLIED,'evidence_hash':token},'name',for_update=True)
     return {'status':'Applied','audit':audit,'settlement_status':doc.settlement_status,'settlement_ready':bool(doc.evidence_settlement_ready)}

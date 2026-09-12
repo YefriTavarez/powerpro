@@ -229,6 +229,8 @@ def prevent_direct_overtime_salary_cancel(additional_salary, method=None):
 		return
 	if not additional_salary.ref_docname:
 		return
+	if frappe.flags.get("overtime_evidence_reversal") == (additional_salary.ref_doctype,additional_salary.ref_docname):
+		return
 	if additional_salary.ref_doctype == "Overtime Authorization" and frappe.flags.get("overtime_exception_reversal") == additional_salary.ref_docname:
 		return
 	if frappe.db.get_value(

@@ -139,6 +139,18 @@ try:
  assert frappe.db.get_value('Overtime Compensatory Credit',auth.compensatory_credit,'docstatus')==1
  assert frappe.db.get_value(rest.DT,election.name,'docstatus')==1
 
+ from powerpro.controllers import checkin_overtime_review as review
+ exit_name=frappe.db.get_value('Employee Checkin',{'employee':employee.name,'time':'2026-09-06 11:00:00'},'name')
+ exit_doc=frappe.get_doc('Employee Checkin',exit_name)
+ frappe.db.savepoint('used_credit_review')
+ exit_doc.time='2026-09-06 10:00:00';exit_doc.save(ignore_permissions=True)
+ reviewed=review.preview_review(name,'DEV measured three hours',source_type=retro.DT)
+ try:review.apply_review(name,'DEV measured three hours',reviewed['token'],source_type=retro.DT)
+ except frappe.ValidationError:pass
+ else:raise AssertionError('Review reversed a consumed retroactive credit')
+ assert frappe.db.get_value(rest.DT,election.name,'docstatus')==1
+ assert frappe.db.get_value('Overtime Compensatory Credit',auth.compensatory_credit,'docstatus')==1
+ frappe.db.rollback(save_point='used_credit_review');exit_doc.reload()
  rest.link_leave(election.name,application.name)
  with patch.object(rest,'now_datetime',return_value=get_datetime('2026-09-09 20:00:00')):
   try:rest.confirm_enjoyment(election.name,'2026-09-08 18:00:00','2026-09-10 06:00:00','Test confirmation')
@@ -181,6 +193,21 @@ try:
   except frappe.ValidationError as exc:assert 'mezcla descanso semanal' in str(exc)
   else:raise AssertionError('Mixed rest obligations silently lost nonweekly hours')
  checks.append('confirmed enjoyment requires an audited correction before native leave cancellation; cancelled leave restores pending scheduling and overdue status')
+ # With the leave reversed, HR may revise physical work. The old election and
+ # credit are released atomically and the employee must make a renewed choice.
+ prior_credit=auth.compensatory_credit
+ exit_doc.time='2026-09-06 10:00:00';exit_doc.save(ignore_permissions=True)
+ reviewed=review.preview_review(name,'DEV measured three hours',source_type=retro.DT)
+ review.apply_review(name,'DEV measured three hours',reviewed['token'],source_type=retro.DT)
+ auth.reload();assert auth.verified_hours==3 and auth.settlement_status=='Pending' and not auth.compensatory_credit
+ assert frappe.db.get_value('Overtime Compensatory Credit',prior_credit,'docstatus')==2
+ election.reload();assert election.docstatus==2 and not election.active_authorization
+ assert not auth.evidence_settlement_ready
+ replacement=choose(name,'Compensatory Rest');rest.approve_election(replacement.name)
+ retro.create_compensatory_settlement(name);auth.reload();election=replacement
+ assert auth.compensatory_credit!=prior_credit and auth.compensatory_hours==8
+ assert frappe.db.count('Overtime Compensatory Credit',{'retroactive_adjustment':name,'docstatus':1})==1
+ checks.append('used leave blocks HR revision; after leave cancellation, measured three-hour review releases old credit/election and renewed choice creates exactly one replacement')
  call.reload();call.flags.ignore_permissions=True;call.cancel()
  assert frappe.db.get_value('Overtime Compensatory Credit',auth.compensatory_credit,'docstatus')==2
  election.reload();assert election.docstatus==2 and not election.active_authorization and not election.active_weekly_rest
@@ -189,6 +216,7 @@ try:
  assert not frappe.db.count('Additional Salary',{'ref_doctype':retro.DT,'ref_docname':name,'docstatus':1})
  # An explicit cash election may replace a planned rest choice, with its own
  # payroll date and the existing native cash settlement guards.
+ exit_doc.time='2026-09-06 11:00:00';exit_doc.save(ignore_permissions=True)
  cash,cash_name=source('Compensatory Rest')
  cash_election=choose(cash_name,'Cash')
  cash_election.settlement_payroll_date='2026-09-08';cash_election.save(ignore_permissions=True)

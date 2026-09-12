@@ -423,6 +423,12 @@ function add_evidence_actions(frm) {
 				: __('La liquidación tiene condiciones pendientes de revisión.');
 			frm.dashboard.set_headline_alert(message, 'orange');
 		}
+		if (state.can_review) {
+            const review = manual => frappe.require('/assets/powerpro/js/checkin_overtime.js', () => powerpro.checkin_overtime.review(frm, manual));
+            frm.add_custom_button(__('Revisar evidencia corregida'), () => review(false), __('Overtime'));
+            if (state.manual_review_allowed) frm.add_custom_button(__('Declarar jornada de RR. HH.'), () => review(true), __('Overtime'));
+            frm.add_custom_button(__('Historial de conciliación'), () => frappe.set_route('List', 'Overtime Reconciliation Run', {retroactive_adjustment: frm.doc.name}), __('Overtime'));
+        }
 		if (state.election || state.can_elect) frm.add_custom_button(__('Elección del empleado'), () => {
             if (frm.is_dirty()) return frappe.msgprint(__('Guarde los cambios primero.'));
             if (state.election) return frappe.set_route('Form', 'Overtime Settlement Election', state.election);

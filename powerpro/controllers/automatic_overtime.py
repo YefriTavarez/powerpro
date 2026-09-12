@@ -388,12 +388,14 @@ def _apply_exception(doc, call, event):
 def _reverse_outputs(doc, event):
     if doc.get('settlement_status') not in FINAL:
         return
-    if doc.get('settlement_method') == 'Cash':
+    if doc.get('settlement_method') == 'Cash' or doc.get('settlement_status') in {'Created','Payroll Submitted','Paid'}:
         from powerpro.controllers.overtime_cash_settlement import before_cancel_adjustment, _get_linked_additional_salaries
         before_cancel_adjustment(doc)
         names = _get_linked_additional_salaries(doc, docstatus=1, for_update=True)
         previous = frappe.flags.get('overtime_exception_reversal')
-        frappe.flags.overtime_exception_reversal = doc.name
+        prior_source = frappe.flags.get('overtime_evidence_reversal')
+        frappe.flags.overtime_exception_reversal = doc.name if doc.doctype==AUTH else None
+        frappe.flags.overtime_evidence_reversal = (doc.doctype,doc.name)
         try:
             for name in names:
                 salary = frappe.get_doc('Additional Salary', name, for_update=True)
@@ -401,11 +403,12 @@ def _reverse_outputs(doc, event):
                 salary.cancel()
         finally:
             frappe.flags.overtime_exception_reversal = previous
+            frappe.flags.overtime_evidence_reversal = prior_source
     elif doc.get('settlement_method') == 'Compensatory Rest':
         from powerpro.controllers.overtime_compensatory_settlement import reverse_compensatory_credit
         # Detach only this source's forward link inside the reversal savepoint.
         # The credit keeps its authorization link and immutable original audit.
-        frappe.db.set_value(AUTH, doc.name, 'compensatory_credit', None, update_modified=False)
+        frappe.db.set_value(doc.doctype, doc.name, 'compensatory_credit', None, update_modified=False)
         reverse_compensatory_credit(doc, reason='Attendance exception ' + event.name + ': ' + event.reason)
 
 

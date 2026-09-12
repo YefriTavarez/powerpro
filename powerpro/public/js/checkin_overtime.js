@@ -42,7 +42,7 @@ powerpro.checkin_overtime.review = (frm, manual = false) => {
     frappe.prompt(fields, (values) => {
         const declaration = manual ? {full_session: Boolean(values.full_session), reference: values.reference,
             intervals: values.intervals.map(row => ({start: row.start, end: row.end}))} : undefined;
-        frappe.call({method: "powerpro.controllers.checkin_overtime_review.preview_review", args: {authorization: frm.doc.name, reason: values.reason,
+        frappe.call({method: "powerpro.controllers.checkin_overtime_review.preview_review", args: {authorization: frm.doc.name, source_type: frm.doc.doctype || "Overtime Authorization", reason: values.reason,
             manual_declaration: declaration && JSON.stringify(declaration)}, freeze: true}).then(({message: p}) => {
             const e = value => frappe.utils.escape_html(String(value ?? ""));
             const rows = [[__("Horas verificadas"), p.before.verified_hours || 0, p.after.verified_hours],
@@ -59,7 +59,7 @@ powerpro.checkin_overtime.review = (frm, manual = false) => {
                 primary_action_label: __("Aceptar revisión"), primary_action() {
                     if (frm.is_dirty()) {frappe.msgprint(__("Guarde los cambios y obtenga una vista previa nueva.")); return;}
                     frappe.call({method: "powerpro.controllers.checkin_overtime_review.apply_review", type: "POST",
-                        args: {authorization: frm.doc.name, reason: p.reason, token: p.token,
+                        args: {authorization: frm.doc.name, source_type: frm.doc.doctype || "Overtime Authorization", reason: p.reason, token: p.token,
                             manual_declaration: p.manual_declaration && JSON.stringify(p.manual_declaration)}, freeze: true}).then(() => {dialog.hide();frm.reload_doc();});
                 }});
             dialog.show();

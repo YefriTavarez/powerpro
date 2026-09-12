@@ -60,6 +60,8 @@ def validate_fresh(doc,*,payroll=False):
     if not payroll and not cint(_settings().get('enable_checkin_overtime_reconciliation')):
         frappe.throw(_('La liquidación por marcaciones está desactivada.'))
     saved=frappe.parse_json(doc.evidence_snapshot or '{}')
+    if doc.reconciliation_source=='Manual Verification' and not payroll and not cint(_settings().get('enable_manual_overtime_verification')):
+        frappe.throw(_('La liquidación de evidencia manual está desactivada.'))
     current=reconcile(doc,for_update=True)
     evidence=current['_evidence']
     if (not saved.get('input_hash') or saved['input_hash']!=evidence['input_hash']
@@ -93,6 +95,14 @@ def get_status(adjustment):
     election=get_election(doc)
     result['election']=election.name if election and frappe.has_permission(election.doctype,'read',doc=election) else None
     result['can_elect']=bool(not changed and current['state']=='Verified' and not election and doc.settlement_status not in {'Created','Payroll Submitted','Paid','Credited','Cancelled'} and frappe.has_permission('Overtime Settlement Election','create'))
+    from powerpro.controllers.checkin_overtime import _settings
+    from powerpro.payroll_rules.manual_overtime import verification_roles
+    settings=_settings()
+    result['can_review']=bool(cint(settings.get('enable_checkin_overtime_reconciliation'))
+        and doc.approver==frappe.session.user and frappe.has_permission(DT,'write',doc=doc)
+        and frappe.has_permission(DT,'submit',doc=doc)
+        and verification_roles(settings.get('overtime_manual_verification_roles')).intersection(frappe.get_roles()))
+    result['manual_review_allowed']=bool(result['can_review'] and cint(settings.get('enable_manual_overtime_verification')))
     result['can_credit']=bool(result['settlement_ready'] and doc.planned_settlement=='Compensatory Rest' and doc.settlement_status=='Pending' and doc.approver==frappe.session.user and frappe.has_permission(DT,'submit',doc=doc))
     if result['ordinary_night_hours']:
         name=frappe.db.get_value('Ordinary Night Settlement',{'employee':doc.employee,'work_date':doc.work_date,'docstatus':1},'name')
@@ -135,3 +145,14 @@ def create_compensatory_settlement(adjustment):
     except Exception:
         frappe.db.rollback(save_point=point)
         raise
+
+
+
+def settle_reviewed_cash(doc,result):
+    from powerpro.controllers.overtime_cash_settlement import create_cash_settlement_for_source
+    if not enabled(doc) or doc.planned_settlement!='Cash' or not result['settlement_ready']:
+        frappe.throw(_('La revisión no está lista para sustituir el pago.'))
+    current=validate_fresh(doc)
+    settlement,values=create_cash_settlement_for_source(doc,current)
+    doc.db_set(values)
+    return settlement

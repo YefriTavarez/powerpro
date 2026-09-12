@@ -20,5 +20,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  assert.equal(JSON.parse(calls[2].args.manual_declaration).full_session,true);
  assert(dialogs[1].fields[0].options.includes('&lt;document&gt;'));assert(dialogs[1].fields[0].options.includes('CHK'));
  dialogs[1].primary_action();await Promise.resolve();assert.deepEqual(JSON.parse(calls[3].args.manual_declaration),declaration);
+ frm.doc.doctype='Retroactive Overtime Adjustment';frm.doc.name='AJUSTE';
+ ctx.powerpro.checkin_overtime.review(frm);requested({reason:'Retroactive correction'});await Promise.resolve();
+ assert.equal(calls[4].args.source_type,'Retroactive Overtime Adjustment');
+ dialogs[2].primary_action();await Promise.resolve();assert.equal(calls[5].args.source_type,'Retroactive Overtime Adjustment');assert.equal(calls[5].args.authorization,'AJUSTE');
  console.log('HR review UI: required reason, escaped preview, before/after amount, dirty guards and explicit token-bound POST passed.');
 })().catch(e=>{console.error(e);process.exitCode=1});

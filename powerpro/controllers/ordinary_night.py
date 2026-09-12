@@ -35,7 +35,8 @@ def _certified_session(extensions, employee, shift, *, for_update=False):
         declaration=review.get('manual_declaration')
         if not declaration:continue
         auth.check_permission('read')
-        if not auth.evidence_enrolled or auth.employee!=employee or auth.shift_type!=shift:
+        from powerpro.controllers.overtime_source import evidence_enabled,links
+        if not evidence_enabled(auth) or auth.employee!=employee or auth.shift_type!=shift:
             frappe.throw(_('La declaración no corresponde a esta jornada inscrita.'))
         data,_settings=_data(auth,for_update=for_update,include_weekly=False)
         # Weekly financial readiness can change independently. Work, policy,
@@ -52,7 +53,7 @@ def _certified_session(extensions, employee, shift, *, for_update=False):
         current=accept_result(current,review)
         if current['state']!='Verified' or _evidence_hash(current['worked_intervals'])!=_evidence_hash(saved.get('worked_intervals')):
             frappe.throw(_('La jornada declarada requiere una nueva revisión.'))
-        found.append({'authorization':auth.name,'review':review,'worked_intervals':current['worked_intervals']})
+        found.append({**links(auth),'review':review,'worked_intervals':current['worked_intervals']})
     if len(found)>1:
         frappe.throw(_('Hay más de una declaración de jornada completa; unifique su revisión antes de liquidar nocturnidad.'))
     return found[0] if found else None
@@ -152,7 +153,12 @@ def coverage_for_authorization(auth, result, *, for_update=False):
     rows=_reconciliation_rows(DT,for_update=for_update,filters={'employee':auth.employee,'work_date':auth.work_date,'docstatus':1},pluck='name',limit=2)
     if len(rows)!=1:return None
     doc=frappe.get_doc(DT,rows[0],for_update=for_update)
-    saved=frappe.parse_json(doc.evidence_snapshot or '{}');fresh=build_preview(doc,for_update=for_update)
+    saved=frappe.parse_json(doc.evidence_snapshot or '{}')
+    try:fresh=build_preview(doc,for_update=for_update)
+    except frappe.ValidationError:
+        # Stale ordinary coverage is an explicit financial blocker. It must not
+        # prevent HR from recording corrected work and reversing the old OT.
+        return None
     if fresh['state']!='Verified' or fresh['input_hash']!=saved.get('input_hash'):return None
     if _evidence_hash(fresh['worked_intervals'])!=_evidence_hash(result.get('worked_intervals')):return None
     if abs(flt(fresh['ordinary_hours'])-flt(result['night_session']['ordinary_premium_hours']))>.0001:return None
