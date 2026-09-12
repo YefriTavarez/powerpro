@@ -76,6 +76,7 @@
   "overtime_policy_rest_section",
   "overtime_policy_weekly_rest_cash",
   "overtime_policy_weekly_rest_percent",
+  "overtime_policy_combined_day",
   "overtime_policy_compensatory",
   "overtime_policy_leave_type",
   "overtime_policy_hours_per_day",
@@ -678,6 +679,15 @@
    "label": "Crédito de licencia por descanso semanal",
    "depends_on": "eval:doc.manage_overtime_pay_policy && doc.overtime_policy_compensatory",
    "description": "Equivalencia con el banco de licencia. Vacío mantiene este caso pendiente de revisión."
+  },
+  {
+   "fieldname": "overtime_policy_combined_day",
+   "fieldtype": "Select",
+   "label": "Feriado y descanso semanal: pago en efectivo",
+   "options": "Require review\nSingle highest premium\nAdditive premiums",
+   "default": "Require review",
+   "description": "Require review: mantener pendiente. Single highest premium: aplicar una vez el mayor recargo. Additive premiums: sumar ambos recargos sobre la misma base. No sustituye la elección del empleado; el descanso compensatorio requiere separar obligaciones.",
+   "depends_on": "eval:doc.manage_overtime_pay_policy"
   }
  ],
  "index_web_pages_for_search": 1,

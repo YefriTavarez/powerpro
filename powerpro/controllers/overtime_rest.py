@@ -73,7 +73,10 @@ def get_election(auth,*,for_update=False):
 
 
 def _weekly(auth,calculation=None):
-    return bool(flt((calculation or {}).get('weekly_rest_hours',auth.get('weekly_rest_hours'))) or auth.get('day_classification')=='Weekly Rest')
+    from powerpro.payroll_rules.overtime_combined_day import combined_hours
+    if calculation is None:calculation=frappe.parse_json(auth.get('evidence_snapshot') or '{}').get('calculation')
+    return bool(flt((calculation or {}).get('weekly_rest_hours',auth.get('weekly_rest_hours')))
+        or combined_hours(calculation) or auth.get('day_classification') in {'Weekly Rest','Legal Holiday on Weekly Rest'})
 
 
 def election_snapshot(election):
@@ -103,6 +106,10 @@ def validate_election(election,auth,policy,*,worked_hours=None,calculation=None)
         if weekly and not policy.get('weekly_rest_cash'):frappe.throw(_('La política no autoriza efectivo por descanso semanal.'))
         values.update(credit_hours=0,minimum_rest_hours=0,required_leave_days=0)
     else:
+        from powerpro.payroll_rules.overtime_combined_day import combined_hours
+        actual_calculation=calculation if calculation is not None else frappe.parse_json(auth.get('evidence_snapshot') or '{}').get('calculation')
+        if combined_hours(actual_calculation):
+            frappe.throw(_('Separe la obligación de pago del feriado antes de acreditar descanso compensatorio por esta coincidencia.'))
         total=worked_hours if worked_hours is not None else (auth.verified_hours or auth.maximum_hours)
         weekly_hours=flt((calculation or {}).get('weekly_rest_hours',auth.get('weekly_rest_hours')))
         if weekly and weekly_hours and abs(flt(total)-weekly_hours)>.0001:

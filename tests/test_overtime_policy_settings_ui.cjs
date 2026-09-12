@@ -8,8 +8,11 @@ const frm={doc:{},set_value(data){Object.assign(this.doc,data);return Promise.re
  await handlers.manage_overtime_pay_policy(frm);assert.equal(frm.doc.overtime_policy_night_percent,undefined);
  frm.doc.manage_overtime_pay_policy=1;await handlers.manage_overtime_pay_policy(frm);
  assert.equal(frm.doc.overtime_policy_night_percent,15);assert.equal(frm.doc.overtime_policy_regular_percent,35);
+ assert.equal(frm.doc.overtime_policy_combined_day,'Require review');
+ frm.doc.overtime_policy_combined_day='Additive premiums';
  frm.doc.overtime_policy_night_percent=20;await handlers.manage_overtime_pay_policy(frm);
  assert.equal(frm.doc.overtime_policy_night_percent,20);
+ assert.equal(frm.doc.overtime_policy_combined_day,'Additive premiums');
  await handlers.overtime_policy_load(frm);assert.equal(calls.length,0);assert.equal(messages.length,1);
  frm.doc.overtime_policy_version='POL-1';await handlers.overtime_policy_load(frm);
  assert.equal(calls[0].method,'powerpro.controllers.overtime_policy_settings.load_version');

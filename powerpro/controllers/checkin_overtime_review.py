@@ -94,9 +94,11 @@ def _preview(doc, reason, *, for_update=False,manual_declaration=None):
         from powerpro.payroll_rules.overtime_cash_settlement import calculate_cash_settlement
         from powerpro.payroll_rules.overtime_pay_policy import rates
         p=accepted['input']['pay_policy'];calculation=accepted['calculation']
+        from powerpro.payroll_rules.overtime_combined_day import cash_kwargs
         estimate=calculate_cash_settlement(hourly_rate=accepted['input']['rate_basis']['hourly_rate'],
             **{key:calculation.get(key,0) for key in ['regular_35_hours','regular_100_hours','holiday_100_hours','weekly_rest_hours','night_hours']},
             **rates(p),holiday_base_covered_hours=calculation.get('holiday_base_covered_hours',0),
+            **cash_kwargs(p,calculation),
             weekly_rest_overtime_percent=p['weekly_rest_percent'] if p.get('weekly_rest_cash') else None)['total_amount']
     dependencies=_dependencies(doc,for_update=for_update)
     payload={**links(doc),'reason':reason.strip(),'before':frozen,'financial_before':_financial(doc),

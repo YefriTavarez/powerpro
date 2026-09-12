@@ -331,7 +331,7 @@ def get_schedule_context(work_date, shift_type, holiday_list=None, *, for_update
 	holiday_list = holiday_list or shift.get("holiday_list")
 	holiday_list_coverage = _get_holiday_list_coverage(holiday_list, work_date, for_update=for_update)
 	holidays = _get_holidays(holiday_list, work_date, for_update=for_update)
-	has_legal_holiday = any(not row.get("weekly_off") for row in holidays)
+	has_legal_holiday = any(not row.get("weekly_off") or row.get("custom_is_legal_holiday") for row in holidays)
 	has_weekly_off = any(row.get("weekly_off") for row in holidays)
 
 	workday_field = WEEKDAY_FIELDS[work_date.weekday()]
@@ -446,6 +446,8 @@ def _get_holidays(holiday_list, work_date, *, for_update=False):
 	fields = ["description"]
 	if meta.has_field("weekly_off"):
 		fields.append("weekly_off")
+	if meta.has_field("custom_is_legal_holiday"):
+		fields.append("custom_is_legal_holiday")
 	rows = _reconciliation_rows(
 		"Holiday",
 		for_update=for_update,

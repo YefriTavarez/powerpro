@@ -13,6 +13,9 @@ FIELDS=('name','company','valid_from','valid_until','approval_reference','approv
 
 
 def validate_policy(policy):
+    from powerpro.payroll_rules.overtime_combined_day import FIELD, MODES, REVIEW
+    if (policy.get(FIELD) or REVIEW) not in MODES:
+        raise ValueError('Seleccione una regla admitida para feriado y descanso semanal.')
     if not policy.get('company') or not policy.get('valid_from') or not policy.get('valid_until'):
         raise ValueError('Indique empresa y vigencia de la política.')
     if _as_datetime(str(policy['valid_until'])) < _as_datetime(str(policy['valid_from'])):

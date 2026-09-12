@@ -6,6 +6,7 @@ Opciones disponibles:
 
 - **Aplicar el recargo nocturno a toda la jornada nocturna**: apagado aplica al trabajo de 21:00 a 07:00; encendido aplica a toda la jornada evidenciada cuando contiene al menos tres horas nocturnas. Solo extiende el recargo nocturno: las horas ordinarias no reciben automáticamente el recargo de horas extra.
 - Porcentajes ordinario, extraordinario/feriado, nocturno y descanso semanal; umbral semanal de horas efectivamente trabajadas. Los recargos se suman sobre la hora base, sin capitalización. Se conservan los mínimos y validaciones del motor.
+- **Feriado y descanso semanal: pago en efectivo**: puede dejarlo en revisión, aplicar una sola vez el mayor recargo o sumar ambos recargos sobre la misma hora base. La base se incluye una sola vez y se descuenta únicamente la cobertura salarial documentada. Sigue siendo necesaria la elección del empleado. En Holiday List, marque **También es feriado legal** en la fila de descanso semanal cuando coincidan ambas condiciones; no duplique la fecha.
 - Pago por descanso semanal y liquidación de nocturnidad ordinaria junto con una autorización inscrita para liquidación automática. Sus demás requisitos de evidencia, elección y permisos siguen aplicando.
 - Descanso compensatorio, tipo de licencia, equivalencia en horas, fracción mínima, duración continua y crédito de descanso semanal. Dejar el crédito semanal en cero mantiene ese caso pendiente de revisión.
 
@@ -21,7 +22,7 @@ La prueba nativa de Configuración cubre publicación mediante `Single.save`, re
 
 La interfaz real en Desarrollo se verificó sin guardar: apertura de la sección, controles dependientes, valores iniciales y mensaje de carga de versión vacía. La publicación HTTP desde esa sesión y la aceptación con cuentas reales de Finanzas/Gestión Humana no quedan demostradas por esa revisión visual.
 
-Este bloque no activa un piloto, no resuelve todavía la coincidencia de feriado y descanso semanal y no certifica todos los regímenes laborales. Esos puntos siguen dentro del plan general.
+El pago en efectivo de feriado coincidente con descanso semanal está cubierto por las opciones anteriores. La combinación de pago del feriado y descanso compensatorio todavía requiere implementación y permanece en revisión. Este bloque no activa un piloto ni certifica todos los regímenes laborales. Esos puntos siguen dentro del plan general.
 
 ## Instalación y reversión en Desarrollo
 

@@ -103,10 +103,16 @@ def _preview(doc, covered_hours, reference, *, for_update=False):
         'approver': doc.get('approver'), 'employee': doc.employee})
     estimate = None
     if data.get('pay_policy') and data.get('rate_basis'):
-        estimate = calculate_cash_settlement(hourly_rate=data['rate_basis']['hourly_rate'],
-            **{k: result['calculation'].get(k, 0) for k in
-               ['regular_35_hours', 'regular_100_hours', 'holiday_100_hours', 'night_hours', 'weekly_rest_hours']},
-            holiday_base_covered_hours=hours, **rates(data['pay_policy']))
+        from powerpro.payroll_rules.overtime_combined_day import cash_kwargs
+        try:
+            combined=cash_kwargs(data['pay_policy'],result['calculation'])
+        except ValueError:
+            combined=None  # Coverage can be documented while the joint rule awaits review.
+        if combined is not None:
+            estimate = calculate_cash_settlement(hourly_rate=data['rate_basis']['hourly_rate'],
+                **{k: result['calculation'].get(k, 0) for k in
+                   ['regular_35_hours', 'regular_100_hours', 'holiday_100_hours', 'night_hours', 'weekly_rest_hours']},
+                holiday_base_covered_hours=hours, **rates(data['pay_policy']), **combined)
     return {'token': token, 'declaration': declaration, 'estimate': estimate,
         'previous': previous, 'sequence': (previous or {}).get('sequence', 0) + 1,
         'issues': result.get('issues', []), 'settlement_blockers': result['settlement_blockers']}

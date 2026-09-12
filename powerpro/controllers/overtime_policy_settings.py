@@ -23,8 +23,9 @@ SETTING_MAP = {
     'rest_hours_per_worked_hour': 'overtime_policy_rest_factor',
     'weekly_rest_duration_hours': 'overtime_policy_rest_duration',
     'weekly_rest_credit_hours': 'overtime_policy_rest_credit',
+    'holiday_weekly_rest_mode': 'overtime_policy_combined_day',
 }
-NUMBERS = set(SETTING_MAP) - {'company', 'valid_from', 'valid_until', 'leave_type'}
+NUMBERS = set(SETTING_MAP) - {'company', 'valid_from', 'valid_until', 'leave_type', 'holiday_weekly_rest_mode'}
 
 
 def values(settings):
@@ -32,6 +33,7 @@ def values(settings):
     # Singles upgraded with new fields may return None until their first save.
     # Persist explicit numeric values so Document defaults cannot create a revision on retry.
     for key in NUMBERS: result[key] = float(result[key] or 0)
+    result['holiday_weekly_rest_mode'] = result['holiday_weekly_rest_mode'] or 'Require review'
     result['night_basis'] = ('Whole nocturnal session' if cint(settings.get('overtime_policy_whole_night'))
                              else 'Clock overlap')
     result['premium_combination'] = 'Additive on base hour'

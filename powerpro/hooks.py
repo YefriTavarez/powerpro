@@ -24,7 +24,7 @@ app_license = "mit"
 # Fixtures
 # --------
 
-fixtures = []
+fixtures = [{"dt": "Custom Field", "filters": [["name", "in", ["Holiday-custom_is_legal_holiday"]]]}]
 
 # Includes in <head>
 # ------------------

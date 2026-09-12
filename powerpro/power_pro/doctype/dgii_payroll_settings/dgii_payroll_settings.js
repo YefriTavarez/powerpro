@@ -35,7 +35,7 @@ frappe.ui.form.on("DGII Payroll Settings", {
 	manage_overtime_pay_policy(frm) {
 		if (!frm.doc.manage_overtime_pay_policy) return;
 		const defaults = {weekly_threshold: 68, regular_percent: 35, extraordinary_percent: 100,
-			night_percent: 15, weekly_rest_percent: 100};
+			night_percent: 15, weekly_rest_percent: 100, combined_day: "Require review"};
 		return set_missing_policy_defaults(frm, defaults);
 	},
 

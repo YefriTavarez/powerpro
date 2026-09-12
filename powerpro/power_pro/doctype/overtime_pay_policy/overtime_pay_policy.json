@@ -173,6 +173,14 @@
    "label": "Revisa la versión",
    "no_copy": 1,
    "description": "La revisión conserva empresa y vigencia. Las conciliaciones ya guardadas conservan su versión anterior."
+  },
+  {
+   "fieldname": "holiday_weekly_rest_mode",
+   "fieldtype": "Select",
+   "label": "Feriado y descanso semanal: pago en efectivo",
+   "options": "Require review\nSingle highest premium\nAdditive premiums",
+   "default": "Require review",
+   "description": "Require review: mantener pendiente. Single highest premium: aplicar una vez el mayor recargo. Additive premiums: sumar ambos recargos sobre la misma base. No sustituye la elección del empleado; el descanso compensatorio requiere separar obligaciones."
   }
  ],
  "field_order": [
@@ -191,6 +199,7 @@
   "premium_combination",
   "weekly_rest_cash",
   "weekly_rest_percent",
+  "holiday_weekly_rest_mode",
   "enable_compensatory",
   "leave_type",
   "hours_per_leave_day",

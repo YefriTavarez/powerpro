@@ -224,8 +224,9 @@ def build_result(doc,*,for_update=False,use_saved_review=True,manual_declaration
                 result['ordinary_night_settlement']=coverage
                 if not coverage:
                     blockers.append(COVERAGE_PENDING)
-        if any(segment['classification']=='Legal Holiday on Weekly Rest' for segment in result['calculation']['segments']):
-            blockers.append('La coincidencia de feriado y descanso semanal requiere una regla conjunta aprobada e implementada.')
+        from powerpro.payroll_rules.overtime_combined_day import settlement_blocker
+        combined_blocker=settlement_blocker(policy,result['calculation'],doc.planned_settlement)
+        if combined_blocker:blockers.append(combined_blocker)
     result['input_hash']=_evidence_hash(data)
     result['input']=data
     result['settlement_blockers']=blockers
@@ -236,7 +237,8 @@ def build_result(doc,*,for_update=False,use_saved_review=True,manual_declaration
         blockers.append('Falta evidencia semanal completa para clasificar el recargo de horas ordinarias extra.')
     from powerpro.controllers.overtime_rest import get_election,validate_election,election_snapshot
     election=get_election(doc,for_update=for_update)
-    needs_election=doc.planned_settlement=='Compensatory Rest' or bool(result.get('calculation',{}).get('weekly_rest_hours'))
+    from powerpro.payroll_rules.overtime_combined_day import combined_hours
+    needs_election=doc.planned_settlement=='Compensatory Rest' or bool(result.get('calculation',{}).get('weekly_rest_hours')) or bool(combined_hours(result.get('calculation')))
     result['settlement_election']=election_snapshot(election)
     if needs_election and not election:
         blockers.append('Falta la elección expresa del empleado y la programación del descanso cuando corresponda.')

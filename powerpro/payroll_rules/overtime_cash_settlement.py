@@ -15,6 +15,8 @@ def calculate_cash_settlement(
 	regular_100_hours=0,
 	holiday_100_hours=0,
 	holiday_base_covered_hours=0,
+	holiday_weekly_rest_hours=0,
+	holiday_weekly_rest_percent=None,
 	weekly_rest_hours=0,
 	night_hours=0,
 	regular_overtime_percent=35,
@@ -47,6 +49,16 @@ def calculate_cash_settlement(
 		extraordinary_overtime_percent, "Extraordinary overtime percentage"
 	)
 	night_percent = _non_negative(night_hours_percent, "Night-hours percentage")
+	combined = _non_negative(holiday_weekly_rest_hours, "Holiday on weekly-rest hours")
+	if combined > holiday_100:
+		raise ValueError("Combined holiday hours cannot exceed verified holiday hours.")
+	combined_percent = extraordinary_percent
+	if combined:
+		if holiday_weekly_rest_percent is None:
+			raise ValueError("Combined holiday and weekly-rest percentage is required.")
+		combined_percent = _non_negative(holiday_weekly_rest_percent, "Combined holiday percentage")
+		if combined_percent < extraordinary_percent:
+			raise ValueError("Combined premium cannot reduce the holiday premium.")
 
 	lines = []
 	_append_line(
@@ -69,6 +81,8 @@ def calculate_cash_settlement(
 		lines, component=EXTRAORDINARY_100_COMPONENT, hours=covered,
 		hourly_rate=rate, premium_percent=extraordinary_percent, include_base_hour=False,
 	)
+	_append_line(lines, component=EXTRAORDINARY_100_COMPONENT, hours=combined,
+		hourly_rate=rate, premium_percent=combined_percent-extraordinary_percent, include_base_hour=False)
 	_append_line(
 		lines,
 		component=NIGHT_COMPONENT,
@@ -85,6 +99,7 @@ def calculate_cash_settlement(
 		"hourly_rate": float(_money(rate)),
 		"holiday_base_covered_hours": float(covered),
 		"holiday_base_already_in_salary": float(_money(covered * rate)),
+		**({"holiday_weekly_rest_hours": float(combined), "holiday_weekly_rest_percent": float(combined_percent)} if combined else {}),
 		"lines": lines,
 		"total_amount": float(
 			_money(sum((_decimal(line["amount"]) for line in lines), Decimal("0")))

@@ -44,10 +44,14 @@ def build_cash_settlement(adjustment, reconciliation):
 	policy = reconciliation.get("pay_policy")
 	election = reconciliation.get("settlement_election")
 	coverage = reconciliation.get("holiday_base_coverage")
+	from powerpro.payroll_rules.overtime_combined_day import cash_kwargs, combined_hours
+	combined = combined_hours(reconciliation)
+	try: combined_kwargs = cash_kwargs(policy, reconciliation) if combined else {}
+	except ValueError as exc: frappe.throw(str(exc))
 	if policy and flt(reconciliation.get("holiday_100_hours")):
 		if not coverage or reconciliation.get("holiday_base_covered_hours") is None:
 			frappe.throw(_("Complete la declaración de base salarial cubierta para el feriado."))
-	if policy and flt(reconciliation.get("weekly_rest_hours")):
+	if policy and (flt(reconciliation.get("weekly_rest_hours")) or combined):
 		if not policy.get("weekly_rest_cash") or not election or election.get("choice") != "Cash":
 			frappe.throw(_("El efectivo por descanso semanal requiere la elección expresa del empleado y una política aprobada."))
 		weekly_percent = policy["weekly_rest_percent"]
@@ -63,6 +67,7 @@ def build_cash_settlement(adjustment, reconciliation):
 		extraordinary_overtime_percent=rates.get("extraordinary_overtime_percent"),
 		night_hours_percent=rates.get("night_hours_percent"),
 		weekly_rest_overtime_percent=weekly_percent,
+		**combined_kwargs,
 	)
 	settlement.update({
 		"salary_structure_assignment": assignment.name,
