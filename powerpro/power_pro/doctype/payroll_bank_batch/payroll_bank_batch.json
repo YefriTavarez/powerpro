@@ -152,12 +152,12 @@
    "label": "Pagos"
   },
   {
+   "description": "Guarde el borrador y use Acciones > Cargar pagos sometidos. Los datos se corrigen en el registro de origen y se vuelven a cargar.",
    "fieldname": "details",
    "fieldtype": "Table",
    "label": "Detalles",
    "options": "Payroll Bank Batch Detail",
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "totals_section",

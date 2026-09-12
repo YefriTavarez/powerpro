@@ -1,6 +1,27 @@
 // Copyright (c) 2026, PowerPro contributors
 
+function clear_empty_bank_payment_rows(frm) {
+    if (frm.doc.docstatus !== 0) return;
+    const payment_fields = [
+        "salary_slip", "employee", "employee_name", "bank_name",
+        "bank_account_no", "account_type", "amount", "identification_number",
+        "validation_message",
+    ];
+    const empty_rows = (frm.doc.details || []).filter((row) =>
+        !payment_fields.some((field) => row[field]) &&
+        [undefined, null, "", "DOP"].includes(row.currency) &&
+        [undefined, null, "", "Cédula"].includes(row.identification_type) &&
+        [undefined, null, "", "Pending"].includes(row.validation_status)
+    );
+    // Remove from locals as well: Desk validates child documents there.
+    empty_rows.forEach((row) => frappe.model.clear_doc(row.doctype, row.name));
+    if (empty_rows.length) frm.refresh_field("details");
+}
+
 frappe.ui.form.on("Payroll Bank Batch", {
+    onload: clear_empty_bank_payment_rows,
+    validate: clear_empty_bank_payment_rows,
+
     setup(frm) {
         frm.set_query("payroll_entry", () => ({
             filters: { docstatus: 1 },
@@ -14,6 +35,12 @@ frappe.ui.form.on("Payroll Bank Batch", {
     },
 
     refresh(frm) {
+        frm.set_intro("");
+        if (frm.doc.docstatus === 0 && !(frm.doc.details || []).length) {
+            frm.set_intro(frm.is_new()
+                ? __("Guarde el borrador y luego use Acciones > Cargar pagos sometidos. Los detalles se completan desde la nómina; no se agregan manualmente.")
+                : __("Use Acciones > Cargar pagos sometidos para completar los detalles desde la nómina."), "blue");
+        }
         if (frm.is_new() || frm.doc.docstatus === 2) return;
 
         if (frm.doc.docstatus === 0) {

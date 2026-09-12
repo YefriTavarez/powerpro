@@ -23,20 +23,26 @@ from powerpro.payroll_rules.banco_popular import (
 
 
 class PayrollBankBatch(Document):
+    def before_validate(self):
+        if self.docstatus == 0:
+            # Older metadata made this read-only table mandatory, so Desk
+            # inserted a blank child before users could load Salary Slips.
+            self.set("details", [row for row in self.details if not _is_empty_payment_row(row)])
+
     def validate(self):
         self._validate_source_documents()
         self._validate_unique_sequence()
         self._refresh_validation_snapshot()
 
     def before_submit(self):
-        if self.validation_status != "Ready":
+        if not self.details or self.validation_status != "Ready":
             frappe.throw(
                 _("The payroll bank batch must be Ready before approval."),
                 title=_("Bank validation blocked"),
             )
         self._validate_salary_slips_not_in_another_batch()
-
-    def on_submit(self):
+        # before_submit runs before db_update; on_submit assignments are not
+        # persisted and would leave an approved document labelled Draft.
         self.status = "Approved"
 
     def on_cancel(self):
@@ -311,6 +317,21 @@ class PayrollBankBatch(Document):
             "reused": reused,
             "bank_entry_created": False,
         }
+
+
+def _is_empty_payment_row(row):
+    """Discard only the old placeholder, never a partial payment snapshot."""
+    payment_fields = (
+        "salary_slip", "employee", "employee_name", "bank_name",
+        "bank_account_no", "account_type", "amount", "identification_number",
+        "validation_message",
+    )
+    return (
+        not any(row.get(field) for field in payment_fields)
+        and row.currency in (None, "", "DOP")
+        and row.identification_type in (None, "", "Cédula")
+        and row.validation_status in (None, "", "Pending")
+    )
 
 
 def _profile_data(profile):

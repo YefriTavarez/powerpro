@@ -22,8 +22,14 @@ El número de activación y los datos bancarios no deben almacenarse en código.
 1. Someter la nómina y sus Salary Slips.
 2. Desde Payroll Entry, usar **Acciones > Crear lote Banco Popular**.
 3. Completar fecha, secuencia de siete dígitos y descripción del pago.
-4. Guardar y usar **Cargar pagos sometidos**.
-5. Corregir todo registro bloqueado y volver a cargar el lote.
+4. Guardar el borrador, inicialmente sin detalles, y usar **Acciones > Cargar
+   pagos sometidos**. La tabla es de solo lectura: no se agregan ni eliminan
+   empleados manualmente.
+5. Revisar las observaciones de cada registro bloqueado, corregir los datos en
+   su registro de origen (Employee o Salary Slip, según corresponda) y volver a
+   cargar el lote. No cancelar ni modificar una nómina sometida sin revisar su
+   impacto contable. Los datos bancarios incompletos se guardan para revisión,
+   pero impiden aprobar el lote y generar el TXT.
 6. Someter el lote cuando el resultado sea **Ready**.
 7. Usar **Generar TXT privado** y descargar el archivo adjunto.
 8. Comparar cantidad, monto total y SHA-256 antes de entregarlo al banco.
@@ -41,6 +47,19 @@ continúan siendo pasos operativos separados.
 - La secuencia no se puede repetir para el mismo perfil y fecha de pago.
 - Cada línea contiene exactamente 320 bytes en Windows-1252 y termina en CRLF.
 - El archivo generado es privado e inmutable para el lote aprobado.
+- Un borrador vacío se guarda como **Pending**; uno con datos bancarios
+  incompletos queda **Blocked**. Ninguno puede someterse ni generar archivos.
+
+## Pruebas del flujo de borrador
+
+La suite `powerpro.power_pro.doctype.payroll_bank_batch.test_payroll_bank_batch`
+usa persistencia real de Frappe y fuentes de nómina sintéticas, con rollback por
+prueba. Ejecutarla solo en un sitio de desarrollo/pruebas. Cubre guardado vacío,
+limpieza de filas antiguas completamente vacías, carga con datos incompletos,
+bloqueo de aprobación/generación y persistencia del estado **Approved**.
+
+`node --test tests/test_payroll_bank_batch_ui.cjs` verifica los eventos del
+formulario con un modelo simulado de Desk; no sustituye una prueba de navegador.
 
 ## Reversión
 
