@@ -47,17 +47,21 @@ def _quarter(doc):
     return {'start':start,'end':end,'intervals':intervals,'sources':sources,'checkins':checkins,'issues':issues,'complete':False}
 
 
-def _historical_current(doc):
-    from powerpro.controllers.overtime_history import compare
-    from powerpro.controllers.checkin_overtime_week import load_week
-    from powerpro.payroll_rules.overtime_actual_week import collect_weekly_work
-    comparison=compare(doc)
+def _historical_state(comparison,physical=physical_input):
     current=deepcopy(comparison['current'])
     accepted=comparison['matches']
     current['state']='Verified' if accepted else 'Needs Review'
     current['historical_review']={'accepted':accepted,
         'revision':comparison['revision'].name if comparison['revision'] else None,
-        'saved_physical_hash':_evidence_hash(physical_input(comparison['saved']))}
+        'saved_physical_hash':_evidence_hash(physical(comparison['saved']))}
+    return current
+
+
+def _historical_current(doc):
+    from powerpro.controllers.overtime_history import compare
+    from powerpro.controllers.checkin_overtime_week import load_week
+    from powerpro.payroll_rules.overtime_actual_week import collect_weekly_work
+    current=_historical_state(compare(doc));accepted=current['historical_review']['accepted']
     employee=frappe.get_doc('Employee',doc.employee)
     data=load_week(doc,employee,current['input']['assignments'])
     historical=data.pop('historical_intervals',[]);names=data.pop('historical_checkins',[])
@@ -79,7 +83,11 @@ def _current(doc):
     from powerpro.controllers.ordinary_night import build_preview
     from powerpro.controllers.checkin_overtime_week import load_week
     from powerpro.payroll_rules.overtime_actual_week import collect_weekly_work
-    current=build_preview(doc);context=current['input']['context']
+    if doc.docstatus==2:
+        from powerpro.controllers import ordinary_night_history as history
+        current=_historical_state(history.compare(doc),history.physical_input)
+    else:current=build_preview(doc)
+    context=current['input']['context']
     employee=frappe.get_doc('Employee',doc.employee)
     assignments=frappe.get_all('Shift Assignment',filters={'employee':doc.employee,'docstatus':1,'status':'Active',
         'start_date':['<=',getdate(doc.work_date)+timedelta(days=2)]},fields=['shift_type','start_date','end_date'],limit=1001)
@@ -88,9 +96,12 @@ def _current(doc):
     facade=frappe._dict(doctype=NIGHT,name=doc.name,employee=doc.employee,authorization_start=start,authorization_end=end,work_date=doc.work_date)
     data=load_week(facade,employee,assignments)
     historical=data.pop('historical_intervals',[]);historical_names=data.pop('historical_checkins',[]);certified=data.pop('certified_sessions',[])
-    if current['input'].get('certified_session'):certified.append({'shift':current['input']['shift']['name'],'start':str(start),'end':str(context['shift_end'])})
-    weekly=collect_weekly_work(**data,accepted_intervals=historical+current.get('worked_intervals',[]),
-        accepted_checkins=historical_names+[r['name'] for r in current.get('source_checkins',[])],certified_sessions=certified)
+    accepted=doc.docstatus!=2 or current['historical_review']['accepted']
+    if accepted:
+        certified.extend(current.get('certified_sessions',[]))
+        if current['input'].get('certified_session'):certified.append({'shift':current['input']['shift']['name'],'start':str(start),'end':str(context['shift_end'])})
+    weekly=collect_weekly_work(**data,accepted_intervals=historical+(current.get('worked_intervals',[]) if accepted else []),
+        accepted_checkins=historical_names+([r['name'] for r in current.get('source_checkins',[])] if accepted else []),certified_sessions=certified)
     return current,weekly,current['input']['shift'],data['rows']
 
 
@@ -100,7 +111,7 @@ def preview(source_type,source_name,profile='General',reference='',break_rule='O
     doc=frappe.get_doc(source_type,source_name);doc.check_permission('read')
     frappe.get_doc('Employee',doc.employee).check_permission('read')
     if not frappe.has_permission('Employee Checkin','read'):frappe.throw(_('Necesita permiso de lectura de marcaciones.'),frappe.PermissionError)
-    historical=doc.docstatus==2 and source_type in {AUTH,RETRO}
+    historical=doc.docstatus==2
     if (doc.docstatus!=1 and not historical) or (source_type!=NIGHT and not evidence_enabled(doc)):
         frappe.throw(_('Seleccione un origen aprobado con conciliación por evidencia.'))
     try:
@@ -128,10 +139,13 @@ def preview(source_type,source_name,profile='General',reference='',break_rule='O
         return ([{'document_type':'Employee Checkin','document_name':r['name']} for r in rows]
             +[{'document_type':r['source_type'],'document_name':r['source_name']} for r in sources if r.get('source_type') and r.get('source_name')]
             +[{'document_type':'Overtime Reconciliation Run','document_name':r['history_revision']} for r in sources if r.get('history_revision')])
+    physical=physical_input
+    if source_type==NIGHT:
+        from powerpro.controllers.ordinary_night_history import physical_input as physical
     result['supporting_evidence']={
-        'session':{'input':{**physical_input(current),**{k:current['input'][k] for k in ('context','extensions','certified_session') if k in current['input']}},'worked_intervals':current.get('worked_intervals',[]),
+        'session':{'input':{**physical(current),**{k:current['input'][k] for k in ('context','extensions','certified_session') if k in current['input']}},'worked_intervals':current.get('worked_intervals',[]),
             'checkins':current.get('source_checkins',[]),'state':current['state'],
-            'access':access(current.get('source_checkins',[]))},
+            'access':access(current.get('source_checkins',[]))+[{'document_type':r.get('source_type') or AUTH,'document_name':r['name']} for r in current['input'].get('extensions',[])]},
         'weekly':{**weekly,'access':access(week_rows,weekly.get('issues',[]))
             +[{'document_type':'Attendance','document_name':n} for c in weekly.get('coverage',[]) for n in c.get('attendances',[])]},
         'quarter':{**{k:quarter[k] for k in ('start','end','intervals','sources','issues','complete')},

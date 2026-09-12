@@ -17,13 +17,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  assert.equal(calls[1].type,'POST');assert.equal(calls[1].args.expected_hash,'token');
  assert.equal(JSON.parse(calls[1].args.options).profile,'General');
  assert.equal(calls[1].args.responsible,'reviewer@example.invalid');
- // Historical controls are accessible only for the two evidence adapters.
+ // Historical controls are accessible only for supported evidence adapters.
  const cases=[
   ['Overtime Authorization',2,1,undefined,true],
   ['Overtime Authorization',2,0,undefined,false],
   ['Retroactive Overtime Adjustment',2,0,'Verified Checkins',true],
   ['Retroactive Overtime Adjustment',2,0,'Legacy',false],
-  ['Ordinary Night Settlement',2,0,undefined,false],
+  ['Ordinary Night Settlement',2,0,undefined,true],
   ['Ordinary Night Settlement',1,0,undefined,true],
   ['Overtime Authorization',0,1,undefined,false]
  ];

@@ -21,6 +21,14 @@
    "no_copy": 1
   },
   {
+   "fieldname": "night_settlement",
+   "fieldtype": "Link",
+   "options": "Ordinary Night Settlement",
+   "label": "Liquidación nocturna",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
    "fieldname": "employee",
    "fieldtype": "Link",
    "label": "Empleado",
@@ -76,6 +84,7 @@
  "field_order": [
   "authorization",
   "retroactive_adjustment",
+  "night_settlement",
   "employee",
   "work_date",
   "result_status",

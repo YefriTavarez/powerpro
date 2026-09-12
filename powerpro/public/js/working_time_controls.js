@@ -1,7 +1,7 @@
 frappe.provide('powerpro.working_time_controls');
 powerpro.working_time_controls.add_button = frm => {
     const dt=frm.doc.doctype;
-    const historical=frm.doc.docstatus===2 && ['Overtime Authorization','Retroactive Overtime Adjustment'].includes(dt);
+    const historical=frm.doc.docstatus===2 && ['Overtime Authorization','Retroactive Overtime Adjustment','Ordinary Night Settlement'].includes(dt);
     if ((frm.doc.docstatus!==1 && !historical) || (dt==='Overtime Authorization' && !frm.doc.evidence_enrolled)
         || (dt==='Retroactive Overtime Adjustment' && frm.doc.reconciliation_engine!=='Verified Checkins')) return;
     frm.add_custom_button(__('Controles de jornada'), () => {

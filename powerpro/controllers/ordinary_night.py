@@ -60,9 +60,12 @@ def _certified_session(extensions, employee, shift, *, for_update=False):
     return found[0] if found else None
 
 
-def build_preview(doc, *, for_update=False):
+def build_preview(doc, *, for_update=False, historical_snapshot=None, historical_declaration=None):
     from powerpro.controllers.checkin_overtime import _evidence_hash
     from powerpro.controllers.overtime_cash_settlement import _get_hourly_rate
+    physical_only=historical_snapshot is not None
+    if physical_only and doc.docstatus!=2:
+        frappe.throw(_('La evaluación histórica requiere una liquidación cancelada.'))
     employee = frappe.get_doc('Employee', doc.employee, for_update=for_update)
     employee.check_permission('read')
     company = frappe.get_doc('Company', employee.company, for_update=for_update)
@@ -88,15 +91,22 @@ def build_preview(doc, *, for_update=False):
         fields=['name','authorization_start','authorization_end','status','shift_type'],order_by='authorization_start asc',limit=51)
     for row in historical:row['source_type']='Retroactive Overtime Adjustment'
     extensions.extend(historical)
+    if physical_only:
+        # Financial cancellation does not shorten the documented old session.
+        # New replacements are not silently added to its historical window.
+        from powerpro.controllers.ordinary_night_history import historical_extensions
+        extensions=historical_extensions(doc,historical_snapshot,for_update=for_update)
     extensions.sort(key=lambda row:(get_datetime(row.authorization_start),row.get('source_type') or 'Overtime Authorization',row.name))
     if len(extensions)>50:frappe.throw(_('Demasiadas prolongaciones para esta jornada.'))
-    if any(r.status!='Approved' or r.shift_type!=current.name for r in extensions):
+    if any((r.status!='Approved' and not (physical_only and r.docstatus==2)) or r.shift_type!=current.name for r in extensions):
         frappe.throw(_('Las prolongaciones deben estar aprobadas y corresponder al turno resuelto.'))
     windows=[{'name':r.name,'start':str(r.authorization_start),'end':str(r.authorization_end),
               **({'source_type':r.source_type} if r.get('source_type') else {})} for r in extensions]
     lo=min([start]+[get_datetime(r['start']) for r in windows]);hi=max([end]+[get_datetime(r['end']) for r in windows])
-    policy=get_effective_policy(frappe._dict(company=company.name,authorization_start=lo,authorization_end=hi),for_update=for_update)
-    if not policy:frappe.throw(_('Falta una política aprobada que cubra toda la jornada.'))
+    policy=None
+    if not physical_only:
+        policy=get_effective_policy(frappe._dict(company=company.name,authorization_start=lo,authorization_end=hi),for_update=for_update)
+        if not policy:frappe.throw(_('Falta una política aprobada que cubra toda la jornada.'))
     next_windows=[]
     date=day+timedelta(days=1)
     while date<=hi.date():
@@ -112,6 +122,9 @@ def build_preview(doc, *, for_update=False):
         fields=['name','time','log_type','shift','shift_start','shift_end','shift_actual_start','shift_actual_end','skip_auto_attendance','offshift'],
         order_by='time asc,name asc',limit=2001)
     if len(rows)>2000:frappe.throw(_('Demasiadas marcaciones para una jornada.'))
+    if physical_only:
+        from powerpro.controllers.ordinary_night_history import evaluate_physical
+        return evaluate_physical(doc,company.name,rows,shift,context,windows,next_windows,historical_declaration)
     salary_fields=['name','base','from_date','salary_structure']
     if frappe.get_meta('Salary Structure Assignment').has_field('salary_per_hour'):salary_fields.append('salary_per_hour')
     rates=_reconciliation_rows('Salary Structure Assignment',for_update=for_update,
@@ -211,6 +224,9 @@ def create_automatic_coverage(auth, result):
 @frappe.whitelist()
 def get_status(name):
     doc=frappe.get_doc(DT,name);doc.check_permission('read')
+    if doc.docstatus==2:
+        from powerpro.controllers.ordinary_night_history import get_status as historical_status
+        return historical_status(name)
     current=build_preview(doc)
     saved=frappe.parse_json(doc.evidence_snapshot or '{}')
     return {'state':'Needs Review' if doc.docstatus==1 and current['input_hash']!=saved.get('input_hash') else current['state'],

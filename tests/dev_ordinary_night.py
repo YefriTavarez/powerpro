@@ -8,7 +8,8 @@ assert frappe.local.site=='igcaribe.fortabs.com' and frappe.conf.developer_mode
 from powerpro.controllers import ordinary_night as night
 from powerpro.controllers.overtime_cash_settlement import _get_linked_additional_salaries
 DT=night.DT
-counts=['Employee','Shift Type','Employee Checkin','Overtime Authorization','Overtime Work Call','Overtime Reconciliation Run','Overtime Pay Policy',DT,'Additional Salary','Salary Slip','Salary Structure Assignment']
+counts=['Employee','Shift Type','Employee Checkin','Overtime Authorization','Overtime Work Call','Overtime Reconciliation Run','Overtime Pay Policy',DT,'Additional Salary','Salary Slip','Salary Structure Assignment',
+ 'Working Time Incident','Working Time Review','Working Time Evidence Reference','Overtime Evidence Watch','Version','Error Log','User','Has Role','User Permission']
 before={dt:frappe.db.count(dt) for dt in counts}
 settings_before={dt:frappe.db.get_singles_dict(dt) for dt in ['DGII Payroll Settings','Payroll Settings']}
 commit,enqueue,sendmail=frappe.db.commit,frappe.enqueue,frappe.sendmail
@@ -73,6 +74,80 @@ try:
   else:raise AssertionError('Source cancellation bypassed submitted payroll')
   slip.cancel();doc.reload();doc.flags.ignore_permissions=True;doc.cancel();doc.reload()
   assert doc.docstatus==2 and not doc.active_claim and frappe.db.get_value('Additional Salary',refs[0],'docstatus')==2
+  # Cancelled night earnings retain physical evidence independently of current
+  # salary/policy. Historical corrections never revive the cancelled source.
+  from powerpro.controllers import ordinary_night_history as history,working_time_controls as controls
+  from powerpro.controllers import working_time_incidents as cases,working_time_reviews as reviews,overtime_evidence_monitor as monitor
+  from powerpro.controllers import overtime_cash_settlement as cash
+  frappe.db.set_single_value('DGII Payroll Settings',{'enable_overtime_evidence_monitor':1,
+   'enable_working_time_incident_monitor':1,'enable_manual_overtime_verification':1})
+  def fails(fn,exc=frappe.ValidationError):
+   try:fn()
+   except exc:return
+   raise AssertionError('Expected refusal')
+  frozen_source=doc.as_dict();money=frappe.db.count('Additional Salary');marks=frappe.db.count('Employee Checkin')
+  with (patch.object(night,'get_effective_policy',side_effect=AssertionError('History read financial policy')),
+        patch.object(cash,'_get_hourly_rate',side_effect=AssertionError('History read salary rate'))):
+   assert history.compare(doc)['matches']
+  assert night.get_status(doc.name)['state']=='Verified' and monitor.check_source(DT,doc.name)['status']=='Current'
+  diagnostic=controls.preview(DT,doc.name);assert diagnostic['historical_review']['accepted']
+  rows=cases.record(DT,doc.name,{},'Administrator',diagnostic['input_hash'])
+  pause=frappe.get_doc(cases.DT,next(r['name'] for r in rows if frappe.db.get_value(cases.DT,r['name'],'control_code')=='work_break'))
+  cases.resolve(pause.name,pause.evidence_hash,'Documented Exception','DEV historical eight hours without pause','DEV source')
+  last.time='2026-09-15 01:00:00';last.save(ignore_permissions=True)
+  assert monitor.check_source(DT,doc.name)['status']=='Needs Review' and night.get_status(doc.name)['state']=='Needs Review'
+  cases.recheck(pause.name);pause.reload();assert pause.status=='Open' and pause.evaluation_status=='Historical review required'
+  fails(lambda:cases.resolve(pause.name,pause.evidence_hash,'Documented Exception','Cancelled payment','DEV'))
+  p=history.preview_review(doc.name,'DEV corrected physical exit');assert p['worked_hours_before']==8 and p['worked_hours_after']==7
+  last.time='2026-09-15 00:00:00';last.save(ignore_permissions=True)
+  fails(lambda:history.apply_review(doc.name,'DEV corrected physical exit',p['token']))
+  last.time='2026-09-15 01:00:00';last.save(ignore_permissions=True)
+  p=history.preview_review(doc.name,'DEV corrected physical exit')
+  result=history.apply_review(doc.name,'DEV corrected physical exit',p['token']);assert result['history_sequence']==1
+  assert history.apply_review(doc.name,'DEV corrected physical exit',p['token'])['idempotent']
+  assert reviews.process_review(pause.working_time_review)['status']=='Checked'
+  pause.reload();assert pause.evaluation_status=='Review' and pause.resolution_reference=='DEV source'
+  assert any(r.document_type=='Overtime Reconciliation Run' and r.document_name==result['audit'] for r in pause.evidence_references)
+  assert monitor.check_source(DT,doc.name)['status']=='Current'
+  last.skip_auto_attendance=1;last.save(ignore_permissions=True)
+  fails(lambda:history.preview_review(doc.name,'DEV missing exit'))
+  declaration={'full_session':True,'reference':'DEV supervisor full session with pause','intervals':[
+   {'start':'2026-09-14 18:00:00','end':'2026-09-14 22:00:00'},
+   {'start':'2026-09-14 23:00:00','end':'2026-09-15 01:00:00'}]}
+  p=history.preview_review(doc.name,'DEV documented historical pause',declaration)
+  result=history.apply_review(doc.name,'DEV documented historical pause',p['token'],declaration);assert result['history_sequence']==2
+  assert history.compare(doc)['matches']
+  cases.recheck(pause.name);pause.reload();assert pause.evaluation_status==cases.CLEAR
+  cases.resolve(pause.name,pause.evidence_hash,'Resolved','DEV complete declaration, four hours then two','DEV historical pause')
+  assert not cases.recheck(pause.name)['changed']
+  # Native role and evidence-reference permissions guard the historical API.
+  user_name=prefix.lower()+'@example.invalid'
+  frappe.get_doc({'doctype':'User','name':user_name,'email':user_name,'first_name':'DEV Night History Reviewer','enabled':1,
+   'user_type':'System User','send_welcome_email':0}).db_insert()
+  frappe.get_doc({'doctype':'Has Role','parent':user_name,'parenttype':'User','parentfield':'roles','role':'HR Manager'}).db_insert()
+  frappe.get_doc({'doctype':'User Permission','user':user_name,'allow':'Employee','for_value':employee.name,'apply_to_all_doctypes':1}).db_insert()
+  configured=frappe.db.get_single_value('DGII Payroll Settings','overtime_manual_verification_roles') or ''
+  frappe.db.set_single_value('DGII Payroll Settings','overtime_manual_verification_roles',configured+'\nHR Manager')
+  frappe.clear_cache(user=user_name);frappe.set_user(user_name)
+  try:
+   assert history.get_status(doc.name)['can_review']
+   assert history.get_status(doc.name)['state']=='Verified'
+   assert frappe.get_list(cases.DT,filters={'name':pause.name},pluck='name')
+  finally:frappe.set_user('Administrator')
+  frappe.get_doc({'doctype':'User Permission','user':user_name,'allow':'Employee Checkin','for_value':first.name,'apply_to_all_doctypes':1}).db_insert()
+  frappe.clear_cache(user=user_name);frappe.set_user(user_name)
+  try:
+   fails(lambda:history.get_status(doc.name),frappe.PermissionError)
+   fails(lambda:history.preview_review(doc.name,'Hidden mark',declaration),frappe.PermissionError)
+   fails(lambda:cases.recheck(pause.name),frappe.PermissionError)
+   assert not frappe.get_list(cases.DT,filters={'name':pause.name},pluck='name')
+  finally:frappe.set_user('Administrator')
+  last.skip_auto_attendance=0;last.time='2026-09-15 02:00:00';last.save(ignore_permissions=True)
+  assert reviews.process_review(pause.working_time_review)['status']=='Checked'
+  pause.reload();assert pause.status=='Open' and pause.evaluation_status=='Historical review required'
+  assert pause.resolution_reference=='DEV historical pause'
+  doc.reload();assert doc.as_dict()==frozen_source and frappe.db.count('Additional Salary')==money and frappe.db.count('Employee Checkin')==marks
+  print('NIGHT_HISTORY: financial-independent physical evidence, audited correction, stale/idempotent guards, manual complete session, incident resolution/reopening and unchanged source/earnings passed')
   corrected=draft();corrected.submit()
   assert len(_get_linked_additional_salaries(corrected,docstatus=1))==1
   corrected.flags.ignore_permissions=True;corrected.cancel()
@@ -107,6 +182,8 @@ try:
    else:raise AssertionError('Ordinary coverage could be cancelled before linked OT')
    call.reload();call.flags.ignore_permissions=True;call.cancel()
    ordinary.reload();ordinary.flags.ignore_permissions=True;ordinary.cancel()
+   assert history.compare(ordinary)['matches'],'Cancelled authorization must preserve the documented extended session'
+   assert controls.preview(DT,ordinary.name)['historical_review']['accepted']
   # Explicit policy opt-in lets an automatically enrolled authorization create
   # ordinary night and OT atomically. No historical/manual draft is taken over.
   frappe.db.savepoint('automatic_night_case')
@@ -217,11 +294,13 @@ try:
    assert manual.settlement_status==manual_night.settlement_status=='Payroll Submitted'
    manual_slip.cancel();manual_call.reload();manual_call.flags.ignore_permissions=True;manual_call.cancel()
    manual_night.reload();manual_night.flags.ignore_permissions=True;manual_night.cancel()
+   assert history.compare(manual_night)['matches'],'Cancelled manual authorization must retain the approved declaration'
+   assert controls.preview(DT,manual_night.name)['historical_review']['accepted']
   print('NIGHT_MANUAL_ACCEPTANCE: one HR declaration reused, 15 ordinary plus 150 OT, unchanged source/actor/punches, stale source rejected, idempotent resume and native payroll/cancel')
  print('NIGHT_ACCEPTANCE: no OT document, verified 5 ordinary night hours / 75 premium, duplicate and direct-cancel guards, stale evidence blocks native payroll, native submit/cancel, corrected replacement')
  print('NIGHT_OT_ACCEPTANCE: ordinary premium 15 plus OT 135 and extra night premium 15, distinct sources and protected cancellation order')
 finally:
- frappe.db.rollback();frappe.db.commit=commit;frappe.enqueue=enqueue;frappe.sendmail=sendmail
+ frappe.set_user('Administrator');frappe.db.rollback();frappe.db.commit=commit;frappe.enqueue=enqueue;frappe.sendmail=sendmail
  after={dt:frappe.db.count(dt) for dt in counts};assert before==after,(before,after)
  assert settings_before=={dt:frappe.db.get_singles_dict(dt) for dt in settings_before}
  print('NIGHT_ROLLBACK_UNCHANGED',json.dumps(after));frappe.db.rollback();frappe.destroy()

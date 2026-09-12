@@ -122,6 +122,11 @@ try:
  assert monitor.check_source(night.DT,night_doc.name)['status']=='Needs Review'
  night_doc.reload();assert night_doc.settlement_amount==30
  night_doc.flags.ignore_permissions=True;night_doc.cancel()
+ # Cancellation alone no longer certifies the altered physical evidence.
+ assert monitor.check_source(night.DT,night_doc.name)['status']=='Needs Review'
+ from powerpro.controllers import ordinary_night_history as night_history
+ p=night_history.preview_review(night_doc.name,'DEV cancelled night correction')
+ night_history.apply_review(night_doc.name,'DEV cancelled night correction',p['token'])
  assert monitor.check_source(night.DT,night_doc.name)['status']=='Current'
  # Native Work Call creates an enrolled authorization, then late evidence makes
  # its saved work appear in the same follow-up queue.

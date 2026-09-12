@@ -161,12 +161,6 @@ def _locked(name):
 
 def _refresh(doc,source):
     options=_options(doc.evaluation_options)
-    if source.docstatus==2 and source.doctype not in {controls.AUTH,controls.RETRO}:
-        # Financial cancellation cannot certify disappearance of physical work.
-        proof={'source_type':source.doctype,'source_name':source.name,'docstatus':2,'options':options,
-            'control':{'code':doc.control_code,'status':'Historical review required',
-                'message':_('Origen cancelado: conserve y revise la evidencia histórica; cancelar el pago no resuelve este control.')}}
-        return _update(doc,proof)
     result=controls.preview(source.doctype,source.name,**options)
     matches=[c for c in result['controls'] if c['code']==doc.control_code and _period(c)==(str(doc.period_start) if doc.period_start else None)]
     if matches:control=matches[0]
