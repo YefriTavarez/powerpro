@@ -46,6 +46,27 @@ def load_week(doc,employee,assignments,*,for_update=False):
             context.update(date=str(day),shift=name)
             schedules.append(context)
         day+=timedelta(days=1)
+    historical_intervals=[];historical_checkins=[]
+    previous=_reconciliation_rows('Overtime Authorization',for_update=for_update,
+        filters=[['employee','=',doc.employee],['docstatus','=',1],['evidence_enrolled','=',1],
+                 ['authorization_end','>',start],['authorization_end','<=',doc.authorization_start],['name','!=',doc.name]],
+        fields=['name','reconciliation_source','evidence_snapshot'],order_by='authorization_start asc, name asc',limit=51)
+    if len(previous)>50:raise ValueError('Demasiadas autorizaciones semanales; requiere revisión.')
+    from powerpro.controllers.checkin_overtime import _data,_evidence_hash,now_datetime
+    from powerpro.payroll_rules.overtime_evidence import evaluate_evidence
+    for prior in previous:
+        if prior.reconciliation_source!='Employee Checkin':
+            issues.append({'code':'weekly_previous_verification_requires_review','authorization':prior.name});continue
+        saved=frappe.parse_json(prior.evidence_snapshot or '{}')
+        current,_settings=_data(frappe.get_doc('Overtime Authorization',prior.name,for_update=for_update),for_update=for_update,include_weekly=False)
+        fresh=evaluate_evidence(authorization=current['authorization'],rows=current['rows'],shift=current['shift'],contexts=current['contexts'],
+            next_windows=current['next_windows'],now=now_datetime(),competing=current['competing'])
+        if fresh['state']!='Verified' or not saved.get('worked_intervals') or (
+            _evidence_hash(saved.get('source_checkins'))!=_evidence_hash(fresh.get('source_checkins')) or
+            _evidence_hash(saved['worked_intervals'])!=_evidence_hash(fresh.get('worked_intervals'))):
+            issues.append({'code':'weekly_previous_snapshot_changed','authorization':prior.name});continue
+        historical_intervals.extend(fresh['worked_intervals'])
+        historical_checkins.extend(name for session in fresh['sessions'] for name in session['checkins'])
     return {'start':start,'cutoff':end,'rows':[dict(r) for r in rows],
             'policies':policies,'schedules':schedules,'attendances':[dict(r) for r in attendances],
-            'context_issues':issues}
+            'context_issues':issues,'historical_intervals':historical_intervals,'historical_checkins':historical_checkins}

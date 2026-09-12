@@ -33,6 +33,10 @@ def build_cash_settlement(adjustment, reconciliation):
 	payroll_date = validate_settlement_payroll_date(adjustment)
 	assignment = _get_effective_salary_assignment(adjustment)
 	hourly_rate = _get_hourly_rate(assignment)
+	if reconciliation.get("pay_policy"):
+		basis = reconciliation.get("rate_basis") or {}
+		if basis.get("name") != assignment.name or abs(flt(basis.get("hourly_rate")) - hourly_rate) > .000001:
+			frappe.throw(_("La tarifa salarial cambió desde la conciliación; revise la evidencia antes de liquidar."))
 	rates = reconciliation.get("rates") or _get_overtime_rates()
 	settlement = calculate_cash_settlement(
 		hourly_rate=hourly_rate,
@@ -50,6 +54,9 @@ def build_cash_settlement(adjustment, reconciliation):
 		"currency": _get_company_currency(adjustment.company),
 		"payroll_date": str(payroll_date),
 	})
+	if reconciliation.get("pay_policy"):
+		settlement["pay_policy"] = reconciliation["pay_policy"]
+		settlement["rate_basis"] = reconciliation["rate_basis"]
 	return settlement
 
 

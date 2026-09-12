@@ -5,6 +5,7 @@ owned transaction. No synthetic Checkins; audit runs are immutable.
 """
 import hashlib
 import json
+from math import isfinite
 from datetime import datetime,time,timedelta
 import frappe
 from frappe import _
@@ -15,6 +16,8 @@ from powerpro.payroll_rules.overtime_calendar import calendar_dates
 from powerpro.payroll_rules.overtime_evidence import VERSION,evaluate_evidence
 from powerpro.payroll_rules.overtime_actual_week import collect_weekly_work,apply_actual_week_bands
 from powerpro.controllers.checkin_overtime_week import load_week
+from powerpro.controllers.overtime_pay_policy import get_effective_policy
+from powerpro.payroll_rules.overtime_pay_policy import classify_night_session
 from powerpro.payroll_rules.manual_overtime import verification_roles
 
 AUTH='Overtime Authorization'
@@ -85,6 +88,9 @@ def enroll_call(call):
     for name in names:
         doc,_call=_lock(name)
         enroll_authorization(doc,auto_settle=call.get('evidence_auto_settle'))
+        if call.get('evidence_auto_settle') and call.planned_settlement=='Cash':
+            from powerpro.controllers.automatic_overtime import _payroll_date
+            doc.db_set('auto_payroll_date',_payroll_date(call,doc.work_date,_settings().get('overtime_auto_payroll_date_policy') or 'Work Date'))
     call.db_set('evidence_reconciliation_enabled',1)
     call.add_comment('Info',_('Conciliación por Employee Checkin inscrita; no se presume asistencia.'))
 
@@ -98,7 +104,7 @@ def enroll(authorization):
     return {'authorization':doc.name,'status':doc.evidence_status}
 
 
-def _data(doc,*,for_update=False):
+def _data(doc,*,for_update=False,include_weekly=True):
     start,end=get_datetime(doc.authorization_start),get_datetime(doc.authorization_end)
     begin=datetime.combine(start.date(),time.min)-timedelta(days=1)
     finish=datetime.combine(end.date()+timedelta(days=1),time.min)
@@ -127,14 +133,26 @@ def _data(doc,*,for_update=False):
         day+=timedelta(days=1)
     competing=bool(_reconciliation_rows(AUTH,for_update=for_update,filters=[['employee','=',doc.employee],['docstatus','=',1],['name','!=',doc.name],['authorization_start','<',end],['authorization_end','>',start]],pluck='name',limit=1))
     settings=_settings()
-    weekly=load_week(doc,employee,assignments,for_update=for_update)
+    pay_policy=get_effective_policy(doc,for_update=for_update)
+    salary_fields=['name','base','from_date']
+    if frappe.get_meta('Salary Structure Assignment').has_field('salary_per_hour'):salary_fields.append('salary_per_hour')
+    assignments_for_pay=_reconciliation_rows('Salary Structure Assignment',for_update=for_update,
+        filters={'employee':doc.employee,'company':doc.company,'docstatus':1,'from_date':['<=',doc.work_date]},
+        fields=salary_fields,order_by='from_date desc, creation desc',limit=1)
+    rate_basis=None
+    if assignments_for_pay and (flt(assignments_for_pay[0].get('salary_per_hour'))>0 or flt(assignments_for_pay[0].base)>0):
+        from powerpro.controllers.overtime_cash_settlement import _get_hourly_rate
+        rate_basis={**dict(assignments_for_pay[0]),'hourly_rate':_get_hourly_rate(assignments_for_pay[0])}
+        if not isfinite(rate_basis['hourly_rate']) or rate_basis['hourly_rate']<=0:rate_basis=None
+    week_start=datetime.combine(start.date()-timedelta(days=start.weekday()),time.min)
+    weekly=load_week(doc,employee,assignments,for_update=for_update) if include_weekly else {'start':week_start}
     config={k:settings.get(k) for k in ['weekly_expected_hours','max_weekly_extra_hours','start_night_hours','end_night_hours','extra_hours_rate','extraordinary_hours_rate','night_hours_rate']}
     policy={k:shift.get(k) for k in ['name','modified','start_time','end_time','last_sync_of_checkin','determine_check_in_and_check_out','working_hours_calculation_based_on','begin_check_in_before_shift_start_time','allow_check_out_after_shift_end_time']}
     authorization={'name':doc.name,'start':str(start),'end':str(end),'shift':doc.shift_type,'maximum_hours':doc.maximum_hours}
     current_context=next(c for c in contexts if c['date']==str(start.date()))
     lower=min(start,get_datetime(current_context['shift_start']))-timedelta(minutes=flt(shift.begin_check_in_before_shift_start_time))
     upper=max(end,get_datetime(current_context['shift_end']))+timedelta(minutes=flt(shift.allow_check_out_after_shift_end_time))
-    data={'calculator_version':VERSION,'authorization':authorization,'rows':[dict(r) for r in rows if lower<=get_datetime(r.time)<=upper],
+    data={'calculator_version':VERSION,'pay_policy':pay_policy,'rate_basis':rate_basis,'authorization':authorization,'rows':[dict(r) for r in rows if lower<=get_datetime(r.time)<=upper],
           'shift':policy,'contexts':contexts,'next_windows':next_windows,'competing':competing,'weekly':weekly,'configuration':config,
           'assignments':[dict(r) for r in assignments if not r.end_date or getdate(r.end_date)>=getdate(weekly['start'])-timedelta(days=1)],
           'default_shift':employee.get('default_shift')}
@@ -143,23 +161,43 @@ def _data(doc,*,for_update=False):
 
 def build_result(doc,*,for_update=False):
     data,settings=_data(doc,for_update=for_update)
+    policy=data['pay_policy']
     result=evaluate_evidence(authorization=data['authorization'],rows=data['rows'],shift=data['shift'],contexts=data['contexts'],
         next_windows=data['next_windows'],now=now_datetime(),competing=data['competing'],
-        night_start=coerce_time(settings.start_night_hours,time(21)),night_end=coerce_time(settings.end_night_hours,time(7)))
+        night_start=time(21) if policy else coerce_time(settings.start_night_hours,time(21)),
+        night_end=time(7) if policy else coerce_time(settings.end_night_hours,time(7)))
+    blockers=[]
+    if not policy:blockers.append('Falta una política de liquidación aprobada que cubra la fecha de trabajo.')
+    if doc.planned_settlement=='Cash' and not data['rate_basis']:
+        blockers.append('Falta una asignación salarial vigente con tarifa por hora válida.')
     if result.get('calculation'):
         accepted=[name for session in result['sessions'] for name in session['checkins']]
-        weekly=collect_weekly_work(**data['weekly'],accepted_intervals=result['worked_intervals'],accepted_checkins=accepted)
+        weekly_data=dict(data['weekly'])
+        historical_intervals=weekly_data.pop('historical_intervals',[])
+        historical_checkins=weekly_data.pop('historical_checkins',[])
+        weekly=collect_weekly_work(**weekly_data,accepted_intervals=historical_intervals+result['worked_intervals'],accepted_checkins=historical_checkins+accepted)
         result['weekly_evidence']=weekly
-        result['calculation']=apply_actual_week_bands(result['calculation'],weekly,threshold=settings.max_weekly_extra_hours)
+        result['calculation']=apply_actual_week_bands(result['calculation'],weekly,threshold=policy['weekly_threshold'] if policy else settings.max_weekly_extra_hours)
         for field in ['regular_35_hours','regular_100_hours']:
             result['snapshot'][field]=result['calculation'][field]
+        if policy:
+            night=classify_night_session(result['worked_intervals'],result['calculation']['intervals'],basis=policy['night_basis'])
+            result['night_session']=night
+            result['snapshot']['night_hours']=result['calculation']['night_hours']=night['overtime_premium_hours']
+            if policy['night_basis']=='Whole nocturnal session' and night['classification']=='Nocturna':
+                for segment in result['calculation']['segments']:segment['night_hours']=segment['verified_hours']
+            if night['ordinary_premium_hours']:
+                blockers.append('La jornada contiene recargo nocturno fuera de la autorización; complete su liquidación ordinaria independiente.')
+        if result['calculation']['weekly_rest_hours']:
+            blockers.append('El trabajo durante descanso semanal requiere registrar la elección del empleado y completar su liquidación específica.')
     result['input_hash']=_evidence_hash(data)
     result['input']=data
-    # Real-work validation is separate from pending weekly/premium policy approval.
-    result['settlement_ready']=False
-    result['settlement_blockers']=['La política de liquidación por evidencia debe estar validada antes de pagar.']
     if result.get('calculation') and not result['calculation']['weekly_evidence_complete']:
-        result['settlement_blockers'].append('Falta evidencia semanal completa para clasificar el recargo de horas ordinarias extra.')
+        blockers.append('Falta evidencia semanal completa para clasificar el recargo de horas ordinarias extra.')
+    if doc.planned_settlement!='Cash':
+        blockers.append('Complete la política y el recorrido de descanso compensatorio antes de acreditar licencia.')
+    result['settlement_ready']=bool(result['state']=='Verified' and result.get('snapshot') and not blockers)
+    result['settlement_blockers']=blockers
     return result
 
 
@@ -191,6 +229,7 @@ def process_authorization(name):
     frozen=frappe.parse_json(doc.get('evidence_snapshot') or '{}')
     if frozen.get('input_hash') and frozen['input_hash']!=result['input_hash']:
         result['state']='Needs Review';result['issues'].append({'code':'verified_source_changed','severity':'review'})
+        result['settlement_ready']=False
         result.pop('snapshot',None)
     changed=doc.get('evidence_last_hash')!=result['input_hash'] or doc.get('evidence_status')!=result['state']
     if changed:_audit(doc,result)
@@ -199,7 +238,7 @@ def process_authorization(name):
     visible_issues.extend({'code':'settlement_pending','scope':'settlement','message':message} for message in result['settlement_blockers'])
     values={'evidence_status':result['state'],'evidence_last_hash':result['input_hash'],
         'evidence_last_attempt':now_datetime(),'evidence_retry_after':now_datetime()+timedelta(minutes=5 if result['state']=='Waiting' else 10),
-        'evidence_issues':_json(visible_issues),'evidence_settlement_ready':0}
+        'evidence_issues':_json(visible_issues),'evidence_settlement_ready':cint(result['settlement_ready'])}
     if result.get('snapshot') and result['state']=='Verified' and (changed or not doc.get('reconciled_on')):
         values.update(result['snapshot'])
         values.update(reconciliation_source='Employee Checkin',presumed_hours=0,presumed_on=None,
@@ -210,6 +249,16 @@ def process_authorization(name):
         values['reconciliation_status']='Scheduled' if result['state']=='Waiting' else 'Check-in Issue'
     doc.db_set(values)
     _sync(call)
+    if result['settlement_ready'] and doc.get('evidence_auto_settle'):
+        frappe.db.savepoint('checkin_cash_settlement')
+        try:
+            from powerpro.controllers.overtime_settlement import _settle_authorization
+            _settle_authorization(doc,payroll_date=doc.auto_payroll_date,settings=_settings())
+            doc.db_set({'evidence_status':'Frozen','evidence_retry_after':None})
+            return 'Frozen'
+        except Exception as exc:
+            frappe.db.rollback(save_point='checkin_cash_settlement')
+            doc.db_set('evidence_issues',_json(visible_issues+[{'code':'settlement_error','scope':'settlement','message':str(exc)[:1500]}]))
     return result['state']
 
 

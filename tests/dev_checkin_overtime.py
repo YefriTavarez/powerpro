@@ -11,7 +11,7 @@ assert frappe.local.site==SITE and frappe.conf.developer_mode
 from powerpro.controllers import checkin_overtime as evidence
 from powerpro.controllers.overtime_settlement import _validate_ready
 prefix='EVIDENCE-DEV-'+uuid.uuid4().hex[:10]
-counts=['Employee','Shift Type','Employee Checkin','Overtime Authorization','Overtime Work Call','Overtime Reconciliation Run','Additional Salary','Leave Allocation','Salary Slip']
+counts=['Employee','Shift Type','Employee Checkin','Overtime Authorization','Overtime Work Call','Overtime Reconciliation Run','Additional Salary','Leave Allocation','Salary Slip','Overtime Pay Policy','Salary Structure Assignment']
 before={d:frappe.db.count(d) for d in counts}
 original_settings=frappe.db.get_singles_dict('DGII Payroll Settings')
 commit,sendmail,enqueue=frappe.db.commit,frappe.sendmail,frappe.enqueue
@@ -99,6 +99,72 @@ try:
   assert evidence.process_authorization(name)=='Manual Verification'
   assert frappe.db.get_value('Overtime Authorization',name,'verified_hours')==1
   checks.append('explicit HR verification is not overwritten by checkin retries')
+ # A policy is approved only inside this rollback fixture, never in the live site state.
+ policy=frappe.get_doc({'doctype':'Overtime Pay Policy','title':'DEV rollback policy','company':employee.company,
+  'valid_from':'2026-09-01','valid_until':'2026-09-30','approval_reference':'Synthetic DEV acceptance only; must roll back',
+  'weekly_threshold':68,'regular_percent':40,'extraordinary_percent':100,'night_percent':15,'weekly_rest_percent':100,
+  'night_basis':'Clock overlap','premium_combination':'Additive on base hour'})
+ policy.insert(ignore_permissions=True);policy.flags.ignore_permissions=True;policy.submit()
+ assert policy.approved_by=='Administrator' and policy.approved_on
+ overlap=frappe.copy_doc(policy);overlap.docstatus=0;overlap.insert(ignore_permissions=True);overlap.flags.ignore_permissions=True
+ try:overlap.submit()
+ except frappe.ValidationError:pass
+ else:raise AssertionError('Overlapping policy approval succeeded')
+ policy.regular_percent=45
+ try:policy.save(ignore_permissions=True)
+ except frappe.ValidationError:pass
+ else:raise AssertionError('Submitted policy was editable')
+ assert frappe.db.get_value('Overtime Pay Policy',policy.name,'regular_percent')==40
+ checks.append('policy approval has identity, rejects overlapping validity and preserves approved rates')
+ cash_employee=frappe.copy_doc(employee);cash_employee.name=prefix+'-CASH-EMP';cash_employee.docstatus=0;cash_employee.db_insert()
+ original=frappe.get_all('Salary Structure Assignment',filters={'employee':base.employee,'docstatus':1},pluck='name',order_by='from_date desc',limit=1)
+ assert original
+ assignment=frappe.copy_doc(frappe.get_doc('Salary Structure Assignment',original[0]));assignment.name=prefix+'-SSA'
+ assignment.employee=cash_employee.name;assignment.docstatus=1;assignment.from_date='2026-01-01';assignment.base=19064
+ assignment.salary_per_hour=100;assignment.db_insert()
+ def cash_call(day):
+  source=frappe.copy_doc(frappe.get_doc('Overtime Work Call','CONV-HE-2026-00004-1'));source.name=None;source.docstatus=0
+  source.company=employee.company;source.from_date=day;source.to_date=day;source.planned_settlement='Cash'
+  source.automation_mode='Verified Checkins';source.evidence_auto_settle=1
+  source.set('employees',[]);source.append('employees',{'employee':cash_employee.name})
+  source.set('dates',[]);source.append('dates',{'work_date':day,'start_time':'18:00:00','end_time':'20:00:00','requested_hours':2})
+  source.insert(ignore_permissions=True);source.flags.ignore_permissions=True;source.submit()
+  for clock,kind in [('08:00:00','IN'),('12:00:00','OUT'),('13:00:00','IN'),('20:00:00','OUT')]:
+   frappe.get_doc({'doctype':'Employee Checkin','employee':cash_employee.name,'time':day+' '+clock,'log_type':kind,'skip_auto_attendance':0}).insert(ignore_permissions=True)
+  return source,frappe.db.get_value('Overtime Authorization',{'overtime_work_call':source.name},'name')
+ from powerpro.controllers import overtime_settlement as settlement
+ from powerpro.controllers.overtime_cash_settlement import _get_linked_additional_salaries
+ frappe.db.set_single_value('DGII Payroll Settings','overtime_auto_payroll_date_policy','Work Date')
+ first_call,first_auth=cash_call('2026-09-14')
+ with patch.object(evidence,'now_datetime',return_value=get_datetime('2026-09-14 21:00:00')):
+  assert evidence.process_authorization(first_auth)=='Frozen'
+  paid_input=frappe.get_doc('Overtime Authorization',first_auth)
+  refs=_get_linked_additional_salaries(paid_input,docstatus=1);assert len(refs)==1
+  assert paid_input.verified_hours==2 and paid_input.presumed_hours==0 and paid_input.settlement_status=='Created'
+  assert paid_input.settlement_amount==280
+  breakdown=frappe.parse_json(paid_input.settlement_breakdown)
+  assert breakdown['pay_policy']['name']==policy.name and breakdown['lines'][0]['premium_percent']==40
+  assert evidence.process_authorization(first_auth)=='Frozen'
+  assert refs==_get_linked_additional_salaries(paid_input,docstatus=1)
+  checks.append('verified checkins automatically create one submitted Additional Salary at the approved 40 percent policy rate; retry creates none')
+ second_call,second_auth=cash_call('2026-09-15')
+ real_create=settlement.create_cash_settlement_for_source
+ def fail_after_creation(*a,**kw):
+  real_create(*a,**kw)
+  raise RuntimeError('Synthetic failure after salary creation')
+ before_salary_count=frappe.db.count('Additional Salary')
+ with patch.object(evidence,'now_datetime',return_value=get_datetime('2026-09-15 21:00:00')):
+  with patch.object(settlement,'create_cash_settlement_for_source',side_effect=fail_after_creation):
+   assert evidence.process_authorization(second_auth)=='Verified'
+  assert frappe.db.count('Additional Salary')==before_salary_count
+  second=frappe.get_doc('Overtime Authorization',second_auth)
+  assert second.verified_hours==2 and second.evidence_settlement_ready and 'settlement_error' in second.evidence_issues
+  assert evidence.process_authorization(second_auth)=='Frozen'
+  assert len(_get_linked_additional_salaries(second,docstatus=1))==1
+  checks.append('failure after salary creation rolls back only settlement, preserves verified hours and succeeds once on retry')
+ first_call.reload();first_call.flags.ignore_permissions=True;first_call.cancel()
+ assert all(frappe.db.get_value('Additional Salary',ref,'docstatus')==2 for ref in refs)
+ checks.append('cancelling the Work Call reverses its generated Additional Salary through document lifecycles')
  frappe.set_user('Guest')
  try:evidence.process_now(name)
  except frappe.PermissionError:pass

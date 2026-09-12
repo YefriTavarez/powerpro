@@ -1,0 +1,183 @@
+{
+ "doctype": "DocType",
+ "name": "Overtime Pay Policy",
+ "module": "Power Pro",
+ "engine": "InnoDB",
+ "autoname": "format:POL-HE-{YYYY}-{#####}",
+ "is_submittable": 1,
+ "title_field": "title",
+ "track_changes": 1,
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Nombre de la política",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Empresa",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "valid_from",
+   "fieldtype": "Date",
+   "label": "Vigente desde",
+   "reqd": 1
+  },
+  {
+   "fieldname": "valid_until",
+   "fieldtype": "Date",
+   "label": "Vigente hasta",
+   "reqd": 1
+  },
+  {
+   "fieldname": "approval_reference",
+   "fieldtype": "Small Text",
+   "label": "Documento y ejemplos aprobados",
+   "reqd": 1,
+   "description": "Referencia de la decisión de Gestión Humana y su validación laboral. Enviar este documento aprueba esta versión; no activa la automatización."
+  },
+  {
+   "fieldname": "weekly_threshold",
+   "fieldtype": "Float",
+   "label": "Umbral de horas reales semanales",
+   "default": "68",
+   "reqd": 1,
+   "description": "Acumulación lunes a domingo; suma las horas efectivamente trabajadas, incluidas las trabajadas en feriados y descanso. Esta versión no admite otros regímenes."
+  },
+  {
+   "fieldname": "regular_percent",
+   "fieldtype": "Percent",
+   "label": "Recargo ordinario (%)",
+   "default": "35",
+   "reqd": 1
+  },
+  {
+   "fieldname": "extraordinary_percent",
+   "fieldtype": "Percent",
+   "label": "Recargo extraordinario y feriado (%)",
+   "default": "100",
+   "reqd": 1
+  },
+  {
+   "fieldname": "night_percent",
+   "fieldtype": "Percent",
+   "label": "Recargo nocturno (%)",
+   "default": "15",
+   "reqd": 1
+  },
+  {
+   "fieldname": "night_basis",
+   "fieldtype": "Select",
+   "label": "Aplicación de nocturnidad",
+   "options": "\nClock overlap\nWhole nocturnal session",
+   "reqd": 1,
+   "description": "Clock overlap: únicamente 21:00–07:00. Whole nocturnal session: toda la jornada evidenciada cuando alcanza tres horas nocturnas; en jornada mixta aplica al tramo nocturno. Requiere criterio aprobado."
+  },
+  {
+   "fieldname": "premium_combination",
+   "fieldtype": "Select",
+   "label": "Combinación de recargos",
+   "options": "\nAdditive on base hour",
+   "reqd": 1,
+   "description": "Cada recargo se calcula sobre la hora base, sin capitalizar otro recargo ni duplicar la hora base."
+  },
+  {
+   "fieldname": "weekly_rest_cash",
+   "fieldtype": "Check",
+   "label": "Permitir efectivo por descanso semanal",
+   "default": "0"
+  },
+  {
+   "fieldname": "weekly_rest_percent",
+   "fieldtype": "Percent",
+   "label": "Recargo de descanso semanal (%)",
+   "default": "100",
+   "reqd": 1
+  },
+  {
+   "fieldname": "enable_compensatory",
+   "fieldtype": "Check",
+   "label": "Permitir descanso compensatorio",
+   "default": "0"
+  },
+  {
+   "fieldname": "leave_type",
+   "fieldtype": "Link",
+   "label": "Tipo de licencia",
+   "options": "Leave Type",
+   "depends_on": "eval:doc.enable_compensatory"
+  },
+  {
+   "fieldname": "hours_per_leave_day",
+   "fieldtype": "Float",
+   "label": "Horas por día de licencia",
+   "depends_on": "eval:doc.enable_compensatory"
+  },
+  {
+   "fieldname": "leave_increment",
+   "fieldtype": "Float",
+   "label": "Fracción mínima de licencia",
+   "depends_on": "eval:doc.enable_compensatory"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Aprobado por",
+   "options": "User",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "approved_on",
+   "fieldtype": "Datetime",
+   "label": "Aprobado el",
+   "read_only": 1,
+   "no_copy": 1
+  }
+ ],
+ "field_order": [
+  "title",
+  "company",
+  "valid_from",
+  "valid_until",
+  "approval_reference",
+  "weekly_threshold",
+  "regular_percent",
+  "extraordinary_percent",
+  "night_percent",
+  "night_basis",
+  "premium_combination",
+  "weekly_rest_cash",
+  "weekly_rest_percent",
+  "enable_compensatory",
+  "leave_type",
+  "hours_per_leave_day",
+  "leave_increment",
+  "approved_by",
+  "approved_on"
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "report": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "report": 1
+  }
+ ]
+}
