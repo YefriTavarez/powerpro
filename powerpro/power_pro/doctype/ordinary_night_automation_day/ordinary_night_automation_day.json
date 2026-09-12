@@ -1,0 +1,82 @@
+{
+ "doctype": "DocType",
+ "name": "Ordinary Night Automation Day",
+ "module": "Power Pro",
+ "engine": "InnoDB",
+ "track_changes": 1,
+ "field_order": [
+  "work_date",
+  "status",
+  "night_hours",
+  "amount",
+  "settlement",
+  "checked_on",
+  "summary",
+  "input_hash",
+  "issues"
+ ],
+ "fields": [
+  {
+   "fieldname": "work_date",
+   "fieldtype": "Date",
+   "label": "Fecha de trabajo",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Estado",
+   "options": "Pending\nWaiting\nNeeds Review\nNo Premium\nCreated\nExisting\nError",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "night_hours",
+   "fieldtype": "Float",
+   "label": "Horas nocturnas ordinarias",
+   "read_only": 1,
+   "precision": "4"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Importe",
+   "read_only": 1
+  },
+  {
+   "fieldname": "settlement",
+   "fieldtype": "Data",
+   "label": "Liquidación",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "checked_on",
+   "fieldtype": "Datetime",
+   "label": "Última comprobación",
+   "read_only": 1
+  },
+  {
+   "fieldname": "summary",
+   "fieldtype": "Small Text",
+   "label": "Resultado",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "input_hash",
+   "fieldtype": "Data",
+   "label": "Huella de evidencia",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issues",
+   "fieldtype": "Long Text",
+   "label": "Detalle",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "permissions": []
+}

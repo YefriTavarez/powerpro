@@ -1,0 +1,123 @@
+{
+ "doctype": "DocType",
+ "name": "Ordinary Night Automation",
+ "module": "Power Pro",
+ "engine": "InnoDB",
+ "track_changes": 1,
+ "field_order": [
+  "employee",
+  "company",
+  "from_date",
+  "to_date",
+  "settlement_payroll_date",
+  "policy",
+  "reference",
+  "enabled",
+  "approved_by",
+  "approved_on",
+  "days"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Empleado",
+   "options": "Employee",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Empresa",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "Desde",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "Hasta",
+   "reqd": 1
+  },
+  {
+   "fieldname": "settlement_payroll_date",
+   "fieldtype": "Date",
+   "label": "Fecha de nómina",
+   "reqd": 1
+  },
+  {
+   "fieldname": "policy",
+   "fieldtype": "Link",
+   "label": "Política aprobada",
+   "options": "Overtime Pay Policy",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reference",
+   "fieldtype": "Small Text",
+   "label": "Motivo y referencia de programación",
+   "reqd": 1
+  },
+  {
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Habilitar procesamiento",
+   "default": "0",
+   "allow_on_submit": 1,
+   "in_list_view": 1,
+   "description": "Procesa exclusivamente este empleado y período. Pausar no revierte liquidaciones existentes."
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Aprobado por",
+   "options": "User",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "approved_on",
+   "fieldtype": "Datetime",
+   "label": "Aprobado el",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "days",
+   "fieldtype": "Table",
+   "label": "Seguimiento por fecha",
+   "options": "Ordinary Night Automation Day",
+   "read_only": 1,
+   "no_copy": 1
+  }
+ ],
+ "is_submittable": 1,
+ "autoname": "format:NOCT-AUTO-{YYYY}-{#####}",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "report": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "report": 1
+  }
+ ]
+}

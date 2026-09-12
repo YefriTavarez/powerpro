@@ -296,6 +296,7 @@ scheduler_events = {
 	"hourly": [
 		"powerpro.controllers.overtime_candidates.scheduled_generate_overtime_candidates",
         "powerpro.controllers.overtime_evidence_monitor.scheduled_check",
+        "powerpro.controllers.ordinary_night_automation.scheduled_check",
 	],
 }
 
