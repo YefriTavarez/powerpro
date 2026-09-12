@@ -12,6 +12,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  bank-batch-isolated:
+    name: Bank batch form and TXT regressions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python powerpro/payroll_rules/test_banco_popular.py
+      - run: node --test tests/test_payroll_bank_batch_ui.cjs
+
   mixed-payroll-unit:
     runs-on: ubuntu-latest
     steps:
@@ -144,6 +158,7 @@ jobs:
           bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_dominican_republic
           bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_employer_contributions
           bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_banco_popular
+          bench --site test_site run-tests --app powerpro --module powerpro.power_pro.doctype.payroll_bank_batch.test_payroll_bank_batch
           bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_overtime
           bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_overtime_work_call
           bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_overtime_compensatory
