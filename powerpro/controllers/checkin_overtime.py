@@ -229,10 +229,27 @@ def get_status(authorization):
     return result
 
 
-def validate_settlement(doc):
+def validate_settlement(doc,*,for_update=False):
     if not doc.get('evidence_enrolled'):return
     if doc.get('evidence_status') not in {'Verified','Manual Verification'} or not doc.get('evidence_settlement_ready'):
         frappe.throw(_('Complete la revisión de evidencia y de su política antes de liquidar.'))
+    if not cint(_settings().get('enable_checkin_overtime_reconciliation')):
+        frappe.throw(_('La liquidación del modo por marcaciones está pausada.'))
+    if doc.get('reconciliation_source')!='Employee Checkin':
+        frappe.throw(_('La verificación manual requiere una revisión de liquidación independiente.'))
+    frozen=frappe.parse_json(doc.get('evidence_snapshot') or '{}')
+    current=build_result(doc,for_update=for_update)
+    if not frozen.get('input_hash') or frozen['input_hash']!=current['input_hash'] or current['state']!='Verified':
+        frappe.throw(_('La evidencia cambió o está incompleta; concilie y revise antes de liquidar.'))
+    if not current.get('settlement_ready') or not current.get('calculation',{}).get('weekly_evidence_complete'):
+        frappe.throw(_('La evidencia semanal y la política vigente deben habilitar esta liquidación.'))
+    snapshot=frozen.get('snapshot') or {}
+    for field in ['verified_hours','regular_35_hours','regular_100_hours','holiday_100_hours','weekly_rest_hours','night_hours']:
+        if field not in snapshot or abs(flt(doc.get(field))-flt(snapshot[field]))>.00005:
+            frappe.throw(_('Las horas del documento no coinciden con su evidencia guardada.'))
+    for field in ['actual_start','actual_end']:
+        if not snapshot.get(field) or not doc.get(field) or get_datetime(doc.get(field))!=get_datetime(snapshot[field]):
+            frappe.throw(_('El horario real no coincide con su evidencia guardada.'))
 
 
 def scheduled_reconcile_due():

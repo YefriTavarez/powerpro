@@ -131,9 +131,16 @@ def cancel_authorization_settlement(authorization):
 
 def _settle_authorization(doc, *, payroll_date=None, settings=None, preview=None):
 	settings = settings or _validate_settlement_role()
-	frappe.db.get_value(doc.doctype, doc.name, "name", for_update=True)
-	doc = frappe.get_doc(doc.doctype, doc.name, for_update=True)
-	_validate_ready(doc)
+	evidence_mode = bool(doc.get("evidence_enrolled"))
+	if evidence_mode:
+		from powerpro.controllers.checkin_overtime import _lock
+		doc, _call = _lock(doc.name)
+	else:
+		frappe.db.get_value(doc.doctype, doc.name, "name", for_update=True)
+		doc = frappe.get_doc(doc.doctype, doc.name, for_update=True)
+		if doc.get("evidence_enrolled"):
+			frappe.throw(_("El modo de conciliación cambió; vuelva a intentar la liquidación."))
+	_validate_ready(doc, for_update=evidence_mode)
 	preview = preview or _build_preview(
 		doc,
 		payroll_date=payroll_date,
@@ -287,10 +294,10 @@ def _validate_settlement_role():
 	return settings
 
 
-def _validate_ready(doc):
+def _validate_ready(doc, *, for_update=False):
 	if doc.get("evidence_enrolled"):
 		from powerpro.controllers.checkin_overtime import validate_settlement
-		validate_settlement(doc)
+		validate_settlement(doc, for_update=for_update)
 	if doc.docstatus != 1 or doc.status != "Approved":
 		frappe.throw(_("Only a submitted approved Overtime Authorization can be settled."))
 	if doc.get("settlement_status") in FINAL_SETTLEMENT_STATUSES:

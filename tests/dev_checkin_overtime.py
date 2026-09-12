@@ -70,6 +70,12 @@ try:
   except frappe.ValidationError:pass
   else:raise AssertionError('Unapproved policy allowed settlement')
   checks.append('pending payroll policy blocks settlement independently of real-hour persistence')
+  auth.evidence_settlement_ready=1
+  try:evidence.validate_settlement(auth,for_update=True)
+  except frappe.ValidationError:pass
+  else:raise AssertionError('Readiness flag bypassed fresh evidence and policy validation')
+  auth.evidence_settlement_ready=0
+  checks.append('a readiness flag alone cannot bypass fresh evidence and policy verification')
   prior=punch('08:00:00','IN',day='2026-09-14');punch('18:00:00','OUT',day='2026-09-14')
   fresh=evidence.build_result(auth,for_update=True)
   assert fresh['weekly_evidence']['complete'] and fresh['calculation']['regular_35_hours']==2
