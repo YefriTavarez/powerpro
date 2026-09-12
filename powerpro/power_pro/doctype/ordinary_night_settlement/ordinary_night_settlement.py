@@ -52,12 +52,13 @@ class OrdinaryNightSettlement(Document):
         night.check_role()
         frappe.db.get_value('Employee',self.employee,'name',for_update=True)
         before_cancel_adjustment(self)
-        refs=frappe.get_all('Overtime Authorization',filters={'employee':self.employee,'work_date':self.work_date,'docstatus':1,
-            'settlement_status':['in',list(night.FINAL)]},fields=['name','evidence_snapshot'])
-        for ref in refs:
-            snapshot=frappe.parse_json(ref.evidence_snapshot or '{}')
-            if (snapshot.get('ordinary_night_settlement') or {}).get('name')==self.name:
-                frappe.throw(_('Revierta primero las horas extra vinculadas a esta jornada: {0}.').format(ref.name))
+        for source_type in ['Overtime Authorization','Retroactive Overtime Adjustment']:
+            refs=frappe.get_all(source_type,filters={'employee':self.employee,'work_date':self.work_date,'docstatus':1,
+                'settlement_status':['in',list(night.FINAL)]},fields=['name','evidence_snapshot'])
+            for ref in refs:
+                snapshot=frappe.parse_json(ref.evidence_snapshot or '{}')
+                if (snapshot.get('ordinary_night_settlement') or {}).get('name')==self.name:
+                    frappe.throw(_('Revierta primero las horas extra vinculadas a esta jornada: {0} {1}.').format(source_type,ref.name))
 
     def on_cancel(self):
         cancel_cash_settlement(self)

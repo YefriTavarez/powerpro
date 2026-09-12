@@ -134,7 +134,7 @@ def create_cash_settlement_for_source(source, reconciliation):
 	return settlement, values
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def create_cash_settlement(adjustment):
 	"""Explicitly settle a valid pre-release approved adjustment once."""
 	doc = frappe.get_doc("Retroactive Overtime Adjustment", adjustment)

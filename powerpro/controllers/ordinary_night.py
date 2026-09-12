@@ -28,7 +28,7 @@ def _certified_session(extensions, employee, shift, *, for_update=False):
     from powerpro.payroll_rules.overtime_manual_session import evaluate_manual_session
     found=[]
     for extension in extensions:
-        auth=frappe.get_doc('Overtime Authorization',extension.name,for_update=for_update)
+        auth=frappe.get_doc(extension.get('source_type') or 'Overtime Authorization',extension.name,for_update=for_update)
         if auth.reconciliation_source!='Manual Verification':continue
         saved=frappe.parse_json(auth.evidence_snapshot or '{}')
         review=saved.get('review') or {}
@@ -81,10 +81,17 @@ def build_preview(doc, *, for_update=False):
     extensions=_reconciliation_rows('Overtime Authorization',for_update=for_update,
         filters={'employee':employee.name,'work_date':day,'docstatus':1},
         fields=['name','authorization_start','authorization_end','status','shift_type'],order_by='authorization_start asc',limit=51)
+    historical=_reconciliation_rows('Retroactive Overtime Adjustment',for_update=for_update,
+        filters={'employee':employee.name,'work_date':day,'docstatus':1,'reconciliation_engine':'Verified Checkins'},
+        fields=['name','authorization_start','authorization_end','status','shift_type'],order_by='authorization_start asc',limit=51)
+    for row in historical:row['source_type']='Retroactive Overtime Adjustment'
+    extensions.extend(historical)
+    extensions.sort(key=lambda row:(get_datetime(row.authorization_start),row.get('source_type') or 'Overtime Authorization',row.name))
     if len(extensions)>50:frappe.throw(_('Demasiadas prolongaciones para esta jornada.'))
     if any(r.status!='Approved' or r.shift_type!=current.name for r in extensions):
         frappe.throw(_('Las prolongaciones deben estar aprobadas y corresponder al turno resuelto.'))
-    windows=[{'name':r.name,'start':str(r.authorization_start),'end':str(r.authorization_end)} for r in extensions]
+    windows=[{'name':r.name,'start':str(r.authorization_start),'end':str(r.authorization_end),
+              **({'source_type':r.source_type} if r.get('source_type') else {})} for r in extensions]
     lo=min([start]+[get_datetime(r['start']) for r in windows]);hi=max([end]+[get_datetime(r['end']) for r in windows])
     policy=get_effective_policy(frappe._dict(company=company.name,authorization_start=lo,authorization_end=hi),for_update=for_update)
     if not policy:frappe.throw(_('Falta una política aprobada que cubra toda la jornada.'))

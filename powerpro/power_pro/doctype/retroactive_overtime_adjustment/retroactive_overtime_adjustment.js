@@ -6,6 +6,7 @@ frappe.ui.form.on("Retroactive Overtime Adjustment", {
 		frappe.require("/assets/powerpro/js/overtime_calendar.js", () => powerpro.overtime_calendar.add_button(frm));
 		configure_reconciliation_display(frm);
 		add_cash_settlement_actions(frm);
+		add_evidence_actions(frm);
 
 		if (frm.doc.docstatus === 0) {
 			set_settlement_payroll_date_default(frm);
@@ -161,10 +162,12 @@ function add_cash_settlement_actions(frm) {
 		return;
 	}
 	frm.add_custom_button(__("Create Cash Settlement"), () => {
+		if (frm.is_dirty()) return frappe.msgprint(__("Guarde los cambios antes de liquidar."));
 		frappe.confirm(
 			__("Create and submit the linked Additional Salary earnings now?"),
 			() => frappe.call({
 				method: "powerpro.controllers.overtime_cash_settlement.create_cash_settlement",
+				type: "POST",
 				args: { adjustment: frm.doc.name },
 				freeze: true,
 				freeze_message: __("Creating overtime payroll earnings..."),
@@ -404,5 +407,29 @@ function show_retroactive_reconciliation(result) {
 		indicator: result.verified_hours > 0 ? "green" : "orange",
 		message: `${snapshot}<table class="table table-bordered"><tbody>${body}</tbody></table>${warnings}`,
 		wide: true,
+	});
+}
+
+
+function add_evidence_actions(frm) {
+	if (frm.doc.docstatus !== 1 || frm.doc.reconciliation_engine !== 'Verified Checkins') return;
+	frappe.call({method: 'powerpro.controllers.retroactive_evidence.get_status', args: {adjustment: frm.doc.name}}).then(r => {
+		const state = r.message || {};
+		if (state.state !== 'Verified') {
+			frm.dashboard.set_headline_alert(__('La evidencia histórica requiere revisión; se conserva el cálculo aprobado.'), 'orange');
+		} else if (!state.settlement_ready) {
+			const message = state.ordinary_night_hours > 0 && !state.ordinary_night
+				? __('Complete la cobertura de nocturnidad ordinaria antes de liquidar las horas extras.')
+				: __('La liquidación tiene condiciones pendientes de revisión.');
+			frm.dashboard.set_headline_alert(message, 'orange');
+		}
+		if (!state.can_night) return;
+		frm.add_custom_button(__('Nocturnidad ordinaria'), () => {
+			if (frm.is_dirty()) return frappe.msgprint(__('Guarde los cambios antes de abrir la nocturnidad.'));
+			if (state.ordinary_night) return frappe.set_route('Form', 'Ordinary Night Settlement', state.ordinary_night);
+			frappe.new_doc('Ordinary Night Settlement', {employee: frm.doc.employee, work_date: frm.doc.work_date,
+				settlement_payroll_date: frm.doc.settlement_payroll_date || frappe.datetime.get_today(),
+				review_reference: __('Cobertura del ajuste retroactivo {0}', [frm.doc.name])});
+		}, __('Overtime'));
 	});
 }

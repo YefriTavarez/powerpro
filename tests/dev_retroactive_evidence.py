@@ -10,7 +10,7 @@ from powerpro.controllers.overtime import get_retroactive_adjustment_preview
 from powerpro.controllers.overtime_cash_settlement import _get_linked_additional_salaries
 DT=retro.DT
 counts=['Employee','Shift Type','Employee Checkin','Salary Structure Assignment','Overtime Pay Policy',DT,
- 'Overtime Authorization','Overtime Reconciliation Run','Additional Salary','Salary Slip']
+ 'Overtime Authorization','Overtime Reconciliation Run','Ordinary Night Settlement','Additional Salary','Salary Slip']
 before={d:frappe.db.count(d) for d in counts}
 settings_before={d:frappe.db.get_singles_dict(d) for d in ['DGII Payroll Settings','Payroll Settings']}
 commit,enqueue,sendmail=frappe.db.commit,frappe.enqueue,frappe.sendmail
@@ -43,9 +43,9 @@ try:
  def punch(day,clock,kind):
   row=frappe.get_doc({'doctype':'Employee Checkin','employee':employee.name,'time':day+' '+clock,'log_type':kind})
   row.insert(ignore_permissions=True);return row
- def draft(day):
-  doc=frappe.get_doc({'doctype':DT,'employee':employee.name,'work_date':day,'authorization_start':day+' 18:00:00',
-   'authorization_end':day+' 20:00:00','maximum_hours':2,'reason':'DEV historical work','exception_justification':'DEV historical exception',
+ def draft(day,start='18:00:00',end='20:00:00',maximum=2):
+  doc=frappe.get_doc({'doctype':DT,'employee':employee.name,'work_date':day,'authorization_start':day+' '+start,
+   'authorization_end':day+' '+end,'maximum_hours':maximum,'reason':'DEV historical work','exception_justification':'DEV historical exception',
    'planned_settlement':'Cash','settlement_payroll_date':'2026-09-15','reconciliation_engine':retro.ENGINE})
   doc.insert(ignore_permissions=True);doc.flags.ignore_permissions=True;return doc
  for day in ['2026-09-07','2026-09-08']:
@@ -96,6 +96,51 @@ try:
  else:raise AssertionError('Retroactive cancellation bypassed native submitted payroll')
  slip.cancel();second.reload();second.flags.ignore_permissions=True;second.cancel()
  assert not _get_linked_additional_salaries(second,docstatus=1)
+ # A separate employee avoids changing the earlier employees' historical shift.
+ from powerpro.controllers import ordinary_night as night
+ from powerpro.controllers.overtime_cash_settlement import create_cash_settlement
+ evening_shift=frappe.copy_doc(shift);evening_shift.name=prefix+'-EVENING';evening_shift.docstatus=0;evening_shift.start_time='16:00:00';evening_shift.end_time='22:00:00';evening_shift.db_insert()
+ employee=frappe.copy_doc(employee);employee.name=prefix+'-NIGHT-EMP';employee.docstatus=0;employee.default_shift=evening_shift.name;employee.db_insert()
+ assignment=frappe.copy_doc(assignment);assignment.name=prefix+'-NIGHT-SSA';assignment.docstatus=1;assignment.employee=employee.name;assignment.db_insert()
+ punch('2026-09-07','18:00:00','IN');night_exit=punch('2026-09-07','23:00:00','OUT')
+ adjustment=draft('2026-09-07','22:00:00','23:00:00',1);adjustment.submit();adjustment.reload()
+ assert adjustment.verified_hours==1 and adjustment.settlement_status=='Pending' and not adjustment.evidence_settlement_ready
+ status=retro.get_status(adjustment.name)
+ assert status['can_night'] and status['ordinary_night_hours']==1 and not status['settlement_ready']
+ night_doc=frappe.get_doc({'doctype':night.DT,'employee':employee.name,'work_date':'2026-09-07',
+  'settlement_payroll_date':'2026-09-15','review_reference':'DEV coverage for '+adjustment.name})
+ night_doc.insert(ignore_permissions=True);night_doc.flags.ignore_permissions=True;night_doc.submit()
+ assert night_doc.settlement_amount==15 and night_doc.night_hours==1
+ assert frappe.parse_json(night_doc.evidence_snapshot)['input']['extensions'][0]['source_type']==DT
+ status=retro.get_status(adjustment.name)
+ assert status['settlement_ready'] and status['ordinary_night']==night_doc.name
+ amount=create_cash_settlement(adjustment.name)
+ adjustment.reload();assert amount['total_amount']==155 and adjustment.settlement_amount==155
+ assert frappe.parse_json(adjustment.evidence_snapshot)['ordinary_night_settlement']['name']==night_doc.name
+ try:night_doc.cancel()
+ except frappe.ValidationError as exc:assert adjustment.name in str(exc),str(exc)
+ else:raise AssertionError('Night coverage cancelled before settled retroactive source')
+ night_doc.reload();night_doc.flags.ignore_permissions=True
+ money_count=frappe.db.count('Additional Salary')
+ try:create_cash_settlement(adjustment.name)
+ except frappe.ValidationError:pass
+ else:raise AssertionError('Duplicate retroactive cash accepted')
+ assert frappe.db.count('Additional Salary')==money_count
+ combined=make_salary_slip(assignment.salary_structure,employee=employee.name,posting_date='2026-09-15',ignore_permissions=True)
+ combined.insert(ignore_permissions=True);combined.flags.ignore_permissions=True
+ frappe.db.savepoint('retroactive_night_source_changed')
+ night_exit.time='2026-09-07 22:30:00';night_exit.save(ignore_permissions=True)
+ assert retro.get_status(adjustment.name)['state']=='Needs Review'
+ try:combined.submit()
+ except frappe.ValidationError:pass
+ else:raise AssertionError('Combined payroll accepted changed night/retroactive evidence')
+ frappe.db.rollback(save_point='retroactive_night_source_changed');combined.reload();combined.flags.ignore_permissions=True
+ combined.submit();adjustment.reload();night_doc.reload()
+ assert adjustment.settlement_status==night_doc.settlement_status=='Payroll Submitted'
+ combined.cancel();adjustment.reload();adjustment.flags.ignore_permissions=True;adjustment.cancel()
+ night_doc.reload();night_doc.flags.ignore_permissions=True;night_doc.cancel()
+ assert not _get_linked_additional_salaries(adjustment,docstatus=1) and not _get_linked_additional_salaries(night_doc,docstatus=1)
+ print('RETROACTIVE_NIGHT_ACCEPTANCE: approved pending OT resolves ordinary15 plus retroactive155, explicit unique cash settlement, linked cancellation guard, live stale status and native combined payroll/cancel')
  print('RETROACTIVE_EVIDENCE_ACCEPTANCE: missing exit blocks, common engine pays2h/280 at frozen40%, preview read-only, prior retroactive session supplies actual weekly20h, cancelling cash retains work, historical correction blocks native payroll, native submit/cancel protected')
 finally:
  frappe.db.rollback();frappe.db.commit=commit;frappe.enqueue=enqueue;frappe.sendmail=sendmail

@@ -73,3 +73,27 @@ def validate_fresh(doc,*,payroll=False):
         if not doc.get(name) or get_datetime(doc.get(name))!=get_datetime(saved['snapshot'].get(name)):
             frappe.throw(_('El horario real del ajuste no coincide con su evidencia guardada.'))
     return current
+
+
+@frappe.whitelist()
+def get_status(adjustment):
+    """Current readiness beside immutable approved evidence; never changes it."""
+    doc=frappe.get_doc(DT,adjustment);doc.check_permission('read')
+    if not enabled(doc) or doc.docstatus!=1:
+        return {'state':'Not Applicable','can_night':False}
+    saved=frappe.parse_json(doc.evidence_snapshot or '{}')
+    current=reconcile(doc)['_evidence']
+    changed=not saved.get('input_hash') or saved['input_hash']!=current['input_hash']
+    result={'state':'Needs Review' if changed else current['state'],
+        'settlement_ready':bool(not changed and current['settlement_ready']),
+        'warnings':as_reconciliation(doc,current)['warnings'],'can_night':False,'ordinary_night':None,
+        'ordinary_night_hours':current.get('night_session',{}).get('ordinary_premium_hours',0)}
+    if changed:result['warnings'].insert(0,_('La evidencia actual cambió; se conserva la instantánea aprobada.'))
+    if result['ordinary_night_hours']:
+        name=frappe.db.get_value('Ordinary Night Settlement',{'employee':doc.employee,'work_date':doc.work_date,'docstatus':1},'name')
+        if name:
+            night=frappe.get_doc('Ordinary Night Settlement',name)
+            if frappe.has_permission(night.doctype,'read',doc=night):
+                result.update(can_night=True,ordinary_night=name)
+        else:result['can_night']=bool(frappe.has_permission('Ordinary Night Settlement','create'))
+    return result
