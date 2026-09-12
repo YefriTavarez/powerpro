@@ -30,6 +30,8 @@ class OrdinaryNightSettlement(Document):
             frappe.throw(_('La conciliación por marcaciones debe estar habilitada y cubrir esta fecha.'))
         frappe.db.get_value('Employee',self.employee,'name',for_update=True)
         current=night.validate_fresh(self)
+        if current['input'].get('certified_session') and not cint(settings.get('enable_manual_overtime_verification')):
+            frappe.throw(_('La verificación manual debe estar habilitada para liquidar esta declaración.'))
         self.evidence_snapshot=_json(current);self.evidence_status=current['state'];self.issues=_json(current['issues'])
         self.shift_type=current['input']['shift']['name'];self.policy=current['input']['policy']['name']
         # Ignore any client-supplied derived fields, even on a direct submit request.

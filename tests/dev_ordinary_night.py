@@ -105,6 +105,55 @@ try:
    else:raise AssertionError('Ordinary coverage could be cancelled before linked OT')
    call.reload();call.flags.ignore_permissions=True;call.cancel()
    ordinary.reload();ordinary.flags.ignore_permissions=True;ordinary.cancel()
+  # Missing/invalid exit: certify once through the real HR review API, then
+  # reuse it for ordinary night and resume the pending OT without changing source.
+  frappe.db.set_single_value('DGII Payroll Settings','enable_manual_overtime_verification',1)
+  last.reload();last.skip_auto_attendance=1;last.save(ignore_permissions=True)
+  manual_call=frappe.copy_doc(call);manual_call.name=None;manual_call.docstatus=0
+  from powerpro.controllers.automatic_overtime import CALL_FIELDS
+  for field in CALL_FIELDS+('evidence_reconciliation_enabled',):manual_call.set(field,None)
+  manual_call.insert(ignore_permissions=True);manual_call.flags.ignore_permissions=True;manual_call.submit()
+  manual_name=frappe.db.get_value('Overtime Authorization',{'overtime_work_call':manual_call.name},'name')
+  from powerpro.controllers import checkin_overtime_review as review
+  with patch.object(evidence,'now_datetime',return_value=get_datetime('2026-09-16 10:00:00')):
+   assert evidence.process_authorization(manual_name)=='Needs Review'
+   declaration={'full_session':True,'reference':'DEV supervisor signed complete session',
+       'intervals':[{'start':'2026-09-14 18:00:00','end':'2026-09-14 23:00:00'}]}
+   punch_count=frappe.db.count('Employee Checkin')
+   preview=review.preview_review(manual_name,'DEV missing exit confirmed by supervisor',manual_declaration=declaration)
+   review.apply_review(manual_name,'DEV missing exit confirmed by supervisor',preview['token'],manual_declaration=declaration)
+   manual=frappe.get_doc('Overtime Authorization',manual_name)
+   assert manual.reconciliation_source=='Manual Verification' and not manual.evidence_settlement_ready
+   frozen=frappe.parse_json(manual.evidence_snapshot);identity=(manual.reconciled_by,manual.reconciled_on)
+   manual_night=draft()
+   night_snapshot=frappe.parse_json(manual_night.evidence_snapshot)
+   assert night_snapshot['input']['certified_session']['authorization']==manual.name
+   assert manual_night.night_hours==1 and manual_night.settlement_amount==15
+   # A changed raw punch cannot silently reuse HR's declaration.
+   frappe.db.savepoint('night_manual_stale')
+   last.skip_auto_attendance=0;last.save(ignore_permissions=True)
+   try:manual_night.submit()
+   except frappe.ValidationError:pass
+   else:raise AssertionError('Night settlement accepted changed manual evidence')
+   frappe.db.rollback(save_point='night_manual_stale');manual_night.reload();manual_night.flags.ignore_permissions=True
+   manual_night.submit()
+   assert evidence.process_authorization(manual.name)=='Frozen'
+   manual.reload();assert manual.reconciliation_source=='Manual Verification' and manual.settlement_amount==150
+   current=frappe.parse_json(manual.evidence_snapshot)
+   assert current['review']==frozen['review'] and current['snapshot']==frozen['snapshot']
+   assert identity==(manual.reconciled_by,manual.reconciled_on)
+   assert current['ordinary_night_settlement']['name']==manual_night.name
+   salary_count=frappe.db.count('Additional Salary')
+   assert evidence.process_authorization(manual.name)=='Frozen'
+   assert frappe.db.count('Additional Salary')==salary_count and frappe.db.count('Employee Checkin')==punch_count
+   # Payroll must validate both documents through their actual native lifecycle.
+   manual_slip=make_salary_slip(assignment.salary_structure,employee=employee.name,posting_date='2026-09-15',ignore_permissions=True)
+   manual_slip.insert(ignore_permissions=True);manual_slip.flags.ignore_permissions=True;manual_slip.submit()
+   manual.reload();manual_night.reload()
+   assert manual.settlement_status==manual_night.settlement_status=='Payroll Submitted'
+   manual_slip.cancel();manual_call.reload();manual_call.flags.ignore_permissions=True;manual_call.cancel()
+   manual_night.reload();manual_night.flags.ignore_permissions=True;manual_night.cancel()
+  print('NIGHT_MANUAL_ACCEPTANCE: one HR declaration reused, 15 ordinary plus 150 OT, unchanged source/actor/punches, stale source rejected, idempotent resume and native payroll/cancel')
  print('NIGHT_ACCEPTANCE: no OT document, verified 5 ordinary night hours / 75 premium, duplicate and direct-cancel guards, stale evidence blocks native payroll, native submit/cancel, corrected replacement')
  print('NIGHT_OT_ACCEPTANCE: ordinary premium 15 plus OT 135 and extra night premium 15, distinct sources and protected cancellation order')
 finally:

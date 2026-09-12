@@ -251,11 +251,14 @@ def process_authorization(name):
     if doc.get('settlement_status') in FINAL:
         if doc.evidence_status!='Frozen':doc.db_set('evidence_status','Frozen')
         return 'Frozen'
-    if doc.get('reconciliation_source') in {'Manual Verification','HR Exception','Presumed Attendance'}:
+    frozen=frappe.parse_json(doc.get('evidence_snapshot') or '{}')
+    certified_manual=bool(doc.get('reconciliation_source')=='Manual Verification' and (frozen.get('review') or {}).get('manual_declaration'))
+    if doc.get('reconciliation_source') in {'Manual Verification','HR Exception','Presumed Attendance'} and not certified_manual:
         if doc.evidence_status!='Manual Verification':doc.db_set({'evidence_status':'Manual Verification','evidence_retry_after':None})
         return 'Manual Verification'
+    if certified_manual and not cint(_settings().get('enable_manual_overtime_verification')):
+        return 'Manual Verification'
     result=build_result(doc,for_update=True)
-    frozen=frappe.parse_json(doc.get('evidence_snapshot') or '{}')
     if frozen.get('input_hash') and frozen['input_hash']!=result['input_hash']:
         result['state']='Needs Review';result['issues'].append({'code':'verified_source_changed','severity':'review'})
         result['settlement_ready']=False
@@ -269,7 +272,12 @@ def process_authorization(name):
     values={'evidence_status':result['state'],'evidence_last_hash':result['input_hash'],
         'evidence_last_attempt':now_datetime(),'evidence_retry_after':now_datetime()+timedelta(minutes=5 if result['state']=='Waiting' else 10),
         'evidence_issues':_json(visible_issues),'evidence_settlement_ready':cint(result['settlement_ready'])}
-    if result.get('snapshot') and result['state']=='Verified' and (changed or not doc.get('reconciled_on')):
+    if certified_manual and result['state']=='Verified':
+        # Coverage/election readiness can change; the HR-certified work and actor cannot.
+        if _evidence_hash(result.get('snapshot'))!=_evidence_hash(frozen.get('snapshot')):
+            frappe.throw(_('El cálculo de la jornada declarada cambió; requiere revisión de Gestión Humana.'))
+        values['evidence_snapshot']=_json(result)
+    elif result.get('snapshot') and result['state']=='Verified' and (changed or not doc.get('reconciled_on')):
         values.update(result['snapshot'])
         values.update(reconciliation_source='Employee Checkin',presumed_hours=0,presumed_on=None,
             source_checkins=_json(result['source_checkins']),reconciliation_intervals=_json(result['calculation']['intervals']),

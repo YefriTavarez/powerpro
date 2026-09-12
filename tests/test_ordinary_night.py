@@ -40,4 +40,23 @@ class OrdinaryNightTest(unittest.TestCase):
   r=self.run_case([('2026-09-14T18:00','IN'),('2026-09-15T02:00','OUT')],row_changes={1:{'shift':None}})
   self.assertEqual(r['state'],'Needs Review')
 
+ def test_certified_session_preserves_original_punches_and_separates_premiums(self):
+  r=self.run_case([('2026-09-14T18:00','IN')],shift={'last_sync_of_checkin':None},
+   extensions=[{'start':'2026-09-15T02:00','end':'2026-09-15T04:00'}],
+   certified_intervals=[{'start':'2026-09-14T18:00','end':'2026-09-14T22:00'},
+                        {'start':'2026-09-14T23:00','end':'2026-09-15T03:00'}])
+  self.assertEqual((r['state'],r['night_session']['ordinary_premium_hours'],r['night_session']['overtime_premium_hours']),('Verified',4,1))
+  self.assertEqual(len(r['source_checkins']),1)
+  self.assertEqual(r['source_checkins'][0]['log_type'],'IN')
+ def test_certification_does_not_override_calendar_or_finished_window(self):
+  interval=[{'start':'2026-09-14T18:00','end':'2026-09-15T02:00'}]
+  self.assertEqual(self.run_case([],certified_intervals=interval,now='2026-09-14T20:00')['state'],'Waiting')
+  r=self.run_case([],certified_intervals=interval,context=dict(shift_start='2026-09-14T18:00',shift_end='2026-09-15T02:00',classification='Regular Workday',holiday_list_covers_work_date=False))
+  self.assertEqual(r['state'],'Needs Review')
+ def test_certified_overlap_and_unapproved_time_are_rejected(self):
+  interval={'start':'2026-09-14T18:00','end':'2026-09-15T02:00'}
+  with self.assertRaises(ValueError):self.run_case([],certified_intervals=[interval,interval])
+  r=self.run_case([],certified_intervals=[dict(start='2026-09-14T18:00',end='2026-09-15T03:00')])
+  self.assertEqual(r['state'],'Needs Review')
+
 if __name__=='__main__':unittest.main()

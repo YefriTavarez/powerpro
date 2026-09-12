@@ -20,6 +20,43 @@ def check_role():
         frappe.throw(_('Su rol no permite verificar nocturnidad.'), frappe.PermissionError)
 
 
+def _certified_session(extensions, employee, shift, *, for_update=False):
+    """Reuse accepted HR evidence without recursively calling OT/night coverage."""
+    from powerpro.controllers.checkin_overtime import _data, _evidence_hash
+    from powerpro.controllers.checkin_overtime_review import accept_result
+    from powerpro.payroll_rules.overtime_manual_session import evaluate_manual_session
+    found=[]
+    for extension in extensions:
+        auth=frappe.get_doc('Overtime Authorization',extension.name,for_update=for_update)
+        if auth.reconciliation_source!='Manual Verification':continue
+        saved=frappe.parse_json(auth.evidence_snapshot or '{}')
+        review=saved.get('review') or {}
+        declaration=review.get('manual_declaration')
+        if not declaration:continue
+        auth.check_permission('read')
+        if not auth.evidence_enrolled or auth.employee!=employee or auth.shift_type!=shift:
+            frappe.throw(_('La declaración no corresponde a esta jornada inscrita.'))
+        data,_settings=_data(auth,for_update=for_update,include_weekly=False)
+        # Weekly financial readiness can change independently. Work, policy,
+        # assignment, calendar and original punches must still be the accepted input.
+        previous=saved.get('input') or {}
+        if (not review.get('reviewed_by') or not review.get('request_token')
+                or review.get('input_hash')!=saved.get('input_hash')
+                or _evidence_hash(declaration)!=_evidence_hash(previous.get('manual_declaration'))
+                or any(_evidence_hash(value)!=_evidence_hash(previous.get(key)) for key,value in data.items() if key!='weekly')):
+            frappe.throw(_('La evidencia de la jornada declarada cambió. Gestión Humana debe revisarla antes de liquidar nocturnidad.'))
+        current=evaluate_manual_session(declaration=declaration,authorization=data['authorization'],rows=data['rows'],
+            contexts=data['contexts'],now=now_datetime(),competing=data['competing'])
+        current.update(input_hash=saved['input_hash'],settlement_blockers=[])
+        current=accept_result(current,review)
+        if current['state']!='Verified' or _evidence_hash(current['worked_intervals'])!=_evidence_hash(saved.get('worked_intervals')):
+            frappe.throw(_('La jornada declarada requiere una nueva revisión.'))
+        found.append({'authorization':auth.name,'review':review,'worked_intervals':current['worked_intervals']})
+    if len(found)>1:
+        frappe.throw(_('Hay más de una declaración de jornada completa; unifique su revisión antes de liquidar nocturnidad.'))
+    return found[0] if found else None
+
+
 def build_preview(doc, *, for_update=False):
     from powerpro.controllers.checkin_overtime import _evidence_hash
     from powerpro.controllers.overtime_cash_settlement import _get_hourly_rate
@@ -75,11 +112,16 @@ def build_preview(doc, *, for_update=False):
         frappe.throw(_('La nómina por hojas de tiempo requiere revisar su nocturnidad para evitar duplicarla.'))
     rate=_get_hourly_rate(rates[0])
     if not isfinite(rate) or rate<=0:frappe.throw(_('La tarifa por hora debe ser positiva y finita.'))
+    certified=_certified_session(extensions,employee.name,current.name,for_update=for_update)
     result=evaluate_night_work(rows=[dict(r) for r in rows],shift=shift,context=context,extensions=windows,
-                              next_windows=next_windows,now=now_datetime(),basis=policy['night_basis'])
+                              next_windows=next_windows,now=now_datetime(),basis=policy['night_basis'],
+                              certified_intervals=certified['worked_intervals'] if certified else None)
     data={'version':VERSION,'employee':employee.name,'company':company.name,'work_date':str(day),'shift':shift,
           'context':context,'extensions':windows,'next_windows':next_windows,'rows':[dict(r) for r in rows],
           'policy':policy,'rate_basis':dict(rates[0]),'hourly_rate':rate}
+    if certified:
+        data['certified_session']=certified
+        result['reconciliation_source']='Manual Verification'
     result.update(input=data,input_hash=_evidence_hash(data),ordinary_hours=result.get('night_session',{}).get('ordinary_premium_hours',0),
                   hourly_rate=rate,currency=company.default_currency,night_percent=policy['night_percent'])
     result['amount']=round(result['ordinary_hours']*rate*policy['night_percent']/100,2)

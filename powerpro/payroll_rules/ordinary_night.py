@@ -8,7 +8,7 @@ from powerpro.payroll_rules.overtime_pay_policy import classify_night_session
 VERSION = 'ordinary-night-v1'
 
 
-def evaluate_night_work(*, rows, shift, context, extensions, next_windows, now, basis):
+def evaluate_night_work(*, rows, shift, context, extensions, next_windows, now, basis, certified_intervals=None):
     start, end = _as_datetime(context['shift_start']), _as_datetime(context['shift_end'])
     windows = [(start, end)] + [(_as_datetime(r['start']), _as_datetime(r['end'])) for r in extensions]
     if any(b <= a for a, b in windows):
@@ -24,7 +24,7 @@ def evaluate_night_work(*, rows, shift, context, extensions, next_windows, now, 
     if context['classification'] != 'Regular Workday': issue('not_an_ordinary_workday')
     if hi - lo > timedelta(hours=24): issue('extended_session_over_24h')
     if _as_datetime(now) < hi + after: issue('window_not_ended', 'wait')
-    if not shift.get('last_sync_of_checkin') or _as_datetime(shift['last_sync_of_checkin']) < hi + after:
+    if certified_intervals is None and (not shift.get('last_sync_of_checkin') or _as_datetime(shift['last_sync_of_checkin']) < hi + after):
         issue('sync_incomplete', 'wait')
     if any(b[0] < a[1] for a, b in zip(sorted(windows[1:]), sorted(windows[1:])[1:])):
         issue('overlapping_authorization')
@@ -33,6 +33,7 @@ def evaluate_night_work(*, rows, shift, context, extensions, next_windows, now, 
         stamp = _as_datetime(raw['time'])
         if not lo - before <= stamp <= hi + after: continue
         result['source_checkins'].append(deepcopy(raw))
+        if certified_intervals is not None: continue
         captured = (raw.get('shift') == shift['name'] and raw.get('shift_start') and raw.get('shift_end')
                     and _as_datetime(raw['shift_start']) == start and _as_datetime(raw['shift_end']) == end)
         if raw.get('skip_auto_attendance'): issue('excluded_checkin'); continue
@@ -47,12 +48,22 @@ def evaluate_night_work(*, rows, shift, context, extensions, next_windows, now, 
             result['interpretations'].append({'checkin': raw.get('name'), 'reason': 'approved_extension',
                                               'stored_log_type': raw.get('log_type')})
         grouped.append(row)
-    evidence = interpret_shift_punches(grouped, {shift['name']: shift})
-    result['sessions'] = evidence['sessions']
-    for warning in evidence['issues']:
-        issue(warning['code'], 'information' if warning['code'] in {'direction_reinterpreted', 'first_last_includes_breaks'} else 'review')
-    worked = evidence['intervals']
-    if not worked: issue('missing_punch_pair')
+    if certified_intervals is None:
+        evidence = interpret_shift_punches(grouped, {shift['name']: shift})
+        result['sessions'] = evidence['sessions']
+        for warning in evidence['issues']:
+            issue(warning['code'], 'information' if warning['code'] in {'direction_reinterpreted', 'first_last_includes_breaks'} else 'review')
+        worked = evidence['intervals']
+        if not worked: issue('missing_punch_pair')
+    else:
+        # Only the controller's freshly validated HR declaration supplies these.
+        # Raw Checkins remain above; a declaration never manufactures a punch.
+        worked = sorted((_as_datetime(r['start']), _as_datetime(r['end'])) for r in certified_intervals)
+        if not worked or any(b <= a or a.tzinfo or b.tzinfo for a,b in worked):
+            raise ValueError('Intervalos certificados inválidos.')
+        if any(b[0] < a[1] for a,b in zip(worked,worked[1:])):
+            raise ValueError('Los intervalos certificados no pueden superponerse.')
+        result['sessions'] = []
     # Anything outside the documented ordinary shift and approved extensions is
     # retained for review, not paid as an ordinary hour by this document.
     outside = [WorkInterval(a, b) for a, b in worked]
