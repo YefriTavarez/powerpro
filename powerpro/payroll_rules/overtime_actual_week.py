@@ -124,3 +124,34 @@ reduce verified worked hours, and it cannot certify payment eligibility.
     for key in ['regular_35_hours','regular_100_hours','unclassified_regular_hours']:
         result[key]=round(result[key],4)
     return result
+
+
+def weekly_bands_ready(calculation):
+    """Require complete weekly evidence only where it selects a regular band.
+
+    Do not relabel an incomplete week as complete. Independently classified
+    holiday/rest segments still require policy, evidence, election and base
+    coverage validation in the caller. Unknown or mixed classifications fail
+    closed, as do inconsistent hour totals.
+    """
+    if not calculation:
+        return False
+    if calculation.get('weekly_evidence_complete') is True:
+        return True
+    segments = calculation.get('segments') or []
+    if not segments:
+        return False
+    from powerpro.payroll_rules.overtime import LEGAL_HOLIDAY, WEEKLY_REST, HOLIDAY_ON_WEEKLY_REST
+    independent = {LEGAL_HOLIDAY, WEEKLY_REST, HOLIDAY_ON_WEEKLY_REST}
+    if any(s.get('classification') not in independent for s in segments):
+        return False
+    try:
+        ordinary = [float(calculation.get(k) or 0) for k in
+                    ('regular_35_hours', 'regular_100_hours', 'unclassified_regular_hours')]
+        hours = [float(s['verified_hours']) for s in segments]
+        total = float(calculation['verified_hours'])
+    except (KeyError, TypeError, ValueError):
+        return False
+    return (all(isfinite(v) and v == 0 for v in ordinary)
+            and all(isfinite(v) and v > 0 for v in hours)
+            and isfinite(total) and total > 0 and abs(sum(hours) - total) <= .0001)

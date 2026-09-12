@@ -2,7 +2,7 @@
 import copy
 import unittest
 from test_overtime_calendar import context,dt,legacy,rules
-from powerpro.payroll_rules.overtime_actual_week import collect_weekly_work,apply_actual_week_bands
+from powerpro.payroll_rules.overtime_actual_week import collect_weekly_work,apply_actual_week_bands,weekly_bands_ready
 from powerpro.payroll_rules.overtime_shift_evidence import ALTERNATING,EVERY_PAIR
 
 
@@ -116,6 +116,42 @@ class ActualBandsTest(unittest.TestCase):
         apply_actual_week_bands(c,self.week(68),threshold=68);self.assertEqual(c,before)
         for threshold in [0,-1,float('nan'),float('inf')]:
             with self.assertRaises(ValueError):apply_actual_week_bands(c,self.week(),threshold=threshold)
+
+
+class WeeklyBandReadinessTest(unittest.TestCase):
+    def calc(self, classification=legacy.WEEKLY_REST):
+        return {'weekly_evidence_complete':False,'verified_hours':5,
+                'regular_35_hours':0,'regular_100_hours':0,'unclassified_regular_hours':0,
+                'segments':[{'classification':classification,'verified_hours':5}]}
+
+    def test_independent_day_does_not_certify_the_week(self):
+        for kind in (legacy.WEEKLY_REST,legacy.LEGAL_HOLIDAY,legacy.HOLIDAY_ON_WEEKLY_REST):
+            c=self.calc(kind); before=copy.deepcopy(c)
+            self.assertTrue(weekly_bands_ready(c)); self.assertEqual(c,before)
+            self.assertFalse(c['weekly_evidence_complete'])
+
+    def test_regular_and_mixed_windows_still_require_week(self):
+        c=self.calc(legacy.REGULAR_DAY)
+        self.assertFalse(weekly_bands_ready(c))
+        c=self.calc();c['segments'].append({'classification':legacy.REGULAR_DAY,'verified_hours':1});c['verified_hours']=6
+        self.assertFalse(weekly_bands_ready(c))
+
+    def test_unclassified_or_unknown_hours_fail_closed(self):
+        for key in ('regular_35_hours','regular_100_hours','unclassified_regular_hours'):
+            c=self.calc();c[key]=1;self.assertFalse(weekly_bands_ready(c))
+        self.assertFalse(weekly_bands_ready(self.calc('Unknown')))
+        for c in (None,{}, {'weekly_evidence_complete':False,'segments':[]}):
+            self.assertFalse(weekly_bands_ready(c))
+
+    def test_inconsistent_zero_or_nonfinite_totals_fail_closed(self):
+        for value in (0,-1,6,float('nan'),float('inf')):
+            c=self.calc();c['verified_hours']=value;self.assertFalse(weekly_bands_ready(c))
+        for value in (0,-1,float('nan'),float('inf')):
+            c=self.calc();c['segments'][0]['verified_hours']=value;self.assertFalse(weekly_bands_ready(c))
+
+    def test_complete_week_preserves_regular_readiness(self):
+        c=self.calc(legacy.REGULAR_DAY);c['weekly_evidence_complete']=True
+        self.assertTrue(weekly_bands_ready(c))
 
 
 if __name__=='__main__':unittest.main()

@@ -14,7 +14,7 @@ from powerpro.controllers.overtime import get_schedule_context,_reconciliation_r
 from powerpro.payroll_rules.overtime import coerce_time,get_shift_window
 from powerpro.payroll_rules.overtime_calendar import calendar_dates
 from powerpro.payroll_rules.overtime_evidence import VERSION,evaluate_evidence
-from powerpro.payroll_rules.overtime_actual_week import collect_weekly_work,apply_actual_week_bands
+from powerpro.payroll_rules.overtime_actual_week import collect_weekly_work,apply_actual_week_bands,weekly_bands_ready
 from powerpro.controllers.checkin_overtime_week import load_week
 from powerpro.controllers.overtime_pay_policy import get_effective_policy
 from powerpro.payroll_rules.overtime_pay_policy import classify_night_session
@@ -238,7 +238,7 @@ def build_result(doc,*,for_update=False,use_saved_review=True,manual_declaration
     if policy and (doc.planned_settlement=='Cash' or hybrid):
         from powerpro.controllers.overtime_holiday_base import apply_to_result
         apply_to_result(result)
-    if result.get('calculation') and not result['calculation']['weekly_evidence_complete']:
+    if result.get('calculation') and not weekly_bands_ready(result['calculation']):
         blockers.append('Falta evidencia semanal completa para clasificar el recargo de horas ordinarias extra.')
     from powerpro.controllers.overtime_rest import get_election,validate_election,election_snapshot
     election=get_election(doc,for_update=for_update)
@@ -384,7 +384,7 @@ def validate_settlement(doc,*,for_update=False,payroll=False):
     current=build_result(doc,for_update=for_update)
     if not frozen.get('input_hash') or frozen['input_hash']!=current['input_hash'] or current['state']!='Verified':
         frappe.throw(_('La evidencia cambió o está incompleta; concilie y revise antes de liquidar.'))
-    if not current.get('settlement_ready') or not current.get('calculation',{}).get('weekly_evidence_complete'):
+    if not current.get('settlement_ready') or not weekly_bands_ready(current.get('calculation')):
         frappe.throw(_('La evidencia semanal y la política vigente deben habilitar esta liquidación.'))
     snapshot=frozen.get('snapshot') or {}
     for field in ['verified_hours','regular_35_hours','regular_100_hours','holiday_100_hours','weekly_rest_hours','night_hours']:
