@@ -43,6 +43,10 @@ def build_cash_settlement(adjustment, reconciliation):
 	weekly_percent = None
 	policy = reconciliation.get("pay_policy")
 	election = reconciliation.get("settlement_election")
+	coverage = reconciliation.get("holiday_base_coverage")
+	if policy and flt(reconciliation.get("holiday_100_hours")):
+		if not coverage or reconciliation.get("holiday_base_covered_hours") is None:
+			frappe.throw(_("Complete la declaración de base salarial cubierta para el feriado."))
 	if policy and flt(reconciliation.get("weekly_rest_hours")):
 		if not policy.get("weekly_rest_cash") or not election or election.get("choice") != "Cash":
 			frappe.throw(_("El efectivo por descanso semanal requiere la elección expresa del empleado y una política aprobada."))
@@ -52,6 +56,7 @@ def build_cash_settlement(adjustment, reconciliation):
 		regular_35_hours=reconciliation.get("regular_35_hours"),
 		regular_100_hours=reconciliation.get("regular_100_hours"),
 		holiday_100_hours=reconciliation.get("holiday_100_hours"),
+		holiday_base_covered_hours=reconciliation.get("holiday_base_covered_hours", 0),
 		weekly_rest_hours=reconciliation.get("weekly_rest_hours"),
 		night_hours=reconciliation.get("night_hours"),
 		regular_overtime_percent=rates.get("regular_overtime_percent"),
@@ -68,6 +73,7 @@ def build_cash_settlement(adjustment, reconciliation):
 		settlement["pay_policy"] = reconciliation["pay_policy"]
 		settlement["rate_basis"] = reconciliation["rate_basis"]
 		settlement["settlement_election"] = reconciliation.get("settlement_election")
+		if coverage: settlement["holiday_base_coverage"] = coverage
 	return settlement
 
 

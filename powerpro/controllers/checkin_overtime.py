@@ -174,6 +174,9 @@ def _data(doc,*,for_update=False,include_weekly=True,observation_window=None):
           'assignments':[dict(r) for r in assignments if not r.end_date or getdate(r.end_date)>=getdate(weekly['start'])-timedelta(days=1)],
           'default_shift':employee.get('default_shift')}
     if observation_window is not None:data['observation_window']=observation_window
+    from powerpro.controllers.overtime_holiday_base import latest
+    coverage=latest(doc,for_update=for_update)
+    if coverage:data['holiday_base_coverage']=coverage
     return data,settings
 
 
@@ -225,6 +228,10 @@ def build_result(doc,*,for_update=False,use_saved_review=True,manual_declaration
             blockers.append('La coincidencia de feriado y descanso semanal requiere una regla conjunta aprobada e implementada.')
     result['input_hash']=_evidence_hash(data)
     result['input']=data
+    result['settlement_blockers']=blockers
+    if policy and doc.planned_settlement=='Cash':
+        from powerpro.controllers.overtime_holiday_base import apply_to_result
+        apply_to_result(result)
     if result.get('calculation') and not result['calculation']['weekly_evidence_complete']:
         blockers.append('Falta evidencia semanal completa para clasificar el recargo de horas ordinarias extra.')
     from powerpro.controllers.overtime_rest import get_election,validate_election,election_snapshot

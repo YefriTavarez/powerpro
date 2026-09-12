@@ -355,6 +355,8 @@ def _reconciliation_snapshot(doc):
 	policy = None
 	rate_basis = None
 	election = None
+	holiday_coverage = None
+	holiday_covered_hours = 0
 	if doc.get("evidence_enrolled"):
 		from powerpro.payroll_rules.overtime_pay_policy import rates as policy_rates
 		snapshot = frappe.parse_json(doc.evidence_snapshot or "{}")
@@ -364,6 +366,8 @@ def _reconciliation_snapshot(doc):
 		rates = policy_rates(policy)
 		rate_basis = snapshot.get("input", {}).get("rate_basis")
 		election = snapshot.get("settlement_election")
+		holiday_coverage = snapshot.get("holiday_base_coverage")
+		holiday_covered_hours = snapshot.get("calculation", {}).get("holiday_base_covered_hours")
 	return {
 		"regular_35_hours": flt(doc.regular_35_hours),
 		"regular_100_hours": flt(doc.regular_100_hours),
@@ -374,6 +378,8 @@ def _reconciliation_snapshot(doc):
 		"pay_policy": policy,
 		"rate_basis": rate_basis,
 		"settlement_election": election,
+		"holiday_base_coverage": holiday_coverage,
+		"holiday_base_covered_hours": holiday_covered_hours,
 	}
 
 

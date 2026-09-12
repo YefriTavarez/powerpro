@@ -413,6 +413,8 @@ function show_retroactive_reconciliation(result) {
 
 
 function add_evidence_actions(frm) {
+    if (!frm.is_new() && frm.doc.docstatus < 2 && frm.doc.reconciliation_engine === 'Verified Checkins')
+        frappe.require('/assets/powerpro/js/checkin_overtime.js', () => powerpro.checkin_overtime.add_holiday_action(frm));
     if (frm.doc.docstatus === 0 && !frm.is_new() && frm.doc.reconciliation_engine === 'Verified Checkins') {
         return frappe.call({method: 'powerpro.controllers.retroactive_draft_review.get_status', args: {adjustment: frm.doc.name}}).then(({message: state}) => {
             if (state?.can_review) frm.add_custom_button(__('Declarar jornada inicial de RR. HH.'), () =>

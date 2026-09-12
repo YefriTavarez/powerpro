@@ -96,7 +96,8 @@ def _preview(doc, reason, *, for_update=False,manual_declaration=None):
         p=accepted['input']['pay_policy'];calculation=accepted['calculation']
         estimate=calculate_cash_settlement(hourly_rate=accepted['input']['rate_basis']['hourly_rate'],
             **{key:calculation.get(key,0) for key in ['regular_35_hours','regular_100_hours','holiday_100_hours','weekly_rest_hours','night_hours']},
-            **rates(p),weekly_rest_overtime_percent=p['weekly_rest_percent'] if p.get('weekly_rest_cash') else None)['total_amount']
+            **rates(p),holiday_base_covered_hours=calculation.get('holiday_base_covered_hours',0),
+            weekly_rest_overtime_percent=p['weekly_rest_percent'] if p.get('weekly_rest_cash') else None)['total_amount']
     dependencies=_dependencies(doc,for_update=for_update)
     payload={**links(doc),'reason':reason.strip(),'before':frozen,'financial_before':_financial(doc),
              'after':accepted,'dependencies':dependencies,'proposed_amount':estimate}

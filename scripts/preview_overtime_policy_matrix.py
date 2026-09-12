@@ -27,13 +27,17 @@ def preview():
         ('Una hora extra en banda +100%',{'regular_100_hours':1}),
         ('Una hora extra +35% y nocturnidad',{'regular_35_hours':1,'night_hours':1}),
         ('Una hora extra +100% y nocturnidad',{'regular_100_hours':1,'night_hours':1}),
-        ('Una hora en feriado',{'holiday_100_hours':1}),
-        ('Una hora en feriado y nocturnidad',{'holiday_100_hours':1,'night_hours':1}),
+        ('Una hora en feriado, base no cubierta',{'holiday_100_hours':1}),
+        ('Una hora en feriado y nocturnidad, base no cubierta',{'holiday_100_hours':1,'night_hours':1}),
+        ('Una hora en feriado, base cubierta',{'holiday_100_hours':1,'holiday_base_covered_hours':1}),
+        ('Una hora en feriado y nocturnidad, base cubierta',{'holiday_100_hours':1,'night_hours':1,'holiday_base_covered_hours':1}),
+        ('Una hora en feriado y nocturnidad, media hora de base cubierta',{'holiday_100_hours':1,'night_hours':1,'holiday_base_covered_hours':.5}),
         ('Una hora en descanso semanal, elección efectivo',{'weekly_rest_hours':1,'weekly_rest_overtime_percent':100}),
         ('Una hora en descanso semanal y nocturnidad, elección efectivo',{'weekly_rest_hours':1,'weekly_rest_overtime_percent':100,'night_hours':1}),
     ]:
         result=calculate_cash_settlement(hourly_rate=100,**inputs)
-        scenarios.append(dict(case=name,inputs=inputs,additional_amount=result['total_amount'],lines=result['lines']))
+        scenarios.append(dict(case=name,inputs=inputs,additional_amount=result['total_amount'],
+            holiday_base_already_in_salary=result['holiday_base_already_in_salary'],lines=result['lines']))
     boundaries=[]
     for end in ['2026-09-21T23:59:00','2026-09-22T00:00:00','2026-09-22T00:01:00']:
         for basis in ['Clock overlap','Whole nocturnal session']:
@@ -52,7 +56,8 @@ def preview():
         ordinary_base='Ordinary shift base pay is assumed already covered and is not added again in these additional amounts.',
         scenarios=scenarios,night_boundary_comparison=boundaries,
         blocked_cases=['Legal Holiday on Weekly Rest: common evidence builder requires an approved implemented joint rule.'],
-        unresolved=['Applicability of either night basis','Holiday/rest concurrent with weekly overtime bands',
+        user_selected={'night_basis':'Clock overlap','regular_night_additive':True,'holiday_night_additive':True},
+        unresolved=['Holiday/rest concurrent with weekly overtime bands',
             'Which employees and dates follow each working-time regime','Rest election and conversion of continuous rest to native leave days'])
 
 

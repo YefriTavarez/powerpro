@@ -1,6 +1,16 @@
 # Matriz de revisión antes del piloto
 
-Desarrollo `igcaribe.fortabs.com`. Pendiente de aprobación; no activa reglas ni liquida registros.
+Desarrollo `igcaribe.fortabs.com`. Decisiones parcialmente confirmadas; no activa reglas ni liquida registros.
+
+## Decisiones confirmadas por el usuario — 12 de septiembre de 2026
+
+Base de nocturnidad: `Clock overlap`. Ante la elección entre el tramo 21:00–07:00 y toda la jornada clasificada nocturna, el usuario respondió: «Solo las horas que estan despues de las 9pm.» Se conserva el límite de las 07:00 de la pregunta y se aplica el recargo únicamente al tiempo efectivamente trabajado en ese tramo. No se extiende a las horas diurnas de la misma jornada. Esta decisión funcional queda registrada; no aprueba las otras combinaciones ni activa el sitio.
+
+Hora extra de banda +35% coincidente con nocturnidad: el usuario confirmó sumar 35% y 15% sobre la misma tarifa base, para un recargo total de 50%. Ejemplo: RD$100 de base + RD$35 extraordinarios + RD$15 nocturnos = RD$150 por esa hora. No aplicar 15% sobre RD$135 ni interpretar toda hora nocturna como extraordinaria. Esta confirmación corresponde a la banda de 35%; no convierte en 35% la banda extraordinaria de 100% ni decide feriados/descanso semanal. No cambia configuración del sitio.
+
+Feriado y nocturnidad: tras revisar los arts. 204–205, el usuario indicó «Entonces tenemos que aplicar eso mismo». Se confirma la suma de 100% y 15% sobre la tarifa normal: RD$215 totales por RD$100/h. Si esa base ya está incluida en el sueldo, el adicional es RD$115; si no lo está, RD$215. Una cobertura parcial reduce únicamente la parte de base ya cubierta. La autorización no decide la coincidencia con descanso semanal ni activa el piloto.
+
+Implementación: en el motor por marcaciones, la acción **Base salarial del feriado** registra las horas cubiertas (también cero) y una referencia salarial. La declaración es una evaluación inmutable, vinculada al origen, empleado, jornada, tarifa y política. Una base mensual por sí sola no demuestra cobertura de estas horas. La declaración no certifica automáticamente el pago ni genera salarios: el operador debe sustentar su referencia y después procesar/revisar la conciliación. Un cambio en la evidencia exige nueva revisión. Las fuentes ya liquidadas no admiten cambiarla directamente.
 
 Esta hoja hace concretas las decisiones pendientes del plan. Los importes se obtuvieron ejecutando los calculadores actuales de PowerPro con una tarifa sintética de RD$100/hora. No son importes de empleados. La coincidencia entre una prueba y el código no constituye validación laboral.
 
@@ -12,8 +22,8 @@ Los arts.203–205 establecen recargos de horas extraordinarias, nocturnidad y f
 
 | Decisión | Comportamiento disponible / límite | Evidencia requerida para cerrar |
 |---|---|---|
-| Base de nocturnidad | `Clock overlap` paga recargo solo en horas de reloj nocturnas. `Whole nocturnal session` lo extiende a la jornada clasificada nocturna. | Selección razonada y ejemplos aprobados por responsable laboral. No seleccionar solo por el menor importe. |
-| Recargos coincidentes | Solo está implementada la suma sobre la hora base; el feriado y descanso semanal coincidentes bloquean la liquidación. | Fórmula para cada coincidencia, incluyendo exceso semanal; implementar lo que difiera antes de activar esos casos. |
+| Base de nocturnidad | Usuario seleccionó `Clock overlap` el 12 de septiembre de 2026: solo horas efectivamente trabajadas entre 21:00 y 07:00. | Selección funcional confirmada. Validar los ejemplos del piloto con esa base; no volver a pedir al usuario la misma selección. |
+| Recargos coincidentes | Confirmados: extra35 + noche15 = recargo50; feriado100 + noche15 = recargo115. Base incluida una sola vez, con declaración explícita de cobertura salarial del feriado. | Resolver las restantes coincidencias, incluyendo exceso semanal y feriado con descanso semanal; este último continúa bloqueado. |
 | Régimen y semana | El motor necesita evidencia semanal completa; los controles distinguen escenarios con excepciones documentadas. | Empleados/puestos y fechas cubiertos, fundamento de excepciones y calendario laboral aplicable. |
 | Descanso | Registra elección, programación y disfrute; no basta crear saldo. | Casos elegibles, duración continua, conversión a días de licencia y fecha de disfrute. No asumir cuatro horas por día como regla general. |
 | Marcaciones | Alternancia o IN/OUT estricto; pares o primera/última marca según Shift Type. Conflictos requieren revisión. | Regla de pausas, tolerancias y garantía de sincronización; respaldo admisible para declaraciones completas. |
@@ -30,8 +40,11 @@ Importes adicionales por una hora. El sueldo base ordinario ya cubierto por nóm
 | Una hora extra en banda +100% | 200.00 |
 | Una hora extra +35% y nocturnidad | 150.00 |
 | Una hora extra +100% y nocturnidad | 215.00 |
-| Una hora en feriado | 200.00 |
-| Una hora en feriado y nocturnidad | 215.00 |
+| Una hora en feriado, base no cubierta por sueldo | 200.00 |
+| Una hora en feriado y nocturnidad, base no cubierta | 215.00 |
+| Una hora en feriado, base cubierta por sueldo | 100.00 |
+| Una hora en feriado y nocturnidad, base cubierta | 115.00 |
+| Una hora en feriado y nocturnidad, media hora de base cubierta | 165.00 |
 | Una hora en descanso semanal, elección efectivo | 200.00 |
 | Una hora en descanso semanal y nocturnidad, elección efectivo | 215.00 |
 

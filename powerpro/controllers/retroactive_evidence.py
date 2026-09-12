@@ -31,7 +31,7 @@ def as_reconciliation(doc,evidence):
     calculation.update(classification=calculation.get('classification') or doc.day_classification,
         source_checkins=evidence.get('source_checkins',[]),warnings=warnings,
         pay_policy=policy,rate_basis=evidence.get('input',{}).get('rate_basis'),rates=rates(policy) if policy else {},
-        settlement_election=evidence.get('settlement_election'),evidence_state=evidence['state'],
+        settlement_election=evidence.get('settlement_election'),holiday_base_coverage=evidence.get('holiday_base_coverage'),evidence_state=evidence['state'],
         settlement_ready=evidence.get('settlement_ready',False),_evidence=evidence)
     for name in ['verified_hours','regular_35_hours','regular_100_hours','holiday_100_hours','weekly_rest_hours','night_hours']:
         calculation.setdefault(name,0)

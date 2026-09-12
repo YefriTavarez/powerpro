@@ -1,5 +1,6 @@
 frappe.provide("powerpro.checkin_overtime");
 powerpro.checkin_overtime.add_actions = (frm) => {
+    powerpro.checkin_overtime.add_holiday_action(frm);
     if (frm.doc.docstatus === 2) return powerpro.checkin_overtime.add_history_actions(frm);
     if (frm.is_new() || frm.doc.docstatus !== 1) return;
     frappe.call({method: "powerpro.controllers.checkin_overtime.get_status", args: {authorization: frm.doc.name}}).then(({message}) => {
@@ -28,6 +29,47 @@ powerpro.checkin_overtime.add_actions = (frm) => {
         }, __("Overtime"));
         if (enrolled) frm.add_custom_button(__("Revisar evidencia corregida"), () => powerpro.checkin_overtime.review(frm), __("Overtime"));
         if (enrolled && message.manual_review_allowed) frm.add_custom_button(__("Declarar jornada de RR. HH."), () => powerpro.checkin_overtime.review(frm, true), __("Overtime"));
+    });
+};
+
+powerpro.checkin_overtime.add_holiday_action = (frm) => {
+    if (frm.is_new() || frm.doc.docstatus === 2 || frm.doc.planned_settlement !== 'Cash') return;
+    const source = {source_type: frm.doc.doctype, source_name: frm.doc.name};
+    const method = 'powerpro.controllers.overtime_holiday_base.';
+    frappe.call({method: method + 'get_status', args: source}).then(({message: status}) => {
+        if (!status?.can_declare) return;
+        frm.add_custom_button(__('Base salarial del feriado'), () => {
+            if (frm.is_dirty()) return frappe.msgprint(__('Guarde los cambios primero.'));
+            frappe.prompt([
+                {fieldname: 'covered_hours', fieldtype: 'Float', label: __('Horas de feriado con base ya incluida en el sueldo'),
+                    default: status.coverage?.covered_hours ?? 0,
+                    description: __('Indique cero si ninguna está cubierta. No incluya horas ajenas a esta conciliación.')},
+                {fieldname: 'reference', fieldtype: 'Small Text', label: __('Referencia salarial y explicación de la cobertura'),
+                    reqd: 1, default: status.coverage?.reference},
+            ], values => {
+                if (frm.is_dirty()) return frappe.msgprint(__('Guarde los cambios primero.'));
+                frappe.call({method: method + 'preview', args: {...source, ...values}, freeze: true}).then(({message: p}) => {
+                    const e = value => frappe.utils.escape_html(String(value ?? ''));
+                    const estimate = p.estimate;
+                    const html = `<p>${__('Horas de feriado')}: ${e(p.declaration.holiday_hours)}</p>
+                        <p>${__('Horas con base cubierta')}: ${e(p.declaration.covered_hours)}</p>
+                        <p>${e(p.declaration.reference)}</p>
+                        ${estimate ? `<p>${__('Base ya incluida en el sueldo')}: ${e(estimate.holiday_base_already_in_salary)}</p>
+                        <p>${__('Adicional estimado, sujeto a las demás validaciones')}: ${e(estimate.total_amount)}</p>` : ''}
+                        <p>${__('Registrar esta declaración no aprueba las horas ni crea pagos. Después, procese o revise la conciliación.')}</p>`;
+                    const dialog = new frappe.ui.Dialog({title: __('Cobertura salarial del feriado'),
+                        fields: [{fieldname: 'preview', fieldtype: 'HTML', options: html}],
+                        primary_action_label: __('Registrar cobertura'), primary_action() {
+                            if (frm.is_dirty()) return frappe.msgprint(__('Guarde los cambios y obtenga otra vista previa.'));
+                            frappe.call({method: method + 'apply', type: 'POST', freeze: true,
+                                args: {...source, covered_hours: p.declaration.covered_hours,
+                                    reference: p.declaration.reference, token: p.token}})
+                                .then(() => {dialog.hide(); frm.reload_doc();});
+                        }});
+                    dialog.show();
+                });
+            }, __('Base salarial del feriado'), __('Vista previa'));
+        }, __('Overtime'));
     });
 };
 

@@ -68,6 +68,26 @@ class OvertimeCashSettlementTest(unittest.TestCase):
 		self.assertEqual(result["total_amount"], 0)
 		self.assertEqual(result["unsettled_weekly_rest_hours"], 4)
 
+	def test_holiday_and_night_premiums_share_the_normal_base(self):
+		for covered, additional in [(0, 215), (1, 115), (.5, 165)]:
+			with self.subTest(covered=covered):
+				r = calculate_cash_settlement(hourly_rate=100, holiday_100_hours=1,
+					night_hours=1, holiday_base_covered_hours=covered)
+				self.assertEqual(r['total_amount'], additional)
+				self.assertEqual(r['total_amount'] + r['holiday_base_already_in_salary'], 215)
+
+	def test_covered_holiday_base_does_not_remove_extraordinary_hour_base(self):
+		r = calculate_cash_settlement(hourly_rate=100, regular_100_hours=1,
+			holiday_100_hours=1, holiday_base_covered_hours=1, night_hours=2)
+		self.assertEqual(r['total_amount'], 330)
+		self.assertEqual([x['multiplier'] for x in r['lines']], [2, 1, .15])
+
+	def test_invalid_covered_holiday_hours_are_rejected(self):
+		for covered in [-1, 2, float('nan'), float('inf')]:
+			with self.subTest(covered=covered), self.assertRaises(ValueError):
+				calculate_cash_settlement(hourly_rate=100, holiday_100_hours=1,
+					holiday_base_covered_hours=covered)
+
 	def test_zero_hour_lines_are_not_created(self):
 		result = calculate_cash_settlement(hourly_rate=100)
 

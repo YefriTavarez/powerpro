@@ -3,7 +3,7 @@ const file='powerpro/power_pro/doctype/retroactive_overtime_adjustment/retroacti
 async function fixture(state,options={}) {
  const calls=[],buttons=[],messages=[],routes=[],drafts=[],headlines=[];
  const reviews=[];
- const ctx={powerpro:{checkin_overtime:{review:(...args)=>reviews.push(args)}},__: (s,args=[])=>s.replace(/\{(\d+)\}/g,(_,i)=>args[i]),frappe:{ui:{form:{on(){}}},
+ const ctx={powerpro:{checkin_overtime:{add_holiday_action(){},review:(...args)=>reviews.push(args)}},__: (s,args=[])=>s.replace(/\{(\d+)\}/g,(_,i)=>args[i]),frappe:{ui:{form:{on(){}}},
   require(path,fn){fn();},call(q){calls.push(q);return Promise.resolve({message:state});},msgprint(s){messages.push(s);},
   confirm(s,fn){fn();},new_doc(...args){drafts.push(args);},set_route(...args){routes.push(args);},datetime:{get_today:()=>'2026-09-15'}}};
  vm.runInNewContext(fs.readFileSync(file,'utf8'),ctx);
