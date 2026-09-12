@@ -52,7 +52,7 @@ frappe.query_reports["Resumen de Convocatorias de Horas Extras"] = {
 			fieldname: "settlement_status",
 			label: __("Settlement Status"),
 			fieldtype: "Select",
-			options: ["", "Pending", "Created", "Paid", "Credited", "Cancelled"],
+			options: ["", "Pending", "Created", "Payroll Submitted", "Paid", "Credited", "Cancelled"],
 		},
 	],
 };

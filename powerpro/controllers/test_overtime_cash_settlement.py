@@ -114,7 +114,7 @@ class OvertimeCashSettlementControllerTest(unittest.TestCase):
 		):
 			settlement._create_additional_salaries(adjustment, {"lines": []})
 
-	def test_salary_slip_submit_marks_fully_included_adjustment_paid(self):
+	def test_salary_slip_submit_marks_fully_included_adjustment_payroll_submitted(self):
 		salary_slip = SimpleNamespace(
 			name="Sal Slip/Employee/00001",
 			get=lambda fieldname: [
@@ -139,18 +139,18 @@ class OvertimeCashSettlementControllerTest(unittest.TestCase):
 			),
 			patch.object(settlement.frappe.db, "set_value") as set_value,
 		):
-			settlement.sync_adjustments_from_salary_slip(salary_slip, paid=True)
+			settlement.sync_adjustments_from_salary_slip(salary_slip, submitted=True)
 
 		set_value.assert_called_once_with(
 			"Retroactive Overtime Adjustment",
 			"OT-ADJ-2026-00001",
 			{
-				"settlement_status": "Paid",
+				"settlement_status": "Payroll Submitted",
 				"settlement_salary_slip": "Sal Slip/Employee/00001",
 			},
 		)
 
-	def test_partial_salary_slip_does_not_mark_adjustment_paid(self):
+	def test_partial_salary_slip_does_not_mark_adjustment_fully_included(self):
 		salary_slip = SimpleNamespace(
 			name="Sal Slip/Employee/00001",
 			get=lambda _fieldname: [
@@ -176,7 +176,7 @@ class OvertimeCashSettlementControllerTest(unittest.TestCase):
 			),
 			patch.object(settlement.frappe.db, "set_value") as set_value,
 		):
-			settlement.sync_adjustments_from_salary_slip(salary_slip, paid=True)
+			settlement.sync_adjustments_from_salary_slip(salary_slip, submitted=True)
 
 		set_value.assert_not_called()
 
@@ -203,7 +203,7 @@ class OvertimeCashSettlementControllerTest(unittest.TestCase):
 			),
 			patch.object(settlement.frappe.db, "set_value") as set_value,
 		):
-			settlement.sync_adjustments_from_salary_slip(salary_slip, paid=False)
+			settlement.sync_adjustments_from_salary_slip(salary_slip, submitted=False)
 
 		set_value.assert_called_once_with(
 			"Retroactive Overtime Adjustment",

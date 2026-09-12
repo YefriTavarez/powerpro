@@ -15,7 +15,7 @@ types=['Employee','Shift Type','Employee Checkin','Attendance','Overtime Authori
        'Overtime Pay Policy','Overtime Settlement Election','Overtime Reconciliation Run','Overtime Compensatory Credit',
        'Leave Period','Leave Allocation','Leave Application','Leave Ledger Entry','Additional Salary','Salary Slip','Salary Structure Assignment']
 before={d:frappe.db.count(d) for d in types}
-settings_before={d:frappe.db.get_singles_dict(d) for d in ['DGII Payroll Settings','HR Settings']}
+settings_before={d:frappe.db.get_singles_dict(d) for d in ['DGII Payroll Settings','HR Settings','Payroll Settings']}
 commit,enqueue,sendmail=frappe.db.commit,frappe.enqueue,frappe.sendmail
 def forbidden(*a,**kw):raise AssertionError('Commit or outbound effect in rollback fixture')
 frappe.db.commit=forbidden;frappe.enqueue=forbidden;frappe.sendmail=forbidden
@@ -24,6 +24,7 @@ try:
  frappe.db.set_single_value('DGII Payroll Settings',{'enable_checkin_overtime_reconciliation':1,'checkin_overtime_effective_from':'2026-09-01',
   'enable_overtime_compensatory_settlement':1,'overtime_auto_payroll_date_policy':'Work Date'})
  frappe.db.set_single_value('HR Settings','send_leave_notification',0)
+ frappe.db.set_single_value('Payroll Settings','email_salary_slip_to_employee',0)
  base=frappe.get_doc('Overtime Authorization','AUT-HE-2026-00018')
  employee=frappe.copy_doc(frappe.get_doc('Employee',base.employee));employee.name=prefix+'-EMP';employee.docstatus=0
  employee.status='Active';employee.employee_name='DEV Rest';employee.user_id=None;employee.company_email=None;employee.personal_email=None
@@ -145,6 +146,20 @@ try:
   assert cash.settlement_amount==800 and cash.weekly_rest_hours==4
   assert len(_get_linked_additional_salaries(cash,docstatus=1))==1
   checks.append('weekly-rest cash requires the employee election and pays the approved premium while retaining its real category')
+ from hrms.payroll.doctype.salary_structure.salary_structure import make_salary_slip
+ slip=make_salary_slip(assignment.salary_structure,employee=employee.name,posting_date='2026-09-15',ignore_permissions=True)
+ slip.insert(ignore_permissions=True);slip.flags.ignore_permissions=True;slip.submit()
+ cash.reload()
+ assert cash.settlement_status=='Payroll Submitted' and cash.settlement_salary_slip==slip.name
+ assert not slip.journal_entry
+ from powerpro.controllers.overtime_cash_settlement import before_cancel_adjustment
+ try:before_cancel_adjustment(cash)
+ except frappe.ValidationError:pass
+ else:raise AssertionError('Payroll-included overtime could be cancelled')
+ slip.cancel();cash.reload()
+ assert cash.settlement_status=='Created' and not cash.settlement_salary_slip
+ before_cancel_adjustment(cash)
+ checks.append('native Salary Slip submission means payroll included, never paid; cancellation restores Created and releases the payroll guard')
  frappe.set_user('Guest')
  try:rest.revoke_enjoyment(election.name,'Unauthorized')
  except frappe.PermissionError:pass

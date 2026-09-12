@@ -363,7 +363,7 @@
    "fieldtype": "Select",
    "in_standard_filter": 1,
    "label": "Settlement Status",
-   "options": "Pending\nCreated\nPaid\nNot Applicable\nCancelled",
+   "options": "Pending\nCreated\nPayroll Submitted\nPaid\nNot Applicable\nCancelled",
    "read_only": 1
   },
   {

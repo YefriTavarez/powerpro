@@ -19,7 +19,7 @@ from powerpro.payroll_rules.overtime_work_call import derive_reconciliation_snap
 AUTH = 'Overtime Authorization'
 CALL = 'Overtime Work Call'
 EXCEPTION = 'Overtime Attendance Exception'
-FINAL = {'Created', 'Paid', 'Credited'}
+FINAL = {'Created', 'Payroll Submitted', 'Paid', 'Credited'}
 ACTIONS = {'Mark Absent', 'Correct Worked Hours', 'Cancel Participation'}
 AUTO_FIELDS = ('auto_enrolled', 'auto_status', 'auto_payroll_date', 'auto_attempts',
                'auto_last_attempt', 'auto_retry_after', 'auto_error', 'attendance_state',

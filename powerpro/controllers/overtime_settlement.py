@@ -12,6 +12,7 @@ from frappe.utils import flt, getdate, now_datetime
 from powerpro.controllers.overtime_cash_settlement import (
 	SETTLEMENT_CREATED,
 	SETTLEMENT_PAID,
+	SETTLEMENT_PAYROLL_SUBMITTED,
 	_get_linked_additional_salaries,
 	_get_overtime_rates,
 	_validate_salary_component,
@@ -28,7 +29,7 @@ from powerpro.controllers.overtime_compensatory_settlement import (
 
 
 ELIGIBLE_RECONCILIATION_STATUSES = {"Completed", "Partial", "Overrun", "Presumed"}
-FINAL_SETTLEMENT_STATUSES = {"Created", "Paid", "Credited"}
+FINAL_SETTLEMENT_STATUSES = {"Created", "Payroll Submitted", "Paid", "Credited"}
 
 
 @frappe.whitelist()
@@ -101,7 +102,7 @@ def before_cancel_authorization_settlement(authorization):
 	authorization = frappe.get_doc(authorization.doctype, authorization.name, for_update=True)
 	if authorization.get("settlement_method") == "Cash" or authorization.get(
 		"settlement_status"
-	) in {SETTLEMENT_CREATED, SETTLEMENT_PAID}:
+	) in {SETTLEMENT_CREATED, SETTLEMENT_PAYROLL_SUBMITTED, SETTLEMENT_PAID}:
 		before_cancel_adjustment(authorization)
 	if authorization.get("evidence_enrolled"):
 		from powerpro.controllers.overtime_rest import release_for_source
@@ -114,6 +115,7 @@ def cancel_authorization_settlement(authorization):
 	if method == "Cash" or authorization.get("settlement_status") in {
 		SETTLEMENT_CREATED,
 		SETTLEMENT_PAID,
+		SETTLEMENT_PAYROLL_SUBMITTED,
 	}:
 		cancel_cash_settlement(authorization)
 		return

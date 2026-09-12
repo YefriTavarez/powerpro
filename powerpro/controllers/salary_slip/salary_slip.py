@@ -65,11 +65,11 @@ class SalarySlip(SalarySlip):
 
     def on_submit(self):
         super().on_submit()
-        sync_adjustments_from_salary_slip(self, paid=True)
+        sync_adjustments_from_salary_slip(self, submitted=True)
 
     def on_cancel(self):
         super().on_cancel()
-        sync_adjustments_from_salary_slip(self, paid=False)
+        sync_adjustments_from_salary_slip(self, submitted=False)
 
     # @overrides
     def pull_sal_struct(self):

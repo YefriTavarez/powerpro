@@ -155,7 +155,7 @@ def _get_adjustments(filters):
         "docstatus": 1,
         "status": "Approved",
         "planned_settlement": "Cash",
-        "settlement_status": ["in", ["Created", "Paid"]],
+        "settlement_status": ["in", ["Created", "Payroll Submitted", "Paid"]],
     }
     for fieldname in ("employee", "department", "settlement_status"):
         if filters.get(fieldname):

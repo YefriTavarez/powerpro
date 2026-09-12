@@ -268,6 +268,7 @@ def reconcile_overtime_work_call(work_call, dry_run=1):
 			continue
 		if not dry_run and authorization.get("settlement_status") in {
 			"Created",
+			"Payroll Submitted",
 			"Paid",
 			"Credited",
 		}:

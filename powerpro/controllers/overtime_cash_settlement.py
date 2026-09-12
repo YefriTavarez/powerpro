@@ -20,7 +20,8 @@ from powerpro.payroll_rules.retroactive_overtime import (
 CASH = "Cash"
 SETTLEMENT_NOT_APPLICABLE = "Not Applicable"
 SETTLEMENT_CREATED = "Created"
-SETTLEMENT_PAID = "Paid"
+SETTLEMENT_PAID = "Paid"  # Legacy value; Salary Slip submission is not payment evidence.
+SETTLEMENT_PAYROLL_SUBMITTED = "Payroll Submitted"
 SETTLEMENT_CANCELLED = "Cancelled"
 OVERTIME_SETTLEMENT_SOURCES = {
 	"Retroactive Overtime Adjustment",
@@ -149,7 +150,7 @@ def create_cash_settlement(adjustment):
 		frappe.throw(_("Only an approved overtime adjustment can be settled."))
 	if doc.planned_settlement != CASH:
 		frappe.throw(_("Only a Cash overtime adjustment creates payroll earnings."))
-	if doc.settlement_status in {SETTLEMENT_CREATED, SETTLEMENT_PAID}:
+	if doc.settlement_status in {SETTLEMENT_CREATED, SETTLEMENT_PAYROLL_SUBMITTED, SETTLEMENT_PAID}:
 		frappe.throw(
 			_("Cash settlement already exists for this overtime adjustment."),
 			title=_("Duplicate settlement blocked"),
@@ -179,15 +180,15 @@ def create_cash_settlement(adjustment):
 
 def before_cancel_adjustment(adjustment):
 	references = _get_linked_additional_salaries(adjustment, docstatus=1, for_update=True)
-	paid_slips = _get_submitted_salary_slips(references, for_update=True)
-	if not paid_slips and adjustment.get("settlement_status") != SETTLEMENT_PAID:
+	submitted_slips = _get_submitted_salary_slips(references, for_update=True)
+	if not submitted_slips and adjustment.get("settlement_status") not in {SETTLEMENT_PAYROLL_SUBMITTED, SETTLEMENT_PAID}:
 		return
-	salary_slip = paid_slips[0] if paid_slips else adjustment.get("settlement_salary_slip")
+	salary_slip = submitted_slips[0] if submitted_slips else adjustment.get("settlement_salary_slip")
 	frappe.throw(
 		_(
-			"Cancel Salary Slip {0} before cancelling this paid overtime adjustment."
+			"Cancel Salary Slip {0} before cancelling this overtime settlement included in payroll."
 		).format(frappe.bold(salary_slip)),
-		title=_("Paid settlement cannot be cancelled"),
+		title=_("Settlement included in payroll cannot be cancelled"),
 	)
 
 
@@ -231,7 +232,8 @@ def prevent_direct_overtime_salary_cancel(additional_salary, method=None):
 		)
 
 
-def sync_adjustments_from_salary_slip(salary_slip, *, paid):
+def sync_adjustments_from_salary_slip(salary_slip, *, submitted):
+	"""Reflect payroll inclusion only; no bank/payment evidence is inferred."""
 	additional_salary_names = {
 		row.additional_salary
 		for row in (salary_slip.get("earnings") or [])
@@ -259,14 +261,14 @@ def sync_adjustments_from_salary_slip(salary_slip, *, paid):
 				source_name, source_doctype=source_doctype, docstatus=1
 			)
 		)
-		if paid and not active_references.issubset(additional_salary_names):
+		if submitted and not active_references.issubset(additional_salary_names):
 			continue
 		frappe.db.set_value(
 			source_doctype,
 			source_name,
 			{
-				"settlement_status": SETTLEMENT_PAID if paid else SETTLEMENT_CREATED,
-				"settlement_salary_slip": salary_slip.name if paid else None,
+				"settlement_status": SETTLEMENT_PAYROLL_SUBMITTED if submitted else SETTLEMENT_CREATED,
+				"settlement_salary_slip": salary_slip.name if submitted else None,
 			},
 		)
 

@@ -87,7 +87,7 @@ def save_authorization_reconciliation(authorization):
 		frappe.throw(
 			_("Refresh attendance from the linked Overtime Work Call to keep team totals synchronized.")
 		)
-	if doc.get("settlement_status") in {"Created", "Paid", "Credited"}:
+	if doc.get("settlement_status") in {"Created", "Payroll Submitted", "Paid", "Credited"}:
 		frappe.throw(
 			_("A settled authorization's reconciliation snapshot cannot be replaced."),
 			title=_("Settlement snapshot is immutable"),

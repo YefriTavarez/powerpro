@@ -512,3 +512,6 @@ Follow Settings,Según configuración
 Applied,Aplicada
 Queued,En cola
 Excluded,Excluido
+Payroll Submitted,Incluido en nómina enviada
+Settlement included in payroll cannot be cancelled,No se puede cancelar una liquidación incluida en nómina
+Cancel Salary Slip {0} before cancelling this overtime settlement included in payroll.,Cancele la nómina salarial {0} antes de cancelar esta liquidación incluida en nómina.

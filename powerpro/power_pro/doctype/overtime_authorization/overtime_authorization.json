@@ -479,7 +479,7 @@
    "in_standard_filter": 1,
    "label": "Settlement Status",
    "no_copy": 1,
-   "options": "Pending\nCreated\nPaid\nCredited\nCancelled",
+   "options": "Pending\nCreated\nPayroll Submitted\nPaid\nCredited\nCancelled",
    "read_only": 1
   },
   {

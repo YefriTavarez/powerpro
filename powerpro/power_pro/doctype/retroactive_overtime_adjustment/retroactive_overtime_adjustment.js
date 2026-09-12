@@ -156,7 +156,7 @@ function add_cash_settlement_actions(frm) {
 		}, __("Cash Settlement"));
 	});
 
-	if (["Created", "Paid"].includes(frm.doc.settlement_status)) {
+	if (["Created", "Payroll Submitted", "Paid"].includes(frm.doc.settlement_status)) {
 		return;
 	}
 	frm.add_custom_button(__("Create Cash Settlement"), () => {

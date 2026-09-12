@@ -105,7 +105,7 @@ def approve_election(name):
     if election.docstatus!=0:frappe.throw(_('La elección ya fue procesada.'))
     if auth.evidence_status!='Verified' or flt(auth.verified_hours)<=0 or auth.reconciliation_source!='Employee Checkin':
         frappe.throw(_('Concilie primero las marcaciones para aprobar la elección sobre horas verificadas.'))
-    if auth.settlement_status in {'Created','Paid','Credited','Cancelled'}:frappe.throw(_('No se cambia la elección de una obligación ya liquidada.'))
+    if auth.settlement_status in {'Created','Payroll Submitted','Paid','Credited','Cancelled'}:frappe.throw(_('No se cambia la elección de una obligación ya liquidada.'))
     with managed('submit',name):
         election.flags.ignore_permissions=True;election.submit()
     auth.db_set({'planned_settlement':election.choice,'evidence_settlement_ready':0,'evidence_retry_after':now_datetime()})
@@ -126,7 +126,7 @@ def release_for_source(auth):
 def cancel_election(name,reason):
     if not str(reason or '').strip():frappe.throw(_('Indique el motivo.'))
     election,auth,_call=_locked_election(name,allow_cancelled=True)
-    if auth.settlement_status in {'Created','Paid','Credited'}:frappe.throw(_('Revierta primero la liquidación vinculada.'))
+    if auth.settlement_status in {'Created','Payroll Submitted','Paid','Credited'}:frappe.throw(_('Revierta primero la liquidación vinculada.'))
     with managed('cancel',name):
         election.flags.ignore_permissions=True;election.cancel()
     auth.db_set({'evidence_settlement_ready':0,'evidence_retry_after':now_datetime()})

@@ -42,7 +42,7 @@ function add_settlement_actions(frm) {
 		}, __("Settlement"));
 	});
 
-	if (["Created", "Paid", "Credited", "Cancelled"].includes(frm.doc.settlement_status)) {
+	if (["Created", "Payroll Submitted", "Paid", "Credited", "Cancelled"].includes(frm.doc.settlement_status)) {
 		return;
 	}
 	frm.add_custom_button(__("Preview and Settle"), () => {
@@ -166,7 +166,7 @@ function show_reconciliation(frm, result) {
 	if (
 		!frm.doc.overtime_work_call
 		&& result.reconciliation_status !== "Scheduled"
-		&& !["Created", "Paid", "Credited"].includes(frm.doc.settlement_status)
+		&& !["Created", "Payroll Submitted", "Paid", "Credited"].includes(frm.doc.settlement_status)
 	) {
 		options.primary_action = {
 			label: __("Save Attendance Snapshot"),

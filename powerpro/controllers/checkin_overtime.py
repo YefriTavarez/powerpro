@@ -22,7 +22,7 @@ from powerpro.payroll_rules.manual_overtime import verification_roles
 
 AUTH='Overtime Authorization'
 CALL='Overtime Work Call'
-FINAL={'Created','Paid','Credited','Cancelled'}
+FINAL={'Created','Payroll Submitted','Paid','Credited','Cancelled'}
 FIELDS=('evidence_enrolled','evidence_status','evidence_enrolled_by','evidence_enrolled_on','evidence_last_hash',
         'evidence_last_attempt','evidence_retry_after','evidence_issues','evidence_snapshot','evidence_settlement_ready','evidence_auto_settle')
 

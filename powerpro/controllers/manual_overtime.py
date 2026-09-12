@@ -12,7 +12,7 @@ from powerpro.payroll_rules.manual_overtime import normalize_intervals, verifica
 from powerpro.payroll_rules.overtime_work_call import derive_reconciliation_snapshot
 
 SOURCE = "Manual Verification"
-FINAL = {"Created", "Paid", "Credited", "Cancelled"}
+FINAL = {"Created", "Payroll Submitted", "Paid", "Credited", "Cancelled"}
 AUDIT_FIELDS = (
     "reconciliation_source", "manual_verification_reason", "manual_worked_intervals",
     "manual_checkin_comparison", "reconciled_by", "reconciled_on",
