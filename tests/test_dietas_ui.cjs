@@ -30,7 +30,7 @@ function harness(accounting=false) {
         add_custom_action(label,fn){this.custom=fn;}
     }
     w.frappe={provide:()=>{w.powerpro={dietas:{}};},utils:{escape_html:x=>$('<span>').text(x).html()},
-        datetime:{get_today:()=> '2026-09-09'},user:{has_role:()=>true},ui:{Dialog,form:{on:(dt,events)=>{handlers[dt]=events;},make_control:opts=>{
+        datetime:{get_today:()=> '2026-09-09',str_to_user:value=>value},user:{has_role:()=>true},ui:{Dialog,form:{on:(dt,events)=>{handlers[dt]=events;},make_control:opts=>{
             const input=$('<input>').addClass('mock-link').appendTo(opts.parent);
             const control={df:opts.df,get_value:()=>input.val(),set_value:value=>{input.val(value);opts.df.onchange?.();}};
             input.on('change',()=>opts.df.onchange?.());controls.push(control);return control;
