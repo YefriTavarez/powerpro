@@ -132,6 +132,7 @@ class OvertimeCashSettlementControllerTest(unittest.TestCase):
 		]
 		with (
 			patch.object(settlement.frappe, "get_all", return_value=links),
+			patch.object(settlement.frappe, "get_meta", return_value=SimpleNamespace(has_field=lambda field: False)),
 			patch.object(
 				settlement,
 				"_get_linked_additional_salaries",
@@ -196,6 +197,7 @@ class OvertimeCashSettlementControllerTest(unittest.TestCase):
 		]
 		with (
 			patch.object(settlement.frappe, "get_all", return_value=links),
+			patch.object(settlement.frappe, "get_meta", return_value=SimpleNamespace(has_field=lambda field: False)),
 			patch.object(
 				settlement,
 				"_get_linked_additional_salaries",

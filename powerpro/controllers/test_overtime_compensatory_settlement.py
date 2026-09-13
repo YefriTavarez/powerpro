@@ -48,6 +48,7 @@ class OvertimeCompensatorySettlementControllerTest(unittest.TestCase):
 			"to_date": "2026-12-31",
 		})
 		first = frappe._dict({
+			"doctype": "Overtime Authorization",
 			"name": "OT-AUTH-0001",
 			"employee": "HR-EMP-0001",
 			"company": "IGC",

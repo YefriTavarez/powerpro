@@ -17,7 +17,10 @@ sys.modules["powerpro"] = package  # Avoid the app's installation-time import ho
 
 
 class AttrDict(dict):
-    __getattr__ = dict.get
+    def __getattr__(self, key):
+        if key.startswith('__'):
+            raise AttributeError(key)
+        return self.get(key)
     __setattr__ = dict.__setitem__
 
 

@@ -15,10 +15,14 @@ parser.add_argument('--site', required=True)
 parser.add_argument('--company', help='Existing company for rollback-only test fixtures')
 parser.add_argument('--sites-path', required=True)
 parser.add_argument('--confirm-development', action='store_true', required=True)
+parser.add_argument('--require-complete', action='store_true', help='Fail if a required fixture causes skipped tests')
 args = parser.parse_args()
 if args.site in ('igcaribe.com', 'igcaribe.erpnext.com'):
     raise SystemExit('Refusing the known production site.')
-frappe.init(site=args.site, sites_path=args.sites_path)
+sites_path = Path(args.sites_path).resolve()
+# Frappe resolves its bench log directory relative to the sites working directory.
+os.chdir(sites_path)
+frappe.init(site=args.site, sites_path=str(sites_path))
 if urlsplit(frappe.conf.get('host_name') or '').hostname in ('igcaribe.com','www.igcaribe.com'):
     raise SystemExit('Refusing the production hostname.')
 frappe.connect()
@@ -40,4 +44,4 @@ try:
 finally:
     frappe.db.rollback()
     frappe.destroy()
-sys.exit(not result.wasSuccessful())
+sys.exit(not result.wasSuccessful() or (args.require_complete and bool(result.skipped)))

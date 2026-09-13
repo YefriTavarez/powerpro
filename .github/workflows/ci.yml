@@ -127,6 +127,7 @@ jobs:
           mariadb --host 127.0.0.1 --port 3306 -u root -proot -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'"
 
       - name: Install
+        id: install_apps
         working-directory: /home/runner/frappe-bench
         run: |
           bench get-app --branch version-15 erpnext
@@ -145,28 +146,34 @@ jobs:
 
       - name: Run Dieta Database Tests (isolated development fixture)
         working-directory: /home/runner/frappe-bench
-        run: env/bin/python apps/powerpro/scripts/test_dietas_dev.py --site test_site --sites-path /home/runner/frappe-bench/sites --confirm-development
+        run: |
+          env/bin/python apps/powerpro/scripts/setup_dietas_ci.py
+          env/bin/python apps/powerpro/scripts/test_dietas_dev.py --site test_site --sites-path /home/runner/frappe-bench/sites --confirm-development --require-complete
 
       - name: Run Payroll Tests
+        if: ${{ !cancelled() && steps.install_apps.outcome == 'success' }}
         working-directory: /home/runner/frappe-bench
         run: |
           bench --site test_site set-config allow_tests true
-          bench --site test_site run-tests --app powerpro --module powerpro.controllers.test_payroll_preflight
-          bench --site test_site run-tests --app powerpro --module powerpro.controllers.test_overtime_cash_settlement
-          bench --site test_site run-tests --app powerpro --module powerpro.controllers.test_overtime_settlement
-          bench --site test_site run-tests --app powerpro --module powerpro.controllers.test_overtime_compensatory_settlement
-          bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_dominican_republic
-          bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_employer_contributions
-          bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_banco_popular
-          bench --site test_site run-tests --app powerpro --module powerpro.power_pro.doctype.payroll_bank_batch.test_payroll_bank_batch
-          bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_overtime
-          bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_overtime_work_call
-          bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_overtime_compensatory
-          bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_overtime_candidates
-          bench --site test_site run-tests --app powerpro --module powerpro.payroll_rules.test_overtime_cash_settlement
-          bench --site test_site run-tests --app powerpro --module powerpro.controllers.test_overtime_candidate_refresh
-          bench --site test_site run-tests --app powerpro --module powerpro.power_pro.doctype.overtime_authorization.test_overtime_authorization
-          bench --site test_site run-tests --app powerpro --module powerpro.power_pro.doctype.retroactive_overtime_adjustment.test_retroactive_overtime_adjustment
-          bench --site test_site run-tests --app powerpro --module powerpro.patches.v1.test_setup_dgii_isr_2026
+          failed=0
+          run_module() { bench --site test_site run-tests --app powerpro --module "$1" || failed=1; }
+          run_module powerpro.controllers.test_payroll_preflight
+          run_module powerpro.controllers.test_overtime_cash_settlement
+          run_module powerpro.controllers.test_overtime_settlement
+          run_module powerpro.controllers.test_overtime_compensatory_settlement
+          run_module powerpro.payroll_rules.test_dominican_republic
+          run_module powerpro.payroll_rules.test_employer_contributions
+          run_module powerpro.payroll_rules.test_banco_popular
+          run_module powerpro.power_pro.doctype.payroll_bank_batch.test_payroll_bank_batch
+          run_module powerpro.payroll_rules.test_overtime
+          run_module powerpro.payroll_rules.test_overtime_work_call
+          run_module powerpro.payroll_rules.test_overtime_compensatory
+          run_module powerpro.payroll_rules.test_overtime_candidates
+          run_module powerpro.payroll_rules.test_overtime_cash_settlement
+          run_module powerpro.controllers.test_overtime_candidate_refresh
+          run_module powerpro.power_pro.doctype.overtime_authorization.test_overtime_authorization
+          run_module powerpro.power_pro.doctype.retroactive_overtime_adjustment.test_retroactive_overtime_adjustment
+          run_module powerpro.patches.v1.test_setup_dgii_isr_2026
+          exit "$failed"
         env:
           TYPE: server
