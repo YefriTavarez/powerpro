@@ -7,7 +7,6 @@ from unittest.mock import patch
 from powerpro.power_pro.doctype.overtime_authorization.overtime_authorization import (
 	OvertimeAuthorization,
 	apply_employee_approver_snapshot,
-	OvertimeAuthorization,
 	apply_requester_snapshot,
 	is_assigned_approver,
 )
@@ -88,6 +87,9 @@ class OvertimeWorkCallSourceTest(unittest.TestCase):
 			"powerpro.power_pro.doctype.overtime_authorization.overtime_authorization.frappe.get_doc"
 		).start()
 		self.addCleanup(patch.stopall)
+		# flt() reads the rounding preference. Keep that settings lookup separate
+		# from the work-call document mock and avoid contaminating Frappe's cache.
+		patch("frappe.get_system_settings", return_value=None).start()
 		patch(
 			"powerpro.power_pro.doctype.overtime_authorization.overtime_authorization._",
 			side_effect=lambda message: message,
