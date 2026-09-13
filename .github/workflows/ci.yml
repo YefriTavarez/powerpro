@@ -145,7 +145,9 @@ jobs:
 
       - name: Run Dieta Database Tests (isolated development fixture)
         working-directory: /home/runner/frappe-bench
-        run: env/bin/python apps/powerpro/scripts/test_dietas_dev.py --site test_site --sites-path /home/runner/frappe-bench/sites --confirm-development
+        run: |
+          bench --site test_site execute frappe.test_runner.make_test_records --kwargs '{"doctype":"Company", "commit":true}'
+          env/bin/python apps/powerpro/scripts/test_dietas_dev.py --site test_site --sites-path /home/runner/frappe-bench/sites --confirm-development --require-complete
 
       - name: Run Payroll Tests
         working-directory: /home/runner/frappe-bench

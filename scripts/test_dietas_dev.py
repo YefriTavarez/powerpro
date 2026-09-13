@@ -15,6 +15,7 @@ parser.add_argument('--site', required=True)
 parser.add_argument('--company', help='Existing company for rollback-only test fixtures')
 parser.add_argument('--sites-path', required=True)
 parser.add_argument('--confirm-development', action='store_true', required=True)
+parser.add_argument('--require-complete', action='store_true', help='Fail if a required fixture causes skipped tests')
 args = parser.parse_args()
 if args.site in ('igcaribe.com', 'igcaribe.erpnext.com'):
     raise SystemExit('Refusing the known production site.')
@@ -43,4 +44,4 @@ try:
 finally:
     frappe.db.rollback()
     frappe.destroy()
-sys.exit(not result.wasSuccessful())
+sys.exit(not result.wasSuccessful() or (args.require_complete and bool(result.skipped)))
