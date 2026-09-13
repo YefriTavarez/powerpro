@@ -18,7 +18,10 @@ parser.add_argument('--confirm-development', action='store_true', required=True)
 args = parser.parse_args()
 if args.site in ('igcaribe.com', 'igcaribe.erpnext.com'):
     raise SystemExit('Refusing the known production site.')
-frappe.init(site=args.site, sites_path=args.sites_path)
+sites_path = Path(args.sites_path).resolve()
+# Frappe resolves its bench log directory relative to the sites working directory.
+os.chdir(sites_path)
+frappe.init(site=args.site, sites_path=str(sites_path))
 if urlsplit(frappe.conf.get('host_name') or '').hostname in ('igcaribe.com','www.igcaribe.com'):
     raise SystemExit('Refusing the production hostname.')
 frappe.connect()

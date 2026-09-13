@@ -23,6 +23,8 @@ from powerpro.dietas.rules import money, day_key
 
 class Record(dict):
     def __getattr__(self, key):
+        if key.startswith('__'):
+            raise AttributeError(key)
         return self.get(key)
     def __setattr__(self, key, value):
         self[key] = value
