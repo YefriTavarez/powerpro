@@ -16,6 +16,12 @@ frappe.connect()
 try:
     frappe.set_user("Administrator")
     frappe.flags.in_test = True
+    # PowerPro requires the DGII classification when Company updates Cash accounts.
+    for name in frappe.get_all("Mode of Payment", filters={"type": "Cash"}, pluck="name"):
+        payment = frappe.get_doc("Mode of Payment", name)
+        if not payment.get("dgii_mode_of_payment"):
+            payment.dgii_mode_of_payment = "1. Efectivo"
+            payment.save()
     if not frappe.db.exists("Company", "_Test Company"):
         frappe.get_doc({
             "doctype": "Company",
@@ -29,7 +35,7 @@ try:
     if not frappe.db.exists("Mode of Payment", {"type": "Cash", "enabled": 1}):
         frappe.get_doc({
             "doctype": "Mode of Payment", "mode_of_payment": "Dieta CI Cash",
-            "type": "Cash", "enabled": 1,
+            "type": "Cash", "enabled": 1, "dgii_mode_of_payment": "1. Efectivo",
         }).insert()
     assert frappe.db.exists("Company", "_Test Company")
     frappe.db.commit()
