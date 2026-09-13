@@ -38,8 +38,16 @@ try:
             "type": "Cash", "enabled": 1, "dgii_mode_of_payment": "1. Efectivo",
         }).insert()
     assert frappe.db.exists("Company", "_Test Company")
+    if not frappe.db.exists("Cost Center", {"company": "_Test Company", "cost_center_name": "Dieta CI Secondary"}):
+        parent = frappe.db.get_value("Cost Center", {"company": "_Test Company", "is_group": 1}, "name")
+        assert parent, "Company must provide the root cost center"
+        frappe.get_doc({
+            "doctype": "Cost Center", "company": "_Test Company",
+            "cost_center_name": "Dieta CI Secondary", "is_group": 0,
+            "parent_cost_center": parent,
+        }).insert()
     frappe.db.commit()
-    print("Dieta CI company and cash payment method are ready.")
+    print("Dieta CI company, cash payment method and two cost centers are ready.")
 finally:
     frappe.db.rollback()
     frappe.destroy()
