@@ -2,15 +2,33 @@ import json
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from powerpro.power_pro.doctype.overtime_authorization.overtime_authorization import (
 	apply_employee_approver_snapshot,
+	OvertimeAuthorization,
 	apply_requester_snapshot,
 	is_assigned_approver,
 )
 
 
 class OvertimeAuthorizationSecurityTest(unittest.TestCase):
+	def test_inherited_validation_allows_documents_without_work_call_field(self):
+		doc = SimpleNamespace(get=lambda field: None)
+		with patch("frappe.get_doc") as load:
+			OvertimeAuthorization._validate_work_call_source(doc)
+		load.assert_not_called()
+
+	def test_supplied_work_call_still_requires_source_generation(self):
+		doc = SimpleNamespace(
+			get=lambda field: "CALL-1", overtime_work_call="CALL-1",
+			flags={}, is_new=lambda: True,
+		)
+		with patch("frappe.throw", side_effect=PermissionError), patch("frappe.get_doc") as load:
+			with self.assertRaises(PermissionError):
+				OvertimeAuthorization._validate_work_call_source(doc)
+		load.assert_not_called()
+
 	def test_pending_settlement_method_has_blank_select_option(self):
 		doctype_path = Path(__file__).with_name("overtime_authorization.json")
 		metadata = json.loads(doctype_path.read_text())

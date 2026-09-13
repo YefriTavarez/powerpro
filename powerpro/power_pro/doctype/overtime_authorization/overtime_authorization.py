@@ -237,7 +237,7 @@ class OvertimeAuthorization(Document):
 			)
 
 	def _validate_work_call_source(self):
-		if not self.overtime_work_call:
+		if not self.get("overtime_work_call"):
 			return
 		if not self.flags.get("generated_from_overtime_work_call") and self.is_new():
 			frappe.throw(
