@@ -7,6 +7,19 @@ from powerpro.payroll_rules.overtime_evidence import calculate_evidenced_interva
 KIND = 'Manual Full Session'
 
 
+def authorized_interval_scope(declaration,source_type):
+    """Opt-in historical review preserves full work but authorizes only its window."""
+    if not declaration or not declaration.get('review_scope'):
+        return False
+    if (source_type!='Retroactive Overtime Adjustment'
+            or declaration['review_scope']!='Authorized interval only'
+            or declaration.get('full_session') is not True
+            or not declaration.get('observation_window')
+            or not str(declaration.get('reference') or '').strip()):
+        raise ValueError('La revisión acotada requiere un ajuste retroactivo, jornada completa, ventana de observación y referencia.')
+    return True
+
+
 def validate_manual_intervals(declaration,lower,upper,now):
     """Validate physical declared intervals without invoking financial calculation."""
     if not isinstance(declaration,dict) or declaration.get('full_session') is not True:
