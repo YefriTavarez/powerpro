@@ -92,13 +92,17 @@ def load_week(doc,employee,assignments,*,for_update=False):
         declaration=(saved.get('review') or {}).get('manual_declaration')
         if prior.reconciliation_source!='Employee Checkin' and not (prior.reconciliation_source=='Manual Verification' and declaration):
             issues.append({'code':'weekly_previous_verification_requires_review','authorization':prior.name,'source_type':prior.source_type});continue
-        current,_settings=_data(frappe.get_doc(prior.source_type,prior.name,for_update=for_update),for_update=for_update,include_weekly=False)
+        from powerpro.payroll_rules.overtime_manual_session import authorized_interval_scope
+        scoped=authorized_interval_scope(declaration,prior.source_type)
+        observation_window=declaration.get('observation_window') if scoped else None
+        current,_settings=_data(frappe.get_doc(prior.source_type,prior.name,for_update=for_update),
+            for_update=for_update,include_weekly=False,observation_window=observation_window,scoped_manual_review=scoped)
         fresh=evaluate_evidence(authorization=current['authorization'],rows=current['rows'],shift=current['shift'],contexts=current['contexts'],
-            next_windows=current['next_windows'],now=now_datetime(),competing=current['competing'])
+            next_windows=current['next_windows'],now=now_datetime(),competing=current['competing'],observation_window=current.get('observation_window'))
         if declaration:
             from powerpro.payroll_rules.overtime_manual_session import evaluate_manual_session
             fresh=evaluate_manual_session(declaration=declaration,authorization=current['authorization'],rows=current['rows'],
-                contexts=current['contexts'],now=now_datetime(),competing=current['competing'])
+                contexts=current['contexts'],now=now_datetime(),competing=current['competing'],observation_window=current.get('observation_window'))
         acceptable=fresh['state']=='Verified' or (saved.get('review') and all(i['code']=='worked_authorized_mismatch' or i['severity']=='information' for i in fresh['issues']))
         if not acceptable or not saved.get('worked_intervals') or (
             _evidence_hash(saved.get('source_checkins'))!=_evidence_hash(fresh.get('source_checkins')) or

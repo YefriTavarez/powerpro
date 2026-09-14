@@ -159,6 +159,7 @@ jobs:
           run_module() { bench --site test_site run-tests --app powerpro --module "$1" || failed=1; }
           run_module powerpro.controllers.test_payroll_preflight
           run_module powerpro.controllers.test_retroactive_interval_review
+          run_module powerpro.controllers.test_weekly_scoped_review
           run_module powerpro.controllers.test_overtime_cash_settlement
           run_module powerpro.controllers.test_overtime_settlement
           run_module powerpro.controllers.test_overtime_compensatory_settlement
