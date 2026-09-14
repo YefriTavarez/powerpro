@@ -20,7 +20,12 @@ def accept_result(result, review):
     if not result.get('snapshot') or flt(result['snapshot'].get('verified_hours'))<=0:
         frappe.throw(_('Se requiere evidencia de intervalos trabajados antes de aceptar la revisión.'))
     codes={i['code'] for i in result['issues'] if i.get('severity')!='information'}
-    if codes-REVIEWABLE or flt(result['calculation'].get('unapproved_hours'))>0:
+    # A separately authorized historical interval can be accepted without
+    # discarding its early/late physical work or paying that excluded time.
+    from powerpro.payroll_rules.overtime_manual_session import authorized_interval_scope
+    scoped=bool(result.get('authorized_interval_review')) and authorized_interval_scope(
+        result.get('manual_declaration'),'Retroactive Overtime Adjustment')
+    if codes-REVIEWABLE or (flt(result['calculation'].get('unapproved_hours'))>0 and not scoped):
         frappe.throw(_('Corrija las marcaciones faltantes o ambiguas y revise el tiempo no autorizado antes de aceptar.'))
     if result['state'] not in {'Verified','Needs Review'}:
         frappe.throw(_('La ventana y la sincronización deben estar completas.'))

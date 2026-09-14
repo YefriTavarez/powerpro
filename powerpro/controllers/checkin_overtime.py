@@ -104,11 +104,12 @@ def enroll(authorization):
     return {'authorization':doc.name,'status':doc.evidence_status}
 
 
-def _data(doc,*,for_update=False,include_weekly=True,observation_window=None):
+def _data(doc,*,for_update=False,include_weekly=True,observation_window=None,scoped_manual_review=False):
     start,end=get_datetime(doc.authorization_start),get_datetime(doc.authorization_end)
     observed_start,observed_end=start,end
     if observation_window is not None:
-        if doc.docstatus!=2:raise ValueError('La ventana histórica solo se admite en orígenes cancelados.')
+        if doc.docstatus!=2 and not (scoped_manual_review and doc.doctype=='Retroactive Overtime Adjustment'):
+            raise ValueError('La ventana histórica requiere un origen cancelado o una revisión retroactiva acotada.')
         from powerpro.payroll_rules.overtime_observation_window import normalize_window
         base=get_schedule_context(start.date(),doc.shift_type,doc.holiday_list,for_update=for_update)
         observation_window=normalize_window(observation_window,min(start,get_datetime(base['shift_start'])),max(end,get_datetime(base['shift_end'])))
@@ -183,22 +184,34 @@ def _data(doc,*,for_update=False,include_weekly=True,observation_window=None):
 
 
 def build_result(doc,*,for_update=False,use_saved_review=True,manual_declaration=None):
-    data,settings=_data(doc,for_update=for_update)
-    policy=data['pay_policy']
     saved=frappe.parse_json(doc.get('evidence_snapshot') or '{}')
     if manual_declaration is None and use_saved_review:
         manual_declaration=(saved.get('review') or {}).get('manual_declaration')
+    from powerpro.payroll_rules.overtime_manual_session import authorized_interval_scope
+    scoped=authorized_interval_scope(manual_declaration,doc.doctype)
+    observation_window=manual_declaration.get('observation_window') if scoped else None
+    data,settings=_data(doc,for_update=for_update,observation_window=observation_window,scoped_manual_review=scoped)
+    policy=data['pay_policy']
     result=evaluate_evidence(authorization=data['authorization'],rows=data['rows'],shift=data['shift'],contexts=data['contexts'],
         next_windows=data['next_windows'],now=now_datetime(),competing=data['competing'],
         night_start=time(21) if policy else coerce_time(settings.start_night_hours,time(21)),
-        night_end=time(7) if policy else coerce_time(settings.end_night_hours,time(7)))
+        night_end=time(7) if policy else coerce_time(settings.end_night_hours,time(7)),
+        observation_window=data.get('observation_window'))
     if manual_declaration is not None:
         from powerpro.payroll_rules.overtime_manual_session import evaluate_manual_session
         comparison=result
         result=evaluate_manual_session(declaration=manual_declaration,authorization=data['authorization'],rows=data['rows'],
-            contexts=data['contexts'],now=now_datetime(),competing=data['competing'],night_start=time(21),night_end=time(7))
+            contexts=data['contexts'],now=now_datetime(),competing=data['competing'],night_start=time(21),night_end=time(7),
+            observation_window=data.get('observation_window'))
         result['checkin_comparison']=comparison
         data['manual_declaration']=manual_declaration
+        if scoped:
+            result['authorized_interval_review']={
+                'start':data['authorization']['start'],'end':data['authorization']['end'],
+                'outside_intervals':result['calculation']['unapproved_intervals'],
+                'outside_hours':result['calculation']['unapproved_hours'],
+                'disposition':'Excluded from this adjustment; physical work retained',
+            }
     blockers=[]
     if not policy:blockers.append('Falta una política de liquidación aprobada que cubra la fecha de trabajo.')
     if doc.planned_settlement=='Cash' and not data['rate_basis']:
