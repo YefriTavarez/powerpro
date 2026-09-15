@@ -88,7 +88,8 @@ def period_issues(current, history, joining_date=None, relieving_date=None):
 
 def calculate(current, previous, previous_deductions, previous_employer, on_date,
               dependents=0, employee_afp_rate=2.87, employee_ars_rate=3.04,
-              infotep_rate=1, srl_rate=1.2, *, current_taxable=None, previous_taxable=None):
+              infotep_rate=1, srl_rate=1.2, *, current_taxable=None, previous_taxable=None,
+              employer_excluded=False):
     """Amounts are already prorated. Returns monthly obligations and remaining balances."""
     totals = {key: money(current.get(key)) + money(previous.get(key)) for key in current.keys() | previous.keys()}
     salary, commission, vacation = (totals.get(key, money()) for key in ("B", "COM", "VAC"))
@@ -112,7 +113,7 @@ def calculate(current, previous, previous_deductions, previous_employer, on_date
     dp = money(dependents) + money(previous_deductions.get("DP"))
     income_base = max(taxable - afp - ars - dp, money())
     obligations = {"AFP": afp, "ARS": ars, "ISRM": calculate_monthly_isr(income_base, on_date)}
-    employer = calculate_employer_contributions(
+    employer = [] if employer_excluded else calculate_employer_contributions(
         salary, on_date, commission, vacation, infotep_rate, srl_rate,
         actual_monthly_base=True,
     )
@@ -139,6 +140,7 @@ def calculate(current, previous, previous_deductions, previous_employer, on_date
         "cotizable": cotizable, "afp_base": afp_base, "ars_base": ars_base,
         "dependents": dp, "income_tax_base": income_base,
         "employee": employee, "employer": employer_rows, "issues": issues,
+        "employer_excluded": bool(employer_excluded),
         "rules": {"tss_effective_from": str(tss.effective_from),
                   "isr_effective_from": str(scale.effective_from),
                   "pension_ceiling": tss.pension_ceiling, "sfs_ceiling": tss.sfs_ceiling,

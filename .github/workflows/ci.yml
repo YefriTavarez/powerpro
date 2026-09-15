@@ -165,6 +165,7 @@ jobs:
           run_module powerpro.controllers.test_overtime_compensatory_settlement
           run_module powerpro.payroll_rules.test_dominican_republic
           run_module powerpro.payroll_rules.test_employer_contributions
+          run_module powerpro.payroll_rules.test_monthly_settlement
           run_module powerpro.payroll_rules.test_banco_popular
           run_module powerpro.power_pro.doctype.payroll_bank_batch.test_payroll_bank_batch
           run_module powerpro.payroll_rules.test_overtime

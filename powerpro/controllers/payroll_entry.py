@@ -156,6 +156,11 @@ class PayrollEntry(payroll_entry.PayrollEntry):
                     )
                 )
             contribution_count = len(slip.get("employer_contributions", []))
+            # Use the saved decision, not today's settings, for submitted payroll.
+            if slip.get("employer_contributions_excluded"):
+                if contribution_count:
+                    frappe.throw(_("Excluded Salary Slip {0} contains employer contributions.").format(slip.name))
+                continue
             from powerpro.controllers.salary_slip.monthly import is_close
             monthly_settlement = is_close(slip)
             if monthly_settlement and contribution_count != 4:

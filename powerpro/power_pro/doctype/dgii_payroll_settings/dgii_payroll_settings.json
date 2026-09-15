@@ -29,6 +29,8 @@
   "column_break_employer_contributions",
   "srl_employer_rate",
   "srl_rate_verified",
+  "employer_exclusions_section",
+  "employer_contribution_exclusions",
   "overtime_authorization_section",
   "enable_overtime_authorization",
   "manual_overtime_section",
@@ -697,6 +699,18 @@
    "default": "0",
    "depends_on": "manage_overtime_pay_policy",
    "description": "Conserva el pago del feriado y el recargo nocturno cuando el empleado elige descanso compensatorio por la coincidencia. La elección requiere fecha de nómina y programación del descanso."
+  },
+  {
+   "fieldname": "employer_exclusions_section",
+   "fieldtype": "Section Break",
+   "label": "Exclusiones de aportes del empleador"
+  },
+  {
+   "fieldname": "employer_contribution_exclusions",
+   "fieldtype": "Table MultiSelect",
+   "label": "Estructuras salariales excluidas",
+   "options": "Employer Contribution Exclusion",
+   "description": "Las estructuras seleccionadas no generan aportes del empleador. Las deducciones del empleado se conservan. Aplica al calcular nuevos recibos o recalcular borradores; no modifica recibos confirmados."
   }
  ],
  "index_web_pages_for_search": 1,

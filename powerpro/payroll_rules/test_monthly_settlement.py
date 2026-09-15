@@ -159,3 +159,16 @@ class MonthlyPeriodTest(TestCase):
 
     def test_unsupported_frequency(self):
         self.assertTrue(period_issues(self.current(frequency="Weekly"), [self.prior()]))
+
+
+class EmployerExclusionTest(TestCase):
+    def test_exclusion_only_changes_employer_obligations(self):
+        from powerpro.payroll_rules.monthly_settlement import calculate
+        args = ({"B": 30000}, {"B": 30000}, {}, {"AFP": 99999}, "2026-09-30")
+        normal = calculate(*args)
+        excluded = calculate(*args, employer_excluded=True)
+        self.assertEqual(excluded["employee"], normal["employee"])
+        self.assertEqual(excluded["income_tax_base"], normal["income_tax_base"])
+        self.assertEqual(excluded["employer"], [])
+        self.assertEqual(excluded["issues"], [])
+        self.assertTrue(excluded["employer_excluded"])
