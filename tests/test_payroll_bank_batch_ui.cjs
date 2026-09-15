@@ -59,6 +59,10 @@ test("metadata allows an empty read-only table but keeps source links required",
     const details = parent.fields.find((field) => field.fieldname === "details");
     assert.equal(details.read_only, 1);
     assert.ok(!details.reqd, "Desk must not create a mandatory blank child");
+    const sequence = parent.fields.find((field) => field.fieldname === "payment_sequence");
+    assert.equal(sequence.read_only, 1);
+    assert.equal(sequence.no_copy, 1);
+    assert.ok(!sequence.reqd, "the server assigns the sequence on first save");
     const child = JSON.parse(fs.readFileSync(path.join(root,
         "powerpro/power_pro/doctype/payroll_bank_batch_detail/payroll_bank_batch_detail.json")));
     for (const field of child.fields) {

@@ -107,11 +107,12 @@
    "reqd": 1
   },
   {
-   "description": "Secuencia de siete dígitos entregada al Banco Popular.",
+   "description": "Se asigna al guardar: siete dígitos, consecutivos por fecha de pago. Cada fecha comienza en 0000001.",
    "fieldname": "payment_sequence",
    "fieldtype": "Data",
    "label": "Secuencia de pago",
-   "reqd": 1
+   "no_copy": 1,
+   "read_only": 1
   },
   {
    "fieldname": "payment_column",

@@ -21,7 +21,9 @@ El número de activación y los datos bancarios no deben almacenarse en código.
 
 1. Someter la nómina y sus Salary Slips.
 2. Desde Payroll Entry, usar **Acciones > Crear lote Banco Popular**.
-3. Completar fecha, secuencia de siete dígitos y descripción del pago.
+3. Completar la fecha y descripción del pago. La secuencia se asigna
+   automáticamente al guardar: `0000001`, `0000002`, etc., por **fecha de pago**.
+   Cada fecha tiene su propio contador, también al cambiar de mes o año.
 4. Guardar el borrador, inicialmente sin detalles, y usar **Acciones > Cargar
    pagos sometidos**. La tabla es de solo lectura: no se agregan ni eliminan
    empleados manualmente.
@@ -45,6 +47,16 @@ continúan siendo pasos operativos separados.
 - El detalle se ordena por nombre del empleado y luego por Salary Slip.
 - Una Salary Slip no puede pertenecer a dos lotes activos.
 - La secuencia no se puede repetir para el mismo perfil y fecha de pago.
+- El contador diario es común a todos los perfiles del sitio y reserva números
+  de forma transaccional para evitar duplicados entre guardados simultáneos.
+  Continúa después de las secuencias anteriores, incluidos los lotes cancelados.
+- Guardar de nuevo o cargar pagos conserva la secuencia. Cambiar la fecha de
+  un borrador asigna el siguiente número de la nueva fecha; duplicar o enmendar
+  un lote también obtiene un número nuevo. Los números reservados por lotes
+  guardados no se reutilizan, incluso si después se eliminan o cancelan.
+- La secuencia es de solo lectura. Los lotes aprobados y TXT ya generados
+  conservan su fecha y secuencia. Al llegar a `9999999`, se bloquean nuevas
+  reservas para esa fecha en lugar de generar un número de ocho dígitos.
 - Cada línea contiene exactamente 320 bytes en Windows-1252 y termina en CRLF.
 - El archivo generado es privado e inmutable para el lote aprobado.
 - Un borrador vacío se guarda como **Pending**; uno con datos bancarios

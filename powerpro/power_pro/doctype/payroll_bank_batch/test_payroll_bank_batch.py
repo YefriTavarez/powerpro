@@ -189,3 +189,42 @@ class TestPayrollBankBatchDraft(unittest.TestCase):
         batch.payment_description = ""
         with self.assertRaises(frappe.MandatoryError):
             batch.insert()
+
+    def test_daily_sequence_is_automatic_and_stable(self):
+        first = self.batch().insert()
+        self.assertEqual(first.payment_sequence, "0000001")
+        first.save()
+        self.assertEqual(first.payment_sequence, "0000001")
+        second = self.batch().insert()
+        self.assertEqual(second.payment_sequence, "0000002")
+        second.payment_date = "2099-01-02"
+        second.save()
+        self.assertEqual(second.payment_sequence, "0000001")
+        second.payment_date = "2099-01-01"
+        second.save()
+        self.assertEqual(second.payment_sequence, "0000003")
+
+    def test_manual_sequence_edits_are_rejected(self):
+        batch = self.batch().insert()
+        batch.payment_sequence = "1234567"
+        with self.assertRaisesRegex(frappe.ValidationError, "automatically"):
+            batch.save()
+
+    def test_copy_reserves_a_new_sequence(self):
+        batch = self.batch().insert()
+        copied = frappe.copy_doc(batch)
+        copied.flags.ignore_links = True
+        copied.insert()
+        self.assertEqual(copied.payment_sequence, "0000002")
+
+    def test_legacy_and_cancelled_sequences_are_not_reused(self):
+        batch = self.batch().insert()
+        frappe.db.set_value(batch.doctype, batch.name, {"payment_sequence": "0000042", "docstatus": 2})
+        following = self.batch().insert()
+        self.assertEqual(following.payment_sequence, "0000043")
+
+    def test_deleted_draft_sequence_is_not_reused(self):
+        batch = self.batch().insert()
+        frappe.delete_doc(batch.doctype, batch.name, force=True)
+        following = self.batch().insert()
+        self.assertEqual(following.payment_sequence, "0000002")
