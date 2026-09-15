@@ -134,11 +134,12 @@ def prepare(doc):
 
 
 def compute(doc, dependents=0):
+    from .employer_policy import is_excluded
     ctx = doc._pp_monthly
     return calculate(ctx["current"], ctx["previous"], ctx["previous_deductions"],
                      ctx["previous_employer"], str(doc.end_date), dependents,
                      current_taxable=ctx["current_taxable"], previous_taxable=ctx["previous_taxable"],
-                     **ctx["rates"])
+                     employer_excluded=is_excluded(doc), **ctx["rates"])
 
 
 def formula_data(doc):

@@ -81,6 +81,12 @@ def populate_employer_contributions(doc):
 	"""Snapshot employer-only obligations without affecting employee totals."""
 	if not doc.meta.has_field("employer_contributions"):
 		return
+	from .employer_policy import is_excluded
+	doc.employer_contributions_excluded = int(is_excluded(doc))
+	if doc.employer_contributions_excluded:
+		doc.set("employer_contributions", [])
+		validate_employer_contributions(doc)
+		return
 	from .monthly import populate_employer
 	if populate_employer(doc):
 		validate_employer_contributions(doc)
@@ -123,7 +129,7 @@ def populate_employer_contributions(doc):
 
 
 def validate_employer_contributions(doc, _event=None):
-	if doc.get("employer_contribution_mode") != DEDICATED_MODE:
+	if doc.get("employer_contribution_mode") != DEDICATED_MODE and not doc.get("employer_contributions_excluded"):
 		return
 
 	legacy_rows = [
@@ -138,6 +144,11 @@ def validate_employer_contributions(doc, _event=None):
 				", ".join(sorted(set(legacy_rows)))
 			)
 		)
+
+	if doc.get("employer_contributions_excluded"):
+		if doc.get("employer_contributions"):
+			frappe.throw(_("An excluded Salary Slip cannot contain employer contributions."))
+		return
 
 	if _is_monthly_settlement(doc) and len(doc.get("employer_contributions", [])) != 4:
 		frappe.throw(_("Dedicated employer accounting requires exactly four contribution snapshots."))

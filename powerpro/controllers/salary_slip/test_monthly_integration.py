@@ -73,6 +73,105 @@ class MonthlyIntegrationTest(unittest.TestCase):
         doc.calculate_net_pay()
         return doc
 
+    def exclude_structure(self, name=None):
+        self.settings.append("employer_contribution_exclusions", {
+            "salary_structure": name or self.structure.name,
+        })
+        self.settings.save(ignore_permissions=True)
+
+    def employer_totals(self, *slips):
+        entry = frappe.new_doc("Payroll Entry")
+        entry.company = self.company
+        entry.cost_center = frappe.db.get_value("Company", self.company, "cost_center")
+        with patch.object(entry, "get_sal_slip_list", return_value=[frappe._dict(name=s.name) for s in slips]), \
+             patch.object(entry, "get_payroll_cost_centers_for_employee", return_value={entry.cost_center: 100}):
+            return entry._get_dedicated_employer_contribution_totals()
+
+    def employee_amounts(self, slip):
+        return (slip.gross_pay, slip.total_deduction, slip.net_pay,
+                [(r.salary_component, r.amount) for r in slip.deductions])
+
+    def test_employer_exclusion_monthly_recalculation_submission_and_mixed_accounting(self):
+        self.slip("2026-09-01", "2026-09-15").submit()
+        close = self.slip("2026-09-16", "2026-09-30")
+        baseline = self.employee_amounts(close)
+        snapshot_before = json.loads(close.monthly_settlement_snapshot)
+        self.assertEqual(len(close.employer_contributions), 4)
+        self.exclude_structure()
+        close.save()
+        self.assertEqual(self.employee_amounts(close), baseline)
+        self.assertEqual(close.employer_contributions_excluded, 1)
+        self.assertEqual(close.employer_contributions, [])
+        snapshot = json.loads(close.monthly_settlement_snapshot)
+        self.assertEqual(snapshot["employer"], [])
+        self.assertTrue(snapshot["employer_excluded"])
+        self.assertEqual(snapshot["employee"], snapshot_before["employee"])
+        close.submit()
+        self.assertEqual(self.employer_totals(close), ({}, {}))
+        # Removing the setting must not change accounting for this submitted slip.
+        self.settings.set("employer_contribution_exclusions", [])
+        self.settings.save(ignore_permissions=True)
+        stored = frappe.get_doc("Salary Slip", close.name)
+        self.assertEqual(stored.employer_contributions_excluded, 1)
+        self.assertEqual(self.employer_totals(stored), ({}, {}))
+        other = self.make_employee()
+        self.assignment(other, "2026-09-01", 40000)
+        self.slip("2026-09-01", "2026-09-15", other).submit()
+        regular = self.slip("2026-09-16", "2026-09-30", other).submit()
+        self.assertEqual(len(regular.employer_contributions), 4)
+        self.assertEqual(regular.employer_contributions_excluded, 0)
+        self.assertEqual(self.employer_totals(stored, regular), self.employer_totals(regular))
+        # Adding the setting does not remove historical obligations either.
+        self.exclude_structure()
+        self.assertEqual(self.employer_totals(regular), self.employer_totals(stored, regular))
+
+    def test_employer_exclusion_iguala_copy_preserves_employee_deductions(self):
+        # The real DEV General Iguala is cancelled; never alter it for a test.
+        original = frappe.get_doc("Salary Structure", "General Iguala")
+        self.structure = frappe.copy_doc(original)
+        self.structure.docstatus = 0
+        self.structure.name = self.token + "-Iguala"
+        self.structure.salary_structure = self.structure.name
+        self.structure.is_active = "Yes"
+        self.structure.insert().submit()
+        self.employee = self.make_employee()
+        self.assignment(self.employee, "2026-09-01", 40000)
+        baseline = self.slip("2026-09-01", "2026-09-30", save=False)
+        self.assertEqual(len(baseline.employer_contributions), 4)
+        self.assertIsNone(baseline._pp_monthly)
+        self.exclude_structure()
+        excluded = self.slip("2026-09-01", "2026-09-30")
+        self.assertEqual(self.employee_amounts(excluded), self.employee_amounts(baseline))
+        self.assertEqual(excluded.employer_contributions_excluded, 1)
+        self.assertEqual(excluded.employer_contributions, [])
+        excluded.submit()
+        self.assertEqual(self.employer_totals(excluded), ({}, {}))
+        self.assertEqual(frappe.db.get_value("Salary Structure", original.name, "docstatus"), 2)
+
+    def test_employer_exclusion_first_half_and_removal_on_draft(self):
+        self.exclude_structure()
+        first = self.slip("2026-09-01", "2026-09-15").submit()
+        self.assertEqual(first.employer_contributions, [])
+        close = self.slip("2026-09-16", "2026-09-30")
+        baseline = self.employee_amounts(close)
+        self.settings.set("employer_contribution_exclusions", [])
+        self.settings.save(ignore_permissions=True)
+        close.save()
+        self.assertEqual(close.employer_contributions_excluded, 0)
+        self.assertEqual(len(close.employer_contributions), 4)
+        self.assertEqual(self.employee_amounts(close), baseline)
+
+    def test_employer_exclusion_rejects_stale_rows_and_legacy_employer_components(self):
+        from powerpro.controllers.salary_slip.helper import validate_employer_contributions
+        close = self.slip("2026-09-16", "2026-09-30", save=False)
+        close.employer_contributions_excluded = 1
+        with self.assertRaises(frappe.ValidationError):
+            validate_employer_contributions(close)
+        close.set("employer_contributions", [])
+        close.append("deductions", {"salary_component": "AFP Empleador", "amount": 10})
+        with self.assertRaises(frappe.ValidationError):
+            validate_employer_contributions(close)
+
     def test_real_hrms_raise_commissions_replay_and_accounting(self):
         self.commission(5000, "2026-09-15")
         first = self.slip("2026-09-01", "2026-09-15").submit()
