@@ -221,7 +221,7 @@ def validate_profile(profile: BancoPopularProfile) -> BancoPopularProfile:
 def validate_payment(
     payment: PayrollPayment, profile: BancoPopularProfile
 ) -> PayrollPayment:
-    reference = _compact_text(payment.reference, "Payment Reference", maximum=140)
+    reference = _payment_reference(payment.reference)
     beneficiary_name = _clean_text(payment.beneficiary_name)
     if not beneficiary_name:
         raise BankFileValidationError(f"{reference}: Beneficiary Name is required.")
@@ -380,6 +380,18 @@ def _fixed_digits(value: str, width: int, label: str) -> str:
     if len(digits) != width:
         raise BankFileValidationError(f"{label} must contain exactly {width} digits.")
     return digits
+
+
+def _payment_reference(value: str) -> str:
+    # This is the internal Salary Slip name, not a field in the bank TXT.
+    # Preserve its exact identity (including spaces) for duplicate detection.
+    if not isinstance(value, str) or not value.strip():
+        raise BankFileValidationError("Payment Reference is required.")
+    if len(value) > 140:
+        raise BankFileValidationError("Payment Reference exceeds 140 characters.")
+    if any(unicodedata.category(character) == "Cc" for character in value):
+        raise BankFileValidationError("Payment Reference cannot contain control characters.")
+    return value
 
 
 def _compact_text(value: str, label: str, *, maximum: int) -> str:

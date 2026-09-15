@@ -47,6 +47,7 @@ frappe.ui.form.on("Payroll Bank Batch", {
             frm.add_custom_button(__("Cargar pagos sometidos"), () => {
                 frm.call({
                     method: "load_payments",
+                    doc: frm.doc,
                     freeze: true,
                     freeze_message: __("Validando y cargando comprobantes sometidos..."),
                 }).then(() => frm.reload_doc());
@@ -60,6 +61,7 @@ frappe.ui.form.on("Payroll Bank Batch", {
                     () => {
                         frm.call({
                             method: "generate_file",
+                            doc: frm.doc,
                             freeze: true,
                             freeze_message: __("Generando y verificando el TXT..."),
                         }).then((r) => {

@@ -15,18 +15,25 @@ function form({ rows = [], isNew = true, docstatus = 0 } = {}) {
     const calls = [];
     const buttons = [];
     const intros = [];
+    const requests = [];
     const frm = {
         doc: { details: rows, docstatus, status: "Draft" },
         is_new: () => isNew,
         refresh_field: (field) => calls.push(["refresh_field", field]),
         set_intro: (message) => intros.push(message),
         add_custom_button: (label, callback) => buttons.push({ label, callback }),
-        call: async (options) => calls.push(["call", options.method]),
+        call: async (options) => {
+            requests.push(options);
+            calls.push(["call", options.method]);
+            return { message: { file_name: "TEST.txt" } };
+        },
         reload_doc: () => calls.push(["reload_doc"]),
     };
     vm.runInNewContext(source, {
         __: (message) => message,
         frappe: {
+            confirm: (message, callback) => callback(),
+            show_alert: () => {},
             ui: { form: { on: (doctype, handlers) => { events = handlers; } } },
             model: {
                 clear_doc: (doctype, name) => {
@@ -37,7 +44,7 @@ function form({ rows = [], isNew = true, docstatus = 0 } = {}) {
             },
         },
     });
-    return { frm, events, locals, calls, buttons, intros };
+    return { frm, events, locals, calls, buttons, intros, requests };
 }
 
 function placeholder(name = "empty") {
@@ -114,12 +121,19 @@ test("new draft explains save-first; saved draft exposes explicit load action", 
     load.callback();
     await Promise.resolve();
     assert.deepEqual(saved.calls, [["call", "load_payments"], ["reload_doc"]]);
+    assert.equal(saved.requests[0].doc, saved.frm.doc,
+        "Frappe v15 requires doc to route the object-form call to run_doc_method");
 });
 
-test("approved persisted state exposes generation but not loading", () => {
+test("approved persisted state routes generation to the batch document", async () => {
     const state = form({ isNew: false, docstatus: 1 });
     state.frm.doc.status = "Approved";
     state.events.refresh(state.frm);
     assert.deepEqual(state.buttons.map((button) => button.label), ["Generar TXT privado"]);
     assert.equal(state.calls.length, 0);
+    state.buttons[0].callback();
+    await Promise.resolve();
+    assert.equal(state.requests[0].method, "generate_file");
+    assert.equal(state.requests[0].doc, state.frm.doc);
+    assert.deepEqual(state.calls, [["call", "generate_file"], ["reload_doc"]]);
 });
