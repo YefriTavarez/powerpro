@@ -53,7 +53,7 @@ try:
   return review.preview_review(doc.name,reason,manual_declaration=declaration)
  def apply(doc,p,declaration,reason='DEV initial manual evidence'):
   return review.apply_review(doc.name,reason,p['token'],manual_declaration=declaration)
- entrance=punch('2026-09-07','08:00:00','IN')
+ entrance=punch('2026-09-07','07:26:43','IN')
  first=draft('2026-09-07')
  def reject(fn,expected=(frappe.ValidationError,frappe.PermissionError,ValueError)):
   try:fn()
@@ -68,7 +68,15 @@ try:
  frappe.db.set_single_value('DGII Payroll Settings','enable_manual_overtime_verification',1)
  reject(lambda:preview(first,{**declaration,'full_session':False}))
  reject(lambda:preview(first,{**declaration,'reference':''}))
+ # Reproduce the draft form failure without discarding the early arrival or late exit.
+ declaration['intervals'][0]['start']='2026-09-07 07:26:43'
+ declaration['intervals'][-1]['end']='2026-09-07 20:00:35'
+ reject(lambda:preview(first,declaration))
+ declaration.update(review_scope='Authorized interval only',
+  observation_window={'start':'2026-09-07 07:26:43','end':'2026-09-07 20:00:35'})
  p=preview(first,declaration);assert p['draft_only'] and p['after']['verified_hours']==2
+ assert p['observation_window'] and p['unapproved_hours']>0
+ assert p['manual_declaration']['intervals']==declaration['intervals']
  assert p['rules_summary']['policy']['name']==policy.name and p['rules_summary']['policy']['regular_percent']==40
  assert p['rules_summary']['hours']['verified_hours']==2 and p['rules_summary']['weekly_evidence_complete'] is True
  money=frappe.db.count('Additional Salary');punches=frappe.db.count('Employee Checkin')
@@ -99,6 +107,9 @@ try:
  assert frappe.db.count('Employee Checkin')==punches
  frozen=frappe.parse_json(first.evidence_snapshot)
  assert frozen['review']['initial_draft'] and frozen['review']['manual_declaration']['reference']==declaration['reference']
+ assert frozen['review']['manual_declaration']['observation_window']==declaration['observation_window']
+ assert frozen['worked_intervals'][0]['start']=='2026-09-07T07:26:43'
+ assert frozen['worked_intervals'][-1]['end']=='2026-09-07T20:00:35'
  assert frozen['checkin_comparison']['state']!='Verified'
  # The resulting manual proof must pass the same native payroll check as other evidence.
  from hrms.payroll.doctype.salary_structure.salary_structure import make_salary_slip

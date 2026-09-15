@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import patch
 import frappe
 from powerpro.controllers import checkin_overtime as engine
+from powerpro.controllers import retroactive_draft_review as draft_review
 from powerpro.controllers.checkin_overtime_review import accept_result
 from powerpro.payroll_rules.overtime_manual_session import authorized_interval_scope
 
@@ -90,3 +91,44 @@ class RetroactiveIntervalReviewTest(unittest.TestCase):
         self.assertEqual(rebuilt['state'],'Verified')
         self.assertEqual(rebuilt['input_hash'],accepted['input_hash'])
         self.assertFalse(rebuilt['settlement_ready'])
+
+    def draft_preview(self,declaration):
+        self.doc.modified='2026-09-14 12:00:00'
+        self.doc.approver='reviewer@example.test'
+        with patch.object(draft_review,'_access'), \
+             patch.object(draft_review,'latest',return_value=None), \
+             patch('frappe.get_doc',return_value=self.doc), \
+             patch.object(engine,'_data',return_value=(deepcopy(self.data),frappe._dict())), \
+             patch.object(engine,'_settings',return_value=frappe._dict(enable_manual_overtime_verification=1)), \
+             patch.object(engine,'now_datetime',return_value=datetime(2026,9,14)), \
+             patch('powerpro.controllers.overtime_rest.get_election',return_value=None), \
+             patch('powerpro.controllers.checkin_overtime_review._dependencies',return_value=[]):
+            return draft_review.preview_review(self.doc.name,'Only the documented overtime hour',declaration)
+
+    def test_initial_preview_preserves_early_arrival_and_discloses_excluded_time(self):
+        preview=self.draft_preview(self.declaration)
+        self.assertTrue(preview['draft_only'])
+        self.assertEqual(preview['after']['verified_hours'],1)
+        self.assertEqual(preview['observation_window'],self.declaration['observation_window'])
+        self.assertAlmostEqual(preview['unapproved_hours'],.45,places=4)
+        self.assertEqual(preview['manual_declaration'],self.declaration)
+        self.assertEqual(preview['checkin_comparison']['source_checkins'],self.data['rows'])
+        self.assertIsNone(preview['proposed_amount'])
+        self.assertTrue(any('semanal' in warning for warning in preview['settlement_blockers']))
+        self.assertEqual(self.doc.docstatus,0)
+        self.assertIsNone(self.doc.evidence_snapshot)
+
+    def test_initial_preview_rejects_work_outside_explicit_window(self):
+        declaration=deepcopy(self.declaration)
+        declaration['intervals'][0]['start']='2026-08-14 07:00:00'
+        with patch('frappe.throw',side_effect=frappe.ValidationError):
+            with self.assertRaises(frappe.ValidationError):self.draft_preview(declaration)
+
+    def test_initial_review_token_binds_observation_window(self):
+        before=self.draft_preview(self.declaration)
+        declaration=deepcopy(self.declaration)
+        declaration['observation_window']['start']='2026-08-14 07:30:00'
+        self.data['observation_window']=declaration['observation_window']
+        after=self.draft_preview(declaration)
+        self.assertNotEqual(before['token'],after['token'])
+        self.assertEqual(before['after']['verified_hours'],after['after']['verified_hours'])

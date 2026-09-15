@@ -109,6 +109,15 @@ powerpro.checkin_overtime.review = (frm, manual = false, observationWindow = nul
     const controller = frm.doc.docstatus === 2 ? "overtime_history" :
         (frm.doc.docstatus === 0 && frm.doc.doctype === "Retroactive Overtime Adjustment" ? "retroactive_draft_review" : "checkin_overtime_review");
     const fields = [{fieldname: "reason", label: __("Motivo y referencia de la corrección"), fieldtype: "Small Text", reqd: 1}];
+    const scopedManual = manual && frm.doc.doctype === 'Retroactive Overtime Adjustment' && frm.doc.docstatus === 0;
+    if (scopedManual) fields.push(
+        {fieldname: 'authorized_interval_only', label: __('Aprobar solo el intervalo solicitado, conservando toda la jornada'), fieldtype: 'Check',
+            description: __('Incluya toda la jornada y sus prolongaciones. El tiempo fuera del intervalo solicitado se conserva como evidencia y no se paga con este ajuste.')},
+        {fieldname: 'observation_start', label: __('Inicio de la jornada completa'), fieldtype: 'Datetime',
+            depends_on: 'eval:doc.authorized_interval_only', mandatory_depends_on: 'eval:doc.authorized_interval_only', default: observationWindow?.start},
+        {fieldname: 'observation_end', label: __('Fin de la jornada completa'), fieldtype: 'Datetime',
+            depends_on: 'eval:doc.authorized_interval_only', mandatory_depends_on: 'eval:doc.authorized_interval_only', default: observationWindow?.end,
+            description: __('La ventana debe incluir el turno y el intervalo solicitado, no superar 24 horas y contener todos los intervalos trabajados. Las pausas se excluyen en la tabla.')});
     if (frm.doc.docstatus===2) fields.push(
         {fieldname:'expand_window',label:__('Ampliar ventana de observación histórica'),fieldtype:'Check'},
         {fieldname:'observation_start',label:__('Inicio de la jornada a revisar'),fieldtype:'Datetime',depends_on:'eval:doc.expand_window',default:observationWindow?.start},
@@ -125,6 +134,10 @@ powerpro.checkin_overtime.review = (frm, manual = false, observationWindow = nul
         const observation = frm.doc.docstatus===2 && values.expand_window ? JSON.stringify({start:values.observation_start,end:values.observation_end}) : undefined;
         const declaration = manual ? {full_session: Boolean(values.full_session), reference: values.reference,
             intervals: values.intervals.map(row => ({start: row.start, end: row.end}))} : undefined;
+        if (scopedManual && values.authorized_interval_only) {
+            declaration.review_scope = 'Authorized interval only';
+            declaration.observation_window = {start: values.observation_start, end: values.observation_end};
+        }
         frappe.call({method: `powerpro.controllers.${controller}.preview_review`, args: {authorization: frm.doc.name, source_type: frm.doc.doctype || "Overtime Authorization", reason: values.reason,
             manual_declaration: declaration && JSON.stringify(declaration),...(observation ? {observation_window:observation} : {})}, freeze: true}).then(({message: p}) => {
             const e = value => frappe.utils.escape_html(String(value ?? ""));
