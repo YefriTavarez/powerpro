@@ -54,7 +54,9 @@ def preview_review(authorization,reason,manual_declaration=None,source_type=RETR
         'financial_before':p['financial_before'],'proposed_amount':p['proposed_amount'],'dependencies':p['dependencies'],
         'settlement_blockers':p['after']['settlement_blockers'],'draft_only':True,
         'rules_summary':review_summary(p['after']),
-        'manual_declaration':p['after']['manual_declaration'],'checkin_comparison':p['after'].get('checkin_comparison')}
+        'manual_declaration':p['after']['manual_declaration'],'checkin_comparison':p['after'].get('checkin_comparison'),
+        'observation_window':p['after']['input'].get('observation_window'),
+        'unapproved_hours':p['after']['calculation'].get('unapproved_hours',0)}
 
 
 @frappe.whitelist(methods=['POST'])

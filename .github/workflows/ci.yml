@@ -12,6 +12,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  overtime-review-ui:
+    name: Overtime evidence review form
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/test_checkin_review_ui.cjs
+      - run: node --check powerpro/public/js/checkin_overtime.js
+
   bank-batch-isolated:
     name: Bank batch form and TXT regressions
     runs-on: ubuntu-latest

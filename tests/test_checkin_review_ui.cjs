@@ -1,9 +1,9 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 (async()=>{
- const calls=[],dialogs=[],messages=[];let requested,reloaded=false,dirty=false;
+ const calls=[],dialogs=[],messages=[];let requested,requestedFields,reloaded=false,dirty=false;
  const preview={token:'TOKEN',reason:'<img src=x onerror=alert(1)>',before:{verified_hours:2},after:{verified_hours:1},financial_before:{settlement_amount:280},proposed_amount:140,settlement_blockers:[],dependencies:[]};
  const ctx={__:x=>x,powerpro:{checkin_overtime:{}},frappe:{provide(){},utils:{escape_html:s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')},
-  prompt(fields,fn){assert(fields[0].reqd);requested=fn;},msgprint(m){messages.push(m)},call(args){calls.push(args);return Promise.resolve({message:preview})},ui:{Dialog:function(args){Object.assign(this,args);this.show=()=>{};this.hide=()=>{};dialogs.push(this);}}}};
+  prompt(fields,fn){assert(fields[0].reqd);requestedFields=fields;requested=fn;},msgprint(m){messages.push(m)},call(args){calls.push(args);return Promise.resolve({message:preview})},ui:{Dialog:function(args){Object.assign(this,args);this.show=()=>{};this.hide=()=>{};dialogs.push(this);}}}};
  vm.runInNewContext(fs.readFileSync('powerpro/public/js/checkin_overtime.js','utf8'),ctx);
  const summary={policy:{name:'<policy>',valid_from:'2026-09-01',valid_until:'2026-09-30',night_basis:'Whole nocturnal session',
   regular_percent:40,extraordinary_percent:100,night_percent:20,weekly_rest_percent:100,weekly_threshold:68,
@@ -66,5 +66,33 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  assert(dialogs.at(-1).fields[0].options.includes('Horas fuera de autorización, sin nuevo pago'));
  dialogs.at(-1).primary_action();await Promise.resolve();assert.equal(calls.at(-1).type,'POST');
  assert.deepEqual(JSON.parse(calls.at(-1).args.observation_window),preview.observation_window);
+ // Initial drafts must explicitly opt in; boundaries travel inside the token-bound declaration.
+ frm.doc.docstatus=0;preview.historical_only=false;preview.draft_only=true;
+ ctx.powerpro.checkin_overtime.review(frm,true);
+ assert(requestedFields.some(f=>f.fieldname==='authorized_interval_only'));
+ for(const key of ['observation_start','observation_end']) {
+  assert.equal(requestedFields.find(f=>f.fieldname===key).mandatory_depends_on,'eval:doc.authorized_interval_only');
+ }
+ const scoped={...declaration,review_scope:'Authorized interval only',
+  observation_window:{start:'2026-09-14 07:26:43',end:'2026-09-14 20:00:35'}};
+ preview.manual_declaration=scoped;preview.observation_window=scoped.observation_window;preview.unapproved_hours=.5644;
+ requested({reason:'Preserve all physical work',...declaration,authorized_interval_only:1,
+  observation_start:scoped.observation_window.start,observation_end:scoped.observation_window.end});await Promise.resolve();
+ assert.deepEqual(JSON.parse(calls.at(-1).args.manual_declaration),scoped);
+ assert(!('observation_window' in calls.at(-1).args));
+ assert(dialogs.at(-1).fields[0].options.includes('.5644'));
+ assert(dialogs.at(-1).fields[0].options.includes('07:26:43'));
+ dialogs.at(-1).primary_action();await Promise.resolve();
+ assert.equal(calls.at(-1).method,'powerpro.controllers.retroactive_draft_review.apply_review');
+ assert.deepEqual(JSON.parse(calls.at(-1).args.manual_declaration),scoped);
+ ctx.powerpro.checkin_overtime.review(frm,true);
+ requested({reason:'Unscoped review',...declaration,authorized_interval_only:0,
+  observation_start:scoped.observation_window.start,observation_end:scoped.observation_window.end});await Promise.resolve();
+ assert.deepEqual(JSON.parse(calls.at(-1).args.manual_declaration),declaration);
+ for(const [doctype,docstatus,manual] of [['Overtime Authorization',0,true],['Retroactive Overtime Adjustment',2,true],['Retroactive Overtime Adjustment',0,false]]) {
+  frm.doc.doctype=doctype;frm.doc.docstatus=docstatus;
+  ctx.powerpro.checkin_overtime.review(frm,manual);
+  assert(!requestedFields.some(f=>f.fieldname==='authorized_interval_only'));
+ }
  console.log('HR review UI: required reason, escaped preview, before/after amount, dirty guards and explicit token-bound POST passed.');
 })().catch(e=>{console.error(e);process.exitCode=1});
