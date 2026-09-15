@@ -24,7 +24,7 @@ app_license = "mit"
 # Fixtures
 # --------
 
-fixtures = [{"dt": "Custom Field", "filters": [["name", "in", ["Holiday-custom_is_legal_holiday"]]]}]
+fixtures = [{"dt": "Custom Field", "filters": [["name", "in", ["Holiday-custom_is_legal_holiday", "Purchase Invoice-custom_supplier_retainer_agreement", "Purchase Invoice-custom_supplier_retainer_batch", "Purchase Invoice-custom_supplier_retainer_period_start", "Purchase Invoice-custom_supplier_retainer_period_end", "Purchase Invoice-custom_supplier_retainer_claim", "Purchase Invoice-custom_supplier_retainer_tax_template"]]]}]
 
 # Includes in <head>
 # ------------------
@@ -290,7 +290,13 @@ doc_events = {
         "validate": "powerpro.controllers.timesheet.validate",
     },
     "Purchase Invoice": {
-        "validate": "powerpro.controllers.purchase_invoice.validate",
+        "before_validate": "powerpro.retainers.invoice_hooks.validate_source",
+        "on_trash": "powerpro.retainers.invoice_hooks.protect_delete",
+        "before_cancel": "powerpro.retainers.invoice_hooks.before_cancel",
+        "validate": [
+            "powerpro.controllers.purchase_invoice.validate",
+            "powerpro.retainers.invoice_hooks.validate_source",
+        ],
         "before_submit": "powerpro.controllers.purchase_invoice.before_submit",
     },
     "Asset Maintenance Log": {

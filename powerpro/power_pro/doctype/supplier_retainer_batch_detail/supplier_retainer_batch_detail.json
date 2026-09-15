@@ -1,0 +1,142 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-15 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "agreement",
+  "supplier",
+  "gross_amount",
+  "purchase_invoice",
+  "item",
+  "description",
+  "currency",
+  "period_start",
+  "period_end",
+  "expense_account",
+  "cost_center",
+  "taxes_and_charges",
+  "replacement_section",
+  "replaces_invoice"
+ ],
+ "fields": [
+  {
+   "fieldname": "agreement",
+   "fieldtype": "Link",
+   "label": "Acuerdo",
+   "options": "Supplier Retainer Agreement",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Proveedor",
+   "options": "Supplier",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "gross_amount",
+   "fieldtype": "Currency",
+   "label": "Honorario bruto",
+   "options": "currency",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "purchase_invoice",
+   "fieldtype": "Link",
+   "label": "Factura de compra",
+   "options": "Purchase Invoice",
+   "read_only": 1,
+   "no_copy": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Servicio",
+   "options": "Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Descripción del servicio",
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Moneda",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "period_start",
+   "fieldtype": "Date",
+   "label": "Desde",
+   "read_only": 1
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "label": "Hasta",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expense_account",
+   "fieldtype": "Link",
+   "label": "Cuenta de gasto",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Centro de costo",
+   "options": "Cost Center",
+   "read_only": 1
+  },
+  {
+   "fieldname": "taxes_and_charges",
+   "fieldtype": "Link",
+   "label": "Plantilla de impuestos de compras",
+   "options": "Purchase Taxes and Charges Template",
+   "read_only": 1
+  },
+  {
+   "fieldname": "replacement_section",
+   "fieldtype": "Section Break",
+   "label": "Reemplazo de factura cancelada"
+  },
+  {
+   "fieldname": "replaces_invoice",
+   "fieldtype": "Data",
+   "label": "Factura cancelada a reemplazar",
+   "no_copy": 1,
+   "description": "Copie el nombre exacto de la factura cancelada del mismo acuerdo y período. Puede abrirla desde la liquidación anterior. El servidor verifica el reemplazo; una factura en borrador o pendiente de pago no se puede reemplazar."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-15 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Power Pro",
+ "name": "Supplier Retainer Batch Detail",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1
+}

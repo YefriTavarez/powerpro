@@ -1,0 +1,81 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-15 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "agreement",
+  "agreement_identity",
+  "period_start",
+  "period_end",
+  "purchase_invoice",
+  "batch"
+ ],
+ "fields": [
+  {
+   "fieldname": "agreement",
+   "fieldtype": "Link",
+   "label": "Acuerdo",
+   "options": "Supplier Retainer Agreement",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "agreement_identity",
+   "fieldtype": "Data",
+   "label": "Identidad del acuerdo",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "period_start",
+   "fieldtype": "Date",
+   "label": "Desde",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "label": "Hasta",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "purchase_invoice",
+   "fieldtype": "Link",
+   "label": "Factura de compra",
+   "options": "Purchase Invoice",
+   "read_only": 1
+  },
+  {
+   "fieldname": "batch",
+   "fieldtype": "Link",
+   "label": "Liquidación",
+   "options": "Supplier Retainer Batch",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-15 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Power Pro",
+ "name": "Supplier Retainer Claim",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "Accounts Manager",
+   "read": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
