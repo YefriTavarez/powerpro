@@ -11,6 +11,8 @@ from frappe.model.document import Document
 from frappe.utils import getdate, now_datetime
 from frappe.utils.file_manager import save_file
 
+from powerpro.payroll_rules.bank_payment_sequence import reserve_payment_sequence
+
 from powerpro.payroll_rules.banco_popular import (
     BankFileValidationError,
     BancoPopularProfile,
@@ -24,10 +26,25 @@ from powerpro.payroll_rules.banco_popular import (
 
 class PayrollBankBatch(Document):
     def before_validate(self):
+        self._set_payment_sequence()
         if self.docstatus == 0:
             # Older metadata made this read-only table mandatory, so Desk
             # inserted a blank child before users could load Salary Slips.
             self.set("details", [row for row in self.details if not _is_empty_payment_row(row)])
+
+    def _set_payment_sequence(self):
+        previous = self.get_doc_before_save()
+        if previous and previous.payment_sequence:
+            same_date = bool(self.payment_date) and getdate(self.payment_date) == getdate(previous.payment_date)
+            if previous.docstatus != 0 and not same_date:
+                frappe.throw(_("The payment date cannot change after approval."))
+            if same_date:
+                if self.payment_sequence not in (None, "", previous.payment_sequence):
+                    frappe.throw(_("Payment Sequence is assigned automatically and cannot be edited."))
+                self.payment_sequence = previous.payment_sequence
+                return
+        if self.payment_date:
+            self.payment_sequence = reserve_payment_sequence(self.payment_date)
 
     def validate(self):
         self._validate_source_documents()

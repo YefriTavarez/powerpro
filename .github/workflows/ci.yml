@@ -37,6 +37,29 @@ jobs:
       - run: python powerpro/payroll_rules/test_banco_popular.py
       - run: node --test tests/test_payroll_bank_batch_ui.cjs
 
+  bank-sequence-concurrency:
+    name: Bank payment daily sequence
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.6
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: --health-cmd="mariadb-admin ping" --health-interval=5s --health-timeout=2s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: pip install pymysql
+      - run: python tests/test_bank_payment_sequence.py
+        env:
+          POWERPRO_SEQUENCE_TEST_ISOLATED: '1'
+          POWERPRO_SEQUENCE_TEST_HOST: 127.0.0.1
+          POWERPRO_SEQUENCE_TEST_PASSWORD: root
+
   mixed-payroll-unit:
     runs-on: ubuntu-latest
     steps:
