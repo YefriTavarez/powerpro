@@ -134,6 +134,36 @@ class TestBancoPopularPayrollFile(unittest.TestCase):
         with self.assertRaisesRegex(BankFileValidationError, "Duplicate payment references"):
             self.build([self.payment(), self.payment()])
 
+    def test_preserves_spaced_salary_slip_reference_without_changing_bank_bytes(self):
+        reference = "Sal Slip/Empleado  de Prueba/00001"
+        payment = self.payment(reference=reference)
+        self.assertEqual(MODULE.validate_payment(payment, self.profile).reference, reference)
+        self.assertEqual(self.build([payment]).content, self.build().content)
+
+    def test_internal_reference_does_not_require_bank_file_encoding(self):
+        reference = "Sal Slip/Empleado 李/00001"
+        payment = self.payment(reference=reference)
+        self.assertEqual(MODULE.validate_payment(payment, self.profile).reference, reference)
+        self.assertEqual(self.build([payment]).content, self.build().content)
+
+    def test_reference_identity_is_not_collapsed(self):
+        generated = self.build([
+            self.payment(reference="Sal Slip/Empleado Prueba/00001"),
+            self.payment(reference="Sal Slip/Empleado  Prueba/00001"),
+        ])
+        self.assertEqual(generated.payment_count, 2)
+
+    def test_rejects_duplicate_spaced_reference(self):
+        payment = self.payment(reference="Sal Slip/Empleado Prueba/00001")
+        with self.assertRaisesRegex(BankFileValidationError, "Duplicate payment references"):
+            self.build([payment, payment])
+
+    def test_rejects_empty_overlong_and_control_character_references(self):
+        for reference in ("", "   ", "x" * 141, "SLIP\n1", "SLIP\t1", "SLIP\x001"):
+            with self.subTest(reference=reference):
+                with self.assertRaisesRegex(BankFileValidationError, "Payment Reference"):
+                    self.build([self.payment(reference=reference)])
+
     def test_rejects_zero_amount(self):
         with self.assertRaisesRegex(BankFileValidationError, "greater than zero"):
             self.build([self.payment(amount="0")])
