@@ -11,5 +11,75 @@
   "in_list_view": 1,
   "depends_on": "eval:doc.weekly_off",
   "description": "Marque cuando este descanso semanal coincide con un feriado legal. Permite reconocer ambas condiciones sin duplicar la fecha del calendario."
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Invoice-custom_supplier_retainer_agreement",
+  "dt": "Purchase Invoice",
+  "fieldname": "custom_supplier_retainer_agreement",
+  "label": "Acuerdo de iguala",
+  "fieldtype": "Data",
+  "insert_after": "amended_from",
+  "read_only": 1,
+  "no_copy": 1,
+  "description": "Referencia histórica del acuerdo. Abra el acuerdo desde el botón de la factura."
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Invoice-custom_supplier_retainer_batch",
+  "dt": "Purchase Invoice",
+  "fieldname": "custom_supplier_retainer_batch",
+  "label": "Liquidación de igualas",
+  "fieldtype": "Link",
+  "insert_after": "custom_supplier_retainer_agreement",
+  "read_only": 1,
+  "no_copy": 1,
+  "options": "Supplier Retainer Batch"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Invoice-custom_supplier_retainer_period_start",
+  "dt": "Purchase Invoice",
+  "fieldname": "custom_supplier_retainer_period_start",
+  "label": "Inicio del período de iguala",
+  "fieldtype": "Date",
+  "insert_after": "custom_supplier_retainer_batch",
+  "read_only": 1,
+  "no_copy": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Invoice-custom_supplier_retainer_period_end",
+  "dt": "Purchase Invoice",
+  "fieldname": "custom_supplier_retainer_period_end",
+  "label": "Fin del período de iguala",
+  "fieldtype": "Date",
+  "insert_after": "custom_supplier_retainer_period_start",
+  "read_only": 1,
+  "no_copy": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Invoice-custom_supplier_retainer_claim",
+  "dt": "Purchase Invoice",
+  "fieldname": "custom_supplier_retainer_claim",
+  "label": "Control del período de iguala",
+  "fieldtype": "Data",
+  "insert_after": "custom_supplier_retainer_period_end",
+  "read_only": 1,
+  "no_copy": 1,
+  "hidden": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Invoice-custom_supplier_retainer_tax_template",
+  "dt": "Purchase Invoice",
+  "fieldname": "custom_supplier_retainer_tax_template",
+  "label": "Plantilla original de la iguala",
+  "fieldtype": "Link",
+  "insert_after": "custom_supplier_retainer_claim",
+  "read_only": 1,
+  "no_copy": 1,
+  "options": "Purchase Taxes and Charges Template"
  }
 ]

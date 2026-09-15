@@ -9,6 +9,7 @@
   "column_break_gfqx",
   "fiscal_settings_section",
   "disable_ncf_generation",
+  "enforce_retainer_tax_template",
   "section_break_vxnb",
   "product_uom",
   "column_break_lduc",
@@ -180,7 +181,7 @@
   {
    "fieldname": "html_haqn",
    "fieldtype": "HTML",
-   "options": "<p>Especifique cuales son los colores que deben ser usados para representar la Cuatricom\u00eda</p>"
+   "options": "<p>Especifique cuales son los colores que deben ser usados para representar la Cuatricomía</p>"
   },
   {
    "fieldname": "item_name_template_for_raw_material",
@@ -214,6 +215,13 @@
    "fieldname": "disable_ncf_generation",
    "fieldtype": "Check",
    "label": "Disable NCF Generation"
+  },
+  {
+   "fieldname": "enforce_retainer_tax_template",
+   "fieldtype": "Check",
+   "label": "Exigir plantilla de impuestos en facturas de igualas",
+   "default": "0",
+   "description": "Al activar, las facturas de igualas deben conservar la plantilla seleccionada cuando fueron generadas. Desactivado, Finanzas puede cambiarla en el borrador. No modifica tasas ni facturas existentes."
   }
  ],
  "grid_page_length": 50,

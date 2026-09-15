@@ -1,3 +1,13 @@
+frappe.ui.form.on("Purchase Invoice", {
+	refresh(frm) {
+		if (frm.doc.custom_supplier_retainer_agreement) {
+			frm.add_custom_button(__("Acuerdo de iguala"), () => {
+				frappe.set_route("Form", "Supplier Retainer Agreement", frm.doc.custom_supplier_retainer_agreement);
+			}, __("Ir a"));
+		}
+	}
+});
+
 {
 	function _prompt_company(frm) {
 		const { doc } = frm;

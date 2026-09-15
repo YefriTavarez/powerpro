@@ -12,6 +12,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  supplier-retainers:
+    name: Supplier retainer workflow
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m unittest discover -s tests -p 'test_supplier_retainer_periods.py'
+      - run: python -m unittest discover -s tests -p 'test_supplier_retainer_invoice_hooks.py'
+      - run: node --test tests/test_supplier_retainers_ui.cjs
+
   overtime-review-ui:
     name: Overtime evidence review form
     runs-on: ubuntu-latest

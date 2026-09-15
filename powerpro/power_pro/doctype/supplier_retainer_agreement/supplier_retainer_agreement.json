@@ -1,0 +1,239 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-15 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "agreement_section",
+  "title",
+  "supplier",
+  "company",
+  "agreement_column",
+  "currency",
+  "gross_amount",
+  "frequency",
+  "validity_section",
+  "start_date",
+  "validity_column",
+  "end_date",
+  "purchase_section",
+  "item",
+  "description",
+  "purchase_column",
+  "expense_account",
+  "cost_center",
+  "tax_section",
+  "taxes_and_charges",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "agreement_section",
+   "fieldtype": "Section Break",
+   "label": "Acuerdo de iguala"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Nombre del acuerdo",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Proveedor",
+   "options": "Supplier",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Empresa",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "agreement_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Moneda",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "gross_amount",
+   "fieldtype": "Currency",
+   "label": "Honorario bruto por período",
+   "options": "currency",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Importe antes de impuestos y retenciones. Se factura el período completo, sin prorrateo automático."
+  },
+  {
+   "fieldname": "frequency",
+   "fieldtype": "Select",
+   "label": "Periodicidad",
+   "options": "Monthly\nBimonthly",
+   "default": "Monthly",
+   "reqd": 1,
+   "in_standard_filter": 1,
+   "description": "Monthly: mensual. Bimonthly: quincenal, del 1 al 15 y del 16 al último día del mes."
+  },
+  {
+   "fieldname": "validity_section",
+   "fieldtype": "Section Break",
+   "label": "Vigencia"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Vigente desde",
+   "reqd": 1
+  },
+  {
+   "fieldname": "validity_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "Vigente hasta",
+   "description": "Deje vacío si el acuerdo no tiene fecha de terminación."
+  },
+  {
+   "fieldname": "purchase_section",
+   "fieldtype": "Section Break",
+   "label": "Servicio y contabilidad"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Servicio",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Descripción del servicio"
+  },
+  {
+   "fieldname": "purchase_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "expense_account",
+   "fieldtype": "Link",
+   "label": "Cuenta de gasto",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Centro de costo",
+   "options": "Cost Center",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tax_section",
+   "fieldtype": "Section Break",
+   "label": "Impuestos y retenciones"
+  },
+  {
+   "fieldname": "taxes_and_charges",
+   "fieldtype": "Link",
+   "label": "Plantilla de impuestos de compras",
+   "options": "Purchase Taxes and Charges Template",
+   "reqd": 1,
+   "allow_on_submit": 1,
+   "permlevel": 1,
+   "description": "Un responsable de Contabilidad puede cambiar esta selección después de validar el acuerdo. Se aplica a nuevas facturas; las ya creadas conservan su desglose."
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Modificado desde",
+   "options": "Supplier Retainer Agreement",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-15 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Power Pro",
+ "name": "Supplier Retainer Agreement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
+   "print": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
+   "print": 1,
+   "export": 1
+  },
+  {
+   "role": "Accounts User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "print": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "permlevel": 1,
+   "read": 1,
+   "write": 1
+  },
+  {
+   "role": "System Manager",
+   "permlevel": 1,
+   "read": 1,
+   "write": 1
+  },
+  {
+   "role": "Accounts User",
+   "permlevel": 1,
+   "read": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "is_submittable": 1,
+ "autoname": "IGUALA-.YYYY.-.#####",
+ "naming_rule": "Expression",
+ "title_field": "title",
+ "search_fields": "title,supplier,company",
+ "track_changes": 1
+}

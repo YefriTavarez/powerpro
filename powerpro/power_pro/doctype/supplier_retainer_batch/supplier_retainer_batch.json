@@ -1,0 +1,192 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-15 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "selection_section",
+  "company",
+  "currency",
+  "supplier",
+  "selection_column",
+  "frequency",
+  "period_date",
+  "posting_date",
+  "period_section",
+  "period_start",
+  "period_column",
+  "period_end",
+  "details_section",
+  "details",
+  "total_section",
+  "total_amount",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "selection_section",
+   "fieldtype": "Section Break",
+   "label": "Selección de acuerdos"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Empresa",
+   "options": "Company",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Moneda",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Filtrar por proveedor",
+   "options": "Supplier",
+   "description": "Opcional. Deje vacío para cargar todos los proveedores que cumplan los filtros."
+  },
+  {
+   "fieldname": "selection_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "frequency",
+   "fieldtype": "Select",
+   "label": "Periodicidad",
+   "options": "Monthly\nBimonthly",
+   "default": "Monthly",
+   "reqd": 1,
+   "description": "Monthly: mensual. Bimonthly: quincenal, del 1 al 15 y del 16 al último día del mes."
+  },
+  {
+   "fieldname": "period_date",
+   "fieldtype": "Date",
+   "label": "Fecha dentro del período",
+   "reqd": 1,
+   "default": "Today",
+   "in_list_view": 1,
+   "description": "Seleccione cualquier fecha del mes o quincena a liquidar. El sistema determina los límites del período."
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Fecha de contabilización",
+   "reqd": 1,
+   "default": "Today",
+   "description": "Fecha que tendrán las facturas de compra; puede ser distinta del período del servicio."
+  },
+  {
+   "fieldname": "period_section",
+   "fieldtype": "Section Break",
+   "label": "Período de la liquidación"
+  },
+  {
+   "fieldname": "period_start",
+   "fieldtype": "Date",
+   "label": "Desde",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "period_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "label": "Hasta",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "details_section",
+   "fieldtype": "Section Break",
+   "label": "Acuerdos seleccionados"
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Table",
+   "label": "Acuerdos",
+   "options": "Supplier Retainer Batch Detail",
+   "description": "Use Acciones > Cargar acuerdos. Quite las filas que no desea procesar. Al validar se genera una factura de compra en borrador por acuerdo y período."
+  },
+  {
+   "fieldname": "total_section",
+   "fieldtype": "Section Break",
+   "label": "Total"
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total bruto",
+   "options": "currency",
+   "read_only": 1,
+   "no_copy": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Modificado desde",
+   "options": "Supplier Retainer Batch",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-15 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Power Pro",
+ "name": "Supplier Retainer Batch",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
+   "print": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
+   "print": 1,
+   "export": 1
+  },
+  {
+   "role": "Accounts User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "print": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "is_submittable": 1,
+ "autoname": "LIQ-IGUALA-.YYYY.-.#####",
+ "naming_rule": "Expression",
+ "track_changes": 1
+}
