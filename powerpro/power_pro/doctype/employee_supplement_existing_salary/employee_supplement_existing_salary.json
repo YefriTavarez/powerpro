@@ -1,0 +1,43 @@
+{
+ "doctype": "DocType",
+ "name": "Employee Supplement Existing Salary",
+ "module": "Power Pro",
+ "engine": "InnoDB",
+ "field_order": [
+  "additional_salary",
+  "treatment",
+  "source_field"
+ ],
+ "fields": [
+  {
+   "fieldname": "additional_salary",
+   "fieldtype": "Link",
+   "label": "Additional Salary existente",
+   "options": "Additional Salary",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "treatment",
+   "fieldtype": "Select",
+   "label": "Tratamiento",
+   "options": "\nCoverage\nIndependent",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "source_field",
+   "fieldtype": "Select",
+   "label": "Complemento que cubre",
+   "options": "\nincentivo_especial\nasignacion_transporte\nasignacion_combustible\nasignacion_mantenimiento_vehiculo",
+   "in_list_view": 1,
+   "depends_on": "eval:doc.treatment == \"Coverage\"",
+   "mandatory_depends_on": "eval:doc.treatment == \"Coverage\""
+  }
+ ],
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "istable": 1,
+ "editable_grid": 1
+}

@@ -39,3 +39,4 @@ powerpro.patches.v1.setup_overtime_authorization
 powerpro.patches.v1.setup_banco_popular_payroll
 powerpro.patches.v1.setup_overtime_settlement
 powerpro.patches.v1.setup_employer_contribution_exclusions
+powerpro.patches.v1.setup_employee_supplements
