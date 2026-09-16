@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  const calls=[],dialogs=[],messages=[];let requested,requestedFields,reloaded=false,dirty=false;
  const preview={token:'TOKEN',reason:'<img src=x onerror=alert(1)>',before:{verified_hours:2},after:{verified_hours:1},financial_before:{settlement_amount:280},proposed_amount:140,settlement_blockers:[],dependencies:[]};
  const ctx={__:x=>x,powerpro:{checkin_overtime:{}},frappe:{provide(){},utils:{escape_html:s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')},
-  prompt(fields,fn){assert(fields[0].reqd);requestedFields=fields;requested=fn;},msgprint(m){messages.push(m)},call(args){calls.push(args);return Promise.resolve({message:preview})},ui:{Dialog:function(args){Object.assign(this,args);this.show=()=>{};this.hide=()=>{};dialogs.push(this);}}}};
+  prompt(){throw new Error('Review forms must not use auto-closing frappe.prompt');},msgprint(m){messages.push(m)},call(args){calls.push(args);return Promise.resolve({message:preview})},ui:{Dialog:function(args){Object.assign(this,args);this.show=()=>{};this.hide=()=>{};this.get_primary_btn=()=>({prop(){}});if(args.fields[0].fieldname==='reason'){requestedFields=args.fields;requested=args.primary_action;}else dialogs.push(this);}}}};
  vm.runInNewContext(fs.readFileSync('powerpro/public/js/checkin_overtime.js','utf8'),ctx);
  const summary={policy:{name:'<policy>',valid_from:'2026-09-01',valid_until:'2026-09-30',night_basis:'Whole nocturnal session',
   regular_percent:40,extraordinary_percent:100,night_percent:20,weekly_rest_percent:100,weekly_threshold:68,
@@ -32,33 +32,33 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  preview.rules_summary=summary;
  const frm={doc:{name:'AUTH'},is_dirty:()=>dirty,reload_doc(){reloaded=true;}};
  dirty=true;ctx.powerpro.checkin_overtime.review(frm);assert.equal(requested,undefined);
- dirty=false;ctx.powerpro.checkin_overtime.review(frm);requested({reason:'reason'});await Promise.resolve();
+ dirty=false;ctx.powerpro.checkin_overtime.review(frm);await requested({reason:'reason'});await Promise.resolve();
  assert.equal(calls[0].method,'powerpro.controllers.checkin_overtime_review.preview_review');
  assert(dialogs[0].fields[0].options.includes('&lt;img'));assert(!dialogs[0].fields[0].options.includes('<img'));
  assert(dialogs[0].fields[0].options.includes('140'));
  assert(dialogs[0].fields[0].options.includes('Reglas utilizadas en esta evaluación'));
- dirty=true;dialogs[0].primary_action();assert.equal(calls.length,1);
- dirty=false;dialogs[0].primary_action();await Promise.resolve();
+ dirty=true;await dialogs[0].primary_action();assert.equal(calls.length,1);
+ dirty=false;await dialogs[0].primary_action();await Promise.resolve();
  assert.equal(calls[1].type,'POST');assert.equal(calls[1].args.token,'TOKEN');assert.equal(calls[1].args.authorization,'AUTH');assert(reloaded);
  const declaration={full_session:true,reference:'<document>',intervals:[{start:'2026-09-14 08:00:00',end:'2026-09-14 20:00:00'}]};
  preview.manual_declaration=declaration;preview.checkin_comparison={source_checkins:[{name:'CHK',time:'2026-09-14 08:00:00',log_type:'IN'}]};
- ctx.powerpro.checkin_overtime.review(frm,true);requested({reason:'HR statement',...declaration});await Promise.resolve();
+ ctx.powerpro.checkin_overtime.review(frm,true);await requested({reason:'HR statement',...declaration});await Promise.resolve();
  assert.equal(JSON.parse(calls[2].args.manual_declaration).full_session,true);
  assert(dialogs[1].fields[0].options.includes('&lt;document&gt;'));assert(dialogs[1].fields[0].options.includes('CHK'));
- dialogs[1].primary_action();await Promise.resolve();assert.deepEqual(JSON.parse(calls[3].args.manual_declaration),declaration);
+ await dialogs[1].primary_action();await Promise.resolve();assert.deepEqual(JSON.parse(calls[3].args.manual_declaration),declaration);
  frm.doc.doctype='Retroactive Overtime Adjustment';frm.doc.name='AJUSTE';
- ctx.powerpro.checkin_overtime.review(frm);requested({reason:'Retroactive correction'});await Promise.resolve();
+ ctx.powerpro.checkin_overtime.review(frm);await requested({reason:'Retroactive correction'});await Promise.resolve();
  assert.equal(calls[4].args.source_type,'Retroactive Overtime Adjustment');
- dialogs[2].primary_action();await Promise.resolve();assert.equal(calls[5].args.source_type,'Retroactive Overtime Adjustment');assert.equal(calls[5].args.authorization,'AJUSTE');
+ await dialogs[2].primary_action();await Promise.resolve();assert.equal(calls[5].args.source_type,'Retroactive Overtime Adjustment');assert.equal(calls[5].args.authorization,'AJUSTE');
  frm.doc.docstatus=2;preview.historical_only=true;preview.worked_hours_before=11;preview.worked_hours_after=10;
- ctx.powerpro.checkin_overtime.review(frm);requested({reason:'Historical physical correction'});await Promise.resolve();
+ ctx.powerpro.checkin_overtime.review(frm);await requested({reason:'Historical physical correction'});await Promise.resolve();
  assert.equal(calls[6].method,'powerpro.controllers.overtime_history.preview_review');assert(dialogs[3].fields[0].options.includes('Sin cambios'));
- dialogs[3].primary_action();await Promise.resolve();assert.equal(calls[7].method,'powerpro.controllers.overtime_history.apply_review');
+ await dialogs[3].primary_action();await Promise.resolve();assert.equal(calls[7].method,'powerpro.controllers.overtime_history.apply_review');
  frm.doc.docstatus=0;preview.historical_only=false;preview.draft_only=true;
- ctx.powerpro.checkin_overtime.review(frm,true);requested({reason:'Initial declaration',...declaration});await Promise.resolve();
+ ctx.powerpro.checkin_overtime.review(frm,true);await requested({reason:'Initial declaration',...declaration});await Promise.resolve();
  assert.equal(calls[8].method,'powerpro.controllers.retroactive_draft_review.preview_review');
  assert(dialogs[4].fields[0].options.includes('El ajuste sigue en borrador'));
- dialogs[4].primary_action();await Promise.resolve();assert.equal(calls[9].method,'powerpro.controllers.retroactive_draft_review.apply_review');
+ await dialogs[4].primary_action();await Promise.resolve();assert.equal(calls[9].method,'powerpro.controllers.retroactive_draft_review.apply_review');
  frm.doc.docstatus=2;
  const historicalButtons=[];frm.add_custom_button=(label,fn)=>historicalButtons.push({label,fn});
  preview.applicable=true;preview.can_review=true;preview.manual_review_allowed=true;
@@ -67,11 +67,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  preview.observation_window={start:'2026-09-06T08:00:00',end:'2026-09-07T02:00:00'};preview.unapproved_hours=3;preview.historical_only=true;
  ctx.powerpro.checkin_overtime.review(frm,false,preview.observation_window);
  const before=calls.length;
- dirty=true;requested({reason:'Expanded review',expand_window:1,observation_start:preview.observation_window.start,observation_end:preview.observation_window.end});assert.equal(calls.length,before);
- dirty=false;requested({reason:'Expanded review',expand_window:1,observation_start:preview.observation_window.start,observation_end:preview.observation_window.end});await Promise.resolve();
+ dirty=true;await requested({reason:'Expanded review',expand_window:1,observation_start:preview.observation_window.start,observation_end:preview.observation_window.end});assert.equal(calls.length,before);
+ dirty=false;await requested({reason:'Expanded review',expand_window:1,observation_start:preview.observation_window.start,observation_end:preview.observation_window.end});await Promise.resolve();
  assert.deepEqual(JSON.parse(calls.at(-1).args.observation_window),preview.observation_window);
  assert(dialogs.at(-1).fields[0].options.includes('Horas fuera de autorización, sin nuevo pago'));
- dialogs.at(-1).primary_action();await Promise.resolve();assert.equal(calls.at(-1).type,'POST');
+ await dialogs.at(-1).primary_action();await Promise.resolve();assert.equal(calls.at(-1).type,'POST');
  assert.deepEqual(JSON.parse(calls.at(-1).args.observation_window),preview.observation_window);
  // Initial drafts must explicitly opt in; boundaries travel inside the token-bound declaration.
  frm.doc.docstatus=0;preview.historical_only=false;preview.draft_only=true;
@@ -83,17 +83,17 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  const scoped={...declaration,review_scope:'Authorized interval only',
   observation_window:{start:'2026-09-14 07:26:43',end:'2026-09-14 20:00:35'}};
  preview.manual_declaration=scoped;preview.observation_window=scoped.observation_window;preview.unapproved_hours=.5644;
- requested({reason:'Preserve all physical work',...declaration,authorized_interval_only:1,
+ await requested({reason:'Preserve all physical work',...declaration,authorized_interval_only:1,
   observation_start:scoped.observation_window.start,observation_end:scoped.observation_window.end});await Promise.resolve();
  assert.deepEqual(JSON.parse(calls.at(-1).args.manual_declaration),scoped);
  assert(!('observation_window' in calls.at(-1).args));
  assert(dialogs.at(-1).fields[0].options.includes('.5644'));
  assert(dialogs.at(-1).fields[0].options.includes('07:26:43'));
- dialogs.at(-1).primary_action();await Promise.resolve();
+ await dialogs.at(-1).primary_action();await Promise.resolve();
  assert.equal(calls.at(-1).method,'powerpro.controllers.retroactive_draft_review.apply_review');
  assert.deepEqual(JSON.parse(calls.at(-1).args.manual_declaration),scoped);
  ctx.powerpro.checkin_overtime.review(frm,true);
- requested({reason:'Unscoped review',...declaration,authorized_interval_only:0,
+ await requested({reason:'Unscoped review',...declaration,authorized_interval_only:0,
   observation_start:scoped.observation_window.start,observation_end:scoped.observation_window.end});await Promise.resolve();
  assert.deepEqual(JSON.parse(calls.at(-1).args.manual_declaration),declaration);
  for(const [doctype,docstatus,manual] of [['Overtime Authorization',0,true],['Retroactive Overtime Adjustment',2,true],['Retroactive Overtime Adjustment',0,false]]) {
