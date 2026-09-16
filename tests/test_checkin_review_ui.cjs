@@ -15,6 +15,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  assert(detail.includes('3.0000'));assert(detail.includes('4.0000'));assert(detail.includes('2.0000'));
  assert(detail.includes('Un solo recargo (el mayor)'));assert(detail.includes('pago del feriado junto'));
  assert(!detail.includes('<policy>'));assert(detail.includes('&lt;policy&gt;'));assert(!detail.includes('<button'));
+ summary.policy.policy_versions=[{name:'<first>',valid_from:'2026-08-14',valid_until:'2026-08-16'},
+  {name:'SECOND',valid_from:'2026-08-17',valid_until:'2026-08-20'}];
+ detail=ctx.powerpro.checkin_overtime.render_rules_summary(summary);
+ assert(detail.includes('Versiones consecutivas con reglas iguales'));
+ assert(detail.includes('&lt;first&gt;'));assert(!detail.includes('<first>'));
+ assert(detail.includes('SECOND'));assert(detail.includes('2026-08-16'));assert(detail.includes('2026-08-17'));
+ delete summary.policy.policy_versions;
  summary.policy.night_basis='Clock overlap';summary.weekly_evidence_complete=false;summary.policy.weekly_rest_cash=0;
  detail=ctx.powerpro.checkin_overtime.render_rules_summary(summary);
  assert(detail.includes('Solo el tiempo trabajado entre 21:00 y 07:00'));assert(detail.includes('Pendiente'));

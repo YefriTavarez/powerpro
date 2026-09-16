@@ -88,8 +88,9 @@ try:
     settings=frappe.get_single('DGII Payroll Settings');settings.overtime_policy_from='2036-01-01';settings.overtime_policy_until='2036-12-31'
     settings.save();settings.reload();fourth=settings.overtime_policy_version
     assert fourth!=third and not frappe.db.get_value('Overtime Pay Policy',fourth,'supersedes')
-    fail(lambda:get_effective_policy(frappe._dict(company=company,
-        authorization_start='2035-12-31 22:00',authorization_end='2036-01-01 02:00')))
+    combined=get_effective_policy(frappe._dict(company=company,
+        authorization_start='2035-12-31 22:00',authorization_end='2036-01-01 02:00'))
+    assert [p['name'] for p in combined['policy_versions']]==[third,fourth]
     assert get_effective_policy(frappe._dict(company='not-this-company',authorization_start=window.authorization_start,
         authorization_end=window.authorization_end)) is None
     # Turning publication off is not an implicit cancellation or payroll action.

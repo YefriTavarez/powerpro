@@ -4,8 +4,9 @@ import frappe
 from frappe import _
 from frappe.utils import get_datetime,getdate
 from powerpro.controllers.overtime import _reconciliation_rows
-from powerpro.payroll_rules.overtime_pay_policy import FIELDS,VERSION,validate_policy
-from powerpro.payroll_rules.overtime_combined_day import FIELD, REVIEW, REST_FIELD
+from powerpro.payroll_rules.overtime_pay_policy import FIELDS
+from powerpro.payroll_rules.overtime_combined_day import FIELD, REST_FIELD
+from powerpro.payroll_rules.overtime_policy_coverage import compose_coverage, policy_names
 
 
 def policy_rows(company, start, last, *, for_update=False):
@@ -33,24 +34,21 @@ def _saved_policy(doc, *, for_update=False):
     inputs=saved.get('input') or {}
     policy=inputs.get('pay_policy') or inputs.get('policy') or {}
     if not saved.get('input_hash') or not policy.get('name'):return None
+    names=policy_names(policy)
+    if not names or len(names)>1000 or len(names)!=len(set(names)) or names[0]!=policy['name']:
+        frappe.throw(_('La cadena de reglas guardada no es válida. Revise la conciliación.'))
     rows=_reconciliation_rows('Overtime Pay Policy',for_update=for_update,
-        filters={'name':policy['name'],'docstatus':1},fields=list(FIELDS)+[FIELD,REST_FIELD],limit=1)
-    if not rows:frappe.throw(_('La versión de reglas de esta conciliación ya no está aprobada.'))
-    return rows[0]
+        filters={'name':['in',names],'docstatus':1},fields=list(FIELDS)+[FIELD,REST_FIELD],limit=len(names))
+    if {r.name for r in rows}!=set(names):
+        frappe.throw(_('La versión de reglas de esta conciliación ya no está aprobada.'))
+    return rows
 
 
 def get_effective_policy(doc,*,for_update=False):
     start=getdate(doc.authorization_start)
     last=(get_datetime(doc.authorization_end)-timedelta(microseconds=1)).date()
     saved=_saved_policy(doc,for_update=for_update)
-    rows=[saved] if saved else active_revisions(policy_rows(doc.company,start,last,for_update=for_update))
+    rows=saved if saved else active_revisions(policy_rows(doc.company,start,last,for_update=for_update))
     if not rows:return None
-    if len(rows)!=1 or rows[0].company!=doc.company or getdate(rows[0].valid_from)>start or getdate(rows[0].valid_until)<last:
-        frappe.throw(_('La ventana debe estar cubierta por una sola política aprobada. Revise vigencias o divida la autorización.'))
-    policy={k:rows[0].get(k) for k in FIELDS}
-    # Do not change hashes of pre-feature policies that retain manual review.
-    if rows[0].get(FIELD) and rows[0][FIELD]!=REVIEW:policy[FIELD]=rows[0][FIELD]
-    if rows[0].get(REST_FIELD):policy[REST_FIELD]=int(rows[0][REST_FIELD])
-    validate_policy(policy)
-    policy['calculator_version']=VERSION
-    return policy
+    try:return compose_coverage(rows,doc.company,start,last)
+    except ValueError as exc:frappe.throw(_(str(exc)))
