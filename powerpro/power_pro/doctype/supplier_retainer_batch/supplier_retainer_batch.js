@@ -51,7 +51,7 @@ frappe.ui.form.on("Supplier Retainer Batch", {
                 }
             }, __("Acciones"));
         } else if (frm.doc.docstatus === 1) {
-            frm.set_intro(__("Abra las facturas desde la tabla para revisar sus impuestos y completar el flujo habitual de compras."), "green");
+            frm.set_intro(__("Abra las facturas desde la tabla para revisarlas. Al cancelar esta liquidación se eliminan sus borradores sin procesamiento fiscal y se conserva el historial. Las facturas sometidas requieren cancelación individual."), "green");
         }
     },
 

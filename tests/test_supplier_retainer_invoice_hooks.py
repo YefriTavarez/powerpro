@@ -1,5 +1,6 @@
 """Invoice provenance and optional template guard contracts without Frappe."""
 from datetime import date
+from html import escape
 import importlib.util
 from pathlib import Path
 import sys
@@ -21,9 +22,14 @@ frappe.db = SimpleNamespace(get_single_value=lambda *args: 0, get_value=lambda *
 utils = ModuleType('frappe.utils')
 utils.cint = lambda value: int(value or 0)
 utils.getdate = lambda value: value if isinstance(value, date) else date.fromisoformat(value)
+utils.escape_html = escape
+cancellation_spec = importlib.util.spec_from_file_location(
+    'powerpro.retainers.cancellation', ROOT / 'powerpro/retainers/cancellation.py')
+cancellation = importlib.util.module_from_spec(cancellation_spec)
 spec = importlib.util.spec_from_file_location('retainer_invoice_hooks', ROOT / 'powerpro/retainers/invoice_hooks.py')
 hooks = importlib.util.module_from_spec(spec)
 with patch.dict(sys.modules, {'frappe': frappe, 'frappe.utils': utils}):
+    cancellation_spec.loader.exec_module(cancellation)
     spec.loader.exec_module(hooks)
 
 
@@ -44,6 +50,11 @@ class Doc(dict):
 
 
 class RetainerInvoiceHookTest(unittest.TestCase):
+    def setUp(self):
+        modules = patch.dict(sys.modules, {'powerpro.retainers.cancellation': cancellation})
+        modules.start()
+        self.addCleanup(modules.stop)
+
     def linked(self, **changes):
         values = dict(custom_supplier_retainer_claim='claim', custom_supplier_retainer_agreement='agreement',
             custom_supplier_retainer_batch='batch', custom_supplier_retainer_period_start='2026-09-01',
@@ -120,6 +131,46 @@ class RetainerInvoiceHookTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             hooks.protect_delete(Doc(self.linked()))
         hooks.protect_delete(Doc())
+
+    def test_matching_server_context_allows_only_unissued_draft_deletion(self):
+        doc = Doc(self.linked(name='invoice', docstatus=0, ncf_status='Never Sent'))
+        with cancellation.discarding_draft('batch', 'invoice'):
+            hooks.protect_delete(doc)
+        with self.assertRaises(ValueError):
+            hooks.protect_delete(doc)
+
+    def test_draft_deletion_context_must_match_invoice_and_batch(self):
+        doc = Doc(self.linked(name='invoice', docstatus=0))
+        doc.flags = SimpleNamespace(retainer_service=True, discarding_draft=True)
+        for batch, invoice in (('other-batch', 'invoice'), ('batch', 'other-invoice')):
+            with self.subTest(batch=batch, invoice=invoice):
+                with cancellation.discarding_draft(batch, invoice):
+                    with self.assertRaises(ValueError):
+                        hooks.protect_delete(doc)
+        with self.assertRaises(ValueError):
+            hooks.protect_delete(doc)
+
+    def test_submitted_and_fiscal_invoices_rejected_even_with_matching_context(self):
+        variants = (
+            {'docstatus': 1}, {'docstatus': 2},
+            {'ncf': 'E410000000001'}, {'encf_status': 'Accepted'},
+            {'ncf_status': 'Send Failed (Unconfirmed)'},
+            {'ncf_status': 'Pending DGII Response'}, {'ncf_status': 'Rejected'},
+            {'ncf_status': 'Rejected (NCF Consumed)'},
+            {'ncf_status': 'Legally Accepted'}, {'ncf_status': 'Accepted with Warnings'},
+        )
+        for values in variants:
+            doc = Doc(self.linked(**dict({'name': 'invoice', 'docstatus': 0}, **values)))
+            with self.subTest(values=values), cancellation.discarding_draft('batch', 'invoice'):
+                with self.assertRaises(ValueError):
+                    hooks.protect_delete(doc)
+
+    def test_discard_context_resets_after_exception(self):
+        with self.assertRaises(RuntimeError):
+            with cancellation.discarding_draft('batch', 'invoice'):
+                raise RuntimeError('deletion failed')
+        with self.assertRaises(ValueError):
+            hooks.protect_delete(Doc(self.linked(name='invoice', docstatus=0)))
 
 
 if __name__ == '__main__':

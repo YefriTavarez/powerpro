@@ -53,7 +53,7 @@ La identidad de la facturación es **acuerdo y período**, no únicamente provee
 
 Los períodos tienen límites canónicos: escoger otra fecha del mismo mes o quincena no crea un período nuevo. Un registro interno, Supplier Retainer Claim, reserva el acuerdo y período durante la misma transacción de generación y permite controlar intentos simultáneos.
 
-Una factura en borrador, validada o pendiente de pago ocupa su período. Repetir la generación no debe producir una segunda factura. La identidad del acuerdo se conserva al modificarlo mediante el proceso de enmienda para evitar que una nueva versión vuelva a facturar un período ya utilizado.
+Una factura en borrador, validada o pendiente de pago ocupa su período. Al cancelar una liquidación, sus borradores sin procesamiento fiscal ni adjuntos se descartan y sus reservas se liberan para volver a generar ese período. La liquidación conserva un comentario de auditoría y Frappe conserva las instantáneas en Deleted Document; no se reutilizan sus números de factura. Repetir la generación no debe producir una segunda factura. La identidad del acuerdo se conserva al modificarlo mediante el proceso de enmienda para evitar que una nueva versión vuelva a facturar un período ya utilizado.
 
 Para reemplazar una factura cancelada, se copia su nombre exacto en **Factura cancelada a reemplazar** en la fila. Puede abrirse desde la liquidación anterior. El servidor comprueba que corresponde al mismo acuerdo y período. La referencia anterior y el historial se conservan. El reemplazo no se habilita por una factura impagada o en borrador.
 
@@ -62,7 +62,7 @@ Para reemplazar una factura cancelada, se copia su nombre exacto en **Factura ca
 - Accounts User: consultar y preparar borradores, incluida la plantilla inicial del acuerdo.
 - Accounts Manager y System Manager: validar y cancelar, y cambiar la plantilla de un acuerdo validado.
 - Supplier Retainer Claim: registro interno, sin creación, edición ni eliminación manual por esos roles.
-- Las liquidaciones que generaron facturas se conservan. La cancelación exige resolver primero las facturas vinculadas según las reglas del controlador.
+- Las liquidaciones que generaron facturas se conservan. La cancelación descarta los borradores elegibles en una sola transacción y exige permiso de eliminar Purchase Invoice. Si existe alguna factura sometida, con NCF/procesamiento fiscal o con adjuntos, no se elimina ningún borrador. Las facturas ya canceladas se conservan. Las liquidaciones canceladas no se eliminan, aunque posteriormente se regenere su período.
 
 Los permisos del formulario complementan los controles del servidor; ocultar un botón no basta para proteger la operación.
 

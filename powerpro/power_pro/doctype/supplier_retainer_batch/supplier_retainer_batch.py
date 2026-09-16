@@ -49,11 +49,10 @@ class SupplierRetainerBatch(Document):
         frappe.throw(_("Submitted retainer batches cannot be edited."))
 
     def before_cancel(self):
-        for row in self.details:
-            if row.purchase_invoice and frappe.db.get_value("Purchase Invoice", row.purchase_invoice, "docstatus") != 2:
-                frappe.throw(_("Cancel purchase invoice {0} before cancelling this batch.").format(row.purchase_invoice))
+        from powerpro.retainers.cancellation import discard_batch_drafts
+        discard_batch_drafts(self)
         self.ignore_linked_doctypes = ("Supplier Retainer Claim", "Purchase Invoice")
 
     def on_trash(self):
-        if any(row.purchase_invoice for row in self.details) or frappe.db.exists("Supplier Retainer Claim", {"batch": self.name}):
+        if self.docstatus != 0 or any(row.purchase_invoice for row in self.details) or frappe.db.exists("Supplier Retainer Claim", {"batch": self.name}):
             frappe.throw(_("A batch with generated invoices cannot be deleted."))

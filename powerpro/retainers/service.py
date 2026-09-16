@@ -146,6 +146,16 @@ def _reserve_claim(batch, row, identity):
         as_dict=True,
     )
     key = claim_key(identity, batch.period_start, batch.period_end)
+    from powerpro.retainers.cancellation import claim_is_released
+    released = [claim for claim in overlaps if claim_is_released(claim)]
+    overlaps = [claim for claim in overlaps if claim not in released]
+    if not overlaps and not row.replaces_invoice:
+        reusable = next((claim for claim in released if claim.name == key), None)
+        if reusable:
+            claim = frappe.get_doc(dict(reusable, doctype=CLAIM))
+            claim.agreement, claim.batch = row.agreement, batch.name
+            claim.flags.retainer_service = True
+            return claim.save(ignore_permissions=True)
     if overlaps:
         prior = overlaps[0]
         if len(overlaps) != 1 or prior.name != key:
