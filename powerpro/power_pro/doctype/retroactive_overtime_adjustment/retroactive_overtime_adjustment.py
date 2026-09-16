@@ -8,7 +8,7 @@ from frappe import _
 from frappe.utils import flt, getdate, now_datetime
 
 from powerpro.controllers.overtime import reconcile_overtime_document
-from powerpro.controllers import retroactive_evidence
+from powerpro.controllers import retroactive_evidence, retroactive_documentation
 from powerpro.controllers.overtime_cash_settlement import (
 	before_cancel_adjustment,
 	cancel_cash_settlement,
@@ -29,6 +29,12 @@ from powerpro.power_pro.doctype.overtime_authorization.overtime_authorization im
 
 class RetroactiveOvertimeAdjustment(OvertimeAuthorization):
 	"""Audited exception for already-worked overtime supported by check-in evidence."""
+
+	def validate(self):
+		# Ordinary settlement keeps all existing evidence and policy requirements.
+		# Documentary closure has its own declared-hours audit, never payable hours.
+		super().validate()
+		retroactive_documentation.validate(self)
 
 	def _validate_feature_flag(self):
 		if not frappe.db.get_single_value(
@@ -70,7 +76,7 @@ class RetroactiveOvertimeAdjustment(OvertimeAuthorization):
 			self.work_date,
 			self.authorization_start,
 			self.authorization_end,
-			allow_overnight=allow_overnight or retroactive_evidence.enabled(self),
+			allow_overnight=allow_overnight or retroactive_evidence.enabled(self) or retroactive_documentation.enabled(self),
 		):
 			frappe.throw(
 				_(
@@ -147,6 +153,9 @@ class RetroactiveOvertimeAdjustment(OvertimeAuthorization):
 			)
 
 		frappe.db.get_value('Employee',self.employee,'name',for_update=True)
+		if retroactive_documentation.enabled(self):
+			retroactive_documentation.submit(self)
+			return
 		if retroactive_evidence.enabled(self):
 			result=retroactive_evidence.reconcile(self,for_update=True)
 			retroactive_evidence.prepare_snapshot(self,result)
@@ -191,6 +200,9 @@ class RetroactiveOvertimeAdjustment(OvertimeAuthorization):
 			release_for_source(self)
 
 	def on_cancel(self):
+		if retroactive_documentation.enabled(self):
+			self.db_set("status", "Cancelled", update_modified=False)
+			return
 		super().on_cancel()
 		if retroactive_evidence.enabled(self):
 			# The parent has already reversed cash or the compensatory ledger.
@@ -200,5 +212,9 @@ class RetroactiveOvertimeAdjustment(OvertimeAuthorization):
 			cancel_cash_settlement(self)
 
 	def on_update_after_submit(self):
-		if retroactive_evidence.enabled(self):
+		if retroactive_evidence.enabled(self) or retroactive_documentation.enabled(self):
 			frappe.throw(_("El ajuste aprobado conserva su evidencia; utilice cancelación y una revisión trazable."))
+
+	def before_update_after_submit(self):
+		retroactive_documentation.protect_closed(self)
+		super().before_update_after_submit()

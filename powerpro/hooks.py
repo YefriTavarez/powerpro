@@ -259,6 +259,7 @@ doc_events = {
         "validate": "powerpro.controllers.salary_structure_assignment.validate",
     },
     "Additional Salary": {
+        "validate": "powerpro.controllers.retroactive_documentation.prevent_salary_link",
         "before_cancel": "powerpro.controllers.overtime_cash_settlement.prevent_direct_overtime_salary_cancel",
     },
 	"Leave Allocation": {

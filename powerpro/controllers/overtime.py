@@ -147,6 +147,10 @@ def get_retroactive_adjustment_preview(adjustment):
 		)
 	if doc.docstatus == 2:
 		frappe.throw(_("A cancelled Retroactive Overtime Adjustment cannot be reconciled."))
+	from powerpro.controllers.retroactive_documentation import enabled as documentary, NOTICE
+	if documentary(doc):
+		return {"documentary_only": True, "read_only": True, "settlement_ready": False,
+			"historical_hours": doc.get("historical_hours"), "warnings": [_(NOTICE)]}
 
 	if doc.docstatus == 1:
 		return _submitted_adjustment_snapshot(doc)

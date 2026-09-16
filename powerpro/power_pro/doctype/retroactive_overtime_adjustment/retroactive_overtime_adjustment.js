@@ -3,6 +3,7 @@
 
 frappe.ui.form.on("Retroactive Overtime Adjustment", {
 	refresh(frm) {
+		if (configure_documentary_display(frm)) return;
         frappe.require("/assets/powerpro/js/working_time_controls.js", () => powerpro.working_time_controls.add_button(frm));
 		frappe.require("/assets/powerpro/js/overtime_calendar.js", () => powerpro.overtime_calendar.add_button(frm));
 		configure_reconciliation_display(frm);
@@ -35,6 +36,13 @@ frappe.ui.form.on("Retroactive Overtime Adjustment", {
 					.then((result) => show_retroactive_reconciliation(result));
 			}, __("Overtime"));
 		}
+	},
+	historical_documentation(frm) {
+		// Refresh only the display; the server sets the documentary engine on save.
+		if (!frm.doc.historical_documentation && frm.doc.reconciliation_engine === 'Documentary') {
+			frm.set_value('reconciliation_engine', 'Verified Checkins');
+		}
+		frm.refresh();
 	},
 
 	employee(frm) {
@@ -74,6 +82,19 @@ frappe.ui.form.on("Retroactive Overtime Adjustment", {
 	settlement_payroll_date: mark_reconciliation_preview_stale,
 });
 
+function configure_documentary_display(frm) {
+	const historical = Boolean(frm.doc.historical_documentation);
+	['reconciliation_section', 'cash_settlement_section', 'planned_settlement'].forEach(
+		field => frm.toggle_display(field, !historical));
+	frm.set_df_property('settlement_payroll_date', 'label', historical
+		? __('Fecha de nómina histórica (referencia)') : __('Settlement Payroll Date'));
+	if (!historical) return false;
+	frm.clear_custom_buttons();
+	frm.dashboard.set_headline_alert(
+		__('Registro documental: no verifica ponches ni genera un nuevo pago o descanso.'), 'blue');
+	return true;
+}
+
 function set_settlement_payroll_date_default(frm) {
 	if (
 		frm.doc.docstatus === 0
@@ -90,7 +111,7 @@ function set_settlement_payroll_date_default(frm) {
 
 function set_reviewed_end_from_last_out(frm) {
 	if (
-		frm.doc.docstatus !== 0
+		frm.doc.historical_documentation || frm.doc.docstatus !== 0
 		|| !frm.doc.employee
 		|| !frm.doc.work_date
 	) {
@@ -148,7 +169,7 @@ const SNAPSHOT_FIELDS = [
 ];
 
 function add_cash_settlement_actions(frm) {
-	if (frm.doc.docstatus !== 1 || frm.doc.planned_settlement !== "Cash") {
+	if (frm.doc.historical_documentation || frm.doc.docstatus !== 1 || frm.doc.planned_settlement !== "Cash") {
 		return;
 	}
 
@@ -213,7 +234,7 @@ function load_draft_reconciliation_preview(
 	frm,
 	{ freeze = false, show_dialog = false } = {}
 ) {
-	if (frm.doc.docstatus !== 0) {
+	if (frm.doc.historical_documentation || frm.doc.docstatus !== 0) {
 		return Promise.resolve(null);
 	}
 	if (frm.is_new()) {
@@ -413,6 +434,7 @@ function show_retroactive_reconciliation(result) {
 
 
 function add_evidence_actions(frm) {
+    if (frm.doc.historical_documentation) return;
     if (!frm.is_new() && frm.doc.docstatus < 2 && frm.doc.reconciliation_engine === 'Verified Checkins')
         frappe.require('/assets/powerpro/js/checkin_overtime.js', () => powerpro.checkin_overtime.add_holiday_action(frm));
     if (frm.doc.docstatus === 0 && !frm.is_new() && frm.doc.reconciliation_engine === 'Verified Checkins') {

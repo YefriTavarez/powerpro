@@ -92,6 +92,8 @@ frappe.PermissionError = PermissionError
 frappe.ValidationError = ValueError
 frappe.whitelist = lambda *args, **kwargs: lambda function: function
 frappe.session = Record(user="manager@example.test")
+frappe.flags = Record()
+frappe.get_meta = lambda dt: Record(has_field=lambda field: False)
 frappe.get_doc = get_doc
 frappe.get_all = get_all
 frappe.get_single = lambda name: SETTINGS
