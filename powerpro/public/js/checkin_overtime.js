@@ -9,6 +9,8 @@ powerpro.checkin_overtime.render_rules_summary = (summary) => {
     const basis = {"Clock overlap": "Solo el tiempo trabajado entre 21:00 y 07:00",
         "Whole nocturnal session": "Toda la jornada cuando contiene al menos tres horas nocturnas"};
     const combined = {"Require review": "Requiere revisión", "Single highest premium": "Un solo recargo (el mayor)", "Additive premiums": "Sumar ambos recargos"};
+    const versions = (p.policy_versions || [p]).map(version =>
+        `${e(version.name)} · ${e(version.valid_from)} — ${e(version.valid_until)}`).join("<br>");
     const rows = [
         [__("Extra ordinaria"), number(h.regular_35_hours), percent(p.regular_percent)],
         [__("Extra por encima del umbral semanal"), number(h.regular_100_hours), percent(p.extraordinary_percent)],
@@ -18,7 +20,7 @@ powerpro.checkin_overtime.render_rules_summary = (summary) => {
         [__("Recargo nocturno sobre horas ordinarias"), number(n.ordinary_premium_hours), percent(p.night_percent)],
     ];
     return `<h5>${e(__("Reglas utilizadas en esta evaluación"))}</h5>
-        <p>${e(__("Versión"))}: ${e(p.name)} · ${e(p.valid_from)} — ${e(p.valid_until)}</p>
+        <p>${e(__(p.policy_versions ? "Versiones consecutivas con reglas iguales" : "Versión"))}: ${versions}</p>
         <p>${e(__("Nocturnidad"))}: ${e(__(basis[p.night_basis] || p.night_basis))}</p>
         <p>${e(__("Clasificación de la jornada"))}: ${e(__(n.classification || "Sin cálculo"))} · ${e(__("Horas entre 21:00 y 07:00"))}: ${e(number(n.clock_night_hours))}</p>
         <table class="table table-bordered"><thead><tr><th>${e(__("Concepto"))}</th><th>${e(__("Horas"))}</th><th>${e(__("Recargo sobre la hora base"))}</th></tr></thead>

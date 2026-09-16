@@ -193,18 +193,20 @@ def coverage_for_authorization(auth, result, *, for_update=False):
 def automatic_coverage_allowed(auth, result):
     """Operational opt-in stays outside the frozen mathematical policy snapshot."""
     from frappe.utils import cint
+    from powerpro.payroll_rules.overtime_policy_coverage import policy_names
     policy=(result.get('input') or {}).get('pay_policy') or {}
     return bool(auth.evidence_enrolled and auth.evidence_auto_settle and result['state']=='Verified'
         and result.get('night_session',{}).get('ordinary_premium_hours')
         and not result.get('ordinary_night_settlement')
         and result.get('settlement_blockers')==[COVERAGE_PENDING]
-        and policy.get('name') and cint(frappe.db.get_value('Overtime Pay Policy',
-            {'name':policy['name'],'docstatus':1},'auto_ordinary_night')))
+        and policy.get('name') and all(cint(frappe.db.get_value('Overtime Pay Policy',
+            {'name':name,'docstatus':1},'auto_ordinary_night')) for name in policy_names(policy)))
 
 
 def create_automatic_coverage(auth, result):
     """Caller owns Call->Employee->Authorization locks and a financial savepoint."""
     from powerpro.controllers.checkin_overtime import _evidence_hash
+    from powerpro.payroll_rules.overtime_policy_coverage import policy_names
     if not automatic_coverage_allowed(auth,result):
         frappe.throw(_('La política y la autorización no habilitan esta liquidación nocturna automática.'))
     saved=frappe.parse_json(auth.evidence_snapshot or '{}')
@@ -225,7 +227,7 @@ def create_automatic_coverage(auth, result):
     if (preview['state']!='Verified' or preview['amount']<=0
             or _evidence_hash(preview['worked_intervals'])!=_evidence_hash(result.get('worked_intervals'))
             or abs(flt(preview['ordinary_hours'])-flt(result['night_session']['ordinary_premium_hours']))>.0001
-            or preview['input']['policy']['name']!=result['input']['pay_policy']['name']):
+            or policy_names(preview['input']['policy'])!=policy_names(result['input']['pay_policy'])):
         frappe.throw(_('La evidencia nocturna no coincide con la jornada verificada de la autorización.'))
     doc.insert();doc.submit()
     return doc

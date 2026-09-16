@@ -101,6 +101,9 @@ def review_summary(result):
             'weekly_threshold', 'premium_combination', 'weekly_rest_cash')}
         selected[FIELD] = policy.get(FIELD) or REVIEW
         selected[REST_FIELD] = bool(policy.get(REST_FIELD))
+        if policy.get('policy_versions'):
+            selected['policy_versions'] = [{key: version.get(key) for key in
+                ('name', 'valid_from', 'valid_until')} for version in policy['policy_versions']]
     return {
         'policy': selected,
         'hours': {key: snapshot.get(key) for key in (
