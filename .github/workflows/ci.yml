@@ -40,6 +40,8 @@ jobs:
           python-version: "3.10"
       - run: python -m unittest discover -s tests -p "test_overtime*policy*.py"
       - run: node tests/test_checkin_review_ui.cjs
+      - run: node --test tests/test_overtime_dialog_retry.cjs
+      - run: node tests/test_overtime_holiday_base_ui.cjs
       - run: node --check powerpro/public/js/checkin_overtime.js
 
   bank-batch-isolated:

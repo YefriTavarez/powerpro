@@ -1,4 +1,29 @@
 frappe.provide("powerpro.checkin_overtime");
+// Frappe prompts hide before their callback runs. These forms must survive
+// server validation errors, including all unsaved interval table rows.
+powerpro.checkin_overtime.dialog_request = async (dialog, request) => {
+    if (dialog.__request_pending) return;
+    dialog.__request_pending = true;
+    dialog.get_primary_btn().prop("disabled", true);
+    try {
+        return await request();
+    } catch (error) {
+        // frappe.call presents server/network errors. Keep the existing dialog
+        // and its values available underneath that message for correction.
+    } finally {
+        dialog.__request_pending = false;
+        dialog.get_primary_btn().prop("disabled", false);
+    }
+};
+powerpro.checkin_overtime.input_dialog = (fields, callback, title, primary_label) => {
+    const dialog = new frappe.ui.Dialog({title, fields,
+        primary_action_label: primary_label,
+        primary_action(values) {
+            return powerpro.checkin_overtime.dialog_request(dialog, () => callback(values, dialog));
+        }});
+    dialog.show();
+    return dialog;
+};
 powerpro.checkin_overtime.render_rules_summary = (summary) => {
     if (!summary) return "";
     const e = value => frappe.utils.escape_html(String(value ?? ""));
@@ -73,15 +98,17 @@ powerpro.checkin_overtime.add_holiday_action = (frm) => {
         if (!status?.can_declare) return;
         frm.add_custom_button(__('Base salarial del feriado'), () => {
             if (frm.is_dirty()) return frappe.msgprint(__('Guarde los cambios primero.'));
-            frappe.prompt([
+            powerpro.checkin_overtime.input_dialog([
                 {fieldname: 'covered_hours', fieldtype: 'Float', label: __('Horas de feriado con base ya incluida en el sueldo'),
                     default: status.coverage?.covered_hours ?? 0,
                     description: __('Indique cero si ninguna está cubierta. No incluya horas ajenas a esta conciliación.')},
                 {fieldname: 'reference', fieldtype: 'Small Text', label: __('Referencia salarial y explicación de la cobertura'),
                     reqd: 1, default: status.coverage?.reference},
-            ], values => {
+            ], (values, input) => {
                 if (frm.is_dirty()) return frappe.msgprint(__('Guarde los cambios primero.'));
-                frappe.call({method: method + 'preview', args: {...source, ...values}, freeze: true}).then(({message: p}) => {
+                return frappe.call({method: method + 'preview', args: {...source, ...values}, freeze: true}).then((r) => {
+                    if (r.exc || !r.message) return;
+                    const p = r.message;
                     const e = value => frappe.utils.escape_html(String(value ?? ''));
                     const estimate = p.estimate;
                     const html = `<p>${__('Horas de feriado')}: ${e(p.declaration.holiday_hours)}</p>
@@ -92,13 +119,16 @@ powerpro.checkin_overtime.add_holiday_action = (frm) => {
                         <p>${__('Registrar esta declaración no aprueba las horas ni crea pagos. Después, procese o revise la conciliación.')}</p>`;
                     const dialog = new frappe.ui.Dialog({title: __('Cobertura salarial del feriado'),
                         fields: [{fieldname: 'preview', fieldtype: 'HTML', options: html}],
+                        secondary_action_label: __('Editar datos'),
+                        secondary_action() { if (!dialog.__request_pending) { dialog.hide(); input.show(); } },
                         primary_action_label: __('Registrar cobertura'), primary_action() {
                             if (frm.is_dirty()) return frappe.msgprint(__('Guarde los cambios y obtenga otra vista previa.'));
-                            frappe.call({method: method + 'apply', type: 'POST', freeze: true,
+                            return powerpro.checkin_overtime.dialog_request(dialog, () => frappe.call({method: method + 'apply', type: 'POST', freeze: true,
                                 args: {...source, covered_hours: p.declaration.covered_hours,
                                     reference: p.declaration.reference, token: p.token}})
-                                .then(() => {dialog.hide(); frm.reload_doc();});
+                                .then((r) => {if (!r.exc) {dialog.hide(); return frm.reload_doc();}}));
                         }});
+                    input.hide();
                     dialog.show();
                 });
             }, __('Base salarial del feriado'), __('Vista previa'));
@@ -131,7 +161,7 @@ powerpro.checkin_overtime.review = (frm, manual = false, observationWindow = nul
             fields: [{fieldname: "start", label: __("Inicio"), fieldtype: "Datetime", in_list_view: 1, reqd: 1},
                      {fieldname: "end", label: __("Fin"), fieldtype: "Datetime", in_list_view: 1, reqd: 1}]},
         {fieldname: "full_session", label: __("Confirmo que estos intervalos incluyen toda la jornada y sus prolongaciones"), fieldtype: "Check", reqd: 1});
-    frappe.prompt(fields, (values) => {
+    return powerpro.checkin_overtime.input_dialog(fields, (values, input) => {
         if (frm.is_dirty()) {frappe.msgprint(__('Guarde los cambios antes de revisar.')); return;}
         const observation = frm.doc.docstatus===2 && values.expand_window ? JSON.stringify({start:values.observation_start,end:values.observation_end}) : undefined;
         const declaration = manual ? {full_session: Boolean(values.full_session), reference: values.reference,
@@ -140,8 +170,10 @@ powerpro.checkin_overtime.review = (frm, manual = false, observationWindow = nul
             declaration.review_scope = 'Authorized interval only';
             declaration.observation_window = {start: values.observation_start, end: values.observation_end};
         }
-        frappe.call({method: `powerpro.controllers.${controller}.preview_review`, args: {authorization: frm.doc.name, source_type: frm.doc.doctype || "Overtime Authorization", reason: values.reason,
-            manual_declaration: declaration && JSON.stringify(declaration),...(observation ? {observation_window:observation} : {})}, freeze: true}).then(({message: p}) => {
+        return frappe.call({method: `powerpro.controllers.${controller}.preview_review`, args: {authorization: frm.doc.name, source_type: frm.doc.doctype || "Overtime Authorization", reason: values.reason,
+            manual_declaration: declaration && JSON.stringify(declaration),...(observation ? {observation_window:observation} : {})}, freeze: true}).then((r) => {
+            if (r.exc || !r.message) return;
+            const p = r.message;
             const e = value => frappe.utils.escape_html(String(value ?? ""));
             const rows = [[__("Horas verificadas"), p.before.verified_hours || 0, p.after.verified_hours],
                 [__("Entrada real"), p.before.actual_start, p.after.actual_start],
@@ -157,13 +189,16 @@ powerpro.checkin_overtime.review = (frm, manual = false, observationWindow = nul
                 <p>${p.draft_only ? __("Se registra la declaración y su evidencia. El ajuste sigue en borrador; su aprobación y liquidación requieren el flujo correspondiente.") : p.historical_only ? __("Se registra una revisión histórica sin reabrir el documento cancelado ni modificar su liquidación original.") : __("La aceptación conserva la evidencia anterior. Si hay liquidación previa, su reversión debe completarse antes de crear la sustitución.")}</p>
                 <ul>${p.settlement_blockers.map(v => `<li>${e(v)}</li>`).join("")}${p.dependencies.map(v => `<li>${e(v.name)}: ${e(v.settlement_status)}</li>`).join("")}</ul>`;
             const dialog = new frappe.ui.Dialog({title: __("Revisión de evidencia"), fields: [{fieldname: "preview", fieldtype: "HTML", options: html}],
+                secondary_action_label: __("Editar datos"),
+                secondary_action() { if (!dialog.__request_pending) { dialog.hide(); input.show(); } },
                 primary_action_label: __("Aceptar revisión"), primary_action() {
                     if (frm.is_dirty()) {frappe.msgprint(__("Guarde los cambios y obtenga una vista previa nueva.")); return;}
-                    frappe.call({method: `powerpro.controllers.${controller}.apply_review`, type: "POST",
+                    return powerpro.checkin_overtime.dialog_request(dialog, () => frappe.call({method: `powerpro.controllers.${controller}.apply_review`, type: "POST",
                         args: {authorization: frm.doc.name, source_type: frm.doc.doctype || "Overtime Authorization", reason: p.reason, token: p.token,
                             manual_declaration: p.manual_declaration && JSON.stringify(p.manual_declaration),
-                            ...(p.observation_window ? {observation_window:JSON.stringify(p.observation_window)} : {})}, freeze: true}).then(() => {dialog.hide();frm.reload_doc();});
+                            ...(p.observation_window ? {observation_window:JSON.stringify(p.observation_window)} : {})}, freeze: true}).then((r) => {if (!r.exc) {dialog.hide(); return frm.reload_doc();}}));
                 }});
+            input.hide();
             dialog.show();
         });
     }, __("Revisar evidencia corregida"), __("Vista previa"));
