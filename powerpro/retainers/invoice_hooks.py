@@ -60,7 +60,11 @@ def validate_source(doc, method=None):
 
 def protect_delete(doc, method=None):
     if doc.get("custom_supplier_retainer_claim"):
-        frappe.throw(_("Esta factura forma parte del historial de una iguala y no se puede eliminar."))
+        from powerpro.retainers.cancellation import may_discard, validate_unissued_draft
+        if may_discard(doc):
+            validate_unissued_draft(doc)
+            return
+        frappe.throw(_("Para descartar una factura de iguala en borrador, cancele su Liquidación de Igualas. Las facturas sometidas requieren su cancelación individual."))
 
 
 def before_cancel(doc, method=None):

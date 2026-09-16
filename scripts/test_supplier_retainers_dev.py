@@ -2,6 +2,8 @@
 
 Fixtures and every test run in rollback-only transactions. No invoice is submitted,
 no schema is installed here, and HTTP/mail/background work and commit are blocked.
+Frappe's after-commit dynamic-link cleanup request from normal document deletion
+is recorded but never scheduled or executed, since every deletion rolls back.
 This proves controller/database integration, not separate-session concurrency.
 """
 import argparse
@@ -44,6 +46,17 @@ def main():
     def prohibited(*args, **kwargs):
         raise AssertionError('Rollback-only retainer tests prohibit commits, mail, jobs and HTTP.')
 
+    deferred_deletion_cleanup = []
+
+    def guarded_enqueue(method=None, *args, **kwargs):
+        if (method == 'frappe.model.delete_doc.delete_dynamic_links'
+                and not args and kwargs.get('enqueue_after_commit') is True
+                and kwargs.get('doctype') == 'Purchase Invoice'
+                and kwargs.get('name')):
+            deferred_deletion_cleanup.append((method, dict(kwargs)))
+            return None
+        return prohibited(method, *args, **kwargs)
+
     try:
         if not frappe.db.exists('Company', args.company):
             raise RuntimeError('The explicit development Company does not exist.')
@@ -56,7 +69,7 @@ def main():
         suite = unittest.defaultTestLoader.loadTestsFromTestCase(namespace['SupplierRetainerDatabaseTest'])
         with patch.object(frappe.db, 'commit', prohibited), \
              patch.object(frappe, 'sendmail', prohibited), \
-             patch.object(frappe, 'enqueue', prohibited), \
+             patch.object(frappe, 'enqueue', guarded_enqueue), \
              patch.object(frappe, 'log_error', return_value=None), \
              patch.object(requests.sessions.Session, 'request', prohibited):
             result = unittest.TextTestRunner(verbosity=2).run(suite)

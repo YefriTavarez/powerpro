@@ -4,6 +4,7 @@ Every fixture is transaction-local; do not run through a production test runner.
 Raw inserts below only construct synthetic Supplier/Item/User fixtures. Agreement,
 Batch and Purchase Invoice business operations use their installed controllers.
 """
+import json
 import os
 import unittest
 from datetime import date, timedelta
@@ -227,6 +228,182 @@ class SupplierRetainerDatabaseTest(unittest.TestCase):
         with self.assertRaises(frappe.ValidationError):
             frappe.delete_doc('Purchase Invoice', invoice.name)
         self.assertTrue(frappe.db.exists('Purchase Invoice', invoice.name))
+
+    def assert_batch_invoices_unchanged(self, batch, invoice_names):
+        batch.reload()
+        self.assertEqual(batch.docstatus, 1)
+        self.assertEqual([row.purchase_invoice for row in batch.details], invoice_names)
+        for name in invoice_names:
+            self.assertTrue(frappe.db.exists('Purchase Invoice', name))
+            claim_name = frappe.db.get_value('Purchase Invoice', name, 'custom_supplier_retainer_claim')
+            self.assertEqual(frappe.db.get_value(CLAIM, claim_name, 'purchase_invoice'), name)
+
+    def test_cancel_batch_removes_drafts_preserves_audit_and_releases_exact_period(self):
+        agreement = self.agreement()
+        batch = self.batch([agreement])
+        invoice = self.invoice(batch)
+        claim_name = invoice.custom_supplier_retainer_claim
+        batch.cancel()
+        batch.reload()
+        self.assertEqual(batch.docstatus, 2)
+        self.assertFalse(batch.details[0].purchase_invoice)
+        self.assertFalse(frappe.db.exists('Purchase Invoice', invoice.name))
+        claim = frappe.get_doc(CLAIM, claim_name)
+        self.assertFalse(claim.purchase_invoice)
+        self.assertEqual(claim.batch, batch.name)
+        self.assertEqual(claim.agreement_identity, agreement.name)
+        deleted = frappe.get_all('Deleted Document', filters={
+            'deleted_doctype': 'Purchase Invoice', 'deleted_name': invoice.name}, fields=['data'])
+        self.assertEqual(len(deleted), 1)
+        snapshot = json.loads(deleted[0].data)
+        self.assertEqual(snapshot['custom_supplier_retainer_batch'], batch.name)
+        self.assertEqual(snapshot['custom_supplier_retainer_claim'], claim_name)
+        comments = frappe.get_all('Comment', filters={
+            'reference_doctype': BATCH, 'reference_name': batch.name}, pluck='content')
+        self.assertTrue(any(invoice.name in (comment or '') for comment in comments))
+        next_batch = self.batch([agreement])
+        next_invoice = self.invoice(next_batch)
+        self.assertNotEqual(next_invoice.name, invoice.name)
+        self.assertEqual(next_invoice.custom_supplier_retainer_claim, claim_name)
+        self.assertEqual(frappe.db.get_value(CLAIM, claim_name, 'batch'), next_batch.name)
+        self.assertEqual(frappe.db.count(CLAIM, {'agreement_identity': agreement.name}), 1)
+        self.assertEqual(frappe.db.count('GL Entry'), self.gl_count)
+        # The reusable claim now belongs to a new batch, but the cancelled
+        # batch remains the durable audit history of its discarded invoice.
+        with self.assertRaises(frappe.ValidationError):
+            frappe.delete_doc(BATCH, batch.name)
+        self.assertTrue(frappe.db.exists(BATCH, batch.name))
+        # Cancellation's internal authorization must not leak into later requests.
+        with self.assertRaises(frappe.ValidationError):
+            frappe.delete_doc('Purchase Invoice', next_invoice.name)
+
+    def test_submitted_invoice_blocks_cancellation_before_any_draft_deletion(self):
+        batch = self.batch([self.agreement(), self.agreement()])
+        names = [row.purchase_invoice for row in batch.details]
+        # Synthetic status only: no invoice submission or fiscal lifecycle.
+        frappe.db.set_value('Purchase Invoice', names[1], 'docstatus', 1)
+        with patch.object(frappe, 'delete_doc', wraps=frappe.delete_doc) as deletion:
+            with self.assertRaises(frappe.ValidationError):
+                batch.cancel()
+            deletion.assert_not_called()
+        self.assert_batch_invoices_unchanged(batch, names)
+
+    def test_fiscal_draft_blocks_cancellation_before_any_draft_deletion(self):
+        # encf_status is a virtual HTML field on this installed Nubef schema;
+        # its defensive runtime guard is covered by the isolated hook tests.
+        for field, value in (('ncf', 'E410000000001'),
+                ('ncf_status', 'Pending DGII Response')):
+            with self.subTest(field=field):
+                batch = self.batch([self.agreement(), self.agreement()])
+                names = [row.purchase_invoice for row in batch.details]
+                self.assertTrue(frappe.get_meta('Purchase Invoice').has_field(field),
+                    'This fiscal integration contract requires the installed Nubef fields.')
+                frappe.db.set_value('Purchase Invoice', names[1], field, value)
+                with patch.object(frappe, 'delete_doc', wraps=frappe.delete_doc) as deletion:
+                    with self.assertRaises(frappe.ValidationError):
+                        batch.cancel()
+                    deletion.assert_not_called()
+                self.assert_batch_invoices_unchanged(batch, names)
+
+    def test_attached_file_blocks_cancellation_before_any_draft_deletion(self):
+        batch = self.batch([self.agreement(), self.agreement()])
+        names = [row.purchase_invoice for row in batch.details]
+        # A transaction-local metadata fixture only: no download, file write or
+        # File controller side effects are needed to exercise the preflight.
+        attached_name = sorted(names)[-1]
+        attachment = self.raw('File', 'RT-FILE-' + self.suffix,
+            file_name='retainer-review.pdf',
+            file_url='https://example.invalid/retainer-review.pdf',
+            attached_to_doctype='Purchase Invoice', attached_to_name=attached_name,
+            is_private=1)
+        with patch.object(frappe, 'delete_doc', wraps=frappe.delete_doc) as deletion:
+            with self.assertRaises(frappe.ValidationError):
+                batch.cancel()
+            deletion.assert_not_called()
+        self.assert_batch_invoices_unchanged(batch, names)
+        self.assertEqual(frappe.db.get_value('File', attachment.name,
+            ['attached_to_doctype', 'attached_to_name', 'file_url']),
+            ('Purchase Invoice', attached_name, 'https://example.invalid/retainer-review.pdf'))
+        self.assertEqual(frappe.db.count('Deleted Document', {
+            'deleted_doctype': 'Purchase Invoice', 'deleted_name': ['in', names]}), 0)
+
+    def test_later_delete_failure_restores_invoices_claims_links_and_audit(self):
+        batch = self.batch([self.agreement(), self.agreement()])
+        names = [row.purchase_invoice for row in batch.details]
+        comment_count = frappe.db.count('Comment', {'reference_doctype': BATCH, 'reference_name': batch.name})
+        original_delete = frappe.delete_doc
+        calls = []
+
+        def fail_second(doctype, name=None, *args, **kwargs):
+            if doctype == 'Purchase Invoice' and name in names:
+                calls.append(name)
+                if len(calls) == 2:
+                    self.assertFalse(frappe.db.exists('Purchase Invoice', calls[0]))
+                    raise RuntimeError('Injected second draft deletion failure')
+            return original_delete(doctype, name, *args, **kwargs)
+
+        with patch.object(frappe, 'delete_doc', fail_second):
+            with self.assertRaisesRegex(RuntimeError, 'second draft deletion failure'):
+                batch.cancel()
+        self.assertEqual(len(calls), 2)
+        self.assert_batch_invoices_unchanged(batch, names)
+        self.assertEqual(frappe.db.count('Comment', {'reference_doctype': BATCH, 'reference_name': batch.name}), comment_count)
+        self.assertEqual(frappe.db.count('Deleted Document', {
+            'deleted_doctype': 'Purchase Invoice', 'deleted_name': ['in', names]}), 0)
+        # Also prove the authorization context is reset when deletion raises.
+        with self.assertRaises(frappe.ValidationError):
+            original_delete('Purchase Invoice', names[0])
+
+    def test_invoice_delete_permission_required_to_cancel_batch_with_drafts(self):
+        batch = self.batch([self.agreement()])
+        names = [row.purchase_invoice for row in batch.details]
+        from frappe.model.document import Document
+        original_permission = Document.check_permission
+
+        def deny_invoice_delete(doc, permtype='read', *args, **kwargs):
+            if doc.doctype == 'Purchase Invoice' and permtype == 'delete':
+                raise frappe.PermissionError('Synthetic denial of Purchase Invoice delete permission')
+            return original_permission(doc, permtype, *args, **kwargs)
+
+        with patch.object(Document, 'check_permission', deny_invoice_delete):
+            with self.assertRaises(frappe.PermissionError):
+                batch.cancel()
+        self.assert_batch_invoices_unchanged(batch, names)
+
+    def test_cancelled_invoice_kept_when_cancelling_batch(self):
+        agreement = self.agreement()
+        batch = self.batch([agreement])
+        invoice = self.invoice(batch)
+        frappe.db.set_value('Purchase Invoice', invoice.name, 'docstatus', 2)
+        batch.cancel()
+        batch.reload()
+        self.assertEqual(batch.docstatus, 2)
+        self.assertEqual(batch.details[0].purchase_invoice, invoice.name)
+        self.assertEqual(frappe.db.get_value(CLAIM, invoice.custom_supplier_retainer_claim, 'purchase_invoice'), invoice.name)
+        self.assertEqual(frappe.db.get_value('Purchase Invoice', invoice.name, 'docstatus'), 2)
+        with self.assertRaises(frappe.ValidationError):
+            self.batch([agreement])
+
+    def test_released_period_is_reused_through_original_agreement_identity(self):
+        agreement = self.agreement()
+        batch = self.batch([agreement])
+        invoice = self.invoice(batch)
+        claim_name = invoice.custom_supplier_retainer_claim
+        batch.cancel()
+        agreement.cancel()
+        amended = frappe.copy_doc(agreement)
+        amended.docstatus = 0
+        amended.amended_from = agreement.name
+        amended.insert()
+        amended.submit()
+        replacement = self.batch([amended])
+        replacement_invoice = self.invoice(replacement)
+        self.assertEqual(replacement_invoice.custom_supplier_retainer_claim, claim_name)
+        claim = frappe.get_doc(CLAIM, claim_name)
+        self.assertEqual(claim.agreement, amended.name)
+        self.assertEqual(claim.agreement_identity, agreement.name)
+        with self.assertRaises(frappe.ValidationError):
+            self.batch([amended])
 
     def test_active_invoice_cannot_be_explicitly_replaced(self):
         agreement = self.agreement()
