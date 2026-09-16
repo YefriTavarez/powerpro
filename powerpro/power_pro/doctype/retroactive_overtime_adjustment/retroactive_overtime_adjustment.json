@@ -32,6 +32,17 @@
   "exception_column",
   "requested_by",
   "approver",
+  "historical_documentation",
+  "historical_documentation_section",
+  "historical_disposition",
+  "historical_source_file",
+  "historical_reference",
+  "historical_break_start",
+  "historical_break_end",
+  "historical_break_estimated",
+  "historical_hours",
+  "historical_acknowledged",
+  "historical_snapshot",
   "reconciliation_section",
   "reconciliation_engine",
   "actual_start",
@@ -472,7 +483,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Draft\nApproved\nCancelled",
+   "options": "Draft\nApproved\nCancelled\nDocumented",
    "read_only": 1
   },
   {
@@ -502,7 +513,7 @@
    "fieldname": "reconciliation_engine",
    "fieldtype": "Select",
    "label": "Motor de conciliación",
-   "options": "Legacy\nVerified Checkins",
+   "options": "Legacy\nVerified Checkins\nDocumentary",
    "default": "Legacy",
    "description": "Verified Checkins utiliza el motor común, evidencia semanal real y una política aprobada. No convierte instantáneas históricas existentes."
   },
@@ -610,6 +621,76 @@
    "no_copy": 1,
    "precision": "4",
    "read_only": 1
+  },
+  {
+   "fieldname": "historical_documentation",
+   "fieldtype": "Check",
+   "label": "Solo registro histórico",
+   "default": "0",
+   "description": "Cierra el documento sin generar otro pago. No convierte horarios declarados en marcaciones verificadas."
+  },
+  {
+   "fieldname": "historical_documentation_section",
+   "fieldtype": "Section Break",
+   "label": "Registro histórico documental",
+   "depends_on": "eval:doc.historical_documentation"
+  },
+  {
+   "fieldname": "historical_disposition",
+   "fieldtype": "Select",
+   "label": "Motivo del cierre histórico",
+   "options": "\nAlready Paid\nOrdinary Work",
+   "mandatory_depends_on": "eval:doc.historical_documentation"
+  },
+  {
+   "fieldname": "historical_source_file",
+   "fieldtype": "Attach",
+   "label": "Documento histórico de respaldo",
+   "mandatory_depends_on": "eval:doc.historical_documentation"
+  },
+  {
+   "fieldname": "historical_reference",
+   "fieldtype": "Small Text",
+   "label": "Referencia y supuestos históricos",
+   "mandatory_depends_on": "eval:doc.historical_documentation",
+   "description": "Indique el documento, la página y los horarios estimados. Para trabajo ya pagado, registre la confirmación del pago anterior; no se calcula un nuevo importe."
+  },
+  {
+   "fieldname": "historical_break_start",
+   "fieldtype": "Datetime",
+   "label": "Inicio de pausa histórica"
+  },
+  {
+   "fieldname": "historical_break_end",
+   "fieldtype": "Datetime",
+   "label": "Fin de pausa histórica"
+  },
+  {
+   "fieldname": "historical_break_estimated",
+   "fieldtype": "Check",
+   "label": "Horario de pausa estimado",
+   "default": "0"
+  },
+  {
+   "fieldname": "historical_hours",
+   "fieldtype": "Float",
+   "label": "Horas documentadas (sin pausa)",
+   "read_only": 1,
+   "precision": "4"
+  },
+  {
+   "fieldname": "historical_acknowledged",
+   "fieldtype": "Check",
+   "label": "Confirmo el cierre documental sin solicitar otro pago",
+   "default": "0"
+  },
+  {
+   "fieldname": "historical_snapshot",
+   "fieldtype": "Code",
+   "label": "Constancia de cierre documental",
+   "options": "JSON",
+   "read_only": 1,
+   "depends_on": "eval:doc.docstatus != 0"
   }
  ],
  "index_web_pages_for_search": 1,

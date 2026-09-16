@@ -32,6 +32,8 @@ OVERTIME_SETTLEMENT_SOURCES = {
 
 def build_cash_settlement(adjustment, reconciliation):
 	"""Build a read-only cash preview from an approved-style snapshot."""
+	from powerpro.controllers.retroactive_documentation import reject_settlement
+	reject_settlement(adjustment)
 	payroll_date = validate_settlement_payroll_date(adjustment)
 	assignment = _get_effective_salary_assignment(adjustment)
 	hourly_rate = _get_hourly_rate(assignment)
@@ -305,6 +307,8 @@ def sync_adjustments_from_salary_slip(salary_slip, *, submitted):
 
 
 def _create_additional_salaries(adjustment, settlement):
+	from powerpro.controllers.retroactive_documentation import reject_settlement
+	reject_settlement(adjustment)
 	# Serialize retries and simultaneous requests on the source adjustment. The
 	# reference lookup below then serves as the idempotency check.
 	frappe.db.get_value(adjustment.doctype, adjustment.name, "name", for_update=True)
