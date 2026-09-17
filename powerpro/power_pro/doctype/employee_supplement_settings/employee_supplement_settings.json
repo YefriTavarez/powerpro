@@ -1,0 +1,93 @@
+{
+ "doctype": "DocType",
+ "name": "Employee Supplement Settings",
+ "module": "Power Pro",
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "company",
+  "currency",
+  "effective_from",
+  "second_quincena_day",
+  "amount_precision",
+  "policy_note",
+  "mappings",
+  "existing_salaries"
+ ],
+ "fields": [
+  {
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Generar complementos automáticamente",
+   "default": "0",
+   "description": "Se aplican al guardar nuevos recibos vinculados a Payroll Entry. No requiere aprobación adicional."
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Empresa",
+   "options": "Company"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Moneda",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Aplicar desde"
+  },
+  {
+   "fieldname": "second_quincena_day",
+   "fieldtype": "Select",
+   "label": "Inicio de segunda quincena",
+   "options": "15\n16",
+   "default": "16"
+  },
+  {
+   "fieldname": "amount_precision",
+   "fieldtype": "Select",
+   "label": "Decimales para el pago",
+   "options": "2\n4",
+   "default": "2"
+  },
+  {
+   "fieldname": "policy_note",
+   "fieldtype": "HTML",
+   "label": "Regla",
+   "options": "<p>Importes mensuales completos: 100% en nómina mensual y 50% por quincena. Sin prorrateo por días. La segunda quincena absorbe la diferencia de redondeo. Configure y concilie antes de habilitar.</p>"
+  },
+  {
+   "fieldname": "mappings",
+   "fieldtype": "Table",
+   "label": "Mapeo de los cuatro complementos",
+   "options": "Employee Supplement Mapping"
+  },
+  {
+   "fieldname": "existing_salaries",
+   "fieldtype": "Table",
+   "label": "Conciliación de Additional Salaries existentes",
+   "options": "Employee Supplement Existing Salary"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "issingle": 1,
+ "track_changes": 1
+}

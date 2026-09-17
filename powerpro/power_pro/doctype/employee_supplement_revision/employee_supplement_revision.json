@@ -1,0 +1,99 @@
+{
+ "doctype": "DocType",
+ "name": "Employee Supplement Revision",
+ "module": "Power Pro",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "company",
+  "currency",
+  "effective_from",
+  "amounts",
+  "source_modified",
+  "revision_key",
+  "legacy_changes"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Empleado",
+   "options": "Employee",
+   "reqd": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Empresa",
+   "options": "Company",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Moneda",
+   "options": "Currency",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Vigente desde",
+   "reqd": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "amounts",
+   "fieldtype": "Long Text",
+   "label": "Importes mensuales",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_modified",
+   "fieldtype": "Datetime",
+   "label": "Modificación del empleado",
+   "read_only": 1
+  },
+  {
+   "fieldname": "revision_key",
+   "fieldtype": "Data",
+   "label": "Clave de vigencia",
+   "read_only": 1,
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "legacy_changes",
+   "fieldtype": "Long Text",
+   "label": "Cierres de vigencia anteriores",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "report": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "autoname": "hash",
+ "track_changes": 1
+}

@@ -30,6 +30,7 @@ frappe._ = lambda text: text
 frappe.whitelist = lambda *a, **k: lambda method: method
 for name in ("get_all", "get_cached_doc", "get_doc", "throw", "publish_realtime", "msgprint"):
     setattr(frappe, name, Mock())
+frappe.get_single = Mock(return_value=AttrDict(enabled=0))
 frappe.db = Mock()
 frappe.session = AttrDict(user="test-user")
 frappe.flags = AttrDict()
@@ -38,6 +39,7 @@ utils = types.ModuleType("frappe.utils")
 utils.cint = lambda value: int(value or 0)
 utils.getdate = lambda value: datetime.date.fromisoformat(str(value)[:10])
 utils.flt = lambda value: float(value or 0)
+utils.today = lambda: datetime.date.today().isoformat()
 sys.modules["frappe.utils"] = utils
 
 suite = unittest.defaultTestLoader.loadTestsFromNames([

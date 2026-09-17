@@ -406,3 +406,20 @@ boot_session = "powerpro.boot.boot_session"
 portal_menu_items = [
     {"title": "Mis solicitudes de dieta", "route": "/dietas", "role": "Employee"},
 ]
+
+
+# Fixed employee supplements extend existing hooks without replacing other payroll integrations.
+_employee_supplement_events = {
+    "Employee": {"validate": "validate_employee", "on_update": "record_employee"},
+    "Salary Slip": {"before_insert": "prepare_slip", "validate": "validate_slip"},
+    "Additional Salary": {
+        "validate": "protect_additional", "before_update_after_submit": "protect_additional",
+        "before_cancel": "protect_additional", "on_trash": "protect_additional",
+    },
+}
+for _doctype, _events in _employee_supplement_events.items():
+    for _event, _handler in _events.items():
+        _existing = doc_events.setdefault(_doctype, {}).get(_event, [])
+        if isinstance(_existing, str):
+            _existing = [_existing]
+        doc_events[_doctype][_event] = [*_existing, "powerpro.supplements.service." + _handler]

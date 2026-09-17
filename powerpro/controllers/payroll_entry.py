@@ -13,16 +13,18 @@ from hrms.payroll.doctype.payroll_entry import payroll_entry
 from powerpro.controllers.salary_slip.helper import LEGACY_EMPLOYER_COMPONENTS
 from powerpro.payroll_rules.employer_contributions import DEDICATED_MODE
 from powerpro.controllers import mixed_frequency_payroll as mixed
+from powerpro.supplements import worker as supplements
 
 
 class PayrollEntry(payroll_entry.PayrollEntry):
     @frappe.whitelist()
     def create_salary_slips(self):
-        if not mixed.enabled(self):
+        if not mixed.enabled(self) and not supplements.enabled_for(self):
             return super().create_salary_slips()
+        create_slips = mixed.create_slips if mixed.enabled(self) else supplements.create_slips
         self.check_permission("write")
         if self.docstatus != 1:
-            frappe.throw(_("Submit the Payroll Entry before generating mixed-frequency Salary Slips."))
+            frappe.throw(_("Submit the Payroll Entry before generating Salary Slips."))
         employees = [row.employee for row in self.employees]
         if not employees:
             return
@@ -34,11 +36,11 @@ class PayrollEntry(payroll_entry.PayrollEntry):
         args["payroll_entry"] = self.name
         if len(employees) > 30 or frappe.flags.enqueue_payroll_entry:
             self.db_set("status", "Queued")
-            frappe.enqueue(mixed.create_slips, timeout=3000, employees=employees, args=args,
+            frappe.enqueue(create_slips, timeout=3000, employees=employees, args=args,
                            publish_progress=False, enqueue_after_commit=True)
             frappe.msgprint(_("Salary Slip creation is queued. It may take a few minutes"), alert=True)
         else:
-            mixed.create_slips(employees, args)
+            create_slips(employees, args)
             self.reload()
 
     def validate_existing_salary_slips(self):

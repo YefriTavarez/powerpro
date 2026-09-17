@@ -1,0 +1,32 @@
+{
+ "doctype": "DocType",
+ "name": "Employee Supplement Mapping",
+ "module": "Power Pro",
+ "engine": "InnoDB",
+ "field_order": [
+  "source_field",
+  "salary_component"
+ ],
+ "fields": [
+  {
+   "fieldname": "source_field",
+   "fieldtype": "Select",
+   "label": "Campo del empleado",
+   "options": "\nincentivo_especial\nasignacion_transporte\nasignacion_combustible\nasignacion_mantenimiento_vehiculo",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "salary_component",
+   "fieldtype": "Link",
+   "label": "Componente de ingreso",
+   "options": "Salary Component",
+   "in_list_view": 1
+  }
+ ],
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "istable": 1,
+ "editable_grid": 1
+}
