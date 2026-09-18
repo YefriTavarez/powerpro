@@ -94,6 +94,8 @@ jobs:
           python-version: '3.10'
       - name: Mixed-frequency payroll unit and controller contract tests
         run: python scripts/test_mixed_frequency_unit.py
+      - name: Cancelled document query conditions
+        run: python -m unittest discover -s tests -p test_cancelled_document_queries.py
       - name: Fixed employee supplement amount and reconciliation rules
         run: python -m unittest discover -s tests -p test_employee_supplement_rules.py
 
