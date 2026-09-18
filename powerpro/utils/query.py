@@ -1,6 +1,11 @@
 import frappe
 
 
+def salary_slip_query_conditions(user=None):
+    """Hide cancelled slips in permission-aware lists, including Administrator's."""
+    return "`tabSalary Slip`.`docstatus` != 2"
+
+
 def customer_query_conditions(user):
     settings = get_igc_settings()
 
