@@ -98,6 +98,7 @@ class ReceivablePayableReport:
 
     def get_data(self):
         self.get_ple_entries()
+        self.exclude_settled_employee_advance_entries()
         self.get_sales_invoices_or_customers_based_on_sales_person()
         self.voucher_balance = OrderedDict()
         self.init_voucher_balance()  # invoiced, paid, credit_note, outstanding
@@ -834,6 +835,128 @@ class ReceivablePayableReport:
 
         self.ple_entries = query.run(as_dict=True)
 
+    def exclude_settled_employee_advance_entries(self):
+        """Hide employee advance issue/return pairs once the advance is settled.
+
+        Employee Advances are reconciled in the Advance Payment Ledger, while this
+        report reads the regular Payment Ledger. Without this bridge, a fully
+        returned advance appears as two open AR rows even though its net balance is
+        zero. Only self-referencing Payment/Journal rows that are fully covered by
+        settled Employee Advance links are removed.
+        """
+        candidates = [
+            ple
+            for ple in self.ple_entries
+            if ple.party_type == "Employee"
+            and ple.voucher_type in ("Payment Entry", "Journal Entry")
+            and ple.voucher_type == ple.against_voucher_type
+            and ple.voucher_no == ple.against_voucher_no
+            and getdate(ple.posting_date) <= self.filters.report_date
+        ]
+        if not candidates:
+            return
+
+        candidate_keys = {(ple.voucher_type, ple.voucher_no) for ple in candidates}
+        advance_links = frappe.get_all(
+            "Advance Payment Ledger Entry",
+            filters={
+                "company": self.filters.company,
+                "voucher_no": ("in", list({ple.voucher_no for ple in candidates})),
+                "delinked": 0,
+            },
+            fields=[
+                "voucher_type",
+                "voucher_no",
+                "against_voucher_type",
+                "against_voucher_no",
+                "amount",
+                "currency",
+            ],
+        )
+        advance_links = [
+            link for link in advance_links if (link.voucher_type, link.voucher_no) in candidate_keys
+        ]
+        if not advance_links:
+            return
+
+        links_by_advance = {}
+        links_by_voucher = {}
+        for link in advance_links:
+            voucher_key = (link.voucher_type, link.voucher_no)
+            links_by_voucher.setdefault(voucher_key, []).append(link)
+            if link.against_voucher_type == "Employee Advance":
+                links_by_advance.setdefault(link.against_voucher_no, []).append(link)
+
+        tolerance = 1.0 / 10**self.currency_precision
+        settled_advances = {
+            advance
+            for advance, links in links_by_advance.items()
+            if abs(sum(flt(link.amount) for link in links)) < tolerance
+        }
+
+        ple_amounts = {}
+        ple_currencies = {}
+        ple_scopes = {}
+        for ple in candidates:
+            voucher_key = (ple.voucher_type, ple.voucher_no)
+            ple_amounts[voucher_key] = ple_amounts.get(voucher_key, 0.0) + flt(
+                ple.amount_in_account_currency
+            )
+            ple_currencies.setdefault(voucher_key, set()).add(ple.account_currency)
+            ple_scopes.setdefault(voucher_key, set()).add((ple.party, ple.account))
+
+        settled_vouchers = set()
+        for voucher_key, links in links_by_voucher.items():
+            # The advance ledger has no account/party row identifier. Ambiguous
+            # multi-employee or multi-account vouchers must remain visible.
+            if len(ple_scopes.get(voucher_key, set())) != 1:
+                continue
+            if not all(
+                link.against_voucher_type == "Employee Advance"
+                and link.against_voucher_no in settled_advances
+                for link in links
+            ):
+                continue
+
+            link_currencies = {link.currency for link in links}
+            if len(ple_currencies.get(voucher_key, set())) != 1 or (
+                link_currencies != ple_currencies[voucher_key]
+            ):
+                continue
+
+            linked_amount = sum(flt(link.amount) for link in links)
+            if abs(ple_amounts.get(voucher_key, 0.0) - linked_amount) < tolerance:
+                settled_vouchers.add(voucher_key)
+
+        # Keep a whole connected settlement visible if any participating voucher
+        # cannot be removed. Never hide only one side of a balanced advance.
+        while True:
+            incomplete = set()
+            for links in links_by_advance.values():
+                keys = {(link.voucher_type, link.voucher_no) for link in links}
+                scopes = set().union(*(ple_scopes.get(key, set()) for key in keys))
+                base_amount = sum(
+                    flt(ple.amount) for ple in candidates
+                    if (ple.voucher_type, ple.voucher_no) in keys
+                )
+                if not keys <= settled_vouchers or len(scopes) != 1 or abs(base_amount) >= tolerance:
+                    incomplete.update(keys)
+            remaining = settled_vouchers - incomplete
+            if remaining == settled_vouchers:
+                break
+            settled_vouchers = remaining
+
+        if settled_vouchers:
+            hidden_names = {
+                ple.name for ple in candidates
+                if (ple.voucher_type, ple.voucher_no) in settled_vouchers
+            }
+            self.ple_entries = [
+                ple
+                for ple in self.ple_entries
+                if ple.name not in hidden_names
+            ]
+
     def get_sales_invoices_or_customers_based_on_sales_person(self):
         if self.filters.get("sales_person"):
             lft, rgt = frappe.db.get_value("Sales Person", self.filters.get("sales_person"), ["lft", "rgt"])
@@ -1242,4 +1365,4 @@ def is_informal_customer(party):
     doctype = "Customer"
     fieldname = "informal_customer"
 
-    return frappe.db.get_value(doctype, party, fieldname) 
+    return frappe.db.get_value(doctype, party, fieldname)
