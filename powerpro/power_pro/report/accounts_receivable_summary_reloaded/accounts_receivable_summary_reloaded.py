@@ -10,6 +10,10 @@ from erpnext.accounts.party import get_partywise_advanced_payment_amount
 from erpnext.accounts.report.accounts_receivable.accounts_receivable import ReceivablePayableReport
 from erpnext.accounts.utils import get_currency_precision, get_party_types_from_account_type
 
+from powerpro.power_pro.report.accounts_receivable_reloaded.accounts_receivable_reloaded import (
+    ReceivablePayableReport as ReloadedReceivablePayableReport,
+)
+
 
 def execute(filters=None):
     args = {
@@ -36,7 +40,10 @@ class AccountsReceivableSummary(ReceivablePayableReport):
         igc_settings = get_igc_settings()
         hide_customers = igc_settings.hide_informal_customers if igc_settings else False
 
-        self.receivables = ReceivablePayableReport(self.filters).run(args)[1]
+        # Aggregate voucher rows only; detailed-report subtotals would double-count them.
+        detail_filters = frappe._dict(self.filters)
+        detail_filters.group_by_party = False
+        self.receivables = ReloadedReceivablePayableReport(detail_filters).run(args)[1]
         self.currency_precision = get_currency_precision() or 2
 
         self.get_party_total(args)
