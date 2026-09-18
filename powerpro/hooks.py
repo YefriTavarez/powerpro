@@ -155,6 +155,7 @@ app_include_icons = "powerpro/icons/igcaribe/icons.svg"
 # Permissions evaluated in scripted ways
 
 permission_query_conditions = {
+    "Salary Slip": "powerpro.utils.query.salary_slip_query_conditions",
     "Overtime Rest Watch": "powerpro.controllers.overtime_rest_monitor.watch_query",
     "Working Time Review": "powerpro.controllers.working_time_reviews.review_query",
     "Working Time Incident": "powerpro.controllers.working_time_incidents.incident_query",
