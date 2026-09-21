@@ -417,9 +417,9 @@ export_python_type_annotations = True
 boot_session = "powerpro.boot.boot_session"
 
 # Employee self-service; dieta operations remain independent of payroll.
-portal_menu_items = [
-    {"title": "Mis solicitudes de dieta", "route": "/dietas", "role": "Employee"},
-]
+# portal_menu_items = [
+#     {"title": "Mis solicitudes de dieta", "route": "/dietas", "role": "Employee"},
+# ]
 
 
 # Fixed employee supplements extend existing hooks without replacing other payroll integrations.
