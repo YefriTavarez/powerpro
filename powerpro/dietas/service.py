@@ -253,6 +253,8 @@ def _prepare(work_call, work_date, rows, lock=False, payable=True):
     prepared = []
     for row in rows:
         emp = _employee(row['employee'], lock=lock)
+        if payable and not access.can_manage_batch_employee(emp):
+            frappe.throw('No tiene permiso sobre el pago de dieta de este empleado.', frappe.PermissionError)
         auth = _authorization(call, emp, date, lock=lock)
         req = _request(call.company, emp.name, date, lock=lock)
         if row['version'] != _version(call, auth, emp, cfg, req):

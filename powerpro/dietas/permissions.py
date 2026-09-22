@@ -1,5 +1,5 @@
 import frappe
-from frappe.permissions import get_user_permissions
+from frappe.permissions import get_allowed_docs_for_doctype, get_user_permissions
 
 REQUEST = 'Solicitud de Dieta'
 BATCH = 'Lote de Pago de Dietas'
@@ -10,15 +10,16 @@ def employee(employee, lock=False):
     return frappe.get_doc('Employee', employee, for_update=lock)
 
 
-def in_scope(emp, user=None):
+def in_scope(emp, user=None, doctype=REQUEST):
     user = user or frappe.session.user
     if user == 'Guest':
         return False
     restrictions = get_user_permissions(user)
     for dt, value in [('Company', emp.company), ('Employee', emp.name), ('Department', emp.department)]:
-        rows = restrictions.get(dt) or []
-        # Apply explicit scope even when a custom API bypasses generic list permissions.
-        if rows and value not in {row.get('doc') for row in rows}:
+        # Match Frappe's global/document-specific scope, including descendants
+        # already expanded by get_user_permissions. Other workflows are unrelated.
+        allowed = get_allowed_docs_for_doctype(restrictions.get(dt) or [], doctype)
+        if allowed and value not in allowed:
             return False
     return True
 
@@ -28,6 +29,11 @@ def can_manage(emp, user=None):
     return bool(user != 'Guest' and emp.user_id != user and in_scope(emp, user) and (
         'HR Manager' in frappe.get_roles(user) or emp.get('expense_approver') == user
     ))
+
+
+def can_manage_batch_employee(emp, user=None):
+    # A payout discloses and changes requests as well as the batch itself.
+    return can_manage(emp, user) and in_scope(emp, user, doctype=BATCH)
 
 
 def can_read_request(doc, user=None):
@@ -64,7 +70,7 @@ def request_permission(doc, user=None, ptype=None, permission_type=None):
 def batch_permission(doc, user=None, ptype=None, permission_type=None):
     user = user or frappe.session.user
     return (ptype or permission_type) in (None, 'read', 'print', 'report', 'export') and bool(doc.rows) and all(
-        can_manage(employee(row.employee), user) for row in doc.rows
+        can_manage_batch_employee(employee(row.employee), user) for row in doc.rows
     )
 
 
@@ -102,7 +108,8 @@ def request_query(user=None):
 
 
 def batch_query(user=None):
-    names = visible_employees(user, own=False)
+    names = [name for name in visible_employees(user, own=False)
+             if in_scope(employee(name), user, doctype=BATCH)]
     if not names:
         return '1=0'
     quoted = ','.join(frappe.db.escape(n) for n in names)
