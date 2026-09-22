@@ -130,6 +130,11 @@ utils.getdate = lambda x=None: date.fromisoformat(str(x)) if x else date(2026,9,
 utils.now_datetime = lambda: datetime(2026,9,9,18)
 perms = types.ModuleType('frappe.permissions')
 perms.get_user_permissions = lambda user: restrictions.get(user,{})
+# Frappe's adapter contract: unrelated DocType permissions do not restrict this document.
+perms.get_allowed_docs_for_doctype = lambda rows, dt: [
+    row.get('doc') for row in rows
+    if not row.get('applicable_for') or row.get('applicable_for') == dt
+]
 model = types.ModuleType('frappe.model'); document = types.ModuleType('frappe.model.document')
 document.Document = object
 fake_modules = patch.dict(sys.modules, {'frappe':fake,'frappe.utils':utils,'frappe.permissions':perms,'frappe.model':model,'frappe.model.document':document})
@@ -467,6 +472,120 @@ class DietasTest(unittest.TestCase):
         for role in ('Auxiliar Contabilidad','System Manager','Employee','Expense Approver'):
             roles['unrelated']=[role];fake.session.user='unrelated'
             with self.assertRaises(PermissionError):service.validate_direct_request(self.direct_request())
+
+    def test_leave_scope_does_not_block_direct_creation_or_creator_visibility(self):
+        roles['creator'] = ['Gerente Finanzas']
+        fake.session.user = 'creator'
+        restrictions['creator'] = {
+            dt: [{'doc': 'OUTSIDE', 'applicable_for': 'Leave Application'}]
+            for dt in ('Company', 'Employee', 'Department')
+        }
+        req = self.direct_request()
+        self.assertTrue(access.request_permission(req, ptype='create'))
+        service.validate_direct_request(req)
+        req.save()
+        self.assertTrue(access.request_permission(req, ptype='read'))
+        self.assertIn("'E1'", access.request_query())
+        self.assertIn("initiated_by = 'creator'", access.request_query())
+        self.assertEqual((req.approval_status, req.payment_status), ('Pending', 'Unpaid'))
+        self.assertFalse(access.can_manage(get_doc('Employee', 'E1')))
+        self.assertEqual(access.batch_query(), '1=0')
+
+    def test_unrelated_allowed_values_cannot_widen_global_or_request_scope(self):
+        roles['creator'] = ['Gerente Finanzas']
+        fake.session.user = 'creator'
+        for dt, value in [('Company', 'IGC'), ('Employee', 'E1'), ('Department', 'Production')]:
+            for applicable_for in (None, '', service.REQUEST):
+                with self.subTest(dt=dt, applicable_for=applicable_for):
+                    restrictions['creator'] = {dt: [
+                        {'doc': 'OUTSIDE', 'applicable_for': applicable_for},
+                        {'doc': value, 'applicable_for': 'Leave Application'},
+                    ]}
+                    req = self.direct_request(initiated_by='creator')
+                    self.assertFalse(access.request_permission(req, ptype='create'))
+                    self.assertFalse(access.request_permission(req, ptype='read'))
+                    self.assertEqual(access.request_query(), '1=0')
+                    with self.assertRaises(PermissionError):
+                        service.validate_direct_request(req)
+                    restrictions['creator'][dt][0]['doc'] = value
+                    self.assertTrue(access.request_permission(req, ptype='create'))
+
+    def test_leave_scope_does_not_block_authorized_payout_or_history(self):
+        restrictions['manager'] = {
+            dt: [{'doc': 'OUTSIDE', 'applicable_for': 'Leave Application'}]
+            for dt in ('Company', 'Employee', 'Department')
+        }
+        result = self.pay(('E1',))
+        batch = get_doc(service.BATCH, result['batch'])
+        self.assertTrue(access.batch_permission(batch, ptype='read'))
+        self.assertEqual(len(service.payment_history('CALL')), 1)
+        self.assertIn("'E1'", access.batch_query())
+
+    def test_batch_scope_does_not_block_request_but_blocks_payout_before_writes(self):
+        args = self.payload(('E1',))
+        for dt in ('Company', 'Employee', 'Department'):
+            with self.subTest(dt=dt):
+                restrictions['manager'] = {dt: [{'doc': 'OUTSIDE', 'applicable_for': service.BATCH}]}
+                req = self.direct_request()
+                self.assertTrue(access.request_permission(req, ptype='create'))
+                service.validate_direct_request(req)
+                self.assertIn("'E1'", access.request_query())
+                with self.assertRaises(PermissionError):
+                    self.payload(('E1',))
+                with self.assertRaises(PermissionError):
+                    service.confirm_payout(**args)
+                self.assertFalse(get_all(service.REQUEST))
+                self.assertFalse(get_all(service.BATCH))
+
+    def test_request_and_batch_scopes_both_protect_batch_history_and_retries(self):
+        args = self.payload()
+        result = service.confirm_payout(**args)
+        batch = get_doc(service.BATCH, result['batch'])
+        for applicable_for in (service.REQUEST, service.BATCH):
+            with self.subTest(applicable_for=applicable_for):
+                restrictions['manager'] = {'Employee': [
+                    {'doc': 'E1', 'applicable_for': applicable_for},
+                    {'doc': 'E2', 'applicable_for': 'Leave Application'},
+                ]}
+                self.assertFalse(access.batch_permission(batch, ptype='read'))
+                self.assertEqual(service.payment_history('CALL'), [])
+                self.assertIn("'E1'", access.batch_query())
+                self.assertNotIn("'E2'", access.batch_query())
+                with self.assertRaises(ValueError):
+                    service.confirm_payout(**args)
+
+    def test_disjoint_request_and_batch_scopes_cannot_be_combined_for_payment(self):
+        args = self.payload(('E1',))
+        restrictions['manager'] = {'Employee': [
+            {'doc': 'E1', 'applicable_for': service.REQUEST},
+            {'doc': 'E2', 'applicable_for': service.BATCH},
+        ]}
+        self.assertTrue(access.request_permission(self.direct_request(), ptype='create'))
+        self.assertEqual(access.batch_query(), '1=0')
+        with self.assertRaises(PermissionError):
+            service.confirm_payout(**args)
+        self.assertFalse(get_all(service.REQUEST))
+        self.assertFalse(get_all(service.BATCH))
+
+    def test_employee_self_service_uses_request_scope(self):
+        user = fake.session.user = 'E1@example.com'
+        restrictions[user] = {'Employee': [{'doc': 'E2', 'applicable_for': 'Leave Application'}]}
+        service.request_dieta('AUTH-E1')
+        self.assertEqual(len(service.my_dietas()['requests']), 1)
+        restrictions[user]['Employee'][0]['applicable_for'] = service.REQUEST
+        with self.assertRaises(PermissionError):
+            service.my_dietas()
+
+    def test_unrelated_scope_does_not_grant_a_role_or_allow_self_management(self):
+        restrictions['manager'] = {'Employee': [{'doc': 'OUTSIDE', 'applicable_for': 'Leave Application'}]}
+        store[('Employee', 'E1')]['user_id'] = 'manager'
+        self.assertFalse(access.request_permission(self.direct_request(), ptype='create'))
+        with self.assertRaises(PermissionError):
+            service._employee('E1')
+        for user in ('Guest', 'unauthorized'):
+            fake.session.user = user
+            restrictions[user] = restrictions['manager']
+            self.assertFalse(access.request_permission(self.direct_request(), ptype='create'))
 
     def enable_centers(self):
         store[('Dieta Company Settings','cfg')]['generate_journal_entry'] = 1

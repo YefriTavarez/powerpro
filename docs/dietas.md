@@ -51,6 +51,13 @@ Call and that employee/company User Permissions match their intended scope.
 HR authority alone does not override explicit Company/Employee/Department User
 Permissions. Employees never receive full Work Call documents through self-service.
 
+User Permissions follow Frappe's `applicable_for` scope: global permissions and
+those for **Solicitud de Dieta** restrict requests; permissions for unrelated
+workflows, such as Leave Application, do not. Payout previews, confirmation,
+history and batch lists additionally enforce **Lote de Pago de Dietas** scope
+for every employee, so request and payout restrictions cannot be combined to
+expand access. Direct creator roles do not gain approval/payment authority.
+
 ## Local verification
 
 ✅ These tests use local adapters and DOM fixtures; they do not connect to a site:

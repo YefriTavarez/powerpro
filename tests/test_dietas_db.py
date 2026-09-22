@@ -75,6 +75,63 @@ class DietaDatabaseTest(unittest.TestCase):
         preview=service.preview_payout(**args)
         return dict(**args,token=preview['token'],idempotency_key=str(uuid.uuid4()))
 
+    def scoped_manager(self):
+        """Rollback-only identity with real roles and a real User Permission."""
+        user = 'dieta-scope-' + self.suffix + '@example.invalid'
+        self.raw('User', user, email=user, first_name='Dieta Scope Test',
+                 enabled=1, user_type='System User')
+        self.raw('Has Role', 'DIETA-ROLE-' + self.suffix, parent=user,
+                 parenttype='User', parentfield='roles', role='HR Manager')
+        other = self.employee + '-OTHER'
+        self.raw('Employee', other, employee_name='Other Dieta Test', first_name='Other',
+                 company=self.company, status='Active', user_id=None)
+        permission = self.raw('User Permission', 'DIETA-PERM-' + self.suffix,
+                 user=user, allow='Employee', for_value=other, hide_descendants=1,
+                 apply_to_all_doctypes=0, applicable_for='Leave Application')
+        self.addCleanup(frappe.clear_cache, user=user)
+        frappe.set_user(user)
+        return user, permission
+
+    def test_direct_request_respects_real_permission_applicability(self):
+        user, permission = self.scoped_manager()
+        currency = frappe.db.get_value('Company', self.company, 'default_currency')
+        def draft():
+            return frappe.get_doc(dict(doctype=service.REQUEST, employee=self.employee,
+                company=self.company, work_date=self.date, amount=300, currency=currency))
+
+        request = draft()
+        request.insert()
+        self.assertEqual((request.approval_status, request.payment_status), ('Pending', 'Unpaid'))
+        self.assertEqual(request.initiated_by, user)
+        request.check_permission('read')
+        self.assertEqual(frappe.get_list(service.REQUEST, filters={'name': request.name},
+                                        pluck='name'), [request.name])
+        # The same Employee restriction must still apply globally or to Dietas.
+        for applicable_for in ('', service.REQUEST):
+            with self.subTest(applicable_for=applicable_for):
+                frappe.db.set_value('User Permission', permission.name, {
+                    'applicable_for': applicable_for,
+                    'apply_to_all_doctypes': int(not applicable_for),
+                })
+                frappe.cache.hdel('user_permissions', user)
+                self.assertFalse(frappe.has_permission(service.REQUEST, 'create', doc=draft()))
+                self.assertFalse(frappe.has_permission(service.REQUEST, 'read', doc=request))
+                self.assertEqual(frappe.get_list(service.REQUEST,
+                    filters={'name': request.name}, pluck='name'), [])
+
+    def test_real_batch_scope_blocks_stale_payout_before_writes(self):
+        user, permission = self.scoped_manager()
+        # Work Call read rights are independent; keep this test focused on the
+        # real Dieta permission/service paths under a non-Administrator identity.
+        with patch.object(service, '_call', return_value=frappe.get_doc('Overtime Work Call', self.call_name)):
+            args = self.payload()
+            frappe.db.set_value('User Permission', permission.name, 'applicable_for', service.BATCH)
+            frappe.cache.hdel('user_permissions', user)
+            with self.assertRaises(frappe.PermissionError):
+                service.confirm_payout(**args)
+        self.assertIsNone(service._request(self.company, self.employee, self.date))
+        self.assertFalse(frappe.db.exists(service.BATCH, {'overtime_work_call': self.call_name}))
+
     def test_real_document_save_and_idempotent_retry(self):
         args=self.payload();first=service.confirm_payout(**args);second=service.confirm_payout(**args)
         self.assertEqual(first['batch'],second['batch'])
