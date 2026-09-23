@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "doctypes": [
+    {
+      "name": "Employee Supplement Mapping",
+      "slug": "employee_supplement_mapping"
+    },
+    {
+      "name": "Employee Supplement Existing Salary",
+      "slug": "employee_supplement_existing_salary"
+    },
+    {
+      "name": "Employer Contribution Exclusion",
+      "slug": "employer_contribution_exclusion"
+    },
+    {
+      "name": "Working Time Evidence Reference",
+      "slug": "working_time_evidence_reference"
+    },
+    {
+      "name": "Ordinary Night Automation Day",
+      "slug": "ordinary_night_automation_day"
+    },
+    {
+      "name": "Employee Supplement Settings",
+      "slug": "employee_supplement_settings",
+      "client_script": true
+    },
+    {
+      "name": "Employee Supplement Revision",
+      "slug": "employee_supplement_revision"
+    },
+    {
+      "name": "Working Time Review",
+      "slug": "working_time_review",
+      "client_script": true
+    },
+    {
+      "name": "Working Time Incident",
+      "slug": "working_time_incident",
+      "client_script": true
+    },
+    {
+      "name": "Overtime Rest Watch",
+      "slug": "overtime_rest_watch",
+      "client_script": true
+    },
+    {
+      "name": "Ordinary Night Automation",
+      "slug": "ordinary_night_automation",
+      "client_script": true
+    },
+    {
+      "name": "Overtime Evidence Watch",
+      "slug": "overtime_evidence_watch",
+      "client_script": true
+    },
+    {
+      "name": "Ordinary Night Settlement",
+      "slug": "ordinary_night_settlement",
+      "client_script": true
+    },
+    {
+      "name": "Overtime Settlement Election",
+      "slug": "overtime_settlement_election",
+      "client_script": true
+    },
+    {
+      "name": "Overtime Pay Policy",
+      "slug": "overtime_pay_policy"
+    },
+    {
+      "name": "Overtime Reconciliation Run",
+      "slug": "overtime_reconciliation_run"
+    },
+    {
+      "name": "Overtime Attendance Exception",
+      "slug": "overtime_attendance_exception"
+    },
+    {
+      "name": "Solicitud de Dieta",
+      "slug": "solicitud_de_dieta",
+      "client_script": true
+    },
+    {
+      "name": "Lote de Pago de Dietas",
+      "slug": "lote_de_pago_de_dietas",
+      "client_script": true
+    }
+  ],
+  "server_scripts": [
+    {
+      "doctype": "Overtime Reconciliation Run",
+      "event": "Before Save",
+      "file": "overtime_reconciliation_run_before_save.py"
+    },
+    {
+      "doctype": "Overtime Reconciliation Run",
+      "event": "Before Delete",
+      "file": "overtime_reconciliation_run_before_delete.py"
+    },
+    {
+      "doctype": "Overtime Attendance Exception",
+      "event": "Before Save",
+      "file": "overtime_attendance_exception_before_save.py"
+    },
+    {
+      "doctype": "Overtime Attendance Exception",
+      "event": "Before Delete",
+      "file": "overtime_attendance_exception_before_delete.py"
+    },
+    {
+      "doctype": "Lote de Pago de Dietas",
+      "event": "Before Save",
+      "file": "lote_de_pago_de_dietas_before_save.py"
+    },
+    {
+      "doctype": "Lote de Pago de Dietas",
+      "event": "Before Delete",
+      "file": "lote_de_pago_de_dietas_before_delete.py"
+    },
+    {
+      "doctype": "Lote de Pago de Dietas",
+      "event": "Before Rename",
+      "file": "lote_de_pago_de_dietas_before_rename.py"
+    }
+  ]
+}

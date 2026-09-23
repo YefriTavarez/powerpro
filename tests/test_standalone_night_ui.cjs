@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 (async()=>{
  let handlers;const calls=[],messages=[],buttons=[],routes=[];
  const ctx={__:s=>s,frappe:{ui:{form:{on(_name,h){handlers=h}}},msgprint:m=>messages.push(m),set_route:(...a)=>routes.push(a),call:q=>{calls.push(q);return Promise.resolve({message:[]})}}};
- vm.runInNewContext(fs.readFileSync('powerpro/power_pro/doctype/ordinary_night_automation/ordinary_night_automation.js','utf8'),ctx);
+ vm.runInNewContext(fs.readFileSync('powerpro/custom_hr/client_scripts/ordinary_night_automation.js','utf8'),ctx);
  let dirty=false,reloads=0;
  const frm={doc:{name:'SCHEDULE',docstatus:0,days:[]},is_dirty:()=>dirty,reload_doc:()=>reloads++,add_custom_button:(label,fn)=>buttons.push({label,fn}),dashboard:{set_headline_alert(){}}};
  handlers.refresh(frm);assert.equal(buttons.length,0);

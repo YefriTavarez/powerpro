@@ -176,7 +176,9 @@ try:
  frappe.set_user(user_name)
  try:
   assert frappe.has_permission(cases.DT,'read',doc=daily.name)
-  assert frappe.get_list(cases.DT,filters={'name':daily.name},pluck='name')
+  # Cancelled retroactive sources are intentionally excluded by the shared
+  # permission-query filter; direct historical access remains available.
+  assert not frappe.get_list(cases.DT,filters={'name':daily.name},pluck='name')
  finally:frappe.set_user('Administrator')
  other_run=frappe.copy_doc(frappe.get_doc('Overtime Reconciliation Run',accepted['audit']))
  other_run.name=prefix+'-OTHER-RUN';other_run.employee=other.name;other_run.retroactive_adjustment=foreign.name

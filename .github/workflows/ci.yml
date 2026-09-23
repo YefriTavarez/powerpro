@@ -212,10 +212,18 @@ jobs:
           bench --site test_site install-app hrms
           bench --site test_site execute erpnext.setup.utils.before_tests
           bench --site test_site execute hrms.tests.test_utils.before_tests
+          bench set-config -g server_script_enabled 1
           bench --site test_site install-app powerpro
           bench build
         env:
           CI: 'Yes'
+
+      - name: Verify HR Custom DocType installation
+        working-directory: /home/runner/frappe-bench/sites
+        run: |
+          bench --site test_site set-config developer_mode 1
+          bench --site test_site set-config powerpro_hr_rehearsal 1
+          ../env/bin/python ../apps/powerpro/scripts/test_hr_custom_dev.py --site test_site --confirm-development
 
       - name: Run Dieta Database Tests (isolated development fixture)
         working-directory: /home/runner/frappe-bench

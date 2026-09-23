@@ -168,6 +168,9 @@ try:
     shift.name = prefix + '-SHIFT'
     shift.docstatus = 0
     shift.start_time, shift.end_time = '18:00:00', '02:00:00'
+    # This synthetic overnight schedule must not inherit the daytime shift's
+    # special Friday exit (17:00), which would create a 23-hour work window.
+    shift.custom_hora_salida_viernes = None
     shift.enable_auto_attendance = 0
     shift.begin_check_in_before_shift_start_time = shift.allow_check_out_after_shift_end_time = 0
     shift.determine_check_in_and_check_out = 'Alternating entries as IN and OUT during the same shift'

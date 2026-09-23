@@ -427,7 +427,7 @@ class DietasTest(unittest.TestCase):
         with self.assertRaises(ValueError):service.validate_direct_request(self.direct_request(overtime_work_call='CALL'))
 
     def test_direct_controller_allows_new_and_keeps_existing_protected(self):
-        controller=importlib.import_module('powerpro.power_pro.doctype.solicitud_de_dieta.solicitud_de_dieta')
+        controller=importlib.import_module('powerpro.controllers.hr_custom.solicitud_de_dieta')
         class Request(Record,controller.SolicituddeDieta):
             pass
         req=Request(self.direct_request())

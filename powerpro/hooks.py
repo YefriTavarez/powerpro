@@ -120,7 +120,8 @@ app_include_icons = "powerpro/icons/igcaribe/icons.svg"
 # ------------
 
 # before_install = "powerpro.install.before_install"
-# after_install = "powerpro.install.after_install"
+after_install = "powerpro.custom_hr.installer.install"
+before_migrate = "powerpro.custom_hr.installer.install"
 
 # Uninstallation
 # ------------
@@ -205,6 +206,19 @@ has_permission = {
 # Override standard doctype classes
 
 override_doctype_class = {
+    # HR controllers use the same classes before and after metadata conversion.
+    'Employee Supplement Settings': 'powerpro.controllers.hr_custom.employee_supplement_settings.EmployeeSupplementSettings',
+    'Employee Supplement Revision': 'powerpro.controllers.hr_custom.employee_supplement_revision.EmployeeSupplementRevision',
+    'Working Time Review': 'powerpro.controllers.hr_custom.working_time_review.WorkingTimeReview',
+    'Working Time Incident': 'powerpro.controllers.hr_custom.working_time_incident.WorkingTimeIncident',
+    'Overtime Rest Watch': 'powerpro.controllers.hr_custom.overtime_rest_watch.OvertimeRestWatch',
+    'Overtime Evidence Watch': 'powerpro.controllers.hr_custom.overtime_evidence_watch.OvertimeEvidenceWatch',
+    'Ordinary Night Automation': 'powerpro.controllers.hr_custom.ordinary_night_automation.OrdinaryNightAutomation',
+    'Ordinary Night Settlement': 'powerpro.controllers.hr_custom.ordinary_night_settlement.OrdinaryNightSettlement',
+    'Overtime Settlement Election': 'powerpro.controllers.hr_custom.overtime_settlement_election.OvertimeSettlementElection',
+    'Overtime Pay Policy': 'powerpro.controllers.hr_custom.overtime_pay_policy.OvertimePayPolicy',
+    'Solicitud de Dieta': 'powerpro.controllers.hr_custom.solicitud_de_dieta.SolicituddeDieta',
+
     "Overtime Authorization": "powerpro.controllers.overtime_source_cancellation.LockedOvertimeAuthorization",
     "Retroactive Overtime Adjustment": "powerpro.controllers.overtime_source_cancellation.LockedRetroactiveOvertimeAdjustment",
     "Leave Application": "powerpro.controllers.overtime_leave_application.OvertimeLeaveApplication",
@@ -366,12 +380,12 @@ override_doctype_dashboards = {
 
 # Request Events
 # ----------------
-# before_request = ["powerpro.utils.before_request"]
+before_request = ["powerpro.custom_hr.installer.initialize_controllers"]
 # after_request = ["powerpro.utils.after_request"]
 
 # Job Events
 # ----------
-# before_job = ["powerpro.utils.before_job"]
+before_job = ["powerpro.custom_hr.installer.initialize_controllers"]
 # after_job = ["powerpro.utils.after_job"]
 
 # User Data Protection
