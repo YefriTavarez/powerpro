@@ -60,7 +60,16 @@ try:
  originals={doc.name:doc.evidence_snapshot for doc in [first,second]}
  money_before=frappe.db.count('Additional Salary');punches_before=frappe.db.count('Employee Checkin')
  frappe.db.set_single_value('DGII Payroll Settings','enable_overtime_evidence_monitor',1)
- candidates=monitor._candidates();assert {r['name'] for r in candidates}=={first.name,second.name},candidates
+ # A restored Development database can already contain eligible sources.
+ # Exercise the real query, then scope scheduler writes to owned fixtures.
+ real_candidates=monitor._candidates
+ candidates=real_candidates(100)
+ fixture_names={first.name,second.name}
+ assert fixture_names <= {r['name'] for r in candidates},candidates
+ def fixture_candidates(limit=50):
+  return [r for r in real_candidates(100) if r['source_type']==DT and r['name'] in fixture_names][:limit]
+ candidate_patch=patch.object(monitor,'_candidates',side_effect=fixture_candidates)
+ candidate_patch.start()
  one=monitor.check_source(DT,first.name);two=monitor.check_source(DT,second.name)
  assert one['status']=='Current' and two['status']=='Current',(one,two)
  version_count=frappe.db.count('Version')
@@ -138,7 +147,10 @@ try:
  call.automation_mode='Verified Checkins';call.evidence_auto_settle=0
  call.set('employees',[]);call.append('employees',{'employee':employee.name})
  call.set('dates',[]);call.append('dates',{'work_date':'2026-09-14','start_time':'18:00:00','end_time':'20:00:00','requested_hours':2})
- call.insert(ignore_permissions=True);call.flags.ignore_permissions=True;call.submit()
+ from powerpro.power_pro.doctype.overtime_work_call import overtime_work_call
+ from powerpro.power_pro.doctype.overtime_authorization import overtime_authorization
+ with patch.object(overtime_work_call,'now_datetime',return_value=get_datetime('2026-09-13 12:00:00')), patch.object(overtime_authorization,'now_datetime',return_value=get_datetime('2026-09-13 12:00:00')):
+  call.insert(ignore_permissions=True);call.flags.ignore_permissions=True;call.submit()
  auth_name=frappe.db.get_value('Overtime Authorization',{'overtime_work_call':call.name},'name')
  with patch.object(evidence,'now_datetime',return_value=get_datetime('2026-09-14 21:00:00')):
   assert evidence.process_authorization(auth_name)=='Verified'
@@ -170,6 +182,7 @@ try:
  first.reload();first.flags.ignore_permissions=True;first.cancel()
  print('EVIDENCE_MONITOR: disabled no-op, source/dependent incident, original finances untouched, idempotent versioning, authoritative resolution, paused-payments monitoring, bounded oldest-first scheduler and visible failure passed')
 finally:
+ if 'candidate_patch' in globals():candidate_patch.stop()
  frappe.db.rollback();frappe.db.commit=commit;frappe.enqueue=enqueue;frappe.sendmail=sendmail
  after={d:frappe.db.count(d) for d in counts}
  assert before==after,(before,after)

@@ -4,7 +4,7 @@ function fixture(doc,dirty=false){
  const context={__:s=>s,frappe:{ui:{form:{on(_name,config){handler=config}},Dialog:class{
   constructor(config){this.config=config;dialogs.push(this)}show(){}hide(){this.hidden=true}
  }},call(options){calls.push(options);return Promise.resolve({message:{status:'Overdue'}})},msgprint(s){alerts.push(s)}}};
- vm.runInNewContext(fs.readFileSync('powerpro/power_pro/doctype/overtime_settlement_election/overtime_settlement_election.js','utf8'),context);
+ vm.runInNewContext(fs.readFileSync('powerpro/custom_hr/client_scripts/overtime_settlement_election.js','utf8'),context);
  const frm={doc,is_new:()=>false,is_dirty:()=>dirty,add_custom_button(label,fn){buttons.push({label,fn})},reload_doc(){alerts.push('reloaded')},dashboard:{set_headline_alert(s){alerts.push(s)}}};
  handler.refresh(frm);return {buttons,calls,dialogs,alerts};
 }

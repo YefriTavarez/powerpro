@@ -58,7 +58,10 @@ try:
   call.automation_mode='Verified Checkins';call.evidence_auto_settle=1
   call.set('employees',[]);call.append('employees',{'employee':employee.name})
   call.set('dates',[]);call.append('dates',{'work_date':'2026-09-13','start_time':'07:00:00','end_time':'11:00:00','requested_hours':4})
-  call.insert(ignore_permissions=True);call.flags.ignore_permissions=True;call.submit()
+  from powerpro.power_pro.doctype.overtime_work_call import overtime_work_call
+  from powerpro.power_pro.doctype.overtime_authorization import overtime_authorization
+  with patch.object(overtime_work_call,'now_datetime',return_value=get_datetime('2026-09-12 12:00:00')), patch.object(overtime_authorization,'now_datetime',return_value=get_datetime('2026-09-12 12:00:00')):
+   call.insert(ignore_permissions=True);call.flags.ignore_permissions=True;call.submit()
   return call,frappe.db.get_value('Overtime Authorization',{'overtime_work_call':call.name},'name')
  def choose(name,method):
   election=frappe.get_doc({'doctype':'Overtime Settlement Election','authorization':name,'choice':method,

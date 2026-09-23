@@ -43,7 +43,7 @@ def wait_for(path):
 
 if len(sys.argv) > 1:
     schedule, action, barrier, slot = sys.argv[1:]
-    get_single, get_single_value = frappe.get_single, frappe.db.get_single_value
+    get_single, get_single_value, get_doc = frappe.get_single, frappe.db.get_single_value, frappe.get_doc
 
     def settings(dt, *args, **kwargs):
         doc = get_single(dt, *args, **kwargs)
@@ -60,7 +60,16 @@ if len(sys.argv) > 1:
                 return '2026-09-01'
         return get_single_value(dt, field, *args, **kwargs)
 
-    frappe.get_single, frappe.db.get_single_value = settings, setting
+    def script_doc(dt, *args, **kwargs):
+        doc = get_doc(dt, *args, **kwargs)
+        if dt == 'DGII Payroll Settings':
+            doc.enable_checkin_overtime_reconciliation = 1
+            doc.checkin_overtime_effective_from = '2026-09-01'
+        return doc
+
+    # Native services use get_single; Server Scripts use the exposed get_doc API.
+    # Keep the global switch off and opt in only these fixture worker processes.
+    frappe.get_single, frappe.db.get_single_value, frappe.get_doc = settings, setting, script_doc
     night.now_datetime = auto.now_datetime = lambda: get_datetime('2026-09-20 10:00:00')
     doc = frappe.get_doc(auto.DT, schedule)
     assert doc.reference.startswith('STANDALONE-RACE-DEV-')
@@ -168,6 +177,9 @@ try:
     shift.name = prefix + '-SHIFT'
     shift.docstatus = 0
     shift.start_time, shift.end_time = '18:00:00', '02:00:00'
+    # This synthetic overnight schedule must not inherit the daytime shift's
+    # special Friday exit (17:00), which would create a 23-hour work window.
+    shift.custom_hora_salida_viernes = None
     shift.enable_auto_attendance = 0
     shift.begin_check_in_before_shift_start_time = shift.allow_check_out_after_shift_end_time = 0
     shift.determine_check_in_and_check_out = 'Alternating entries as IN and OUT during the same shift'

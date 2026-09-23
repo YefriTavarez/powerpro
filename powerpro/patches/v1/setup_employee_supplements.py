@@ -5,9 +5,8 @@ from powerpro.supplements.rules import FIELDS
 
 
 def execute():
-    for name in ('employee_supplement_mapping', 'employee_supplement_existing_salary',
-                 'employee_supplement_revision', 'employee_supplement_settings'):
-        frappe.reload_doc('power_pro', 'doctype', name)
+    from powerpro.custom_hr.installer import install
+    install()
     # Preserve customer-owned Currency fields exactly when they already exist.
     previous = 'ctc'
     employee = []

@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  let hooks,prompt;const buttons={},calls=[];let dirty=false,reloads=0;
  const ctx={__:s=>s,frappe:{ui:{form:{on:(dt,h)=>hooks=h}},prompt:(f,fn)=>prompt=fn,
   call:q=>{calls.push(q);return Promise.resolve({message:{}})},set_route(){},msgprint(){}}};
- vm.runInNewContext(fs.readFileSync('powerpro/power_pro/doctype/working_time_incident/working_time_incident.js','utf8'),ctx);
+ vm.runInNewContext(fs.readFileSync('powerpro/custom_hr/client_scripts/working_time_incident.js','utf8'),ctx);
  const frm={doc:{name:'CASE',status:'Open',evidence_hash:'original',responsible:'reviewer'},is_new:()=>false,is_dirty:()=>dirty,
   reload_doc:()=>reloads++,add_custom_button:(label,fn)=>buttons[label]=fn};
  hooks.refresh(frm);buttons['Registrar resolución']();frm.doc.evidence_hash='changed';

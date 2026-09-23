@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
  let hooks,prompt;const buttons={},calls=[],routes=[];let dirty=false;
  const ctx={__:s=>s,frappe:{ui:{form:{on:(dt,h)=>hooks=h}},prompt:(fields,fn)=>prompt=fn,msgprint(){},
   set_route:(...args)=>routes.push(args),call:q=>{calls.push(q);return Promise.resolve({message:{}})}}};
- vm.runInNewContext(fs.readFileSync('powerpro/power_pro/doctype/working_time_review/working_time_review.js','utf8'),ctx);
+ vm.runInNewContext(fs.readFileSync('powerpro/custom_hr/client_scripts/working_time_review.js','utf8'),ctx);
  const frm={doc:{name:'REVIEW',status:'Active',source_type:'Overtime Authorization',source_name:'AUTH'},
   is_new:()=>false,is_dirty:()=>dirty,reload_doc(){},add_custom_button:(label,fn)=>buttons[label]=fn};
  hooks.refresh(frm);buttons['Configurar vigilancia']();prompt({status:'Pausada',responsible:'reviewer',reason:'pause'});await Promise.resolve();

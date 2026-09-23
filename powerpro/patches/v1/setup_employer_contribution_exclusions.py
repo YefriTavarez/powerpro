@@ -5,6 +5,8 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 
 def execute():
+    from powerpro.custom_hr.installer import install
+    install()
     create_custom_fields({"Salary Slip": [{
         "fieldname": "employer_contributions_excluded",
         "fieldtype": "Check",

@@ -1,0 +1,53 @@
+{
+  "Client Script:PowerPro HR v1 - Employee Supplement Settings": {
+    "script": "87b184c2e47992d7469b99676fe56bccb6070d6329b3d97136d39237453ab3c7"
+  },
+  "Client Script:PowerPro HR v1 - Working Time Review": {
+    "script": "c5698cb9b49e2dfee33f2d1b956d33ab30f0380f2903dd353abc2360760e363a"
+  },
+  "Client Script:PowerPro HR v1 - Working Time Incident": {
+    "script": "2452cc6ec2ad4156aeedb7776f2ffbf08e6b4083cb8136c310e46a9d897dc5c8"
+  },
+  "Client Script:PowerPro HR v1 - Overtime Rest Watch": {
+    "script": "1bf87019eb2a2dc5581431b914f62d4680516451f74e9d89d0d147f073749d32"
+  },
+  "Client Script:PowerPro HR v1 - Ordinary Night Automation": {
+    "script": "a8f18a1f18546620c679174285d0a90fca1fa96eb6d57383c02741a598a2bad2"
+  },
+  "Client Script:PowerPro HR v1 - Overtime Evidence Watch": {
+    "script": "9f4ecca072871117943c3df3b64961cbc7b0c0baf070281a08fe05f032e0409f"
+  },
+  "Client Script:PowerPro HR v1 - Ordinary Night Settlement": {
+    "script": "1fbcc641f1fa3a9bca5bcc08a1a12f2bbcefad0d24ac64cbec07e35a174f9e4f"
+  },
+  "Client Script:PowerPro HR v1 - Overtime Settlement Election": {
+    "script": "9e63615aa7a068378d58c482185d5d3890f1ca5809ccb18cfff97b8f8e0d8c23"
+  },
+  "Client Script:PowerPro HR v1 - Solicitud de Dieta": {
+    "script": "f114690e875d6c230de9b06a9a1d6def164f226fd625d7cf09ff1debd035a67c"
+  },
+  "Client Script:PowerPro HR v1 - Lote de Pago de Dietas": {
+    "script": "98676ab269c636c8acc3ce46ad9a3972b57f4c17f761b8cfec0d1db794b0086c"
+  },
+  "Server Script:PowerPro HR v1 - Overtime Reconciliation Run - Before Save": {
+    "script": "0913834f6b1cfc12dbff51b036b7be9739c9cef55917d418aa9cf1ba4a26f7f5"
+  },
+  "Server Script:PowerPro HR v1 - Overtime Reconciliation Run - Before Delete": {
+    "script": "8823e0ca70eb8d01ffd239609d71e5fc33f9b029bf9d093a2e36e6a269c2f708"
+  },
+  "Server Script:PowerPro HR v1 - Overtime Attendance Exception - Before Save": {
+    "script": "6193b0bf9a89d3086495a9cec8e6773f9f7476666de511427145f521b207e6c0"
+  },
+  "Server Script:PowerPro HR v1 - Overtime Attendance Exception - Before Delete": {
+    "script": "98f698a7d65e7ef3ed708ce24119afa8daf04e89a4b8a3a75b74fd5a3ca58d59"
+  },
+  "Server Script:PowerPro HR v1 - Lote de Pago de Dietas - Before Save": {
+    "script": "4618a5a810975004b396e3c80a9b2cc82f12d5600e206a68c5a53f36af1f3927"
+  },
+  "Server Script:PowerPro HR v1 - Lote de Pago de Dietas - Before Delete": {
+    "script": "1fa49dd55b2614ede6e1294b6b00724ea3b50bc9b01ae8735990a8a64fbaad3f"
+  },
+  "Server Script:PowerPro HR v1 - Lote de Pago de Dietas - Before Rename": {
+    "script": "c325431176ac6860a3319cba5e36e718f917ef5ffe6277e8221a0610f630e5d8"
+  }
+}
