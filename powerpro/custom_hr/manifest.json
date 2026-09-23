@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "doctypes": [
     {
       "name": "Employee Supplement Mapping",
@@ -123,6 +123,176 @@
       "doctype": "Lote de Pago de Dietas",
       "event": "Before Rename",
       "file": "lote_de_pago_de_dietas_before_rename.py"
+    },
+    {
+      "doctype": "Working Time Review",
+      "event": "Before Save",
+      "file": "working_time_review_validate.py"
+    },
+    {
+      "doctype": "Working Time Review",
+      "event": "Before Delete",
+      "file": "working_time_review_on_trash.py"
+    },
+    {
+      "doctype": "Working Time Incident",
+      "event": "Before Save",
+      "file": "working_time_incident_validate.py"
+    },
+    {
+      "doctype": "Working Time Incident",
+      "event": "Before Delete",
+      "file": "working_time_incident_on_trash.py"
+    },
+    {
+      "doctype": "Overtime Rest Watch",
+      "event": "Before Save",
+      "file": "overtime_rest_watch_validate.py"
+    },
+    {
+      "doctype": "Overtime Rest Watch",
+      "event": "Before Delete",
+      "file": "overtime_rest_watch_on_trash.py"
+    },
+    {
+      "doctype": "Overtime Evidence Watch",
+      "event": "Before Save",
+      "file": "overtime_evidence_watch_validate.py"
+    },
+    {
+      "doctype": "Overtime Evidence Watch",
+      "event": "Before Delete",
+      "file": "overtime_evidence_watch_on_trash.py"
+    },
+    {
+      "doctype": "Employee Supplement Revision",
+      "event": "Before Save",
+      "file": "employee_supplement_revision_validate.py"
+    },
+    {
+      "doctype": "Employee Supplement Revision",
+      "event": "Before Delete",
+      "file": "employee_supplement_revision_on_trash.py"
+    },
+    {
+      "doctype": "Employee Supplement Settings",
+      "event": "Before Save",
+      "file": "employee_supplement_settings_validate.py"
+    },
+    {
+      "doctype": "Employee Supplement Settings",
+      "event": "After Save",
+      "file": "employee_supplement_settings_on_update.py"
+    },
+    {
+      "doctype": "Ordinary Night Automation",
+      "event": "Before Save",
+      "file": "ordinary_night_automation_validate.py"
+    },
+    {
+      "doctype": "Ordinary Night Automation",
+      "event": "Before Submit",
+      "file": "ordinary_night_automation_before_submit.py"
+    },
+    {
+      "doctype": "Ordinary Night Automation",
+      "event": "Before Save (Submitted Document)",
+      "file": "ordinary_night_automation_before_update_after_submit.py"
+    },
+    {
+      "doctype": "Ordinary Night Automation",
+      "event": "Before Cancel",
+      "file": "ordinary_night_automation_before_cancel.py"
+    },
+    {
+      "doctype": "Ordinary Night Settlement",
+      "event": "Before Save",
+      "file": "ordinary_night_settlement_validate.py"
+    },
+    {
+      "doctype": "Ordinary Night Settlement",
+      "event": "Before Submit",
+      "file": "ordinary_night_settlement_before_submit.py"
+    },
+    {
+      "doctype": "Ordinary Night Settlement",
+      "event": "After Submit",
+      "file": "ordinary_night_settlement_on_submit.py"
+    },
+    {
+      "doctype": "Ordinary Night Settlement",
+      "event": "Before Cancel",
+      "file": "ordinary_night_settlement_before_cancel.py"
+    },
+    {
+      "doctype": "Ordinary Night Settlement",
+      "event": "After Cancel",
+      "file": "ordinary_night_settlement_on_cancel.py"
+    },
+    {
+      "doctype": "Ordinary Night Settlement",
+      "event": "Before Save (Submitted Document)",
+      "file": "ordinary_night_settlement_before_update_after_submit.py"
+    },
+    {
+      "doctype": "Overtime Pay Policy",
+      "event": "Before Save",
+      "file": "overtime_pay_policy_validate.py"
+    },
+    {
+      "doctype": "Overtime Pay Policy",
+      "event": "Before Submit",
+      "file": "overtime_pay_policy_before_submit.py"
+    },
+    {
+      "doctype": "Overtime Pay Policy",
+      "event": "Before Cancel",
+      "file": "overtime_pay_policy_before_cancel.py"
+    },
+    {
+      "doctype": "Overtime Pay Policy",
+      "event": "Before Save (Submitted Document)",
+      "file": "overtime_pay_policy_before_update_after_submit.py"
+    },
+    {
+      "doctype": "Overtime Settlement Election",
+      "event": "Before Save",
+      "file": "overtime_settlement_election_validate.py"
+    },
+    {
+      "doctype": "Overtime Settlement Election",
+      "event": "Before Submit",
+      "file": "overtime_settlement_election_before_submit.py"
+    },
+    {
+      "doctype": "Overtime Settlement Election",
+      "event": "Before Cancel",
+      "file": "overtime_settlement_election_before_cancel.py"
+    },
+    {
+      "doctype": "Overtime Settlement Election",
+      "event": "After Cancel",
+      "file": "overtime_settlement_election_on_cancel.py"
+    },
+    {
+      "doctype": "Overtime Settlement Election",
+      "event": "Before Save (Submitted Document)",
+      "file": "overtime_settlement_election_before_update_after_submit.py"
+    },
+    {
+      "doctype": "Solicitud de Dieta",
+      "event": "Before Save",
+      "file": "solicitud_de_dieta_validate.py"
+    },
+    {
+      "doctype": "Solicitud de Dieta",
+      "event": "Before Delete",
+      "file": "solicitud_de_dieta_on_trash.py"
+    },
+    {
+      "doctype": "Solicitud de Dieta",
+      "event": "Before Rename",
+      "file": "solicitud_de_dieta_before_rename.py"
     }
   ]
 }

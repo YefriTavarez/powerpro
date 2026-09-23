@@ -426,16 +426,20 @@ class DietasTest(unittest.TestCase):
         store[('Overtime Work Call','CALL')]['docstatus']=0
         with self.assertRaises(ValueError):service.validate_direct_request(self.direct_request(overtime_work_call='CALL'))
 
-    def test_direct_controller_allows_new_and_keeps_existing_protected(self):
+    def test_direct_script_allows_new_and_keeps_existing_protected(self):
         controller=importlib.import_module('powerpro.controllers.hr_custom.solicitud_de_dieta')
         class Request(Record,controller.SolicituddeDieta):
             pass
+        source=(Path(__file__).resolve().parents[1] / 'powerpro/custom_hr/server_scripts/solicitud_de_dieta_validate.py').read_text()
         req=Request(self.direct_request())
-        req.validate()
+        # Site-free behavior check; the DB suite exercises actual Frappe safe_exec.
+        def validate():
+            exec(compile(source, 'solicitud_de_dieta_validate.py', 'exec'), {'frappe':fake,'doc':req})
+        validate()
         req.save()
-        with self.assertRaises(PermissionError):req.validate()
+        with self.assertRaises(PermissionError):validate()
         req.flags.dieta_service=True
-        req.validate()
+        validate()
 
     def test_business_roles_create_read_own_without_payment_privileges(self):
         for role in ('Gerente Finanzas','Encargado Gestión Humana'):

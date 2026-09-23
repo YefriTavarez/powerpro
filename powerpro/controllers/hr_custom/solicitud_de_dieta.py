@@ -1,12 +1,8 @@
-from powerpro.dietas.documents import ManagedDietaDocument
-from powerpro.dietas.service import validate_direct_request
+"""Creation uses the existing locked, idempotent dieta service."""
+from frappe.model.document import Document
 
 
-class SolicituddeDieta(ManagedDietaDocument):
-    def validate(self):
-        if self.flags.get('dieta_service'):
-            return super().validate()
-        if self.is_new():
-            validate_direct_request(self)
-        else:
-            super().validate()
+class SolicituddeDieta(Document):
+    def validate_new_request(self):
+        from powerpro.dietas.service import validate_direct_request
+        return validate_direct_request(self)

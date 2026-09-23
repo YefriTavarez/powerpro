@@ -1,11 +1,8 @@
+"""Atomic history seeding uses employee locks and private authority tokens."""
 from frappe.model.document import Document
 
 
 class EmployeeSupplementSettings(Document):
-    def validate(self):
-        from powerpro.supplements.service import validate_settings
-        validate_settings(self)
-
-    def on_update(self):
+    def seed_supplement_history(self):
         from powerpro.supplements.service import seed_history
         seed_history(self)

@@ -206,7 +206,7 @@ has_permission = {
 # Override standard doctype classes
 
 override_doctype_class = {
-    # HR controllers use the same classes before and after metadata conversion.
+    # HR capabilities only; editable event rules live in custom_hr/server_scripts.
     'Employee Supplement Settings': 'powerpro.controllers.hr_custom.employee_supplement_settings.EmployeeSupplementSettings',
     'Employee Supplement Revision': 'powerpro.controllers.hr_custom.employee_supplement_revision.EmployeeSupplementRevision',
     'Working Time Review': 'powerpro.controllers.hr_custom.working_time_review.WorkingTimeReview',

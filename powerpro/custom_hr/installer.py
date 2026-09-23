@@ -15,7 +15,8 @@ ROOT = Path(__file__).parent
 MANIFEST = json.loads((ROOT / "manifest.json").read_text())
 NAMES = tuple(row["name"] for row in MANIFEST["doctypes"])
 PREFIX = "PowerPro HR v1 - "
-SNAPSHOT = "powerpro-hr-custom-v1-before.json"
+SNAPSHOT = "powerpro-hr-custom-v2-before.json"
+BASELINE_KEY = "powerpro_hr_script_upstream_v2"
 IGNORE = {"creation", "modified", "modified_by", "owner", "doctype", "custom", "__islocal"}
 
 
@@ -63,6 +64,60 @@ def scripts(include_server_scripts=True):
     return result
 
 
+def _script_key(doc):
+    return doc["doctype"] + ":" + doc["name"]
+
+
+def _body_hash(script):
+    return hashlib.sha256((script or "").encode()).hexdigest()
+
+
+def _upstream_record(doc):
+    # DefaultValue is TEXT; retain compact fingerprints, not whole JS/Python files.
+    return {"script": _body_hash(doc["script"])}
+
+
+def _stored_baseline():
+    # Read the transactional row, not the process/Redis defaults cache.
+    raw = frappe.db.get_value("DefaultValue", {"parent": "__global", "defkey": BASELINE_KEY}, "defvalue")
+    return json.loads(raw) if raw else None
+
+
+def _upstream():
+    return _stored_baseline() or json.loads((ROOT / "script_baselines_v1.json").read_text())
+
+
+def _script_plan(include_server_scripts=True):
+    """Three-way merge: preserve owner edits, apply upstream-only changes."""
+    previous = _upstream()
+    desired, conflicts = [], []
+    for expected in scripts(include_server_scripts):
+        merged = dict(expected)
+        if frappe.db.exists(expected["doctype"], expected["name"]):
+            current = frappe.get_doc(expected["doctype"], expected["name"])
+            for key, value in expected.items():
+                if key not in ("script", "enabled", "disabled") and not _equal(current.get(key), value):
+                    conflicts.append(f"{expected['name']}: script identity conflict at {key}")
+            old = previous.get(_script_key(expected))
+            current_body = current.get("script")
+            if current_body != expected["script"]:
+                if old and _body_hash(expected["script"]) == old["script"]:
+                    merged["script"] = current_body
+                elif not old or _body_hash(current_body) != old["script"]:
+                    conflicts.append(f"{expected['name']}: both owner and release changed script; merge explicitly")
+            flag = "enabled" if expected["doctype"] == "Client Script" else "disabled"
+            merged[flag] = current.get(flag)
+        desired.append(merged)
+    return desired, conflicts
+
+
+def _store_upstream(value):
+    if value is None:
+        frappe.db.delete("DefaultValue", {"parent": "__global", "defkey": BASELINE_KEY})
+    elif _stored_baseline() != value:
+        frappe.db.set_global(BASELINE_KEY, json.dumps(value, ensure_ascii=False, sort_keys=True))
+
+
 def _equal(actual, expected):
     if actual in (None, "") and expected in (None, ""):
         return True
@@ -102,7 +157,7 @@ def _fingerprint(doc):
 
 def preview(include_server_scripts=True):
     """Read-only preflight; no cache invalidation or record creation."""
-    report = {"version": 1, "site": frappe.local.site, "doctypes": [], "conflicts": []}
+    report = {"version": MANIFEST["version"], "site": frappe.local.site, "doctypes": [], "conflicts": []}
     owned = {(doc["doctype"], doc["name"]) for doc in scripts(include_server_scripts)}
     for name, expected in definitions().items():
         exists = frappe.db.exists("DocType", name)
@@ -120,12 +175,8 @@ def preview(include_server_scripts=True):
             for row in frappe.get_all(dt, filters={field: name}, pluck="name"):
                 if (dt, row) not in owned:
                     report["conflicts"].append(f"{name}: existing {dt} {row}")
-    for expected in scripts(include_server_scripts):
-        if frappe.db.exists(expected["doctype"], expected["name"]):
-            current = frappe.get_doc(expected["doctype"], expected["name"])
-            for key, value in expected.items():
-                if key not in ("enabled", "disabled") and not _equal(current.get(key), value):
-                    report["conflicts"].append(f"{expected['name']}: script conflict at {key}")
+    _, script_conflicts = _script_plan(include_server_scripts)
+    report["conflicts"].extend(script_conflicts)
     if include_server_scripts:
         # These run before Server Scripts in Document.run_method. New outbound
         # bindings need review before replacing an early Python rejection.
@@ -133,6 +184,11 @@ def preview(include_server_scripts=True):
             for dt, field in (("Notification", "document_type"), ("Webhook", "webhook_doctype")):
                 for binding in frappe.get_all(dt, filters={field: name, "enabled": 1}, pluck="name"):
                     report["conflicts"].append(f"{name}: enabled {dt} requires event-order review: {binding}")
+            # Optional app hook observes before_submit before Server Scripts.
+            if frappe.db.exists("DocType", "Procedure Traceability Rule"):
+                for binding in frappe.get_all("Procedure Traceability Rule",
+                        filters={"target_doctype": name, "enabled": 1}, pluck="name"):
+                    report["conflicts"].append(f"{name}: traceability rule requires event-order review: {binding}")
     return report
 
 
@@ -141,14 +197,16 @@ def _require_clean(report):
         frappe.throw("HR Custom DocType preflight failed:\n" + "\n".join(report["conflicts"]))
 
 
-def _snapshot():
+def _snapshot(desired=None):
     path = Path(frappe.get_site_path("private", "backups", SNAPSHOT))
     if path.exists():
         data = json.loads(path.read_text())
         if data.get("site") != frappe.local.site or set(data.get("doctypes", {})) != set(NAMES):
             frappe.throw("Invalid HR migration before-image; inspect the private snapshot.")
         return data
-    data = {"version": 1, "site": frappe.local.site, "doctypes": {}, "scripts": {}}
+    data = {"version": MANIFEST["version"], "site": frappe.local.site, "doctypes": {}, "scripts": {},
+            "upstream_before": _stored_baseline(),
+            "installed_scripts": {_script_key(doc): doc for doc in (desired or _script_plan()[0])}}
     for name in NAMES:
         data["doctypes"][name] = frappe.get_doc("DocType", name).as_dict() if frappe.db.exists("DocType", name) else None
     for doc in scripts():
@@ -209,7 +267,8 @@ def install(include_server_scripts=True):
     frappe.get_hooks()  # Load the existing PowerPro custom-controller loader first.
     report = preview(include_server_scripts)
     _require_clean(report)
-    _snapshot()
+    desired, _ = _script_plan(include_server_scripts)
+    _snapshot(desired)
     for definition in ordered_definitions():
         name = definition["name"]
         if frappe.db.exists("DocType", name):
@@ -231,7 +290,7 @@ def install(include_server_scripts=True):
             finally:
                 frappe.flags.in_import = importing
     _refresh()
-    for expected in scripts(include_server_scripts):
+    for expected in desired:
         if not frappe.db.exists(expected["doctype"], expected["name"]):
             frappe.get_doc(expected).insert(ignore_permissions=True)
         else:
@@ -240,6 +299,7 @@ def install(include_server_scripts=True):
             if changed:
                 doc.update(changed)
                 doc.save(ignore_permissions=True)
+    _store_upstream({_script_key(doc): _upstream_record(doc) for doc in scripts(include_server_scripts)})
     _refresh()
     return report
 
@@ -261,20 +321,30 @@ def rollback():
             frappe.throw("Fresh-install rollback requires isolated checkpoint recovery; no DocTypes will be deleted.")
         if _fingerprint(frappe.get_doc("DocType", name).as_dict()) != _fingerprint(doc):
             frappe.throw("HR metadata changed after conversion: " + name)
-    # Validate every owned script before making any inverse changes.
-    for expected in scripts():
+    # Compare against the merged installed image, including pre-existing owner edits.
+    for expected in before["installed_scripts"].values():
         if frappe.db.exists(expected["doctype"], expected["name"]):
             current = frappe.get_doc(expected["doctype"], expected["name"])
-            if any(not _equal(current.get(key), value) for key, value in expected.items() if key not in ("enabled", "disabled")):
+            if any(not _equal(current.get(key), value) for key, value in expected.items()):
                 frappe.throw("HR script changed after conversion: " + expected["name"])
+        else:
+            frappe.throw("HR script disappeared after conversion: " + expected["name"])
     for name, doc in before["doctypes"].items():
         frappe.db.set_value("DocType", name, "custom", doc.get("custom", 0), update_modified=False)
-    for expected in scripts():
+    for expected in before["installed_scripts"].values():
         dt, name = expected["doctype"], expected["name"]
-        original = before["scripts"][dt + ":" + name]
-        if frappe.db.exists(dt, name):
-            key = "enabled" if dt == "Client Script" else "disabled"
-            value = original.get(key) if original else int(key == "disabled")
-            frappe.db.set_value(dt, name, key, value, update_modified=False)
+        original = before["scripts"][_script_key(expected)]
+        if original is None:
+            # These owned metadata records did not exist before this release.
+            # Removing them lets a reapply enable its required new event rules.
+            frappe.db.delete(dt, {"name": name})
+            continue
+        doc = frappe.get_doc(dt, name)
+        flag = "enabled" if dt == "Client Script" else "disabled"
+        values = {"script": original["script"], flag: original.get(flag)}
+        if any(not _equal(doc.get(key), value) for key, value in values.items()):
+            doc.update(values)
+            doc.save(ignore_permissions=True)
+    _store_upstream(before.get("upstream_before"))
     _refresh()
     return {"restored_custom_flags": len(NAMES), "site": frappe.local.site}

@@ -1,10 +1,8 @@
+"""Read the unforgeable authority token kept outside the sandbox."""
 from frappe.model.document import Document
-from powerpro.supplements.service import protect_revision
+from powerpro.supplements.service import internal
 
 
 class EmployeeSupplementRevision(Document):
-    def validate(self):
-        protect_revision(self)
-
-    def on_trash(self):
-        protect_revision(self)
+    def is_internal_revision(self):
+        return internal(self)

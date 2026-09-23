@@ -77,67 +77,6 @@ def classifications(config, field):
     return coverage, independent
 
 
-def validate_settings(config):
-    old = config.get_doc_before_save()
-    if old and frappe.db.count(REVISION):
-        for key in ("company", "currency", "effective_from", "second_quincena_day", "amount_precision"):
-            if str(config.get(key) or "") != str(old.get(key) or ""):
-                fail("La política con historial no se puede reinterpretar. Conserve empresa, moneda, vigencia y calendario.")
-        mapping = lambda d: sorted((r.source_field, r.salary_component) for r in d.mappings)
-        if mapping(config) != mapping(old):
-            fail("No cambie el mapeo después de iniciar el historial de complementos.")
-        classify = lambda d: {(r.additional_salary, r.treatment, r.source_field or "") for r in d.existing_salaries}
-        if not classify(old).issubset(classify(config)):
-            fail("No quite ni cambie asociaciones existentes después de iniciar el historial.")
-    if not config.enabled:
-        return
-    if not config.company or not config.currency or not config.effective_from:
-        fail("Defina empresa, moneda y fecha de inicio antes de habilitar los complementos.")
-    if cint(config.second_quincena_day) not in (15, 16) or cint(config.amount_precision) not in (2, 4):
-        fail("Calendario o precisión inválidos.")
-    if getdate(config.effective_from).day not in (1, cint(config.second_quincena_day)):
-        fail("La fecha de inicio debe coincidir con el comienzo de una quincena.")
-    mappings = {r.source_field: r.salary_component for r in config.mappings}
-    if set(mappings) != set(rules.FIELDS) or len(config.mappings) != len(rules.FIELDS):
-        fail("Configure una fila para cada uno de los cuatro campos de Employee.")
-    if len(set(mappings.values())) != len(mappings) or not all(mappings.values()):
-        fail("Cada complemento requiere un componente de ingreso distinto.")
-    for field, name in mappings.items():
-        meta = frappe.get_meta("Employee").get_field(field)
-        if not meta or meta.fieldtype != "Currency":
-            fail(f"Employee.{field} debe existir como Currency.")
-        component_valid(name)
-    seen = set()
-    for row in config.existing_salaries:
-        if row.additional_salary in seen:
-            fail("Un Additional Salary solo puede tener una clasificación.")
-        seen.add(row.additional_salary)
-        salary = frappe.get_doc("Additional Salary", row.additional_salary, for_update=True)
-        if salary.company != config.company or salary.currency != config.currency or salary.type != "Earning":
-            fail(f"{salary.name}: empresa, moneda o tipo incompatible.")
-        if salary.get("pp_supplement_key") or salary.overwrite_salary_structure_amount:
-            fail(f"{salary.name}: no se puede asociar un automático ni un reemplazo de estructura.")
-        if salary.docstatus != 1 or salary.disabled:
-            fail(f"{salary.name}: debe estar confirmado y habilitado para conciliarlo.")
-        if row.treatment == "Coverage":
-            if mappings.get(row.source_field) != salary.salary_component:
-                fail(f"{salary.name}: el componente no corresponde al campo de origen.")
-        elif row.treatment != "Independent":
-            fail("Seleccione Coverage o Independent para cada adicional existente.")
-    # Require a one-time disposition for pre-existing documents, including employees with zero fields.
-    rows = frappe.get_all("Additional Salary", filters={"company": config.company, "docstatus": 1,
-        "disabled": 0, "salary_component": ["in", list(mappings.values())]}, fields=AS_FIELDS)
-    for row in rows:
-        relevant = (row.is_recurring and row.to_date and getdate(row.to_date) >= getdate(config.effective_from)) or (
-            not row.is_recurring and row.payroll_date and getdate(row.payroll_date) >= getdate(config.effective_from))
-        if relevant and not row.pp_supplement_key and row.name not in seen and row.pp_supplement_treatment != "Independent":
-            fail(f"Concilie {row.name} como cobertura o pago independiente antes de habilitar.")
-    if not frappe.db.count(REVISION) and frappe.db.exists("Salary Slip", {
-        "company": config.company, "docstatus": ["<", 2], "end_date": [">=", config.effective_from],
-    }):
-        fail("El inicio se superpone con recibos existentes. Elija una fecha posterior para la transición.")
-
-
 def write_revision(employee, effective, legacy_changes=None):
     doc = frappe.get_doc(dict(doctype=REVISION, employee=employee.name, company=employee.company,
         currency=employee_currency(employee), effective_from=effective, amounts=json.dumps(amounts(employee)),
@@ -145,11 +84,6 @@ def write_revision(employee, effective, legacy_changes=None):
         revision_key=rules.key(employee.company, employee.name, "revision", effective, effective)))
     trusted(doc).insert(ignore_permissions=True)
     return doc
-
-
-def protect_revision(doc):
-    if not internal(doc) or not doc.is_new():
-        fail("El historial de complementos es inmutable y se registra al actualizar Employee.")
 
 
 def seed_history(config):
