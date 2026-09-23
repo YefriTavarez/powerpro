@@ -144,6 +144,7 @@ access = importlib.import_module('powerpro.dietas.permissions')
 accounting = importlib.import_module('powerpro.dietas.accounting')
 hooks = importlib.import_module('powerpro.dietas.hooks')
 documents = importlib.import_module('powerpro.dietas.documents')
+request_edit = importlib.import_module('powerpro.dietas.request_edit')
 
 
 class DietasTest(unittest.TestCase):
@@ -359,6 +360,149 @@ class DietasTest(unittest.TestCase):
                      work_date='2026-09-09', amount=300, currency='DOP', flags=Record())
         req.update(values)
         return req
+
+    def saved_direct_request(self, **values):
+        roles['creator'] = ['Gerente Finanzas', 'Employee']
+        fake.session.user = 'creator'
+        req = self.direct_request(**values)
+        service.validate_direct_request(req)
+        return req.save()
+
+    def test_creator_edits_notes_and_amount_without_changing_protected_fields(self):
+        req = self.saved_direct_request(amount=400, notes='Original')
+        before = get_doc(service.REQUEST, req.name).as_dict()
+        context = request_edit.get_context(req.name)
+        self.assertTrue(context['can_edit'])
+        self.assertEqual(context['expense_approver'], 'approver')
+        request_edit.update_request(req.name, context['modified'], 450, 'Viaje corregido')
+        after = get_doc(service.REQUEST, req.name).as_dict()
+        self.assertEqual((after['amount'], after['notes']), (450, 'Viaje corregido'))
+        for field in before.keys() - {'amount', 'notes', 'audit_log', 'modified'}:
+            self.assertEqual(before[field], after[field], field)
+        audit = json.loads(after['audit_log'])
+        self.assertEqual(audit[-1]['action'], 'edit')
+        self.assertEqual(audit[-1]['user'], 'creator')
+        self.assertEqual(audit[-1]['previous_amount'], 400)
+        self.assertEqual(audit[-1]['previous_notes'], 'Original')
+        self.assertFalse(access.request_permission(get_doc(service.REQUEST, req.name), ptype='write'))
+        self.assertFalse(access.can_manage(get_doc('Employee', 'E1')))
+
+    def test_edit_notes_only_noop_and_historical_default(self):
+        req = self.saved_direct_request()
+        request_edit.update_request(req.name, req.modified, 300, '')
+        self.assertEqual(get_doc(service.REQUEST, req.name).modified, req.modified)
+        store[('Dieta Company Settings', 'cfg')]['default_amount'] = 450
+        request_edit.update_request(req.name, req.modified, 300, 'Notas nuevas')
+        current = get_doc(service.REQUEST, req.name)
+        self.assertEqual(current.default_amount, 300)
+        self.assertEqual(current.notes, 'Notas nuevas')
+
+    def test_edit_denies_stale_missing_version_and_invalid_amount_without_writes(self):
+        req = self.saved_direct_request()
+        before = copy.deepcopy(store)
+        for version, amount, notes in [(None,300,''), ('old',300,''), (req.modified,0,''),
+                (req.modified,-1,''), (req.modified,'NaN',''), (req.modified,'Infinity',''),
+                (req.modified,400,'')]:
+            with self.subTest(version=version, amount=amount):
+                with self.assertRaises(ValueError):
+                    request_edit.update_request(req.name, version, amount, notes)
+                self.assertEqual(store, before)
+        request_edit.update_request(req.name, req.modified, 300, 'Primero')
+        with self.assertRaisesRegex(ValueError, 'cambió'):
+            request_edit.update_request(req.name, req.modified, 300, 'Sobrescribir')
+        self.assertEqual(get_doc(service.REQUEST, req.name).notes, 'Primero')
+
+    def test_edit_permission_matrix(self):
+        req = self.saved_direct_request()
+        roles['unrelated'] = ['Gerente Finanzas']
+        for user, allowed in [('creator',True), ('manager',True), ('approver',True),
+                              ('unrelated',False), ('E1@example.com',False), ('Guest',False)]:
+            with self.subTest(user=user):
+                fake.session.user = user
+                self.assertEqual(request_edit.can_edit(req, get_doc('Employee','E1')), allowed)
+                if allowed:
+                    current = get_doc(service.REQUEST, req.name)
+                    request_edit.update_request(req.name, current.modified, 300, user)
+                else:
+                    before = copy.deepcopy(store)
+                    with self.assertRaises(PermissionError):
+                        request_edit.update_request(req.name, req.modified, 300, 'denied')
+                    self.assertEqual(store, before)
+
+    def test_edit_honors_permission_applicability_and_role_revocation(self):
+        req = self.saved_direct_request()
+        for dt in ('Employee', 'Company', 'Department'):
+            restrictions['creator'] = {dt: [{'doc':'OTHER', 'applicable_for':'Leave Application'}]}
+            self.assertTrue(request_edit.get_context(req.name)['can_edit'])
+            for scope in ('', service.REQUEST):
+                restrictions['creator'][dt][0]['applicable_for'] = scope
+                with self.assertRaises(PermissionError):
+                    request_edit.update_request(req.name, req.modified, 300, 'denied')
+        restrictions.clear()
+        roles['creator'] = ['Employee']
+        with self.assertRaises(PermissionError):
+            request_edit.update_request(req.name, req.modified, 300, 'denied')
+
+    def test_edit_denies_terminal_states_and_self_management(self):
+        req = self.saved_direct_request()
+        stored = store[(service.REQUEST, req.name)]
+        for field, value in [('approval_status','Approved'), ('approval_status','Rejected'),
+                ('approval_status','Cancelled'), ('payment_status','Paid'), ('payout_batch','BATCH'), ('docstatus',1)]:
+            old = stored.get(field)
+            stored[field] = value
+            before = copy.deepcopy(store)
+            self.assertFalse(request_edit.get_context(req.name)['can_edit'])
+            with self.assertRaises(PermissionError):
+                request_edit.update_request(req.name, req.modified, 300, 'denied')
+            self.assertEqual(store, before)
+            stored = store[(service.REQUEST, req.name)]
+            stored[field] = old
+        store[('Employee','E1')]['user_id'] = 'creator'
+        with self.assertRaises(PermissionError):
+            request_edit.update_request(req.name, req.modified, 300, 'denied')
+
+    def test_edit_checks_current_employee_settings_and_sources(self):
+        store[('Overtime Authorization','AUTH-E1')]['company'] = 'IGC'
+        req = self.saved_direct_request(overtime_work_call='CALL', authorization='AUTH-E1')
+        for key, field, value in [(('Employee','E1'),'status','Left'), (('Employee','E1'),'company','OTHER'),
+                (('Dieta Company Settings','cfg'),'enabled',0), (('Company','IGC'),'default_currency','USD'),
+                (('Overtime Work Call','CALL'),'docstatus',2), (('Overtime Authorization','AUTH-E1'),'docstatus',2)]:
+            with self.subTest(key=key,field=field):
+                old = store[key][field]
+                store[key][field] = value
+                before = copy.deepcopy(store)
+                with self.assertRaises((ValueError,PermissionError)):
+                    request_edit.update_request(req.name, req.modified, 300, 'denied')
+                self.assertEqual(store, before)
+                store[key][field] = old
+
+    def test_edit_rolls_back_storage_failure_and_rejects_extra_fields(self):
+        req = self.saved_direct_request()
+        before = copy.deepcopy(store)
+        original = service._save
+        def failed(doc):
+            original(doc)
+            raise RuntimeError('storage failed')
+        with patch.object(service, '_save', side_effect=failed), self.assertRaises(RuntimeError):
+            request_edit.update_request(req.name, req.modified, 350, 'Error')
+        self.assertEqual(store, before)
+        with self.assertRaises(TypeError):
+            request_edit.update_request(req.name, req.modified, 300, 'forged', approval_status='Approved')
+        self.assertEqual(store, before)
+
+    def test_edit_invalidates_existing_work_call_preview_and_preserves_payout_flow(self):
+        req = self.saved_direct_request(overtime_work_call='CALL')
+        fake.session.user = 'manager'
+        args = self.payload(('E1',))
+        request_edit.update_request(req.name, req.modified, 350, 'Corrección')
+        with self.assertRaises(ValueError):
+            service.confirm_payout(**args)
+        service.manage_requests('CALL', '2026-09-09', self.selected(('E1',)), 'approve')
+        self.assertFalse(request_edit.get_context(req.name)['can_edit'])
+        result = self.pay(('E1',))
+        paid = get_doc(service.REQUEST, req.name)
+        self.assertEqual((paid.amount, paid.payment_status, paid.payout_batch), (350, 'Paid', result['batch']))
+        self.assertEqual(json.loads(paid.audit_log)[1]['action'], 'edit')
 
     def test_direct_creation_without_overtime_and_trusted_initial_state(self):
         req = self.direct_request(approval_status='Approved', payment_status='Paid',

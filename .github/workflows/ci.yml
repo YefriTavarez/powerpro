@@ -122,8 +122,9 @@ jobs:
           node-version: '22'
       - run: python tests/test_dietas.py
       - run: npm ci --prefix tests
-      - run: node --test tests/test_dietas_ui.cjs
+      - run: node --test tests/test_dietas_ui.cjs tests/test_dieta_request_ui.cjs
       - run: node --check powerpro/public/js/dietas.js
+      - run: node --check powerpro/custom_hr/client_scripts/solicitud_de_dieta.js
 
   tests:
     runs-on: ubuntu-latest
