@@ -44,6 +44,8 @@ Para revertir esa actualización acotada, restaurar juntos el Client Script
 respaldado y su archivo fuente, retirar `powerpro/dietas/request_edit.py` si no
 existía antes e invalidar la caché de Solicitud de Dieta. Los eventos de auditoría
 ya registrados se conservan. No hace falta revertir datos ni asientos.
+Reciclar también los procesos web que hayan importado el módulo para retirar
+la API de su memoria; esto puede interrumpir solicitudes en curso brevemente.
 
 ## Verificación
 
