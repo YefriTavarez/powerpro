@@ -14,7 +14,7 @@ ENABLED = os.environ.get('POWERPRO_DIETA_DEV_TESTS') == '1'
 if ENABLED:
     import frappe
     from frappe.utils import getdate
-    from powerpro.dietas import service, accounting
+    from powerpro.dietas import service, accounting, request_edit
 
 
 @unittest.skipUnless(ENABLED, 'Requires an explicitly authorized isolated development site')
@@ -131,6 +131,93 @@ class DietaDatabaseTest(unittest.TestCase):
                 service.confirm_payout(**args)
         self.assertIsNone(service._request(self.company, self.employee, self.date))
         self.assertFalse(frappe.db.exists(service.BATCH, {'overtime_work_call': self.call_name}))
+
+    def direct_request(self):
+        return frappe.get_doc(dict(doctype=service.REQUEST, employee=self.employee,
+            company=self.company, work_date=self.date, amount=300,
+            currency=frappe.db.get_value('Company', self.company, 'default_currency'))).insert()
+
+    def test_creator_can_edit_saved_request_with_real_hooks_and_server_scripts(self):
+        user, permission = self.scoped_manager()
+        # Use the production creator role, without HR Manager or payment privileges.
+        frappe.db.set_value('Has Role', 'DIETA-ROLE-' + self.suffix, 'role', 'Gerente Finanzas')
+        frappe.clear_cache(user=user)
+        doc = self.direct_request()
+        self.assertTrue(request_edit.get_context(doc.name)['can_edit'])
+        doc.notes = 'Generic CRUD stays denied'
+        with self.assertRaises(frappe.PermissionError):
+            doc.save()
+        doc.reload()
+        before = doc.as_dict()
+        request_edit.update_request(doc.name, str(doc.modified), 350, 'Corregir monto y notas')
+        doc.reload()
+        self.assertEqual((doc.amount, doc.notes), (350, 'Corregir monto y notas'))
+        for field in ('employee','company','work_date','currency','day_key','default_amount','origin',
+                      'initiated_by','approval_status','payment_status','approved_by','paid_by','payout_batch'):
+            self.assertEqual(doc.get(field), before.get(field), field)
+        self.assertEqual(frappe.parse_json(doc.audit_log)[-1]['user'], user)
+        self.assertEqual(frappe.parse_json(doc.audit_log)[-1]['action'], 'edit')
+        # Frappe filters unknown RPC arguments, but the narrow service never reads them.
+        frappe.call('powerpro.dietas.request_edit.update_request', request=doc.name,
+            modified=str(doc.modified), amount=350, notes='Solo notas', employee='forged',
+            approval_status='Approved', payment_status='Paid', audit_log='[]')
+        doc.reload()
+        self.assertEqual((doc.employee, doc.approval_status, doc.payment_status),
+                         (self.employee, 'Pending', 'Unpaid'))
+        self.assertEqual(len(frappe.parse_json(doc.audit_log)), 3)
+        for scope in ('', service.REQUEST):
+            frappe.db.set_value('User Permission', permission.name, {
+                'applicable_for':scope, 'apply_to_all_doctypes':int(not scope)})
+            frappe.cache.hdel('user_permissions', user)
+            with self.assertRaises(frappe.PermissionError):
+                request_edit.update_request(doc.name, str(doc.modified), 300, 'Denied')
+
+    def test_edit_rechecks_approval_payment_and_stale_versions(self):
+        doc = self.direct_request()
+        version = str(doc.modified)
+        request_edit.update_request(doc.name, version, 300, 'First')
+        with self.assertRaises(frappe.ValidationError):
+            request_edit.update_request(doc.name, version, 300, 'Stale browser')
+        doc.reload()
+        for status in ('Approved', 'Rejected', 'Cancelled'):
+            frappe.db.set_value(service.REQUEST, doc.name, 'approval_status', status)
+            with self.assertRaises(frappe.PermissionError):
+                request_edit.update_request(doc.name, str(doc.modified), 300, 'Denied')
+        frappe.db.set_value(service.REQUEST, doc.name, {'approval_status':'Pending', 'payment_status':'Paid'})
+        with self.assertRaises(frappe.PermissionError):
+            request_edit.update_request(doc.name, str(doc.modified), 300, 'Denied')
+
+    def test_custom_doctype_serves_versioned_edit_dialog(self):
+        from powerpro.custom_hr import installer
+        from frappe.desk.form.meta import get_meta
+        desired, conflicts = installer._script_plan()
+        self.assertEqual(conflicts, [])
+        script = next(row for row in desired if row['name'] == 'PowerPro HR v1 - Solicitud de Dieta')
+        current = frappe.get_doc('Client Script', script['name'])
+        current.update(script)
+        current.save(ignore_permissions=True)
+        self.addCleanup(frappe.clear_cache, doctype=service.REQUEST)
+        meta = get_meta(service.REQUEST, cached=False)
+        self.assertEqual(meta.custom, 1)
+        self.assertIn('powerpro.dietas.request_edit.', meta.get('__custom_js'))
+        self.assertIn('frm.disable_save()', meta.get('__custom_js'))
+        self.assertIn('Editar solicitud', meta.get('__custom_js'))
+
+    def test_saved_direct_request_can_continue_through_existing_work_call_flow(self):
+        doc = frappe.get_doc(dict(doctype=service.REQUEST, employee=self.employee,
+            company=self.company, work_date=self.date, amount=300,
+            overtime_work_call=self.call_name, authorization=self.auth_name,
+            currency=frappe.db.get_value('Company', self.company, 'default_currency'))).insert()
+        request_edit.update_request(doc.name, str(doc.modified), 350, 'Monto corregido')
+        context = service.work_call_context(self.call_name, self.date)
+        row = context['rows'][0]
+        selection = [dict(employee=self.employee, version=row['version'], amount=row['amount'], reason='')]
+        service.manage_requests(self.call_name, self.date, selection, 'approve')
+        self.assertFalse(request_edit.get_context(doc.name)['can_edit'])
+        result = service.confirm_payout(**self.payload())
+        doc.reload()
+        self.assertEqual((doc.amount, doc.approval_status, doc.payment_status), (350, 'Approved', 'Paid'))
+        self.assertEqual(doc.payout_batch, result['batch'])
 
     def test_real_document_save_and_idempotent_retry(self):
         args=self.payload();first=service.confirm_payout(**args);second=service.confirm_payout(**args)

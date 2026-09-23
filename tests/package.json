@@ -5,6 +5,6 @@
   },
   "private": true,
   "scripts": {
-    "test": "node --test test_dietas_ui.cjs"
+    "test": "node --test test_dietas_ui.cjs test_dieta_request_ui.cjs"
   }
 }
