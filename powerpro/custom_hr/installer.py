@@ -126,10 +126,50 @@ def _equal(actual, expected):
     return actual == expected
 
 
-def _definition_conflicts(actual, expected):
+def _extended_field_conflicts(rows, expected):
+    """Compare installed fields by identity, preserving additive site extensions.
+
+    Optionality is an editable site rule. Select choices may be extended, but
+    removing a release choice, field, or changing its storage/link contract is
+    still a conflict. All other versioned field properties remain checked.
+    """
+    conflicts, fields = [], {}
+    for row in rows:
+        name = row.get("fieldname")
+        if not name or name in fields:
+            conflicts.append(f"fields: missing or duplicate fieldname {name!r}")
+        fields[name] = row
+    for source in expected:
+        name = source["fieldname"]
+        if name not in fields:
+            conflicts.append(f"fields.{name}: missing release field")
+            continue
+        saved = fields[name]
+        for key, value in source.items():
+            if key in IGNORE or key == "reqd":
+                continue
+            if key == "options" and source.get("fieldtype") == "Select":
+                # Empty options represent the blank choice too; retain it when
+                # the release includes it. Choice order is presentation only.
+                if set((value or "").split("\n")).issubset(set((saved.get(key) or "").split("\n"))):
+                    continue
+            if not _equal(saved.get(key), value):
+                conflicts.append(f"fields.{name}.{key}")
+    return conflicts
+
+
+def _definition_conflicts(actual, expected, allow_extensions=False):
     conflicts = []
+    # Standard JSON omits false flags. They still define the table/document
+    # shape and must not become unchecked when a site extends its fields.
+    expected = dict(expected)
+    for key in ("istable", "issingle", "is_submittable"):
+        expected.setdefault(key, 0)
     for key, value in expected.items():
         if key in IGNORE or key == "field_order":
+            continue
+        if key == "fields" and allow_extensions:
+            conflicts.extend(_extended_field_conflicts(actual.get(key) or [], value))
             continue
         if isinstance(value, list):
             rows = actual.get(key) or []
@@ -144,7 +184,7 @@ def _definition_conflicts(actual, expected):
             conflicts.append(key)
     # field_order is encoded by DocField.idx in the database.
     order = expected.get("field_order")
-    if order and [row.get("fieldname") for row in actual.get("fields", [])] != order:
+    if not allow_extensions and order and [row.get("fieldname") for row in actual.get("fields", [])] != order:
         conflicts.append("field_order")
     return conflicts
 
@@ -157,24 +197,37 @@ def _fingerprint(doc):
 
 def preview(include_server_scripts=True):
     """Read-only preflight; no cache invalidation or record creation."""
-    report = {"version": MANIFEST["version"], "site": frappe.local.site, "doctypes": [], "conflicts": []}
+    report = {"version": MANIFEST["version"], "site": frappe.local.site, "doctypes": [],
+              "conflicts": [], "preserved_customizations": []}
+    # This row is written only at the end of a successful installation. A
+    # custom flag alone must not relax the first-conversion preflight.
+    installed = bool(_stored_baseline())
     owned = {(doc["doctype"], doc["name"]) for doc in scripts(include_server_scripts)}
     for name, expected in definitions().items():
         exists = frappe.db.exists("DocType", name)
         custom = None
+        allow_extensions = False
         if exists:
             actual = frappe.get_doc("DocType", name).as_dict()
             custom = actual.custom
-            for conflict in _definition_conflicts(actual, expected):
+            allow_extensions = bool(custom and installed)
+            for conflict in _definition_conflicts(actual, expected, allow_extensions=allow_extensions):
                 report["conflicts"].append(f"{name}: definition differs at {conflict}")
         report["doctypes"].append({"name": name, "action": "create" if not exists else "keep" if custom else "convert"})
-        # Never silently absorb site-level behavior or metadata customizations.
+        # Keep first conversion strict. Additional scripts on an installed
+        # custom DocType belong to the site, regardless of view/event. Report
+        # them without adopting, resaving, disabling, or executing their source.
+        # Owned script names still go through identity and three-way checks.
         for dt, field in (("Custom Field", "dt"), ("Property Setter", "doc_type"),
                           ("Workflow", "document_type"), ("Client Script", "dt"),
                           ("Server Script", "reference_doctype")):
             for row in frappe.get_all(dt, filters={field: name}, pluck="name"):
                 if (dt, row) not in owned:
-                    report["conflicts"].append(f"{name}: existing {dt} {row}")
+                    detail = f"{name}: existing {dt} {row}"
+                    if allow_extensions and dt in ("Client Script", "Server Script"):
+                        report["preserved_customizations"].append(detail)
+                    else:
+                        report["conflicts"].append(detail)
     _, script_conflicts = _script_plan(include_server_scripts)
     report["conflicts"].extend(script_conflicts)
     if include_server_scripts:

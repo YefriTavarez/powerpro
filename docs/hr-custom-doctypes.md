@@ -43,7 +43,19 @@ The installer uses a three-way comparison with the last installed upstream body 
 - Both changed it differently: stop before mutation and report the script requiring an explicit merge.
 - Same final body: accept it. Missing records are recreated from defaults.
 
-Existing enable/disable choices are preserved. Disabling a guard changes system behavior, just as editing its body does; the installer does not silently re-enable it. Script identity, metadata drift, additional scoped customizations and unreviewed outbound event bindings remain preflight conflicts. Conflicting merges should be prepared against the previous release, then explicitly reviewed/applied to the release defaults and/or site record so the next preview is clean.
+Existing enable/disable choices are preserved. Disabling a guard changes system behavior, just as editing its body does; the installer does not silently re-enable it. Script identity and conflicting body changes remain preflight conflicts. Conflicting merges should be prepared against the previous release, then explicitly reviewed/applied to the release defaults and/or site record so the next preview is clean.
+
+### Metadata extensions after installation
+
+The first conversion remains strict. Only a Custom DocType on a site with a stored successful-install script baseline can use the extension comparison. A custom flag by itself, or the bundled version-1 fallback hashes, does not establish a successful installation.
+
+On subsequent migrations, existing fields are matched by `fieldname`, so additional fields and changed ordering are retained. Site changes to `reqd` are retained; validation of a locally optional field belongs in the site's server rules. Select options may be added or reordered, but release choices must remain. Missing or duplicate field names, changed field types/link targets, other versioned field properties, document shape flags, and versioned permissions still produce conflicts. Existing DocTypes are not saved or reimported by this process.
+
+Additional site-owned Client Scripts (**Form** and **List**) and document-event Server Scripts are listed in `preview()["preserved_customizations"]` and left untouched. They are not added to the app's owned scripts or upstream fingerprints, and the installer does not execute them. Authorized site users can add and edit them in Desk without an app release or an installer review solely because those scripts exist. Their normal runtime permissions and event execution remain Frappe's responsibility. A script using an app-owned name still goes through the app's identity and three-way body checks.
+
+Custom Fields, Property Setters, Workflows and enabled outbound bindings continue to require explicit review. This is not a blanket conflict bypass or certification of custom business rules.
+
+For example, a site can retain independent-dieta fields, make its source Convocatoria optional, extend the lote status with `Draft`, and keep a separate list action without making every subsequent Cloud migration repeat the original conversion checks. These local extensions are not installed on other sites.
 
 Only upstream fingerprints are stored transactionally in a scoped `DefaultValue`; full before-images stay in the site's private backups. Version-1 fingerprints support upgrading already converted sites. Repeated installation does not resave unchanged or owner-edited scripts. Owner changes are not silently exported to git or other sites.
 
@@ -58,5 +70,7 @@ Version 2 keeps `powerpro-hr-custom-v2-before.json`, leaving the original versio
 ## Validation
 
 Use `scripts/test_hr_custom_dev.py` only on an isolated Development site with `developer_mode` and `powerpro_hr_rehearsal`. It blocks commits, email and jobs and rolls back its fixtures. Coverage includes controller resolution, real document-event guards, owner edits reaching both form and worker, sandbox/import restrictions, idempotency, three-way conflicts, identity/enablement, and inverse/reapply.
+
+The same runner includes the standalone preflight regressions in `tests/test_hr_custom_preflight.py`. They can also run without Frappe using `python -m unittest discover -s tests -p test_hr_custom_preflight.py`. Database integration tests exercise the extended metadata and site Form/List/event scripts through repeated installs and verify that they remain unchanged, unexecuted, and outside the app's ownership baseline.
 
 Test on the target Frappe version, not just with Python compilation: Frappe 15.103.2 lacks the restricted tuple-assignment helper, forbids `str.format`, exposes `as_json` globally, and requires `json.loads` instead of `frappe.parse_json`. Integration coverage must exercise native night settlement/automation, concurrency, supplements, dietas, review/incident and rest/evidence workflows. Fresh-install checks certify metadata/controller/script compatibility, not every payroll feature's business setup.
