@@ -214,17 +214,17 @@ def preview(include_server_scripts=True):
             for conflict in _definition_conflicts(actual, expected, allow_extensions=allow_extensions):
                 report["conflicts"].append(f"{name}: definition differs at {conflict}")
         report["doctypes"].append({"name": name, "action": "create" if not exists else "keep" if custom else "convert"})
-        # Keep conversion and document-event conflicts strict. An installed
-        # custom DocType may have a separate site-owned List view script; it
-        # is reported, left untouched, and never added to the owned script plan.
+        # Keep first conversion strict. Additional scripts on an installed
+        # custom DocType belong to the site, regardless of view/event. Report
+        # them without adopting, resaving, disabling, or executing their source.
+        # Owned script names still go through identity and three-way checks.
         for dt, field in (("Custom Field", "dt"), ("Property Setter", "doc_type"),
                           ("Workflow", "document_type"), ("Client Script", "dt"),
                           ("Server Script", "reference_doctype")):
             for row in frappe.get_all(dt, filters={field: name}, pluck="name"):
                 if (dt, row) not in owned:
                     detail = f"{name}: existing {dt} {row}"
-                    if (allow_extensions and dt == "Client Script"
-                            and frappe.db.get_value(dt, row, "view") == "List"):
+                    if allow_extensions and dt in ("Client Script", "Server Script"):
                         report["preserved_customizations"].append(detail)
                     else:
                         report["conflicts"].append(detail)

@@ -96,6 +96,29 @@ class CustomHRMigrationTest(unittest.TestCase):
         with self.assertRaisesRegex(frappe.ValidationError, "fields row count"):
             installer.install()
 
+    def test_additional_form_and_event_scripts_survive_repeated_upgrades(self):
+        records = [
+            dict(doctype="Client Script", name="HR-CUSTOM-SITE-DIETA-FORM",
+                 dt="Lote de Pago de Dietas", view="Form", enabled=1,
+                 script="// independent site form"),
+            dict(doctype="Server Script", name="HR-CUSTOM-SITE-DIETA-EVENT",
+                 reference_doctype="Lote de Pago de Dietas", script_type="DocType Event",
+                 doctype_event="Before Save", disabled=0,
+                 script="frappe.throw('This site event must not run during migration')"),
+        ]
+        for values in records:
+            frappe.get_doc(values).db_insert()
+        before = [frappe.get_doc(row["doctype"], row["name"]).as_dict() for row in records]
+        for _ in range(2):
+            report = installer.install()
+            self.assertEqual(report["conflicts"], [])
+            for row in records:
+                self.assertIn("Lote de Pago de Dietas: existing " + row["doctype"] + " " + row["name"],
+                              report["preserved_customizations"])
+                self.assertNotIn(installer._script_key(row), installer._stored_baseline())
+        self.assertEqual(before, [frappe.get_doc(row["doctype"], row["name"]).as_dict()
+                                  for row in records])
+
     def test_extension_does_not_hide_incompatible_release_field(self):
         self.extend_dietas_metadata()
         field = frappe.db.get_value("DocField", {"parent": "Solicitud de Dieta", "fieldname": "company"}, "name")

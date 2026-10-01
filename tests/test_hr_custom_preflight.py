@@ -14,7 +14,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class Record(dict):
     def __getattr__(self, key):
-        return self.get(key)
+        try:
+            return self[key]
+        except KeyError as exc:
+            raise AttributeError(key) from exc
 
     def as_dict(self):
         return self
@@ -162,14 +165,35 @@ class PreflightTest(unittest.TestCase):
                 self.assertTrue(self.installer.preview()["conflicts"])
                 self.records = before
 
-    def test_form_scripts_and_other_bindings_still_require_review(self):
+    def test_additional_form_and_event_scripts_remain_site_owned(self):
         self.extend_dietas()
         self.records[("Client Script", self.extra_list)]["view"] = "Form"
+        event_name = "Site dieta event"
+        self.records[("Server Script", event_name)] = Record(
+            doctype="Server Script", name=event_name, script_type="DocType Event",
+            reference_doctype="Lote de Pago de Dietas", doctype_event="Before Save",
+            disabled=0, script="# independent server customization")
+        before = copy.deepcopy(self.records)
+        for _ in range(2):
+            report = self.installer.preview()
+            self.assertEqual(report["conflicts"], [])
+            self.assertEqual(len(report["preserved_customizations"]), 2)
+            desired, conflicts = self.installer._script_plan()
+            self.assertEqual(conflicts, [])
+            self.assertFalse({self.extra_list, event_name}.intersection(doc["name"] for doc in desired))
+        self.assertEqual(self.records, before)
+        self.baseline = None
+        report = self.installer.preview()
+        for name in (self.extra_list, event_name):
+            self.assertTrue(any(name in item for item in report["conflicts"]))
+
+    def test_non_script_metadata_bindings_still_require_review(self):
+        self.extend_dietas()
         for dt, field in (("Custom Field", "dt"), ("Property Setter", "doc_type"),
-                          ("Workflow", "document_type"), ("Server Script", "reference_doctype")):
+                          ("Workflow", "document_type")):
             self.records[(dt, "site override")] = Record({field: "Lote de Pago de Dietas"})
         conflicts = self.installer.preview()["conflicts"]
-        for dt in ("Client Script", "Custom Field", "Property Setter", "Workflow", "Server Script"):
+        for dt in ("Custom Field", "Property Setter", "Workflow"):
             self.assertTrue(any("existing " + dt in item for item in conflicts), dt)
 
     def test_outbound_bindings_still_require_event_order_review(self):
