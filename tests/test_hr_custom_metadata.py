@@ -47,6 +47,69 @@ class CustomHRMigrationTest(unittest.TestCase):
         self.assertEqual(before, after)
         self.assertEqual(installer.preview()["conflicts"], [])
 
+    def extend_dietas_metadata(self):
+        """Metadata-only fixtures; no business documents, DDL, or fixture commits."""
+        for dt, fieldname, fieldtype, options in (
+                ("Solicitud de Dieta", "work_order", "Link", "Work Order"),
+                ("Lote de Pago de Dietas", "standalone_details", "Long Text", None)):
+            parent = frappe.get_doc("DocType", dt)
+            frappe.get_doc(dict(doctype="DocField", parent=dt, parenttype="DocType",
+                                parentfield="fields", idx=len(parent.fields) + 1,
+                                fieldname=fieldname, fieldtype=fieldtype,
+                                label=fieldname, options=options)).db_insert()
+        for dt, fieldname in (("Solicitud de Dieta", "company"),
+                              ("Lote de Pago de Dietas", "overtime_work_call")):
+            name = frappe.db.get_value("DocField", {"parent": dt, "fieldname": fieldname}, "name")
+            frappe.db.set_value("DocField", name, "reqd", 0, update_modified=False)
+        status = frappe.db.get_value("DocField", {"parent": "Lote de Pago de Dietas", "fieldname": "status"}, "name")
+        frappe.db.set_value("DocField", status, "options", "Draft\nConfirmed\nReversed", update_modified=False)
+        # Reorder an existing field independently of the added rows.
+        field = frappe.db.get_value("DocField", {"parent": "Solicitud de Dieta", "fieldname": "company"}, "name")
+        frappe.db.set_value("DocField", field, "idx", 0, update_modified=False)
+        name = "HR-CUSTOM-SITE-DIETA-LIST"
+        frappe.get_doc(dict(doctype="Client Script", name=name, dt="Lote de Pago de Dietas",
+                            view="List", enabled=1, script="// site-owned list action")).db_insert()
+        return name
+
+    def test_repeated_upgrade_preserves_dietas_extensions_and_list_script(self):
+        name = self.extend_dietas_metadata()
+        owned = installer.PREFIX + "Lote de Pago de Dietas"
+        frappe.db.set_value("Client Script", owned, "script", "// edited site form", update_modified=False)
+        doctypes = ("Solicitud de Dieta", "Lote de Pago de Dietas")
+        before = {dt: frappe.get_doc("DocType", dt).as_dict() for dt in doctypes}
+        scripts_before = {key: frappe.get_doc("Client Script", key).as_dict() for key in (name, owned)}
+        counts = {dt: frappe.db.count(dt) for dt in doctypes}
+        for _ in range(2):
+            report = installer.install()
+            self.assertEqual(report["conflicts"], [])
+            self.assertIn("Lote de Pago de Dietas: existing Client Script " + name,
+                          report["preserved_customizations"])
+        self.assertEqual(before, {dt: frappe.get_doc("DocType", dt).as_dict() for dt in doctypes})
+        self.assertEqual(scripts_before, {key: frappe.get_doc("Client Script", key).as_dict()
+                                        for key in (name, owned)})
+        self.assertEqual(counts, {dt: frappe.db.count(dt) for dt in doctypes})
+        self.assertNotIn("Client Script:" + name, installer._stored_baseline())
+
+    def test_extensions_without_install_baseline_still_block_conversion(self):
+        self.extend_dietas_metadata()
+        frappe.db.delete("DefaultValue", {"parent": "__global", "defkey": installer.BASELINE_KEY})
+        with self.assertRaisesRegex(frappe.ValidationError, "fields row count"):
+            installer.install()
+
+    def test_extension_does_not_hide_incompatible_release_field(self):
+        self.extend_dietas_metadata()
+        field = frappe.db.get_value("DocField", {"parent": "Solicitud de Dieta", "fieldname": "company"}, "name")
+        frappe.db.set_value("DocField", field, "fieldtype", "Data", update_modified=False)
+        with self.assertRaisesRegex(frappe.ValidationError, "fields.company.fieldtype"):
+            installer.install()
+
+    def test_extension_does_not_allow_removal_of_release_status(self):
+        self.extend_dietas_metadata()
+        field = frappe.db.get_value("DocField", {"parent": "Lote de Pago de Dietas", "fieldname": "status"}, "name")
+        frappe.db.set_value("DocField", field, "options", "Draft\nConfirmed", update_modified=False)
+        with self.assertRaisesRegex(frappe.ValidationError, "fields.status.options"):
+            installer.install()
+
     def test_entry_point_repairs_stale_generic_controller(self):
         name = "Ordinary Night Automation"
         expected = get_controller(name)

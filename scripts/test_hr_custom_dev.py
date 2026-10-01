@@ -26,7 +26,7 @@ def prohibited(*args, **kwargs):
 
 try:
     suite = unittest.defaultTestLoader.discover(str(Path(__file__).resolve().parents[1] / "tests"),
-                                              pattern="test_hr_custom_metadata.py")
+                                              pattern="test_hr_custom_*.py")
     with patch.object(frappe.db, "commit", prohibited), patch.object(frappe, "sendmail", prohibited), patch.object(frappe, "enqueue", prohibited):
         result = unittest.TextTestRunner(verbosity=2).run(suite)
 finally:
