@@ -207,10 +207,12 @@ def preview(include_server_scripts=True):
         exists = frappe.db.exists("DocType", name)
         custom = None
         allow_extensions = False
+        fieldnames = {field["fieldname"] for field in expected["fields"]}
         if exists:
             actual = frappe.get_doc("DocType", name).as_dict()
             custom = actual.custom
             allow_extensions = bool(custom and installed)
+            fieldnames.update(field.get("fieldname") for field in actual.get("fields", []))
             for conflict in _definition_conflicts(actual, expected, allow_extensions=allow_extensions):
                 report["conflicts"].append(f"{name}: definition differs at {conflict}")
         report["doctypes"].append({"name": name, "action": "create" if not exists else "keep" if custom else "convert"})
@@ -224,7 +226,19 @@ def preview(include_server_scripts=True):
             for row in frappe.get_all(dt, filters={field: name}, pluck="name"):
                 if (dt, row) not in owned:
                     detail = f"{name}: existing {dt} {row}"
-                    if allow_extensions and dt in ("Client Script", "Server Script"):
+                    if allow_extensions and dt == "Custom Field":
+                        # Custom Field rows are not part of DocType.fields.
+                        # Preserve additive site fields, but never let them
+                        # shadow release fields, local DocFields, or each other.
+                        fieldname = frappe.get_doc(dt, row).get("fieldname")
+                        if not fieldname:
+                            report["conflicts"].append(detail + ": missing fieldname")
+                        elif fieldname in fieldnames:
+                            report["conflicts"].append(detail + f": duplicate fieldname {fieldname!r}")
+                        else:
+                            fieldnames.add(fieldname)
+                            report["preserved_customizations"].append(detail)
+                    elif allow_extensions and dt in ("Client Script", "Server Script"):
                         report["preserved_customizations"].append(detail)
                     else:
                         report["conflicts"].append(detail)
