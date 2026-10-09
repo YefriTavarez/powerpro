@@ -126,6 +126,37 @@ class CustomHRMigrationTest(unittest.TestCase):
         with self.assertRaisesRegex(frappe.ValidationError, "fields.company.fieldtype"):
             installer.install()
 
+    def test_payroll_custom_fields_and_single_values_survive_repeated_upgrades(self):
+        dt = "Employee Supplement Settings"
+        names = []
+        for fieldname, value in (("custom_igc_salary_distribution_enabled", 1),
+                                 ("custom_igc_direct_supplements", 0)):
+            name = dt + "-" + fieldname
+            # Metadata-only insertion on a Single: no DDL, settings save,
+            # payroll events or commits. The runner rolls back these fixtures.
+            frappe.get_doc(dict(doctype="Custom Field", name=name, dt=dt,
+                                fieldname=fieldname, fieldtype="Check", label=fieldname,
+                                insert_after="enabled", default="0")).db_insert()
+            frappe.db.set_single_value(dt, fieldname, value)
+            names.append(name)
+        fields_before = {name: frappe.get_doc("Custom Field", name).as_dict() for name in names}
+        doctype_before = frappe.get_doc("DocType", dt).as_dict()
+        values_before = frappe.db.sql(
+            "select field, value from tabSingles where doctype=%s order by field", (dt,))
+        baseline_before = installer._stored_baseline()
+        for _ in range(2):
+            report = installer.install()
+            self.assertEqual(report["conflicts"], [])
+            for name in names:
+                self.assertIn(dt + ": existing Custom Field " + name,
+                              report["preserved_customizations"])
+        self.assertEqual(fields_before, {name: frappe.get_doc("Custom Field", name).as_dict()
+                                        for name in names})
+        self.assertEqual(doctype_before, frappe.get_doc("DocType", dt).as_dict())
+        self.assertEqual(values_before, frappe.db.sql(
+            "select field, value from tabSingles where doctype=%s order by field", (dt,)))
+        self.assertEqual(baseline_before, installer._stored_baseline())
+
     def test_extension_does_not_allow_removal_of_release_status(self):
         self.extend_dietas_metadata()
         field = frappe.db.get_value("DocField", {"parent": "Lote de Pago de Dietas", "fieldname": "status"}, "name")

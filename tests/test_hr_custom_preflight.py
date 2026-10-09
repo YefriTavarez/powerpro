@@ -187,13 +187,74 @@ class PreflightTest(unittest.TestCase):
         for name in (self.extra_list, event_name):
             self.assertTrue(any(name in item for item in report["conflicts"]))
 
-    def test_non_script_metadata_bindings_still_require_review(self):
+    def add_custom_field(self, fieldname, name=None):
+        dt = "Employee Supplement Settings"
+        name = name or dt + "-" + fieldname
+        self.records[("Custom Field", name)] = Record(
+            doctype="Custom Field", name=name, dt=dt, fieldname=fieldname,
+            fieldtype="Check", label=fieldname, insert_after="enabled", default="0")
+        return name
+
+    def test_payroll_custom_fields_survive_repeated_previews_and_installs(self):
+        names = [self.add_custom_field(field) for field in (
+            "custom_igc_salary_distribution_enabled", "custom_igc_direct_supplements")]
+        before = copy.deepcopy(self.records)
+        safe_exec = types.ModuleType("frappe.utils.safe_exec")
+        safe_exec.is_safe_exec_enabled = lambda: True
+        with patch.dict(sys.modules, {"frappe.utils.safe_exec": safe_exec}), \
+                patch.object(self.installer, "_snapshot"), \
+                patch.object(self.installer, "_refresh"):
+            for _ in range(2):
+                for report in (self.installer.preview(), self.installer.install()):
+                    self.assertEqual(report["conflicts"], [])
+                    self.assertCountEqual(report["preserved_customizations"], [
+                        "Employee Supplement Settings: existing Custom Field " + name for name in names])
+        self.assertEqual(self.records, before)
+        self.assertFalse(any(key.startswith("Custom Field:") for key in self.baseline))
+        for operation in ("set_value", "delete", "set_global", "commit"):
+            getattr(self.frappe.db, operation).assert_not_called()
+
+    def test_custom_fields_still_block_first_conversion(self):
+        name = self.add_custom_field("custom_igc_direct_supplements")
+        for baseline, custom in ((None, 1), ({}, 1), (self.baseline, 0)):
+            with self.subTest(baseline=bool(baseline), custom=custom):
+                self.baseline = baseline
+                self.records[("DocType", "Employee Supplement Settings")]["custom"] = custom
+                self.assertIn("Employee Supplement Settings: existing Custom Field " + name,
+                              self.installer.preview()["conflicts"])
+
+    def test_custom_field_cannot_shadow_release_or_local_docfield(self):
+        dt = self.records[("DocType", "Employee Supplement Settings")]
+        dt["fields"].append(dict(fieldname="custom_local_setting", fieldtype="Check"))
+        for fieldname in ("enabled", "custom_local_setting"):
+            with self.subTest(fieldname=fieldname):
+                name = self.add_custom_field(fieldname)
+                conflicts = self.installer.preview()["conflicts"]
+                self.assertTrue(any(name in item and "duplicate fieldname" in item for item in conflicts))
+                self.records.pop(("Custom Field", name))
+
+    def test_custom_field_cannot_replace_missing_release_field(self):
+        fields = self.records[("DocType", "Employee Supplement Settings")]["fields"]
+        fields[:] = [row for row in fields if row["fieldname"] != "enabled"]
+        name = self.add_custom_field("enabled")
+        conflicts = self.installer.preview()["conflicts"]
+        self.assertTrue(any("missing release field" in item for item in conflicts))
+        self.assertTrue(any(name in item and "duplicate fieldname" in item for item in conflicts))
+
+    def test_custom_fields_with_duplicate_or_missing_names_remain_conflicts(self):
+        self.add_custom_field("custom_local_setting", "first")
+        self.add_custom_field("custom_local_setting", "second")
+        self.add_custom_field("", "missing")
+        conflicts = self.installer.preview()["conflicts"]
+        self.assertEqual(sum("duplicate fieldname" in item for item in conflicts), 1)
+        self.assertEqual(sum("missing fieldname" in item for item in conflicts), 1)
+
+    def test_property_setters_and_workflows_still_require_review(self):
         self.extend_dietas()
-        for dt, field in (("Custom Field", "dt"), ("Property Setter", "doc_type"),
-                          ("Workflow", "document_type")):
+        for dt, field in (("Property Setter", "doc_type"), ("Workflow", "document_type")):
             self.records[(dt, "site override")] = Record({field: "Lote de Pago de Dietas"})
         conflicts = self.installer.preview()["conflicts"]
-        for dt in ("Custom Field", "Property Setter", "Workflow"):
+        for dt in ("Property Setter", "Workflow"):
             self.assertTrue(any("existing " + dt in item for item in conflicts), dt)
 
     def test_outbound_bindings_still_require_event_order_review(self):
