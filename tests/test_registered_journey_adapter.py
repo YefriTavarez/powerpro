@@ -12,6 +12,8 @@ from unittest.mock import patch
 
 class Record(dict):
     def __getattr__(self, key):
+        if key.startswith('__'):
+            raise AttributeError(key)
         return self.get(key)
     def check_permission(self, action):
         if self.get('denied'):
