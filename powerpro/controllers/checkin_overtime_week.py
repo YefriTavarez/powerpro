@@ -113,6 +113,13 @@ def load_week(doc,employee,assignments,*,for_update=False):
         certified_sessions.extend(fresh.get('certified_sessions',[]))
         historical_intervals.extend(fresh['worked_intervals'])
         historical_checkins.extend(name for session in fresh['sessions'] for name in session['checkins'])
+    from powerpro.controllers.registered_journey import ordinary_week_evidence
+    ordinary=ordinary_week_evidence(doc.employee,first-timedelta(days=1),doc.authorization_start,for_update=for_update)
+    historical_intervals.extend(ordinary['intervals'])
+    historical_checkins.extend(ordinary['checkins'])
+    certified_sessions.extend(ordinary['sessions'])
+    issues.extend(ordinary['issues'])
     return {'start':start,'cutoff':end,'rows':[dict(r) for r in rows],
             'policies':policies,'schedules':schedules,'attendances':[dict(r) for r in attendances],
             'context_issues':issues,'certified_sessions':certified_sessions,'historical_intervals':historical_intervals,'historical_checkins':historical_checkins}
+

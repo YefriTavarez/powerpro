@@ -124,8 +124,8 @@ def _data(doc,*,for_update=False,include_weekly=True,observation_window=None,sco
     for day in [days[0]-timedelta(days=1)]+days:
         c=get_schedule_context(day,doc.shift_type,doc.holiday_list,for_update=for_update)
         c['date']=str(day);contexts.append(c)
-    assignments=_reconciliation_rows('Shift Assignment',for_update=for_update,filters={'employee':doc.employee,'docstatus':1,'status':'Active','start_date':['<=',observed_end.date()+timedelta(days=1)]},
-        fields=['name','shift_type','start_date','end_date','modified'],limit=1001)
+    from powerpro.controllers.registered_journey import shift_assignments
+    assignments=shift_assignments(doc.employee,observed_end.date()+timedelta(days=1),for_update=for_update,include_modified=True)
     if len(assignments)>1000:raise ValueError('Demasiadas asignaciones; requiere revisión.')
     employee=frappe.get_doc('Employee',doc.employee,for_update=for_update)
     next_windows=[]
@@ -422,3 +422,4 @@ def scheduled_reconcile_due():
                     'evidence_issues':_json([{'code':'processing_error','message':str(exc)[:1500]}]),'evidence_retry_after':now_datetime()+timedelta(minutes=10)})
                 frappe.db.commit()
             except Exception:frappe.db.rollback()
+
