@@ -1,0 +1,340 @@
+[
+  {
+    "doctype": "DocType",
+    "name": "Registro de Jornada Empleado",
+    "module": "Custom",
+    "custom": 1,
+    "istable": 1,
+    "editable_grid": 1,
+    "track_changes": 1,
+    "fields": [
+      {
+        "fieldname": "employee",
+        "label": "Empleado",
+        "fieldtype": "Link",
+        "options": "Employee",
+        "reqd": 1,
+        "in_list_view": 1,
+        "columns": 3
+      },
+      {
+        "fieldname": "employee_name",
+        "label": "Nombre",
+        "fieldtype": "Data",
+        "read_only": 1
+      },
+      {
+        "fieldname": "work_order",
+        "label": "Orden de Producción",
+        "fieldtype": "Link",
+        "options": "Work Order",
+        "in_list_view": 1,
+        "columns": 2
+      },
+      {
+        "fieldname": "job_card",
+        "label": "Tarjeta de Trabajo",
+        "fieldtype": "Link",
+        "options": "Job Card"
+      },
+      {
+        "fieldname": "break_mode",
+        "label": "Descanso",
+        "fieldtype": "Select",
+        "options": "Marcaciones\nDescanso Flexible del Turno\nDescanso Declarado",
+        "default": "Marcaciones",
+        "reqd": 1,
+        "in_list_view": 1,
+        "columns": 3
+      },
+      {
+        "fieldname": "evidence_section",
+        "label": "Horario y Descanso Declarados",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "actual_start",
+        "label": "Inicio Real",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "actual_end",
+        "label": "Fin Real",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "break_column",
+        "label": "",
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "break_start",
+        "label": "Inicio del Descanso",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "break_end",
+        "label": "Fin del Descanso",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "evidence_reference",
+        "label": "Referencia de la Declaración",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "sources_section",
+        "label": "Documentos Vinculados",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "shift_assignment",
+        "label": "Asignación de Turno",
+        "fieldtype": "Link",
+        "options": "Shift Assignment",
+        "read_only": 1,
+        "no_copy": 1
+      },
+      {
+        "fieldname": "retroactive_adjustment",
+        "label": "Ajuste Retroactivo",
+        "fieldtype": "Link",
+        "options": "Retroactive Overtime Adjustment",
+        "read_only": 1,
+        "no_copy": 1
+      },
+      {
+        "fieldname": "night_settlement",
+        "label": "Liquidación Nocturna",
+        "fieldtype": "Link",
+        "options": "Ordinary Night Settlement",
+        "read_only": 1,
+        "no_copy": 1
+      },
+      {
+        "fieldname": "work_call",
+        "label": "Convocatoria",
+        "fieldtype": "Link",
+        "options": "Overtime Work Call",
+        "read_only": 1,
+        "no_copy": 1
+      }
+    ]
+  },
+  {
+    "doctype": "DocType",
+    "name": "Registro de Jornada",
+    "module": "Custom",
+    "custom": 1,
+    "autoname": "format:JORN-{YYYY}-{#####}",
+    "naming_rule": "Expression",
+    "track_changes": 1,
+    "allow_rename": 0,
+    "search_fields": "reason,company",
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "title_field": "journey_type",
+    "show_title_field_in_link": 0,
+    "fields": [
+      {
+        "fieldname": "intro",
+        "label": "Registro de Jornada",
+        "fieldtype": "HTML"
+      },
+      {
+        "fieldname": "general",
+        "label": "1. Jornada",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "company",
+        "label": "Empresa",
+        "fieldtype": "Link",
+        "options": "Company",
+        "reqd": 1
+      },
+      {
+        "fieldname": "journey_type",
+        "label": "Tipo de Jornada",
+        "fieldtype": "Select",
+        "options": "Horas Adicionales\nCambio de Turno\nCambio de Turno y Horas Adicionales",
+        "reqd": 1,
+        "in_list_view": 1,
+        "default": "Horas Adicionales"
+      },
+      {
+        "fieldname": "replacement_shift",
+        "label": "Turno Sustituto",
+        "fieldtype": "Link",
+        "options": "Shift Type",
+        "depends_on": "eval:doc.journey_type!=\"Horas Adicionales\"",
+        "mandatory_depends_on": "eval:doc.journey_type!=\"Horas Adicionales\""
+      },
+      {
+        "fieldname": "general_col",
+        "label": "",
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "starts_at",
+        "label": "Desde",
+        "fieldtype": "Datetime",
+        "reqd": 1,
+        "in_list_view": 1
+      },
+      {
+        "fieldname": "ends_at",
+        "label": "Hasta",
+        "fieldtype": "Datetime",
+        "reqd": 1
+      },
+      {
+        "fieldname": "status",
+        "label": "Estado",
+        "fieldtype": "Select",
+        "options": "Borrador\nDocumentos Preparados",
+        "read_only": 1,
+        "default": "Borrador",
+        "in_list_view": 1,
+        "no_copy": 1
+      },
+      {
+        "fieldname": "reason",
+        "label": "Motivo",
+        "fieldtype": "Small Text",
+        "reqd": 1
+      },
+      {
+        "fieldname": "payment_section",
+        "label": "2. Pago",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "payroll_entry",
+        "label": "Nómina de Destino",
+        "fieldtype": "Link",
+        "options": "Payroll Entry"
+      },
+      {
+        "fieldname": "payment_col",
+        "label": "",
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "payroll_date",
+        "label": "Fecha de Nómina",
+        "fieldtype": "Date",
+        "reqd": 1,
+        "in_list_view": 1
+      },
+      {
+        "fieldname": "team_section",
+        "label": "3. Empleados",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "employees",
+        "label": "Empleados",
+        "fieldtype": "Table",
+        "options": "Registro de Jornada Empleado",
+        "reqd": 1
+      },
+      {
+        "fieldname": "review_section",
+        "label": "4. Revisión y Documentos",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "review",
+        "label": "Revisión",
+        "fieldtype": "HTML"
+      },
+      {
+        "fieldname": "audit_section",
+        "label": "Origen",
+        "fieldtype": "Section Break",
+        "collapsible": 1
+      },
+      {
+        "fieldname": "source_work_call",
+        "label": "Convocatoria de Origen",
+        "fieldtype": "Link",
+        "options": "Overtime Work Call",
+        "read_only": 1
+      },
+      {
+        "fieldname": "source_snapshot",
+        "label": "Datos al Preparar Documentos",
+        "fieldtype": "Code",
+        "options": "JSON",
+        "read_only": 1,
+        "hidden": 1,
+        "no_copy": 1
+      }
+    ],
+    "permissions": [
+      {
+        "role": "System Manager",
+        "read": 1,
+        "write": 1,
+        "create": 1,
+        "delete": 1,
+        "print": 1,
+        "export": 1,
+        "report": 1,
+        "share": 0
+      },
+      {
+        "role": "HR Manager",
+        "read": 1,
+        "write": 1,
+        "create": 1,
+        "delete": 1,
+        "print": 1,
+        "export": 1,
+        "report": 1,
+        "share": 0
+      },
+      {
+        "role": "Manufacturing Manager",
+        "read": 1,
+        "write": 1,
+        "create": 1,
+        "delete": 1,
+        "print": 1,
+        "export": 1,
+        "report": 1,
+        "share": 0
+      },
+      {
+        "role": "Accounts Manager",
+        "read": 1,
+        "write": 1,
+        "create": 1,
+        "delete": 1,
+        "print": 1,
+        "export": 1,
+        "report": 1,
+        "share": 0
+      },
+      {
+        "role": "Encargado Gestión Humana",
+        "read": 1,
+        "write": 1,
+        "create": 1,
+        "delete": 1,
+        "print": 1,
+        "export": 1,
+        "report": 1,
+        "share": 0
+      },
+      {
+        "role": "HR User",
+        "read": 1,
+        "write": 1,
+        "create": 1,
+        "report": 1
+      }
+    ]
+  }
+]

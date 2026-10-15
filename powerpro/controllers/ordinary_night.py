@@ -72,9 +72,8 @@ def build_preview(doc, *, for_update=False, historical_snapshot=None, historical
     employee.check_permission('read')
     company = frappe.get_doc('Company', employee.company, for_update=for_update)
     day = getdate(doc.work_date)
-    assignments = _reconciliation_rows('Shift Assignment', for_update=for_update,
-        filters={'employee': employee.name, 'docstatus': 1, 'status': 'Active', 'start_date': ['<=', day+timedelta(days=2)]},
-        fields=['name', 'shift_type', 'start_date', 'end_date'], limit=1001)
+    from powerpro.controllers.registered_journey import shift_assignments, ordinary_declaration
+    assignments = shift_assignments(employee.name, day+timedelta(days=2), for_update=for_update)
     if len(assignments)>1000: frappe.throw(_('Demasiadas asignaciones de turno.'))
     def shift_at(date):
         names = {r.shift_type for r in assignments if getdate(r.start_date)<=date and (not r.end_date or getdate(r.end_date)>=date)}
@@ -146,6 +145,11 @@ def build_preview(doc, *, for_update=False, historical_snapshot=None, historical
     rate=_get_hourly_rate(rates[0])
     if not isfinite(rate) or rate<=0:frappe.throw(_('La tarifa por hora debe ser positiva y finita.'))
     certified=_certified_session(extensions,employee.name,current.name,for_update=for_update)
+    registered=ordinary_declaration(doc,current.name,lo,hi,for_update=for_update)
+    if registered:
+        if certified and _evidence_hash(registered['worked_intervals'])!=_evidence_hash(certified['worked_intervals']):
+            frappe.throw(_('La declaración de jornada no coincide con la evidencia de horas adicionales.'))
+        certified=registered
     result=evaluate_night_work(rows=[dict(r) for r in rows],shift=shift,context=context,extensions=windows,
                               next_windows=next_windows,now=now_datetime(),basis=policy['night_basis'],
                               certified_intervals=certified['worked_intervals'] if certified else None)
@@ -155,6 +159,9 @@ def build_preview(doc, *, for_update=False, historical_snapshot=None, historical
     if certified:
         data['certified_session']=certified
         result['reconciliation_source']='Manual Verification'
+    if registered:
+        # The historical cancellation/review service reads this canonical key.
+        data['manual_declaration']=registered['manual_declaration']
     result.update(input=data,input_hash=_evidence_hash(data),ordinary_hours=result.get('night_session',{}).get('ordinary_premium_hours',0),
                   hourly_rate=rate,currency=company.default_currency,night_percent=policy['night_percent'])
     result['amount']=round(result['ordinary_hours']*rate*policy['night_percent']/100,2)
@@ -243,3 +250,4 @@ def get_status(name):
     saved=frappe.parse_json(doc.evidence_snapshot or '{}')
     return {'state':'Needs Review' if doc.docstatus==1 and current['input_hash']!=saved.get('input_hash') else current['state'],
             'issues':current['issues'],'settlement_status':doc.settlement_status}
+
