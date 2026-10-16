@@ -18,11 +18,14 @@ from powerpro.controllers.overtime_cash_settlement import (
 )
 
 from . import helper, monthly
+from powerpro.controllers import additional_salary_schedule as recurring
 from powerpro.controllers import mixed_frequency_payroll as mixed
 
 
 class SalarySlip(SalarySlip):
     def validate(self):
+        if self.docstatus == 1:
+            recurring.lock_employee(self.employee)
         mixed.prepare_slip(self)
         mixed.validate_slip(self)
         if self.docstatus == 1 and monthly.settings_for(self):
@@ -55,6 +58,10 @@ class SalarySlip(SalarySlip):
         super().calculate_component_amounts(component_type)
         if component_type == "deductions":
             monthly.finish(self)
+
+    def add_additional_salary_components(self, component_type):
+        if not recurring.add_components(self, component_type):
+            return super().add_additional_salary_components(component_type)
 
     def get_data_for_eval(self):
         data, default_data = super().get_data_for_eval()
@@ -94,6 +101,7 @@ class SalarySlip(SalarySlip):
 
     def calculate_net_pay(self, skip_tax_breakup_computation: bool = False):
         self._pp_monthly = None
+        self.pp_recurring_salary_snapshot = None
         super().calculate_net_pay(skip_tax_breakup_computation=skip_tax_breakup_computation)
         helper.populate_employer_contributions(self)
 

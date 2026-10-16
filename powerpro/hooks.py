@@ -58,6 +58,7 @@ app_include_js = [
 
 # include js in doctype views
 doctype_js = {
+    "Additional Salary": "public/js/additional_salary_schedule.js",
     "Overtime Work Call": "public/js/dietas.js",
     "Salary Slip": "public/js/salary_slip_monthly.js",
     "Item" : "public/js/item.js",
@@ -287,6 +288,8 @@ doc_events = {
         "validate": "powerpro.controllers.salary_structure_assignment.validate",
     },
     "Additional Salary": {
+        "before_validate": "powerpro.controllers.additional_salary_schedule.validate_schedule",
+        "before_update_after_submit": "powerpro.controllers.additional_salary_schedule.validate_schedule",
         "validate": "powerpro.controllers.retroactive_documentation.prevent_salary_link",
         "before_cancel": "powerpro.controllers.overtime_cash_settlement.prevent_direct_overtime_salary_cancel",
     },
