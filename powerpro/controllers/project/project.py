@@ -106,6 +106,14 @@ class Project(Document):
 
         self.notify_update()
 
+    # ERPNext v15 calls these helpers from update_percent_complete. This
+    # controller extends Document, so the native helpers must be exposed here.
+    # Older ERPNext versions do not define or call them.
+    if hasattr(project.Project, "validate_completed_status"):
+        validate_completed_status = project.Project.validate_completed_status
+    if hasattr(project.Project, "get_task_progress"):
+        get_task_progress = project.Project.get_task_progress
+
     # overrides of update_costing
     update_purchase_costing = project.Project.update_purchase_costing
     update_sales_amount = project.Project.update_sales_amount
