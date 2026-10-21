@@ -1,19 +1,33 @@
 # Copyright (c) 2026, Yefri Tavarez and Contributors
 # For license information, please see license.txt
 
-"""Regression checks for ERPNext progress methods used by PowerPro Project."""
+"""Regression checks for ERPNext progress and costing used by PowerPro Project."""
 
 import unittest
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import frappe
 from erpnext.projects.doctype.project import project as erpnext_project
 
 from powerpro.controllers.project.project import Project
+from powerpro.controllers.task.task import Task
 
 
-class TestProjectProgress(unittest.TestCase):
+class ProjectTestCase(unittest.TestCase):
+    def setUp(self):
+        # Load settings before task SQL/cached-document mocks are active.
+        # Native rounding and timestamps both read this configuration lazily.
+        system_settings = frappe.get_doc("System Settings").as_dict()
+        system_settings.update(rounding_method="Banker's Rounding", time_zone="UTC")
+        settings = patch.object(
+            frappe, "get_system_settings", side_effect=system_settings.get
+        )
+        settings.start()
+        self.addCleanup(settings.stop)
+
+
+class TestProjectProgress(ProjectTestCase):
     def make_project(self, method="Task Completion", status="Open", previous="Open"):
         # The progress methods only need document fields; no persisted fixture.
         doc = Project.__new__(Project)
@@ -95,6 +109,85 @@ class TestProjectProgress(unittest.TestCase):
                     doc.validate()
                 self.assertEqual(doc.percent_complete, expected)
                 self.assertEqual(doc.status, "Open")
+
+
+@unittest.skipUnless(
+    hasattr(erpnext_project.Project, "get_non_stock_purchase_cost"),
+    "ERPNext version predates split purchase costing helpers",
+)
+class TestProjectPurchaseCosting(ProjectTestCase):
+    def make_query(self, results):
+        # Keep the native ERPNext costing methods; mock only database results.
+        query = MagicMock()
+        for method in ("left_join", "on", "select", "where"):
+            getattr(query, method).return_value = query
+        query.run.side_effect = results
+        return query
+
+    def test_purchase_cost_includes_all_capitalised_landed_costs(self):
+        for purchase, landed in ((1250.75, 50.25), (None, None), (-125.5, -5.25)):
+            with self.subTest(purchase=purchase, landed=landed):
+                doc = Project.__new__(Project)
+                doc.name = "TEST-PROJECT-COSTING"
+                receipt_types = erpnext_project.LANDED_COST_RECEIPT_ITEMS
+                query = self.make_query([[(purchase,)]] + [[(landed,)]] * len(receipt_types))
+                with patch.object(erpnext_project.qb, "from_", return_value=query):
+                    doc.update_purchase_costing()
+                self.assertAlmostEqual(
+                    doc.total_purchase_cost,
+                    (purchase or 0) - (landed or 0) * len(receipt_types),
+                )
+                self.assertEqual(query.run.call_count, 1 + len(receipt_types))
+
+    def test_task_update_reaches_native_costing_and_persists_project(self):
+        doc = Project.__new__(Project)
+        doc.name = "TEST-PROJECT-COSTING"
+        doc.status = "Open"
+        doc.percent_complete = 0
+        doc.percent_complete_method = "Task Completion"
+        doc.total_consumed_material_cost = 200
+        doc.get_doc_before_save = Mock(return_value=SimpleNamespace(status="Open"))
+        doc.db_update = Mock()
+        doc.notify_update = Mock()
+        timesheet = SimpleNamespace(
+            start_date=None, end_date=None, costing_amount=100,
+            billing_amount=180, time=2,
+        )
+        receipt_count = len(erpnext_project.LANDED_COST_RECEIPT_ITEMS)
+        query = self.make_query(
+            [[timesheet], [(1250.75,)]] + [[(50.25,)]] * receipt_count
+        )
+        task = Task.__new__(Task)
+        task.project = doc.name
+        task.flags = SimpleNamespace(from_project=False)
+        with patch.object(frappe, "get_cached_doc", return_value=doc), patch.object(
+            frappe.db, "count", return_value=2
+        ), patch.object(
+            frappe.db, "sql", side_effect=[[(1,)], [(2000,)], [(1800,)], [(100,)]]
+        ), patch.object(erpnext_project.qb, "from_", return_value=query):
+            task.update_project()
+        purchase_cost = 1250.75 - 50.25 * receipt_count
+        self.assertEqual(doc.percent_complete, 50)
+        self.assertEqual(doc.status, "Open")
+        self.assertEqual(doc.total_purchase_cost, purchase_cost)
+        self.assertEqual(doc.total_sales_amount, 2000)
+        self.assertEqual(doc.total_billed_amount, 1900)
+        self.assertEqual(doc.actual_time, 2)
+        self.assertEqual(doc.gross_margin, 1900 - 100 - purchase_cost - 200)
+        self.assertAlmostEqual(doc.per_gross_margin, doc.gross_margin / 1900 * 100)
+        doc.db_update.assert_called_once_with()
+        doc.notify_update.assert_called_once_with()
+
+    def test_database_failure_is_not_silently_converted_to_zero_cost(self):
+        doc = Project.__new__(Project)
+        doc.name = "TEST-PROJECT-COSTING"
+        doc.total_purchase_cost = 123
+        query = self.make_query([])
+        query.run.side_effect = RuntimeError("cost query failed")
+        with patch.object(erpnext_project.qb, "from_", return_value=query):
+            with self.assertRaisesRegex(RuntimeError, "cost query failed"):
+                doc.update_purchase_costing()
+        self.assertEqual(doc.total_purchase_cost, 123)
 
 
 if __name__ == "__main__":
