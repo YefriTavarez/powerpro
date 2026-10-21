@@ -16,16 +16,13 @@ from powerpro.controllers.task.task import Task
 
 class ProjectTestCase(unittest.TestCase):
     def setUp(self):
-        # flt(..., precision) lazily reads System Settings. Keep that lookup
-        # outside the task SQL/cached-document mocks, even with a cold cache.
-        system_settings = frappe.get_system_settings
-
-        def get_setting(key):
-            if key == "rounding_method":
-                return "Banker's Rounding"
-            return system_settings(key)
-
-        settings = patch.object(frappe, "get_system_settings", side_effect=get_setting)
+        # Load settings before task SQL/cached-document mocks are active.
+        # Native rounding and timestamps both read this configuration lazily.
+        system_settings = frappe.get_doc("System Settings").as_dict()
+        system_settings.update(rounding_method="Banker's Rounding", time_zone="UTC")
+        settings = patch.object(
+            frappe, "get_system_settings", side_effect=system_settings.get
+        )
         settings.start()
         self.addCleanup(settings.stop)
 
