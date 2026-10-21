@@ -116,6 +116,12 @@ class Project(Document):
 
     # overrides of update_costing
     update_purchase_costing = project.Project.update_purchase_costing
+    # ERPNext v15.124 splits purchase costing into two native helpers.
+    # Expose both without changing the costing rules or older-version support.
+    if hasattr(project.Project, "get_non_stock_purchase_cost"):
+        get_non_stock_purchase_cost = project.Project.get_non_stock_purchase_cost
+    if hasattr(project.Project, "get_capitalised_landed_cost"):
+        get_capitalised_landed_cost = project.Project.get_capitalised_landed_cost
     update_sales_amount = project.Project.update_sales_amount
     update_billed_amount = project.Project.update_billed_amount
     calculate_gross_margin = project.Project.calculate_gross_margin
