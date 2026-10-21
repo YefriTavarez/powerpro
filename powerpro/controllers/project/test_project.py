@@ -14,7 +14,23 @@ from powerpro.controllers.project.project import Project
 from powerpro.controllers.task.task import Task
 
 
-class TestProjectProgress(unittest.TestCase):
+class ProjectTestCase(unittest.TestCase):
+    def setUp(self):
+        # flt(..., precision) lazily reads System Settings. Keep that lookup
+        # outside the task SQL/cached-document mocks, even with a cold cache.
+        system_settings = frappe.get_system_settings
+
+        def get_setting(key):
+            if key == "rounding_method":
+                return "Banker's Rounding"
+            return system_settings(key)
+
+        settings = patch.object(frappe, "get_system_settings", side_effect=get_setting)
+        settings.start()
+        self.addCleanup(settings.stop)
+
+
+class TestProjectProgress(ProjectTestCase):
     def make_project(self, method="Task Completion", status="Open", previous="Open"):
         # The progress methods only need document fields; no persisted fixture.
         doc = Project.__new__(Project)
@@ -102,7 +118,7 @@ class TestProjectProgress(unittest.TestCase):
     hasattr(erpnext_project.Project, "get_non_stock_purchase_cost"),
     "ERPNext version predates split purchase costing helpers",
 )
-class TestProjectPurchaseCosting(unittest.TestCase):
+class TestProjectPurchaseCosting(ProjectTestCase):
     def make_query(self, results):
         # Keep the native ERPNext costing methods; mock only database results.
         query = MagicMock()
