@@ -115,6 +115,7 @@ class Project(Document):
         get_task_progress = project.Project.get_task_progress
 
     # overrides of update_costing
+    update_costing = project.Project.update_costing
     update_purchase_costing = project.Project.update_purchase_costing
     # ERPNext v15.124 splits purchase costing into two native helpers.
     # Expose both without changing the costing rules or older-version support.
@@ -122,6 +123,16 @@ class Project(Document):
         get_non_stock_purchase_cost = project.Project.get_non_stock_purchase_cost
     if hasattr(project.Project, "get_capitalised_landed_cost"):
         get_capitalised_landed_cost = project.Project.get_capitalised_landed_cost
+    # Invoice and stock-voucher updates persist costs through these native
+    # methods. Keep the complete helper chain on this Document-based override.
+    if hasattr(project.Project, "db_set_cost"):
+        db_set_cost = project.Project.db_set_cost
+    if hasattr(project.Project, "set_consumed_material_cost"):
+        set_consumed_material_cost = project.Project.set_consumed_material_cost
+    if hasattr(project.Project, "get_stock_value_consumed"):
+        get_stock_value_consumed = project.Project.get_stock_value_consumed
+    if hasattr(project.Project, "get_stock_entry_additional_costs"):
+        get_stock_entry_additional_costs = project.Project.get_stock_entry_additional_costs
     update_sales_amount = project.Project.update_sales_amount
     update_billed_amount = project.Project.update_billed_amount
     calculate_gross_margin = project.Project.calculate_gross_margin
@@ -621,3 +632,4 @@ def get_target_row(items: list[dict], item_code: str, project_id: str):
         if satisfies_qty(row):
             return row
     return None
+
