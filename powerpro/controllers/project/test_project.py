@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, Mock, patch
 
 import frappe
+from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import PurchaseInvoice
 from erpnext.projects.doctype.project import project as erpnext_project
 
 from powerpro.controllers.project.project import Project
@@ -119,7 +120,7 @@ class TestProjectPurchaseCosting(ProjectTestCase):
     def make_query(self, results):
         # Keep the native ERPNext costing methods; mock only database results.
         query = MagicMock()
-        for method in ("left_join", "on", "select", "where"):
+        for method in ("left_join", "join", "on", "select", "where"):
             getattr(query, method).return_value = query
         query.run.side_effect = results
         return query
@@ -190,5 +191,122 @@ class TestProjectPurchaseCosting(ProjectTestCase):
         self.assertEqual(doc.total_purchase_cost, 123)
 
 
+@unittest.skipUnless(
+    hasattr(erpnext_project.Project, "db_set_cost"),
+    "ERPNext version predates direct project cost persistence",
+)
+class TestProjectTransactionCosting(ProjectTestCase):
+    make_query = TestProjectPurchaseCosting.make_query
+
+    def make_project(self):
+        doc = Project.__new__(Project)
+        doc.name = "TEST-PROJECT-TRANSACTION-COSTING"
+        doc.total_costing_amount = 100
+        doc.total_purchase_cost = 0
+        doc.total_consumed_material_cost = 200
+        doc.total_billed_amount = 1900
+        doc.db_set = Mock()
+        return doc
+
+    def assert_cost_persisted(self, doc, field, expected):
+        self.assertAlmostEqual(doc.get(field), expected)
+        margin = (
+            doc.total_billed_amount - doc.total_costing_amount
+            - doc.total_purchase_cost - doc.total_consumed_material_cost
+        )
+        self.assertAlmostEqual(doc.gross_margin, margin)
+        self.assertAlmostEqual(
+            doc.per_gross_margin,
+            margin / doc.total_billed_amount * 100 if doc.total_billed_amount else 0,
+        )
+        doc.db_set.assert_called_once_with(
+            {field: expected, "gross_margin": doc.gross_margin,
+             "per_gross_margin": doc.per_gross_margin},
+            update_modified=False,
+        )
+
+    def test_purchase_invoice_update_persists_purchase_cost_and_margin(self):
+        # Same native entry point used by invoice submission and cancellation.
+        # Values represent submitted purchases, cancellation and a credit note.
+        for purchase, billed in ((1250.75, 1900), (None, 0), (-125.5, 1900)):
+            with self.subTest(purchase=purchase, billed=billed):
+                doc = self.make_project()
+                doc.total_billed_amount = billed
+                invoice = PurchaseInvoice.__new__(PurchaseInvoice)
+                invoice.items = [
+                    SimpleNamespace(project=doc.name),
+                    SimpleNamespace(project=doc.name),
+                    SimpleNamespace(project=None),
+                ]
+                query = self.make_query(
+                    [[(purchase,)]] + [[(None,)]]
+                    * len(erpnext_project.LANDED_COST_RECEIPT_ITEMS)
+                )
+                with patch.object(frappe, "get_doc", return_value=doc) as get_doc, patch.object(
+                    erpnext_project.qb, "from_", return_value=query
+                ):
+                    invoice.update_project()
+                get_doc.assert_called_once_with("Project", doc.name, for_update=True)
+                self.assert_cost_persisted(doc, "total_purchase_cost", purchase or 0)
+
+    def test_stock_update_persists_consumption_additional_costs_and_margin(self):
+        for value_change, additional in ((-800, 50), (None, None), (125, -5)):
+            with self.subTest(value_change=value_change, additional=additional):
+                doc = self.make_project()
+                query = self.make_query([[(value_change,)], [(additional,)]])
+                with patch.object(frappe, "get_doc", return_value=doc) as get_doc, patch.object(
+                    erpnext_project.qb, "from_", return_value=query
+                ):
+                    erpnext_project.update_consumed_material_cost({doc.name})
+                get_doc.assert_called_once_with("Project", doc.name, for_update=True)
+                self.assertEqual(query.run.call_count, 2)
+                expected = -(value_change or 0) + (additional or 0)
+                self.assert_cost_persisted(doc, "total_consumed_material_cost", expected)
+
+    def test_cost_query_failure_does_not_persist_partial_costs(self):
+        for update in (erpnext_project.update_purchase_cost,
+                       erpnext_project.update_consumed_material_cost):
+            with self.subTest(update=update.__name__):
+                doc = self.make_project()
+                query = self.make_query([])
+                query.run.side_effect = RuntimeError("cost query failed")
+                with patch.object(frappe, "get_doc", return_value=doc), patch.object(
+                    erpnext_project.qb, "from_", return_value=query
+                ):
+                    with self.assertRaisesRegex(RuntimeError, "cost query failed"):
+                        update({doc.name})
+                doc.db_set.assert_not_called()
+
+    def test_cost_write_failure_remains_visible_to_caller(self):
+        doc = self.make_project()
+        doc.db_set.side_effect = RuntimeError("cost write failed")
+        with self.assertRaisesRegex(RuntimeError, "cost write failed"):
+            doc.db_set_cost("total_purchase_cost")
+
+    def test_explicit_recalculation_uses_native_helpers_and_write_permission(self):
+        doc = self.make_project()
+        doc.check_permission = Mock()
+        doc.db_update = Mock()
+        timesheet = SimpleNamespace(
+            start_date=None, end_date=None, costing_amount=100,
+            billing_amount=180, time=2,
+        )
+        query = self.make_query(
+            [[(-800,)], [(50,)], [timesheet], [(1250.75,)]]
+            + [[(None,)]] * len(erpnext_project.LANDED_COST_RECEIPT_ITEMS)
+        )
+        with patch.object(frappe, "get_doc", return_value=doc), patch.object(
+            erpnext_project.qb, "from_", return_value=query
+        ), patch.object(frappe.db, "sql", side_effect=[[(2000,)], [(1800,)], [(100,)]]):
+            erpnext_project.update_costing_and_billing(doc.name)
+        doc.check_permission.assert_called_once_with("write")
+        self.assertEqual(doc.total_consumed_material_cost, 850)
+        self.assertEqual(doc.total_purchase_cost, 1250.75)
+        self.assertEqual(doc.total_billed_amount, 1900)
+        self.assertEqual(doc.gross_margin, 1900 - 100 - 1250.75 - 850)
+        doc.db_update.assert_called_once_with()
+
+
 if __name__ == "__main__":
     unittest.main()
+
