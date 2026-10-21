@@ -120,7 +120,7 @@ class TestProjectPurchaseCosting(ProjectTestCase):
     def make_query(self, results):
         # Keep the native ERPNext costing methods; mock only database results.
         query = MagicMock()
-        for method in ("left_join", "on", "select", "where"):
+        for method in ("left_join", "join", "on", "select", "where"):
             getattr(query, method).return_value = query
         query.run.side_effect = results
         return query
