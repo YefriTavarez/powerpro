@@ -200,12 +200,26 @@ def populate_employer(doc):
     return True
 
 
+def apply_site_settlement_adjustments(doc):
+    """Run the installed site's final monthly policy before the submission check."""
+    name = "IGC - Topes TSS - Aplicar a Recibo V1"
+    if not frappe.db.exists("Server Script", name):
+        return
+    script = frappe.get_doc("Server Script", name)
+    if script.disabled:
+        return
+    if script.script_type != "DocType Event" or script.reference_doctype != "Salary Slip":
+        frappe.throw("La política mensual configurada requiere un Server Script de eventos para Salary Slip.")
+    script.execute_doc(doc)
+
+
 def before_submit(doc):
     if not settings_for(doc):
         return
     # Lock acquired at the start of validate; repeat only for direct lifecycle calls.
     lock_employee(doc)
     doc.calculate_net_pay()
+    apply_site_settlement_adjustments(doc)
     snapshot = json.loads(doc.monthly_settlement_snapshot or "{}")
     if snapshot.get("issues"):
         frappe.throw("No se puede confirmar el acumulado mensual: " + "; ".join(snapshot["issues"]))
@@ -234,3 +248,4 @@ def is_close(doc):
     if snapshot:
         return bool(snapshot.get("close"))
     return bool(doc.get("mid_month_start") or doc.payroll_frequency == "Monthly")
+
